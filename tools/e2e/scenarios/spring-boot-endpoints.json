@@ -1,0 +1,184 @@
+{
+ "id": "spring-boot-endpoints",
+ "fixture": "spring-maven",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   },
+   "Spring Boot Properties": {
+    "enable_language_server": true
+   },
+   "Spring Boot YAML": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "run.configurations.names": [
+     "DemoApplication"
+    ]
+   },
+   "within": 60000
+  },
+  {
+   "expect": {
+    "java.spring.classpath": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.spring.index.loaded": true,
+    "java.spring.index.endpoints": [
+     "GET /hello"
+    ]
+   },
+   "within": 120000
+  },
+  {
+   "do": "action",
+   "name": "endpoints_tool_window::ToggleFocus"
+  },
+  {
+   "expect": {
+    "docks.right.open": true,
+    "docks.right.panel": "Endpoints"
+   },
+   "within": 5000
+  },
+  {
+   "find": [
+    {
+     "label": "Endpoints"
+    },
+    {
+     "label": "demo"
+    },
+    {
+     "label": "/hello"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "/hello"
+  },
+  {
+   "expect": {
+    "java.spring.index.selected": "/hello"
+   },
+   "within": 3000
+  },
+  {
+   "find": [
+    {
+     "label": "Documentation"
+    },
+    {
+     "label": "GET /hello",
+     "in": "Documentation"
+    },
+    {
+     "label": "HTTP Server",
+     "in": "Documentation"
+    },
+    {
+     "label": "Spring MVC",
+     "in": "Documentation"
+    },
+    {
+     "label": "HelloController",
+     "in": "Documentation"
+    }
+   ],
+   "within": 3000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "endpoints"
+  },
+  {
+   "do": "click",
+   "label": "/hello",
+   "count": 2
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/demo/HelloController.java"
+   },
+   "within": 10000
+  },
+  {
+   "find": {
+    "label": "Request mapping",
+    "role": "AXButton"
+   },
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "workspace::CloseAllDocks"
+  },
+  {
+   "do": "click",
+   "label": "Request mapping",
+   "role": "AXButton"
+  },
+  {
+   "menu": "Request mapping",
+   "items": [
+    "Show all endpoints of module",
+    "Open in web browser"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Show all endpoints of module",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "docks.right.open": true,
+    "docks.right.panel": "Endpoints",
+    "java.spring.index.selected": "/hello"
+   },
+   "within": 5000
+  }
+ ]
+}

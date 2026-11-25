@@ -102,7 +102,7 @@ pub(crate) fn register(workspace: &mut Workspace, cx: &mut Context<Workspace>) {
 
 /// Whether a project's build files declare Kotlin: Gradle's Kotlin plugin (`kotlin("jvm")`,
 /// `org.jetbrains.kotlin.*`) or Maven's `kotlin-maven-plugin`.
-fn declares_kotlin(root: &Path) -> bool {
+pub(crate) fn declares_kotlin(root: &Path) -> bool {
     let read = |name: &str| std::fs::read_to_string(root.join(name)).unwrap_or_default();
     let gradle = ["build.gradle.kts", "build.gradle"].map(read).join("\n");
     gradle.contains("org.jetbrains.kotlin")
@@ -133,7 +133,12 @@ impl KotlinProject {
             .cloned()
     }
 
-    fn root(&self, cx: &App) -> Option<PathBuf> {
+    /// The first Kotlin project open.
+    pub(crate) fn first(cx: &App) -> Option<Entity<Self>> {
+        cx.try_global::<Projects>()?.0.values().next().cloned()
+    }
+
+    pub(crate) fn root(&self, cx: &App) -> Option<PathBuf> {
         self.java.read(cx).root.clone()
     }
 
@@ -162,10 +167,14 @@ impl KotlinProject {
         }
     }
 
-    /// Starts the server on one of the project's Kotlin files, a main one first.
-    // shortcut: a project without a Kotlin file isn't analysed until one is opened, as Java's
+    /// Starts the server on one of the project's Kotlin files, a main one first, or, in a project
+    /// whose build declares Kotlin but has no Kotlin file yet, on its Kotlin build script.
+    // shortcut: a Maven or Groovy Gradle project without a Kotlin file isn't analysed until one is
+    // opened, as Java's; start the server on its build file once the language servers can start
+    // without a Kotlin buffer
     fn start(&mut self, cx: &mut Context<Self>) {
         let project = self.project.clone();
+        let declared = self.detected;
         let Some(worktree) = project.read(cx).visible_worktrees(cx).next() else {
             return;
         };
@@ -181,12 +190,19 @@ impl KotlinProject {
                 let kotlin = |entry: &&project::Entry| {
                     entry.is_file() && entry.path.extension() == Some("kt")
                 };
+                let script = || {
+                    ["build.gradle.kts", "settings.gradle.kts"]
+                        .into_iter()
+                        .map(|name| worktree.abs_path().join(name))
+                        .find(|path| declared && path.is_file())
+                };
                 worktree
                     .entries(false, 0)
                     .filter(kotlin)
                     .find(|entry| !entry.path.as_unix_str().contains("/test/"))
                     .or_else(|| worktree.entries(false, 0).find(kotlin))
                     .map(|entry| worktree.abs_path().join(entry.path.as_std_path()))
+                    .or_else(script)
             }) else {
                 return;
             };

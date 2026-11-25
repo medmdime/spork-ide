@@ -1,0 +1,289 @@
+{
+ "id": "java-debug-method-field-breakpoints",
+ "fixture": "maven",
+ "covers": [
+  "action:ToggleMethodBreakpoint",
+  "action:ToggleFieldBreakpoint"
+ ],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "sh": "mkdir -p .zed && printf '%s' '[{\"label\": \"Debuggee\", \"adapter\": \"Java\", \"request\": \"launch\", \"mainClass\": \"com.example.Debuggee\"}]' > .zed/debug.json"
+  },
+  {
+   "expect": {
+    "java.tool": "Maven"
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 600000
+  },
+  {
+   "expect": {
+    "run.configurations.selected": "Debuggee"
+   },
+   "within": 10000
+  },
+  {
+   "do": "open",
+   "path": "src/main/java/com/example/Debuggee.java"
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/Debuggee.java",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "type",
+   "text": "44:9"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "do": "action",
+   "name": "run::ToggleMethodBreakpoint"
+  },
+  {
+   "expect": {
+    "run.breakpoints.0.at": "Debuggee.java:43",
+    "run.breakpoints.0.kind": "method",
+    "run.breakpoints.0.name": "com.example.Debuggee.measure"
+   }
+  },
+  {
+   "find": {
+    "label": "Method breakpoint",
+    "role": "AXImage"
+   }
+  },
+  {
+   "find": {
+    "label": "Debug 'Debuggee'",
+    "role": "AXButton",
+    "enabled": true
+   },
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-d"
+  },
+  {
+   "expect": {
+    "run.debug.status": "Stopped"
+   },
+   "within": 120000
+  },
+  {
+   "expect": {
+    "run.debug.frames.0": "measure:44, Debuggee (com.example)",
+    "run.debug.variables": [
+     "name = \"Ada\""
+    ]
+   },
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f2"
+  },
+  {
+   "expect": {
+    "run.debug.terminated": true
+   },
+   "within": 30000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "type",
+   "text": "44:9"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "do": "action",
+   "name": "run::ToggleMethodBreakpoint"
+  },
+  {
+   "expect": {
+    "run.breakpoints": []
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "type",
+   "text": "12:5"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "do": "action",
+   "name": "run::ToggleFieldWatchpoint"
+  },
+  {
+   "expect": {
+    "run.breakpoints.0.at": "Debuggee.java:12",
+    "run.breakpoints.0.kind": "field",
+    "run.breakpoints.0.name": "Debuggee.counter"
+   }
+  },
+  {
+   "find": {
+    "label": "Field watchpoint",
+    "role": "AXImage"
+   }
+  },
+  {
+   "do": "action",
+   "name": "run::ViewBreakpoints"
+  },
+  {
+   "find": [
+    {
+     "label": "Breakpoints Toolbar",
+     "role": "AXToolbar"
+    },
+    {
+     "label": "Java Field Watchpoints",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "Debuggee.counter",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "Debuggee.counter, Field watchpoint"
+    },
+    {
+     "label": "Field access",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "Field modification",
+     "role": "AXCheckBox",
+     "value": "1"
+    }
+   ],
+   "ordered": true,
+   "within": 8000
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "activate",
+   "window": "Breakpoints"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "dialog",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Done",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Breakpoints Toolbar",
+    "role": "AXToolbar"
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-d"
+  },
+  {
+   "expect": {
+    "run.debug.status": "Stopped",
+    "run.debug.terminated": false
+   },
+   "within": 120000
+  },
+  {
+   "expect": {
+    "run.debug.frames.0": "measure:44, Debuggee (com.example)",
+    "run.debug.variables": [
+     "name = \"Ada\""
+    ]
+   },
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-alt-r"
+  },
+  {
+   "expect": {
+    "run.debug.variables": [
+     "name = \"Grace\""
+    ]
+   },
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f2"
+  },
+  {
+   "expect": {
+    "run.debug.terminated": true
+   },
+   "within": 30000
+  }
+ ]
+}

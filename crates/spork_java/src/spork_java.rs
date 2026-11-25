@@ -4,12 +4,16 @@
 
 mod actuator;
 mod application;
+mod breakpoints;
 pub mod build_files;
 mod build_tool_window;
 mod build_view;
 mod debugger;
+mod endpoints;
 mod generate;
 pub mod gradle_model;
+mod hotswap;
+mod initializr;
 mod java_project;
 pub mod jdk;
 mod jdk_banner;
@@ -26,7 +30,10 @@ pub mod project_structure;
 pub mod sdks;
 pub mod spring_boot;
 pub mod spring_boot_ls;
+mod spring_markers;
+pub mod testing;
 
+pub use application::{TEST_CONFIGURATION, jre_combo, test_template, test_variables};
 pub use build_tool_window::{gradle_tool_window, maven_tool_window};
 pub use build_view::{build, build_panel};
 pub use generate::java;
@@ -96,8 +103,13 @@ fn queries() -> LanguageQueries {
 /// configuration, and each workspace's Java project with its build tool's tool window.
 pub fn init(languages: Arc<LanguageRegistry>, cx: &mut App) {
     application::init(cx);
+    testing::init(cx);
     debugger::init(cx);
+    breakpoints::init(cx);
+    hotswap::init(cx);
     spring_boot::init(cx);
+    initializr::init(cx);
+    spring_markers::init(cx);
     generate::init(cx);
     kotlin_compiler::init(cx);
     language_level_fix::init(cx);
@@ -181,6 +193,7 @@ pub fn e2e_state(workspace: &Workspace, cx: &App) -> Value {
         "build": build_view::e2e_state(workspace, cx),
         "spring": spring_boot::e2e_state(java, cx),
         "downloads": jdk_download::e2e_state(cx),
+        "hotswap": hotswap::e2e_state(workspace, cx),
     })
 }
 

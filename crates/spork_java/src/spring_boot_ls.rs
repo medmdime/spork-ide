@@ -500,6 +500,14 @@ impl lsp::request::Request for ExecuteClientCommand {
     const METHOD: &'static str = "workspace/executeClientCommand";
 }
 
+/// The Spring LS's `spring/index/updated`: its index of beans and request mappings changed.
+enum IndexUpdated {}
+
+impl lsp::notification::Notification for IndexUpdated {
+    type Params = Value;
+    const METHOD: &'static str = "spring/index/updated";
+}
+
 /// The bridge between a project's JDT LS and its Spring LS, alive while it is held.
 pub struct Bridge {
     pub spring: Weak<LanguageServer>,
@@ -520,14 +528,16 @@ impl Bridge {
 
 /// Connects the two servers: the Spring LS's `sts/*` requests answered by JDT LS's commands,
 /// JDT LS's callbacks run by the Spring LS. `classpath` is told each time JDT LS sends a
-/// project's classpath. A server takes one handler per method: a previous bridge of either
+/// project's classpath, `indexed` each time the Spring LS's index changes. A server takes one handler per method: a previous bridge of either
 /// server must be dropped first.
 pub fn bridge(
     jdtls: &Arc<LanguageServer>,
     spring: &Arc<LanguageServer>,
     classpath: impl Fn(&mut AsyncApp) + Send + 'static,
+    indexed: impl Fn(&mut AsyncApp) + Send + 'static,
 ) -> Bridge {
     let mut subscriptions = relay_all(jdtls, spring);
+    subscriptions.push(spring.on_notification::<IndexUpdated, _>(move |_, cx| indexed(cx)));
     let to_spring = Arc::downgrade(spring);
     subscriptions.push(
         jdtls.on_request::<ExecuteClientCommand, _, _>(move |params, cx| {

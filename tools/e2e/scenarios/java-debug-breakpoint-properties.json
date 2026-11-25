@@ -1,0 +1,321 @@
+{
+ "id": "java-debug-breakpoint-properties",
+ "fixture": "maven",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "sh": "mkdir -p .zed && printf '%s' '[{\"label\": \"Debuggee\", \"adapter\": \"Java\", \"request\": \"launch\", \"mainClass\": \"com.example.Debuggee\"}]' > .zed/debug.json"
+  },
+  {
+   "expect": {
+    "java.tool": "Maven"
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 600000
+  },
+  {
+   "expect": {
+    "run.configurations.selected": "Debuggee"
+   },
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "do": "open",
+   "path": "src/main/java/com/example/Debuggee.java"
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/Debuggee.java",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "type",
+   "text": "49:1"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-f8"
+  },
+  {
+   "find": [
+    {
+     "label": "Breakpoint",
+     "role": "AXWindow"
+    },
+    {
+     "label": "Enabled",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "Suspend",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "All",
+     "role": "AXRadioButton",
+     "value": "1"
+    },
+    {
+     "label": "Thread",
+     "role": "AXRadioButton",
+     "value": "0"
+    },
+    {
+     "label": "Condition",
+     "role": "AXTextField"
+    }
+   ],
+   "ordered": true,
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Thread",
+   "role": "AXRadioButton"
+  },
+  {
+   "expect": {
+    "run.breakpoints.0.at": "Debuggee.java:49",
+    "run.breakpoints.0.suspend": "thread"
+   }
+  },
+  {
+   "find": {
+    "label": "Thread",
+    "role": "AXRadioButton",
+    "value": "1"
+   }
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "popup"
+  },
+  {
+   "do": "click",
+   "label": "Done",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Breakpoint",
+    "role": "AXWindow"
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "type",
+   "text": "44:1"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "expect": {
+    "run.breakpoints.0.at": "Debuggee.java:44",
+    "run.breakpoints.1.at": "Debuggee.java:49"
+   }
+  },
+  {
+   "do": "action",
+   "name": "run::ViewBreakpoints"
+  },
+  {
+   "find": {
+    "label": "Breakpoints Toolbar",
+    "role": "AXToolbar"
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Debuggee.java:44",
+   "role": "AXRow"
+  },
+  {
+   "find": {
+    "label": "Debuggee.java:44, Line breakpoint"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Disable until hitting the following breakpoint:",
+   "role": "AXPopUpButton"
+  },
+  {
+   "do": "click",
+   "label": "Debuggee.java:49",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "run.breakpoints.0.depends_on": "Debuggee.java:49"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Remove once hit",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "Disable until hitting the following breakpoint:",
+     "role": "AXPopUpButton",
+     "value": "Debuggee.java:49"
+    },
+    {
+     "label": "Disable again",
+     "role": "AXRadioButton",
+     "value": "1"
+    },
+    {
+     "label": "Leave enabled",
+     "role": "AXRadioButton",
+     "value": "0"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "find": {
+    "label": "Dependent breakpoint",
+    "role": "AXImage"
+   }
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "activate",
+   "window": "Breakpoints"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "dialog",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Done",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Breakpoints Toolbar",
+    "role": "AXToolbar"
+   },
+   "absent": true
+  },
+  {
+   "find": {
+    "label": "Debug 'Debuggee'",
+    "role": "AXButton",
+    "enabled": true
+   },
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-d"
+  },
+  {
+   "expect": {
+    "run.debug.status": "Stopped"
+   },
+   "within": 120000
+  },
+  {
+   "expect": {
+    "run.debug.frames.0": "twice:49, Debuggee (com.example)",
+    "run.debug.thread": "\"worker\"@11: STOPPED"
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "run.debug.threads": {
+     "contains": "\"main\"@1: RUNNING"
+    }
+   },
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-alt-r"
+  },
+  {
+   "expect": {
+    "run.debug.terminated": true
+   },
+   "within": 30000
+  }
+ ]
+}

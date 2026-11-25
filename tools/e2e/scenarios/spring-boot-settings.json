@@ -161,7 +161,7 @@
    "within": 60000
   },
   {
-   "sh": "cat .zed/debug.json",
+   "sh": "cat \"../home/Library/Application Support/Spork IDE/workspace/\"*/debug.json",
    "contains": "\"adapter\": \"Spring Boot\"",
    "within": 8000
   },

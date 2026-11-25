@@ -13,7 +13,18 @@ three classes, as of the triage (2026-11-23):
 Each line: the task's id, its name, its class (and its tests, when a scenario covers it).
 
 Kotlin got its engine on 2026-11-25 (ROADMAP, phase 10e: the Kotlin language server and its debugger): Kotlin
-Class/File is built; the other Kotlin tasks below still say (c) until they are triaged again.
+Class/File is built; the other Kotlin tasks below still say (c) until they are triaged again. Built since without a task
+of their own (wave 2, Kotlin): the Kotlin configuration's module, JRE and Shorten command line
+(kotlin-run-configuration-module), Debug from the gutter (kotlin-gutter-debug), Kotlin function breakpoints and lambda
+breakpoints with the Set Breakpoint popup (kotlin-breakpoint-variants), coroutine stacks with IntelliJ's "Async stack
+trace" (kotlin-coroutine-frames), "Kotlin is not configured" with Configure (kotlin-not-configured), the
+`build.gradle.kts` task gutter (kotlin-gradle-task-gutter), the server in a Kotlin project without Kotlin files
+(kotlin-server-without-kotlin-files). The Generate items (`KotlinGenerate*`) and Convert Java to Kotlin are (b): the
+Kotlin language server (271.2085.0) offers neither a command nor a code action for them.
+
+Built by the second Spring wave (2026-11-25), beside the tasks below it marks: run configurations kept in the workspace
+until Store as project file, Update Running Application (Run menu), New Project ▸ Spring Boot, the Spring gutter
+icons and Go to Declaration into a library's class.
 
 Built without a task of its own (2026-11-23): every menu and every scrollbar of the IDE is Spork's (its popup menus'
 look, its scrollbar), checked by the `popup-menu-look` and `scrollbar-behaviour` scenarios.
@@ -40,7 +51,7 @@ The main reasons in (b), by how many tasks they hold:
 | remote servers and deployment (Services' Clouds): no engine | 9 |
 | IntelliJ's module model (modules, Project Structure, `.iml`): Spork IDE opens folders, JDT LS sees one project per build file | 9 |
 | the debugger's memory view: java-debug's adapter reports no instance counts | 9 |
-| a test runner engine: IntelliJ's test tree and results (JUnit, TestNG); Zed's tasks and debug sessions report no tests | 8 |
+| a test runner engine (built in the test wave, 2026-11-25: the tasks left are buildable now) | 8 |
 | a syntax filter in Zed's search (in comments, in string literals): phase 4 left it | 8 |
 | an XML engine (schemas, DTD, validation): Spork IDE has no XML language server yet; a decision (Eclipse's LemMinX would fit Decision 11's way) | 7 |
 | Method Hierarchy: no language server request gives it (LSP has call and type hierarchies only) | 6 |
@@ -908,7 +919,7 @@ Settings item (the Settings dialog opens on a page only from its own crate).
 - `context-menu:ExtractMethodToolWindow.TreePopup` ExtractMethodToolWindow.TreePopup — (b) IntelliJ's own Extract Method (its duplicates): the language servers' extract finds none
 - `context-menu:Maven.RepositoryMenu` Maven.RepositoryMenu — (b) Maven repository indices: no engine indexes the local repository
 - `context-menu:Mq.Patches.ContextMenu` Mq.Patches.ContextMenu — (b) a decision on version control beyond git (Spork's engine is git's; Mercurial isn't decided)
-- `context-menu:TestTreePopupMenu` TestTreePopupMenu — (b) a test runner engine: IntelliJ's test tree and results (JUnit, TestNG); Zed's tasks and debug sessions report no tests
+- `context-menu:TestTreePopupMenu` TestTreePopupMenu — (a) the test runner engine exists (test wave): not built yet
 - `context-menu:ShowFilterPopup` ShowFilterPopup — (b) a syntax filter in Zed's search (in comments, in string literals): phase 4 left it
 - `action:IntegrateFiles` Integrate — (b) a decision on version control beyond git: the action is Subversion's and Perforce's (git has no such operation)
 - `action:CheckStatusForFiles` Check Status — (b) a decision on version control beyond git: the action is Subversion's and Perforce's (git has no such operation)
@@ -995,9 +1006,9 @@ Settings item (the Settings dialog opens on a page only from its own crate).
 - `action:SearchContext.InComments` SearchContext.InComments — (b) a syntax filter in Zed's search (in comments, in string literals): phase 4 left it
 - `action:SearchContext.InStringLiterals` SearchContext.InStringLiterals — (b) a syntax filter in Zed's search (in comments, in string literals): phase 4 left it
 - `action:Svn.RefreshWorkingCopies` Refresh — (b) a decision on version control beyond git (Subversion isn't decided)
-- `action:excludeFromSuite` Exclude from Suite — (b) a test runner engine: IntelliJ's test tree and results (JUnit, TestNG); Zed's tasks and debug sessions report no tests
-- `action:excludeFromTestNGSuite` Exclude from Suite — (b) a test runner engine: IntelliJ's test tree and results (JUnit, TestNG); Zed's tasks and debug sessions report no tests
-- `action:openAssertEqualsDiff` View assertEquals Difference — (b) a test runner engine: IntelliJ's test tree and results (JUnit, TestNG); Zed's tasks and debug sessions report no tests
+- `action:excludeFromSuite` Exclude from Suite — (a) the test runner engine exists (test wave): not built yet
+- `action:excludeFromTestNGSuite` Exclude from Suite — (a) the test runner engine exists (test wave): not built yet
+- `action:openAssertEqualsDiff` View assertEquals Difference — (a) · built (test wave: the failure's "Click to see difference"; its ⌘D action is left) · tested: java-test-runner (pass)
 - `action:CloseGotItTooltip` Close Got It Tooltip — (b) Got It tooltips (IntelliJ's feature hints): Spork IDE shows none yet
 - `action:CommitView.CloseWindowedFloatingTwOnCommit` Close the Commit Tool Window in Window/Float Mode After Committing — (b) floating and windowed tool windows: Zed's docks can't leave the project window
 - `action:OpenPortForwardingToolwindowAction` Code With Me: Show Port Forwarding Window — (b) our own collaboration server first (Decision 2: Zed's collaboration comes back on it)
@@ -1018,7 +1029,7 @@ Settings item (the Settings dialog opens on a page only from its own crate).
 - `action:RemoteServers.EditDeploymentConfig` Edit Configuration — (b) remote servers and deployment (Services' Clouds): no engine
 - `action:RemoteServers.EditServerConfig` Edit Configuration — (b) remote servers and deployment (Services' Clouds): no engine
 - `action:EditPropertyValue` Edit Property Value… — (b) Java resource bundles and i18n: no engine (JDT LS has none)
-- `action:ExportTestResults` Export Test Results… — (b) a test runner engine: IntelliJ's test tree and results (JUnit, TestNG); Zed's tasks and debug sessions report no tests
+- `action:ExportTestResults` Export Test Results… — (a) · built (test wave: IntelliJ's XML into the project's folder, without the export dialog) · tested: java-test-runner (pass)
 - `action:FixWSLFirewall` Fix WSL Firewall Settings — (b) WSL, on Windows only: a decision on Windows support
 - `action:FloatMode` Float — (b) floating and windowed tool windows: Zed's docks can't leave the project window
 - `action:ToggleFloatingMode` Floating Mode — (b) floating and windowed tool windows: Zed's docks can't leave the project window
@@ -1046,10 +1057,10 @@ Settings item (the Settings dialog opens on a page only from its own crate).
 - `action:FileChooser.GoBackward` Previous Directory — (b) a decision: IntelliJ uses the system's file dialog by default (Advanced Settings › Use native file chooser dialog, `ide.ui.native.file.chooser`, on), as Spork IDE does; its own File Chooser shows only with that setting off
 - `action:PreviousLessonAction` Previous Lesson — (b) the Learn courses' content (phase 6 left the Welcome window's Learn): a decision
 - `action:FileChooser.GotoProject` Project Directory — (b) a decision: IntelliJ uses the system's file dialog by default (Advanced Settings › Use native file chooser dialog, `ide.ui.native.file.chooser`, on), as Spork IDE does; its own File Chooser shows only with that setting off
-- `action:ShowRecentTests` Recent Tests — (b) a test runner engine: IntelliJ's test tree and results (JUnit, TestNG); Zed's tasks and debug sessions report no tests
+- `action:ShowRecentTests` Recent Tests — (a) the test runner engine exists (test wave): not built yet
 - `action:FileChooser.Refresh` Refresh — (b) a decision: IntelliJ uses the system's file dialog by default (Advanced Settings › Use native file chooser dialog, `ide.ui.native.file.chooser`, on), as Spork IDE does; its own File Chooser shows only with that setting off
-- `action:RerunFailedTests` Rerun Failed Tests — (b) a test runner engine: IntelliJ's test tree and results (JUnit, TestNG); Zed's tasks and debug sessions report no tests
-- `action:RerunTests` Rerun Tests — (b) a test runner engine: IntelliJ's test tree and results (JUnit, TestNG); Zed's tasks and debug sessions report no tests
+- `action:RerunFailedTests` Rerun Failed Tests — (a) · built (test wave) · tested: java-test-runner (pass)
+- `action:RerunTests` Rerun Tests — (a) · built (test wave) · tested: java-test-runner (pass)
 - `action:ResetLearningProgressAction` Reset Learning Progress — (b) the Learn courses' content (phase 6 left the Welcome window's Learn): a decision
 - `action:ResetPluginPermissions` Reset Plugin Permissions… — (b) IntelliJ's plugin permissions: Zed's extensions have capabilities in settings, not Allow Always decisions; a decision
 - `action:RestartLessonAction` Restart Lesson — (b) the Learn courses' content (phase 6 left the Welcome window's Learn): a decision
@@ -1139,16 +1150,16 @@ Settings item (the Settings dialog opens on a page only from its own crate).
 - `action:GenerateTestDataPathFiles` @TestDataPath Files — (c) IntelliJ plugin development (DevKit)
 - `action:GenerateTestDataPathMethods` @TestDataPath Methods — (c) IntelliJ plugin development (DevKit)
 - `action:GenerateCreateUI` createUI(…) — (c) IntelliJ plugin development (DevKit)
-- `action:KotlinGenerateEqualsAndHashCode` equals() and hashCode() — (c) Kotlin (no engine chosen, left out with notebooks and database tools)
+- `action:KotlinGenerateEqualsAndHashCode` equals() and hashCode() — (b) the Kotlin language server offers no Generate action (271.2085.0)
 - `action:KotlinGenerateMavenCompileExecutionAction` Kotlin compile execution — (c) Kotlin (no engine chosen, left out with notebooks and database tools)
 - `action:KotlinGenerateMavenPluginAction` Kotlin plugin — (c) Kotlin (no engine chosen, left out with notebooks and database tools)
 - `action:KotlinGenerateMavenTestCompileExecutionAction` Kotlin test-compile execution — (c) Kotlin (no engine chosen, left out with notebooks and database tools)
-- `action:KotlinGenerateDataMethod` Parameters Function — (c) Kotlin (no engine chosen, left out with notebooks and database tools)
-- `action:KotlinGenerateSecondaryConstructor` Secondary Constructor — (c) Kotlin (no engine chosen, left out with notebooks and database tools)
-- `action:KotlinGenerateSetUpMethod` SetUp Function — (c) Kotlin (no engine chosen, left out with notebooks and database tools)
-- `action:KotlinGenerateTearDownMethod` TearDown Function — (c) Kotlin (no engine chosen, left out with notebooks and database tools)
-- `action:KotlinGenerateTestMethod` Test Function — (c) Kotlin (no engine chosen, left out with notebooks and database tools)
-- `action:KotlinGenerateToString` toString() — (c) Kotlin (no engine chosen, left out with notebooks and database tools)
+- `action:KotlinGenerateDataMethod` Parameters Function — (b) the Kotlin language server offers no Generate action (271.2085.0)
+- `action:KotlinGenerateSecondaryConstructor` Secondary Constructor — (b) the Kotlin language server offers no Generate action (271.2085.0)
+- `action:KotlinGenerateSetUpMethod` SetUp Function — (b) the Kotlin language server offers no Generate action (271.2085.0)
+- `action:KotlinGenerateTearDownMethod` TearDown Function — (b) the Kotlin language server offers no Generate action (271.2085.0)
+- `action:KotlinGenerateTestMethod` Test Function — (b) the Kotlin language server offers no Generate action (271.2085.0)
+- `action:KotlinGenerateToString` toString() — (b) the Kotlin language server offers no Generate action (271.2085.0)
 - `action:JupyterMarkdownToggleCellStateAction` JupyterMarkdownToggleCellStateAction — (c) notebooks and data tables (module 2)
 - `action:AddCellPromoAction` AI — (c) JetBrains AI promotion (Decision 5: AI is the user's own providers)
 - `action:NotebookInsertCodeCellAction` Code — (c) notebooks and data tables (module 2)
@@ -1308,7 +1319,7 @@ Settings item (the Settings dialog opens on a page only from its own crate).
 - `action:PromoDatabase` Database — (c) IntelliJ IDEA Ultimate promotion
 - `action:DumpFocusableComponentHierarchyAction` Dump Focusable Component Hierarchy — (c) IntelliJ's internal maintenance and diagnostics
 - `action:JupyterMarkdownDestroyControllerAction` Edit Markdown Cell — (c) notebooks and data tables (module 2)
-- `action:PromoEndpoints` Endpoints — (c) IntelliJ IDEA Ultimate promotion
+- `action:PromoEndpoints` Endpoints — built (2026-11-25, the second Spring wave): the paid edition's Endpoints tool window itself, on the Spring LS's request mappings (spring-boot-endpoints)
 - `action:KotlinShellExecute` Execute Kotlin Code — (c) Kotlin (no engine chosen, left out with notebooks and database tools)
 - `action:NotebookExpandSelectionToCellAboveAction` Expand Selection to Cell Above — (c) notebooks and data tables (module 2)
 - `action:NotebookExpandSelectionToCellBelowAction` Expand Selection to Cell Below — (c) notebooks and data tables (module 2)

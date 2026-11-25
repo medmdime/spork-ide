@@ -52,6 +52,15 @@ pub struct ChangeMarkerClick(
 
 impl Global for ChangeMarkerClick {}
 
+/// Spork IDE: a left click on a line number, set once by the app (IntelliJ's "Click line number
+/// to perform run to cursor"): given the row clicked, whether it took the click.
+#[derive(Clone)]
+pub struct LineNumberClick(
+    pub Rc<dyn Fn(&mut Editor, DisplayRow, &mut Window, &mut Context<Editor>) -> bool>,
+);
+
+impl Global for LineNumberClick {}
+
 /// Spork IDE: the menu of a right click on the annotations (IntelliJ's annotation popup), set once
 /// by the app: given the display row clicked, the menu, if it has one for it.
 #[derive(Clone)]
@@ -75,6 +84,40 @@ pub struct BookmarkGutterIcon(pub Rc<dyn Fn(&str, &mut App) -> AnyElement>);
 
 impl Global for BookmarkGutterIcon {}
 
+/// Spork IDE: the line markers the app adds to a buffer's rows (IntelliJ's `LineMarkerProvider`s:
+/// Spring's beans, injection points and request mappings), each buffer row's icon in the gutter's
+/// icons area where no run icon is, its clicks its own; set once.
+#[derive(Clone)]
+pub struct LineMarkers(
+    pub Rc<dyn Fn(&Entity<language::Buffer>, &mut Window, &mut App) -> Vec<(u32, AnyElement)>>,
+);
+
+impl Global for LineMarkers {}
+
+/// Spork IDE: what a run icon in the gutter stands for, for the app's icon: the runnable's
+/// captures (`java_class_name`…) and tags, and how its last run from the gutter went
+/// (`Some(true)` passed, `Some(false)` failed, `None` never or running).
+pub struct RunIndicatorLook<'a> {
+    pub variables: &'a collections::HashMap<String, String>,
+    pub tags: Vec<&'a str>,
+    pub running: bool,
+    pub passed: Option<bool>,
+}
+
+/// Spork IDE: the gutter's run icon (IntelliJ's, with a test's last state), drawn by the app,
+/// set once; Zed's icon otherwise.
+#[derive(Clone)]
+pub struct RunIndicatorIcon(pub Rc<dyn Fn(RunIndicatorLook<'_>, &mut App) -> AnyElement>);
+
+impl Global for RunIndicatorIcon {}
+
+/// Spork IDE: the run icon popup's last row, IntelliJ's Modify Run Configuration…, given the
+/// popup's first task, set once by the app; no such row otherwise.
+#[derive(Clone)]
+pub struct RunMenuModify(pub Rc<dyn Fn(&task::ResolvedTask, &mut Window, &mut App)>);
+
+impl Global for RunMenuModify {}
+
 /// Spork IDE: how a breakpoint stands, for the app's gutter icon.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct BreakpointLook {
@@ -85,6 +128,12 @@ pub struct BreakpointLook {
     pub logs: bool,
     /// Whether the running debug session verified it; `None` without a session.
     pub verified: Option<bool>,
+    /// It waits for another breakpoint to be hit.
+    pub dependent: bool,
+    /// A method breakpoint on a method's declaration.
+    pub method: bool,
+    /// A field watchpoint on a field's declaration.
+    pub field: bool,
 }
 
 /// Spork IDE: the gutter's icon for a breakpoint (IntelliJ's), drawn by the app from how it
@@ -112,6 +161,16 @@ pub struct BreakpointMenu(
 );
 
 impl Global for BreakpointMenu {}
+
+/// Spork IDE: a breakpoint about to be added on a line (the gutter's click, Toggle Line
+/// Breakpoint), which the app may add itself, as IntelliJ adds a function breakpoint or asks for
+/// the line's variant (Set Breakpoint): given its position, whether the app took it.
+#[derive(Clone)]
+pub struct BreakpointToggle(
+    pub Rc<dyn Fn(&mut Editor, Anchor, &mut Window, &mut Context<Editor>) -> bool>,
+);
+
+impl Global for BreakpointToggle {}
 
 /// Spork IDE: the gutter laid out as IntelliJ's New UI lays it out (`EditorGutterLayout`), set once
 /// by the app: the line numbers first, then the icons (run markers, breakpoints, bookmarks), the
@@ -494,6 +553,18 @@ impl Editor {
     }
 
     /// Spork IDE: hands a click on a change marker to the app's [`ChangeMarkerClick`].
+    pub(crate) fn line_number_clicked(
+        &mut self,
+        row: DisplayRow,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> bool {
+        match cx.try_global::<LineNumberClick>().cloned() {
+            Some(LineNumberClick(handler)) => handler(self, row, window, cx),
+            None => false,
+        }
+    }
+
     pub(crate) fn change_marker_clicked(
         &mut self,
         hunk: Range<Anchor>,
@@ -557,6 +628,24 @@ impl Editor {
         let rows_down = (f64::from(row.0) + 1. - map.scroll_position.y) as f32;
         Some(gpui::point(
             map.content_origin.x - Pixels::from(map.scroll_pixel_position.x),
+            map.text_hitbox.bounds.origin.y + map.line_height * rows_down,
+        ))
+    }
+
+    /// Spork IDE: the middle of a buffer row's line number in the window, for the end-to-end
+    /// tests' clicks; `None` before the editor is drawn or without IntelliJ's gutter.
+    pub fn line_number_point(&self, row: u32, cx: &mut App) -> Option<gpui::Point<Pixels>> {
+        let map = self.last_position_map.as_ref()?;
+        let areas = self.gutter_dimensions.intellij?;
+        let display_row = crate::display_map::ToDisplayPoint::to_display_point(
+            &text::Point::new(row, 0),
+            &self.display_snapshot(cx),
+        )
+        .row();
+        let rows_down = (f64::from(display_row.0) + 0.5 - map.scroll_position.y) as f32;
+        Some(gpui::point(
+            map.gutter_hitbox.bounds.origin.x
+                + (areas.icons + IntellijGutterAreas::BEFORE_NUMBERS) / 2.,
             map.text_hitbox.bounds.origin.y + map.line_height * rows_down,
         ))
     }

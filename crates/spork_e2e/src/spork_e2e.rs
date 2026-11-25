@@ -30,6 +30,7 @@
 //! top left); `{"do": "click", "label": "main.rs", "role": "AXRow", "nth": 0, "button":
 //! "right"}` (or "back", "forward": a mouse's buttons 4 and 5) clicks the center of the first element whose label or title is that text, and
 //! `{"do": "click", "at": [x, y]}` that point of the project window, `{"do": "click",
+//! "line_number": 31}` that line's number in the active editor's gutter, `{"do": "click",
 //! "console_text": "src/main.rs:4"}` that text in the Run tool window's console; without a label, the `nth`
 //! element of the role; `"value": "Ask"` in place of the label finds a combo box by the choice
 //! it shows; `"in": "Project Panel"` looks only under the element of that label; `"hover": true`
@@ -357,15 +358,29 @@ fn run(command: &Value, cx: &mut App) -> Value {
         "click" => {
             draw_windows(cx);
             // "console_text": the text where the Run tool window's console shows it
-            let found = match command["console_text"].as_str() {
-                Some(text) => workspace
+            // "line_number": that line's number in the active editor's gutter
+            let line_number = command["line_number"]
+                .as_u64()
+                .and_then(|line| u32::try_from(line).ok());
+            let found = match (command["console_text"].as_str(), line_number) {
+                (_, Some(line)) => workspace
+                    .as_ref()
+                    .and_then(|workspace| workspace.read(cx).active_item_as::<editor::Editor>(cx))
+                    .and_then(|editor| {
+                        editor.update(cx, |editor, cx| {
+                            editor.line_number_point(line.saturating_sub(1), cx)
+                        })
+                    })
+                    .map(|at| (None, (f32::from(at.x), f32::from(at.y))))
+                    .ok_or_else(|| format!("the editor shows no line {line}")),
+                (Some(text), None) => workspace
                     .as_ref()
                     .and_then(|workspace| {
                         spork_run::run_panel::e2e_console_point(workspace.read(cx), text, cx)
                     })
                     .map(|at| (None, at))
                     .ok_or_else(|| format!("the console doesn't show {text}")),
-                None => accessibility::locate(command),
+                (None, None) => accessibility::locate(command),
             };
             let (size, at) = match found {
                 Ok(found) => found,
@@ -691,10 +706,11 @@ fn state(window: AnyWindowHandle, workspace: Option<&Entity<Workspace>>, cx: &mu
         .visible_worktrees(cx)
         .map(|worktree| worktree.read(cx).abs_path().to_string_lossy().into_owned())
         .collect();
-    // a file by its path in its root, anything else by its tab's text
+    // a file by its path in its root, anything else (a file that is its own root, as a library's
+    // source) by its tab's text
     let name = |item: &dyn ItemHandle| match item.project_path(cx) {
-        Some(path) => path.path.as_unix_str().to_owned(),
-        None => item.tab_content_text(0, cx).to_string(),
+        Some(path) if !path.path.is_empty() => path.path.as_unix_str().to_owned(),
+        _ => item.tab_content_text(0, cx).to_string(),
     };
     let items: Vec<String> = workspace
         .items(cx)
@@ -793,8 +809,33 @@ fn editor_state(workspace: &Workspace, cx: &App) -> Value {
         let name = buffer.file()?.file_name(cx).to_owned();
         Some((name, buffer.read_only()))
     });
+    // the caret as the status bar writes it: line:column
+    let caret = {
+        let snapshot = editor.buffer().read(cx).snapshot(cx);
+        let head = editor::ToPoint::to_point(&editor.selections.newest_anchor().head(), &snapshot);
+        format!("{}:{}", head.row + 1, head.column + 1)
+    };
+    // the lines showing the debugger's values, as shown: `44: code  name: "Ada"`
+    let inline_values: Vec<String> = editor
+        .buffer()
+        .read(cx)
+        .as_singleton()
+        .map(|buffer| {
+            let text = buffer.read(cx).text();
+            editor
+                .inline_value_lines()
+                .iter()
+                .map(|(row, values)| {
+                    let code = text.lines().nth(*row as usize).unwrap_or_default();
+                    format!("{}: {}{values}", row + 1, code.trim())
+                })
+                .collect()
+        })
+        .unwrap_or_default();
     json!({
         "language": language,
+        "caret": caret,
+        "inline_values": inline_values,
         "diagnostics": diagnostics,
         "completions": completions,
         "file": file.as_ref().map(|(name, _)| name),

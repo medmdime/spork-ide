@@ -12,7 +12,7 @@ and Appearance & Behavior › Accessibility, a page of its own in 2026.3.
   isn't claimed.
 - **c**: nothing is backed: the page is left out.
 
-Counts: **1 a**, **38 b**, **167 c**. Version Control's pages are Spork's (the reference app's
+Counts: **1 a**, **42 b**, **163 c**. Version Control's pages are Spork's (the reference app's
 entry decides, Decision 9). Options Zed has that IntelliJ's pages don't (the minimap, hiding the mouse while typing,
 restoring unsaved files) aren't on IntelliJ's pages: they stay in `settings.json`.
 
@@ -93,8 +93,11 @@ restoring unsaved files) aren't on IntelliJ's pages: they stay in `settings.json
 | Build, Execution, Deployment › Build Tools and the 9 pages under it | c | phase 10's Maven and Gradle import has no settings yet |
 | Build, Execution, Deployment › Compiler and the 7 pages under it | c | JDT LS builds; no compiler settings |
 | Build, Execution, Deployment › Coverage | c | no coverage |
-| Build, Execution, Deployment › Debugger | c | none of its options has a Zed or Spork setting behind it (in the tree to reach Data Views) |
-| Build, Execution, Deployment › Debugger › Async Stack Traces · Build, Execution, Deployment › Debugger › Data Views › Java · Build, Execution, Deployment › Debugger › Data Views › Java Type Renderers · … (5 pages) | c | Java's debugger (Eclipse's java-debug) and Zed's take none of these options |
+| Build, Execution, Deployment › Debugger | b | Click line number to perform run to cursor (`/spork/debugger/…`, `spork_settings::debugger`). Left out: the debug window's showing, focusing and hiding, scrolling the execution point to the centre, how breakpoints are removed and confirmed, Java's transport, source switcher, kill and memory agent, Kotlin's coroutine agent |
+| Build, Execution, Deployment › Debugger › Data Views › Java | b | Fully qualified names, Static fields, Show hex value for primitives, Enable alternative view for Collections classes, Enable 'toString()' object view (java-debug's settings). Left out: autoscroll, the data flow predictions, Declared type, Object id, synthetic, `$val` and static final fields, type for strings, hiding null elements, Throwable's stack trace, toString()'s class list |
+| Build, Execution, Deployment › Debugger › HotSwap | b | Build project before reloading classes, Suggest HotSwap in the editor when code is modified (the "Code changed:" toolbar), Reload classes after compilation: Always, Never, Ask. Left out: the 'JVM will hang' warning, Groovy's hot-swap agent |
+| Build, Execution, Deployment › Debugger › Stepping | b | Skip synthetic methods, Skip constructors, Do not step into the classes with IntelliJ's list (each pattern on or off), Resume only the current thread (java-debug's step filters, the Java proxy). Left out: Always do smart step into, skipping class loaders and simple getters, adding and removing patterns, hiding frames by the filters, finally blocks on pop frame, Kotlin's options |
+| Build, Execution, Deployment › Debugger › Async Stack Traces · Build, Execution, Deployment › Debugger › Data Views › Java Type Renderers | c | Java's debugger (Eclipse's java-debug) and Zed's take none of these options |
 | Build, Execution, Deployment › Debugger › Data Views | b | Show values inline (`inlay_hints.show_value_hints`). Left out: sorting, auto expressions, value tooltips |
 | Build, Execution, Deployment › Java Profiler | c | no profiler |
 | Build, Execution, Deployment › Kubernetes | c | a promotion page |

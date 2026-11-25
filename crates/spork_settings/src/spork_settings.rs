@@ -8,6 +8,7 @@
 //! window. Which of IntelliJ's pages and options it has, and why the others are left out:
 //! `docs/spork-settings-pages.md`.
 
+pub mod debugger;
 mod export_import;
 mod file_types;
 mod keymap;
@@ -242,10 +243,14 @@ const TREE: &[Node] = &[
                  kotlin to javascript generate source maps embed source code into source map \
                  copy library runtime files destination directory module kind",
             )]),
-        Node::new("Debugger", Content::Group("")).children(&[Node::new(
-            "Data Views",
-            Content::Options(pages::DATA_VIEWS),
-        )]),
+        Node::new("Debugger", Content::Options(pages::DEBUGGER)).children(&[
+            Node::new("Data Views", Content::Options(pages::DATA_VIEWS)).children(&[Node::new(
+                "Java",
+                Content::Options(pages::DATA_VIEWS_JAVA),
+            )]),
+            Node::new("HotSwap", Content::Options(pages::HOTSWAP)),
+            Node::new("Stepping", Content::Options(pages::STEPPING)),
+        ]),
         Node::new("Docker", Content::Docker).words(
             "docker connection connect to docker daemon with docker for mac colima unix socket \
              tcp socket engine api url connection successful",
@@ -303,7 +308,46 @@ pub fn spring_boot_creates_run_configurations(cx: &App) -> bool {
         .is_none_or(|value| value != "false")
 }
 
+/// An option of [`debugger::DebuggerSettings`], by its field: read from and written to the
+/// debugger's options.
+macro_rules! debugger_option {
+    ($path:literal, $field:ident) => {
+        Owned {
+            path: $path,
+            get: |cx| serde_json::json!(debugger::settings(cx).$field),
+            set: |value, cx| {
+                let mut options = debugger::settings(cx);
+                options.$field = serde_json::from_value(value.clone())?;
+                debugger::set_settings(options, cx)
+            },
+        }
+    };
+}
+
 pub(crate) const OWNED: &[Owned] = &[
+    debugger_option!(
+        "/spork/debugger/click_line_number_runs_to_cursor",
+        click_line_number_runs_to_cursor
+    ),
+    debugger_option!("/spork/debugger/show_static_fields", show_static_fields),
+    debugger_option!("/spork/debugger/show_qualified_names", show_qualified_names),
+    debugger_option!("/spork/debugger/show_hex", show_hex),
+    debugger_option!("/spork/debugger/collection_views", collection_views),
+    debugger_option!("/spork/debugger/to_string_view", to_string_view),
+    debugger_option!("/spork/debugger/build_before_reload", build_before_reload),
+    debugger_option!("/spork/debugger/suggest_hotswap", suggest_hotswap),
+    debugger_option!(
+        "/spork/debugger/reload_after_compilation",
+        reload_after_compilation
+    ),
+    debugger_option!("/spork/debugger/skip_synthetic", skip_synthetic),
+    debugger_option!("/spork/debugger/skip_constructors", skip_constructors),
+    debugger_option!("/spork/debugger/step_filters_enabled", step_filters_enabled),
+    debugger_option!("/spork/debugger/step_filters", step_filters),
+    debugger_option!(
+        "/spork/debugger/resume_only_current_thread",
+        resume_only_current_thread
+    ),
     Owned {
         path: LOCAL_HISTORY_DAYS,
         get: |cx| serde_json::json!(spork_local_history::days_to_keep(cx)),
@@ -357,6 +401,7 @@ gpui::actions!(
 );
 
 pub fn init(cx: &mut App) {
+    debugger::init(cx);
     follow_ui_options(cx);
     plugins::apply_themes_of_installed_plugins(cx);
     cx.observe_new(|workspace: &mut Workspace, _, _| {

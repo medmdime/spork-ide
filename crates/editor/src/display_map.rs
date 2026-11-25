@@ -164,6 +164,10 @@ pub enum HighlightKey {
     BufferSearchHighlights,
     ConsoleAnsiHighlight(usize),
     DebugStackFrameLine,
+    /// Spork IDE: the debugger's inline values, by their look (plain, execution line, changed).
+    DebuggerInlineValue(usize),
+    /// Spork IDE: Smart Step Into's calls in place, the targets and the chosen one.
+    DebuggerSmartStepInto(usize),
     DocumentHighlightRead,
     DocumentHighlightWrite,
     EditPredictionHighlight,

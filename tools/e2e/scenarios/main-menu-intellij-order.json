@@ -469,6 +469,7 @@
     "Debugging Actions"
    ],
    "items": [
+    "Update Running Application… (disabled)",
     "Step Over (disabled)",
     "Force Step Over (disabled)",
     "Step Into (disabled)",
@@ -492,6 +493,9 @@
    ],
    "items": [
     "Line Breakpoint",
+    "Method Breakpoint",
+    "Field Watchpoint",
+    "Temporary Line Breakpoint",
     "Toggle Breakpoint Enabled"
    ]
   },

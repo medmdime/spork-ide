@@ -3,7 +3,8 @@
 //! as IntelliJ's debugger where the protocol leaves it free:
 //! - Suspend: All, IntelliJ's default: when a thread stops, the others are paused too; Resume
 //!   Program resumes them all, Pause Program pauses the whole VM, and a step runs the other threads
-//!   while it steps ("Resume only the current thread" ☐).
+//!   while it steps ("Resume only the current thread" ☐). A Suspend: Thread breakpoint (the
+//!   `thread` breakpoint mode the proxy offers) stops its thread alone, as java-debug does.
 //! - A logging breakpoint keeps its condition (java-debug drops it) and says IntelliJ's "Breakpoint
 //!   reached at …": the proxy evaluates the log message where the breakpoint stops, prints it and
 //!   resumes; a condition that fails asks IntelliJ's question at each stop.
@@ -11,24 +12,26 @@
 //!   (com.example)`, `{ArrayList@23}  size = 3`.
 //! - java-debug's own events reach the app: a breakpoint condition's error, hot code replace.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::net::Ipv4Addr;
 use std::path::Path;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 use anyhow::{Context as _, Result, anyhow};
 use futures::channel::{mpsc, oneshot};
 use futures::{AsyncBufReadExt as _, AsyncReadExt as _, AsyncWriteExt as _, StreamExt as _};
 use gpui::{
-    AnyWindowHandle, App, AppContext as _, AsyncApp, Entity, Global, InteractiveElement as _,
-    SharedString, Task, TaskExt as _, WeakEntity,
+    AnyWindowHandle, App, AppContext as _, AsyncApp, Context, Entity, Global,
+    InteractiveElement as _, SharedString, Task, TaskExt as _, WeakEntity,
 };
 use lsp::LanguageServer;
 use project::Project;
 use project::debugger::session::{Session, SessionEvent, ThreadId};
 use serde_json::{Value, json};
 use smol::net::{TcpListener, TcpStream};
+use spork_settings::debugger::{DebuggerSettings, Reload};
 use util::ResultExt as _;
 use workspace::Workspace;
 use workspace::notifications::{NotificationId, simple_message_notification::MessageNotification};
@@ -67,7 +70,9 @@ pub(crate) struct ProxyHandle {
     requests: mpsc::UnboundedSender<AppRequest>,
     /// Reload Changed Classes builds the project, then reloads: the build's "classes changed"
     /// isn't a question for the user then.
-    reloading: Arc<std::sync::atomic::AtomicBool>,
+    pub(crate) reloading: Arc<AtomicBool>,
+    /// Stepping's "Resume only the current thread": a step leaves the other threads suspended.
+    resume_only_current: Arc<AtomicBool>,
 }
 
 impl ProxyHandle {
@@ -100,14 +105,21 @@ pub(crate) async fn start(
     let port = listener.local_addr()?.port();
     let (requests, app) = mpsc::unbounded();
     let (notices, noticed) = mpsc::unbounded();
-    let run = async move {
-        if let Err(error) = serve(listener, adapter_port, app, notices).await {
-            log::error!("Java debugger proxy: {error:#}");
+    let resume_only_current = Arc::<AtomicBool>::default();
+    let run = {
+        let resume_only_current = resume_only_current.clone();
+        async move {
+            if let Err(error) =
+                serve(listener, adapter_port, app, notices, resume_only_current).await
+            {
+                log::error!("Java debugger proxy: {error:#}");
+            }
         }
     };
     let handle = ProxyHandle {
         requests,
         reloading: Arc::default(),
+        resume_only_current,
     };
     Ok((port, handle, noticed, run))
 }
@@ -124,6 +136,7 @@ async fn serve(
     adapter_port: u16,
     app: mpsc::UnboundedReceiver<AppRequest>,
     notices: mpsc::UnboundedSender<Notice>,
+    resume_only_current: Arc<AtomicBool>,
 ) -> Result<()> {
     let (client, _) = listener.accept().await?;
     drop(listener);
@@ -162,9 +175,11 @@ async fn serve(
         pending: HashMap::new(),
         suspended_all: false,
         log_points: HashMap::new(),
+        thread_points: HashSet::new(),
         condition_error: None,
         failed_conditions: HashMap::new(),
         packages: HashMap::new(),
+        resume_only_current,
     };
     while let Some(input) = inputs.next().await {
         match input {
@@ -181,6 +196,9 @@ async fn serve(
     }
     Ok(())
 }
+
+/// The breakpoint mode of a Suspend: Thread breakpoint.
+const SUSPEND_THREAD: &str = project::debugger::breakpoint_store::SUSPEND_THREAD_MODE;
 
 /// The proxy's own requests are numbered apart from Zed's (java-debug reads a `seq` as an `int`).
 const FIRST_SEQ: i64 = 1_000_000_000;
@@ -210,6 +228,8 @@ struct Proxy {
     suspended_all: bool,
     /// The logging breakpoints, by their file and line: their log message.
     log_points: HashMap<(String, u64), String>,
+    /// The Suspend: Thread breakpoints, by their file and line.
+    thread_points: HashSet<(String, u64)>,
     /// A breakpoint's condition failed: the stop java-debug sends next is that breakpoint's.
     condition_error: Option<String>,
     /// The breakpoints whose condition failed, by their file and line, with the error: java-debug
@@ -217,6 +237,7 @@ struct Proxy {
     failed_conditions: HashMap<(String, u64), String>,
     /// The package each source file declares.
     packages: HashMap<String, Option<String>>,
+    resume_only_current: Arc<AtomicBool>,
 }
 
 impl Proxy {
@@ -253,7 +274,7 @@ impl Proxy {
             // Pause Program suspends the VM
             "pause" => message["command"] = "pauseAll".into(),
             // the other threads run while one steps
-            "next" | "stepIn" | "stepOut" => {
+            "next" | "stepIn" | "stepOut" if !self.resume_only_current.load(Ordering::Relaxed) => {
                 let thread = message["arguments"]["threadId"].clone();
                 let seq = self
                     .send_adapter("continueOthers", json!({"threadId": thread}))
@@ -275,6 +296,7 @@ impl Proxy {
             .unwrap_or_default()
             .to_owned();
         self.log_points.retain(|(file, _), _| *file != path);
+        self.thread_points.retain(|(file, _)| *file != path);
         self.failed_conditions.retain(|(file, _), _| *file != path);
         let Some(breakpoints) = message["arguments"]["breakpoints"].as_array_mut() else {
             return;
@@ -283,6 +305,13 @@ impl Proxy {
             let Some(object) = breakpoint.as_object_mut() else {
                 continue;
             };
+            if let (Some(Value::String(mode)), Some(line)) = (
+                object.remove("mode"),
+                object.get("line").and_then(Value::as_u64),
+            ) && mode == SUSPEND_THREAD
+            {
+                self.thread_points.insert((path.clone(), line));
+            }
             let (Some(Value::String(log)), Some(line)) = (
                 object.remove("logMessage"),
                 object.get("line").and_then(Value::as_u64),
@@ -360,6 +389,7 @@ impl Proxy {
         let thread = body["threadId"].clone();
         if self.condition_error.is_some()
             || !self.log_points.is_empty()
+            || !self.thread_points.is_empty()
             || !self.failed_conditions.is_empty()
         {
             let seq = self
@@ -459,6 +489,12 @@ impl Proxy {
                         self.pending.insert(seq, Pending::LogMessage { thread });
                         Ok(())
                     }
+                    // Suspend: Thread, java-debug's own suspend policy
+                    _ if stopped["body"]["reason"] == "breakpoint"
+                        && self.thread_points.contains(&(path, line)) =>
+                    {
+                        self.send_client(&stopped).await
+                    }
                     _ => self.stop_all(stopped).await,
                 }
             }
@@ -494,6 +530,11 @@ impl Proxy {
         let command = response["command"].as_str().unwrap_or_default().to_owned();
         let body = &mut response["body"];
         match command.as_str() {
+            // the breakpoint modes the proxy makes of java-debug's own: Suspend: Thread
+            "initialize" => {
+                body["breakpointModes"] = json!([{"mode": SUSPEND_THREAD, "label": "Thread",
+                    "appliesTo": ["source"]}]);
+            }
             "threads" => {
                 for thread in body["threads"].as_array_mut().into_iter().flatten() {
                     if let Some(name) = thread["name"].as_str() {
@@ -597,6 +638,14 @@ pub(crate) async fn connect(
 ) -> Result<u16> {
     let (port, handle, mut notices, run) = start(adapter_port).await?;
     cx.update(|cx| {
+        if let Some(workspace) = workspace.upgrade() {
+            let project = workspace.read(cx).project().clone();
+            crate::hotswap::mark_unchanged(&project, false, cx);
+        }
+        handle.resume_only_current.store(
+            spork_settings::debugger::settings(cx).resume_only_current_thread,
+            Ordering::Relaxed,
+        );
         cx.default_global::<Proxies>()
             .0
             .insert(port, handle.clone());
@@ -612,60 +661,47 @@ pub(crate) async fn connect(
     Ok(port)
 }
 
-/// IntelliJ's classes Step Into doesn't enter (Settings › Debugger › Stepping, "Do not step into
-/// the classes"), without its own runtime's.
-const STEPPING_FILTERS: [&str; 17] = [
-    "com.sun.*",
-    "java.*",
-    "javax.*",
-    "org.omg.*",
-    "sun.*",
-    "jdk.internal.*",
-    "junit.*",
-    "org.junit.*",
-    "com.yourkit.runtime.*",
-    "com.springsource.loaded.*",
-    "org.springsource.loaded.*",
-    "javassist.*",
-    "org.apache.webbeans.*",
-    "com.ibm.ws.*",
-    "org.mockito.*",
-    "kotlin.*",
-    "kotlinx.*",
-];
-
-/// java-debug's settings (`vscode.java.updateDebugSettings`) as IntelliJ's defaults: values with
-/// their `toString()` and collections' views, no static fields, stepping filters and "Skip
-/// synthetic methods". java-debug's settings are JDT LS's, its sessions share them.
-fn settings(stepping_filters: bool) -> String {
-    let skip = match stepping_filters {
-        true => STEPPING_FILTERS.as_slice(),
-        false => &[],
-    };
+/// java-debug's settings (`vscode.java.updateDebugSettings`) from IntelliJ's Data Views › Java and
+/// Stepping options: values with their `toString()` and collections' views, the stepping filters
+/// ("Do not step into the classes") and "Skip synthetic methods" unless `stepping_filters` is off
+/// (Force Step Into). java-debug's settings are JDT LS's, its sessions share them.
+fn settings(options: &DebuggerSettings, stepping_filters: bool) -> String {
+    let filters = stepping_filters && options.step_filters_enabled;
+    let skip: Vec<&str> = options
+        .step_filters
+        .iter()
+        .filter(|(_, on)| filters && *on)
+        .map(|(filter, _)| filter.as_str())
+        .collect();
     json!({
-        "showStaticVariables": false,
-        "showQualifiedNames": false,
-        "showHex": false,
-        "showLogicalStructure": true,
-        "showToString": true,
+        "showStaticVariables": options.show_static_fields,
+        "showQualifiedNames": options.show_qualified_names,
+        "showHex": options.show_hex,
+        "showLogicalStructure": options.collection_views,
+        "showToString": options.to_string_view,
         "hotCodeReplace": "manual",
         // java-debug parses it on each update
         "logLevel": "WARNING",
         "stepFilters": {
             "skipClasses": skip,
-            "skipSynthetics": stepping_filters,
+            "skipSynthetics": stepping_filters && options.skip_synthetic,
             "skipStaticInitializers": false,
-            "skipConstructors": false,
+            "skipConstructors": stepping_filters && options.skip_constructors,
         },
     })
     .to_string()
 }
 
-pub(crate) async fn update_settings(server: &LanguageServer, stepping_filters: bool) -> Result<()> {
+pub(crate) async fn update_settings(
+    server: &LanguageServer,
+    stepping_filters: bool,
+    cx: &mut AsyncApp,
+) -> Result<()> {
+    let options = cx.update(|cx| spork_settings::debugger::settings(cx));
     execute_command(
         server,
         "vscode.java.updateDebugSettings",
-        vec![settings(stepping_filters).into()],
+        vec![settings(&options, stepping_filters).into()],
     )
     .await
     .map(drop)
@@ -686,7 +722,7 @@ pub(crate) fn force_step_into(session: &Entity<Session>, thread: ThreadId, cx: &
     };
     let session = session.clone();
     cx.spawn(async move |cx| {
-        update_settings(&server, false).await?;
+        update_settings(&server, false, cx).await?;
         let (stopped, stop) = oneshot::channel();
         let mut stopped = Some(stopped);
         let _subscription = cx.update(|cx| {
@@ -702,7 +738,7 @@ pub(crate) fn force_step_into(session: &Entity<Session>, thread: ThreadId, cx: &
             session.step_in(thread, dap::SteppingGranularity::Statement, cx)
         });
         stop.await.ok();
-        update_settings(&server, true).await
+        update_settings(&server, true, cx).await
     })
     .detach_and_log_err(cx);
 }
@@ -794,11 +830,19 @@ fn notify(
                 });
             });
         }
-        // HotSwap's "Reload classes after compilation: Ask": JDT LS built changed classes
+        // HotSwap's "Reload classes after compilation": JDT LS built changed classes
         Notice::HotCodeReplace { change, .. }
-            if change == "BUILD_COMPLETE"
-                && !proxy.reloading.load(std::sync::atomic::Ordering::Relaxed) =>
+            if change == "BUILD_COMPLETE" && !proxy.reloading.load(Ordering::Relaxed) =>
         {
+            match spork_settings::debugger::settings(cx).reload_after_compilation {
+                Reload::Never => return,
+                Reload::Always => {
+                    proxy.reloading.store(true, Ordering::Relaxed);
+                    reload_classes(workspace.downgrade(), proxy.clone(), cx).detach();
+                    return;
+                }
+                Reload::Ask => {}
+            }
             let Some(window) = window_of(&workspace, cx) else {
                 return;
             };
@@ -816,7 +860,8 @@ fn notify(
                         ],
                         move |reload, cx| {
                             if reload {
-                                reload_classes(weak, proxy, cx);
+                                proxy.reloading.store(true, Ordering::Relaxed);
+                                reload_classes(weak, proxy, cx).detach();
                             }
                         },
                         window,
@@ -894,8 +939,8 @@ pub(crate) fn class_source(
     }))
 }
 
-/// Reload Changed Classes, for a Java debug session: the project built ("Build project before
-/// reloading classes" ☑), then its classes reloaded.
+/// Reload Changed Classes, for a Java debug session; the debugger's options applied to the
+/// running sessions and JDT LS as they change.
 pub(crate) fn init(cx: &mut App) {
     cx.observe_new(|workspace: &mut Workspace, _, _| {
         workspace.register_action_renderer(|div, workspace, _, cx| {
@@ -907,35 +952,74 @@ pub(crate) fn init(cx: &mut App) {
             };
             div.on_action(cx.listener(
                 move |workspace, _: &crate::java::ReloadChangedClasses, _, cx| {
-                    let build = JavaProject::of(workspace, cx).map(|java| java.read(cx).build(cx));
-                    let (weak, proxy) = (workspace.weak_handle(), proxy.clone());
-                    proxy
-                        .reloading
-                        .store(true, std::sync::atomic::Ordering::Relaxed);
-                    cx.spawn(async move |_, cx| {
-                        let built = match build {
-                            Some(build) => build.await,
-                            None => Ok(()),
-                        };
-                        cx.update(|cx| reload_classes(weak, proxy, cx));
-                        built
-                    })
-                    .detach_and_log_err(cx);
+                    reload_changed_classes(workspace, proxy.clone(), cx)
                 },
             ))
         });
     })
     .detach();
+    cx.observe_global::<spork_settings::debugger::DebuggerSettingsGlobal>(|cx| {
+        let options = spork_settings::debugger::settings(cx);
+        if let Some(proxies) = cx.try_global::<Proxies>() {
+            for proxy in proxies.0.values() {
+                proxy
+                    .resume_only_current
+                    .store(options.resume_only_current_thread, Ordering::Relaxed);
+            }
+        }
+        let servers: Vec<_> = cx
+            .try_global::<crate::java_project::Projects>()
+            .map(|projects| {
+                projects
+                    .0
+                    .values()
+                    .filter_map(|java| java.read(cx).language_server(cx))
+                    .collect()
+            })
+            .unwrap_or_default();
+        for server in servers {
+            cx.spawn(async move |cx| update_settings(&server, true, cx).await)
+                .detach_and_log_err(cx);
+        }
+    })
+    .detach();
+}
+
+/// Reload Changed Classes: the project built ("Build project before reloading classes"), then its
+/// classes reloaded.
+pub(crate) fn reload_changed_classes(
+    workspace: &mut Workspace,
+    proxy: ProxyHandle,
+    cx: &mut Context<Workspace>,
+) {
+    let build = spork_settings::debugger::settings(cx)
+        .build_before_reload
+        .then(|| JavaProject::of(workspace, cx).map(|java| java.read(cx).build(cx)))
+        .flatten();
+    let weak = workspace.weak_handle();
+    proxy.reloading.store(true, Ordering::Relaxed);
+    cx.spawn(async move |_, cx| {
+        let built = match build {
+            Some(build) => build.await,
+            None => Ok(()),
+        };
+        cx.update(|cx| reload_classes(weak, proxy, cx)).await;
+        built
+    })
+    .detach_and_log_err(cx);
 }
 
 /// Reload Changed Classes (HotSwap): java-debug redefines the classes JDT LS built since the
-/// last reload, then IntelliJ's notification says how many, or why HotSwap failed.
-pub(crate) fn reload_classes(workspace: WeakEntity<Workspace>, proxy: ProxyHandle, cx: &mut App) {
+/// last reload, then IntelliJ's notification says how many, or why HotSwap failed; whether it
+/// reloaded without failing.
+pub(crate) fn reload_classes(
+    workspace: WeakEntity<Workspace>,
+    proxy: ProxyHandle,
+    cx: &mut App,
+) -> Task<bool> {
     cx.spawn(async move |cx| {
         let answer = proxy.request("redefineClasses", json!({})).await;
-        proxy
-            .reloading
-            .store(false, std::sync::atomic::Ordering::Relaxed);
+        proxy.reloading.store(false, Ordering::Relaxed);
         let changed = answer
             .as_ref()
             .ok()
@@ -945,6 +1029,7 @@ pub(crate) fn reload_classes(workspace: WeakEntity<Workspace>, proxy: ProxyHandl
             Ok(body) => body["errorMessage"].as_str().map(str::to_owned),
             Err(error) => Some(format!("{error:#}")),
         };
+        let failed = error.is_some();
         // `status.classes.reloaded`, `status.hotswap.uptodate`, `status.hot.swap.completed.with.errors`
         let (title, text) = match (error, changed) {
             (Some(error), _) => (Some("HotSwap failed"), error),
@@ -955,21 +1040,27 @@ pub(crate) fn reload_classes(workspace: WeakEntity<Workspace>, proxy: ProxyHandl
             (None, 1) => (None, "1 class reloaded".to_owned()),
             (None, changed) => (None, format!("{changed} classes reloaded")),
         };
-        workspace.update(cx, |workspace, cx| {
-            let id = NotificationId::unique::<HotSwap>();
-            workspace.dismiss_notification(&id, cx);
-            workspace.show_notification(id, cx, |cx| {
-                cx.new(|cx| {
-                    let notification = MessageNotification::new(text, cx);
-                    match title {
-                        Some(title) => notification.with_title(title),
-                        None => notification,
-                    }
-                })
-            });
-        })
+        workspace
+            .update(cx, |workspace, cx| {
+                // the floating toolbar's "Code has been reloaded"
+                if !failed {
+                    crate::hotswap::mark_unchanged(workspace.project(), true, cx);
+                }
+                let id = NotificationId::unique::<HotSwap>();
+                workspace.dismiss_notification(&id, cx);
+                workspace.show_notification(id, cx, |cx| {
+                    cx.new(|cx| {
+                        let notification = MessageNotification::new(text, cx);
+                        match title {
+                            Some(title) => notification.with_title(title),
+                            None => notification,
+                        }
+                    })
+                });
+            })
+            .log_err();
+        !failed
     })
-    .detach_and_log_err(cx);
 }
 
 struct HotSwap;

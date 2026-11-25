@@ -123,6 +123,9 @@ pub(crate) enum Kind {
     /// A combo box of one choice, the one Spork IDE has of IntelliJ's; greyed while the check box
     /// it belongs to is off. It writes nothing.
     Fixed(&'static str),
+    /// IntelliJ's list of class patterns, each with a check box (Stepping's "Do not step into the
+    /// classes"): `[["java.*", true], …]`; greyed while the check box before it is off.
+    Patterns,
 }
 
 const fn opt(label: &'static str, path: &'static str, kind: Kind) -> Row {
@@ -591,6 +594,71 @@ pub(crate) const OTHER_FILE_TYPES: &[Row] = &[
 pub(crate) const DATA_VIEWS: &[Row] = &[
     Row::Title("Editor"),
     check("Show values inline", "/inlay_hints/show_value_hints"),
+];
+
+/// Build, Execution, Deployment › Debugger (`XDebuggerSettings`' general page): what Spork IDE's
+/// debugger honours of it.
+pub(crate) const DEBUGGER: &[Row] = &[check(
+    "Click line number to perform run to cursor",
+    "/spork/debugger/click_line_number_runs_to_cursor",
+)];
+
+/// Debugger › Data Views › Java (`DebuggerDataViewsConfigurable`): java-debug's own views.
+pub(crate) const DATA_VIEWS_JAVA: &[Row] = &[
+    Row::Title("Show"),
+    check(
+        "Fully qualified names",
+        "/spork/debugger/show_qualified_names",
+    ),
+    check("Static fields", "/spork/debugger/show_static_fields"),
+    Row::End,
+    check("Show hex value for primitives", "/spork/debugger/show_hex"),
+    check(
+        "Enable alternative view for Collections classes",
+        "/spork/debugger/collection_views",
+    ),
+    check(
+        "Enable 'toString()' object view",
+        "/spork/debugger/to_string_view",
+    ),
+];
+
+/// Debugger › HotSwap (`JavaHotSwapConfigurableUi`).
+pub(crate) const HOTSWAP: &[Row] = &[
+    Row::Title("Java"),
+    check(
+        "Build project before reloading classes",
+        "/spork/debugger/build_before_reload",
+    ),
+    check(
+        "Suggest HotSwap in the editor when code is modified",
+        "/spork/debugger/suggest_hotswap",
+    ),
+    opt(
+        "Reload classes after compilation:",
+        "/spork/debugger/reload_after_compilation",
+        Kind::Radios(&[
+            ("Always", Lit::Str("always")),
+            ("Never", Lit::Str("never")),
+            ("Ask", Lit::Str("ask")),
+        ]),
+    ),
+];
+
+/// Debugger › Stepping (`DebuggerSteppingConfigurable`): java-debug's step filters.
+pub(crate) const STEPPING: &[Row] = &[
+    Row::Title("Java"),
+    check("Skip synthetic methods", "/spork/debugger/skip_synthetic"),
+    check("Skip constructors", "/spork/debugger/skip_constructors"),
+    check(
+        "Do not step into the classes",
+        "/spork/debugger/step_filters_enabled",
+    ),
+    indented(opt("", "/spork/debugger/step_filters", Kind::Patterns)),
+    check(
+        "Resume only the current thread",
+        "/spork/debugger/resume_only_current_thread",
+    ),
 ];
 
 pub(crate) const MARKDOWN: &[Row] = &[
@@ -1551,6 +1619,7 @@ impl SettingsDialog {
                 )
             }
             Kind::Intentions => self.intentions(path, cx),
+            Kind::Patterns => self.patterns(path, enabled, cx),
             Kind::Env => {
                 let shown = self
                     .draft
@@ -1906,6 +1975,60 @@ impl SettingsDialog {
 
     /// The intentions turned off, as saved and as edited: unchecking one turns it off, checking
     /// it turns it back on.
+    /// The class patterns' list, each pattern's check box turning it on or off.
+    fn patterns(&self, path: &'static str, enabled: bool, cx: &mut Context<Self>) -> AnyElement {
+        let patterns: Vec<(String, bool)> = self
+            .draft
+            .get(path)
+            .and_then(|value| serde_json::from_value(value.clone()).ok())
+            .unwrap_or_default();
+        let tokens = Tokens::get(cx);
+        v_flex()
+            .id(SharedString::from(path))
+            .role(Role::List)
+            .aria_label("Do not step into the classes")
+            .w_full()
+            .max_h(px(180.))
+            .overflow_y_scroll()
+            .p(px(6.))
+            .gap(px(4.))
+            .border_1()
+            .border_color(tokens.separator)
+            .children(patterns.iter().enumerate().map(|(ix, (pattern, on))| {
+                let label = SharedString::from(pattern.clone());
+                let row = h_flex()
+                    .id(SharedString::from(format!("pattern-{pattern}")))
+                    .role(Role::CheckBox)
+                    .aria_label(label.clone())
+                    .aria_toggled((*on).into())
+                    .gap(px(4.))
+                    .child(spork_workbench::controls::check_box(
+                        SharedString::from(format!("pattern-box-{pattern}")),
+                        Some(*on),
+                        cx,
+                    ))
+                    .child(label);
+                match enabled {
+                    false => row.text_color(tokens.text_disabled),
+                    true => row
+                        .cursor_pointer()
+                        .on_click(cx.listener(move |this, _, _, cx| {
+                            let mut patterns: Vec<(String, bool)> = this
+                                .draft
+                                .get(path)
+                                .and_then(|value| serde_json::from_value(value.clone()).ok())
+                                .unwrap_or_default();
+                            if let Some((_, on)) = patterns.get_mut(ix) {
+                                *on = !*on;
+                            }
+                            this.draft.set(path, Some(json!(patterns)));
+                            cx.notify();
+                        })),
+                }
+            }))
+            .into_any_element()
+    }
+
     fn intentions(&self, path: &'static str, cx: &mut Context<Self>) -> AnyElement {
         let titles = |json: Option<&Value>| -> Vec<String> {
             json.and_then(Value::as_array)
@@ -2424,6 +2547,7 @@ pub(crate) fn samples(rows: &'static [Row]) -> Vec<(&'static str, Value)> {
             Kind::Wrapped { key, .. } => json!({ key: "zsh" }),
             Kind::Env => json!({ "A": "1" }),
             Kind::Intentions => json!(["Rewrite as raw string"]),
+            Kind::Patterns => json!([["java.*", true]]),
             Kind::CloseButton => {
                 samples.push(("/tabs/show_close_button", json!("hidden")));
                 json!("left")

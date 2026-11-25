@@ -110,6 +110,7 @@
     "Debugging Actions"
    ],
    "items": [
+    "Update Running Application… (disabled)",
     "Step Over",
     "Force Step Over",
     "Step Into",

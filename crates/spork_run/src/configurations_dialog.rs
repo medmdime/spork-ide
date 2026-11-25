@@ -102,6 +102,7 @@ pub(crate) fn types(cx: &mut App) -> Vec<Option<SharedString>> {
     {
         adapters.push(configurations::REMOTE_JVM_DEBUG.into());
         adapters.push(configurations::JUNIT.into());
+        adapters.push(configurations::TESTNG.into());
     }
     adapters.sort_by_key(|adapter| configurations::type_name(Some(adapter)));
     std::iter::once(None)
@@ -242,9 +243,12 @@ impl ConfigurationsDialog {
         };
         let mut fields = match configuration.adapter.as_deref() {
             Some(configurations::REMOTE_JVM_DEBUG) => vec![Field::Name, Field::Host, Field::Port],
-            Some(configurations::JUNIT) => vec![
+            adapter if configurations::is_test(adapter) => vec![
                 Field::Name,
                 Field::Command,
+                Field::TestMethod,
+                Field::TestPackage,
+                Field::TestPattern,
                 Field::WorkingDirectory,
                 Field::Environment,
                 Field::VmOptions,
@@ -594,7 +598,7 @@ fn load_templates() -> HashMap<String, Configuration> {
                 key,
                 Configuration {
                     adapter,
-                    shared: true,
+                    shared: false,
                     entry,
                 },
             ))
@@ -645,7 +649,7 @@ fn label(configuration: &Configuration, field: Field) -> &'static str {
         {
             "Main class:"
         }
-        (Field::Command, Some(configurations::JUNIT)) => "Class:",
+        (Field::Command, adapter) if configurations::is_test(adapter) => "Class:",
         (Field::Command, Some(_)) => "Executable:",
         (Field::Arguments, None) => "Script options:",
         (Field::Arguments, Some(_)) => "Program arguments:",
@@ -657,6 +661,9 @@ fn label(configuration: &Configuration, field: Field) -> &'static str {
         (Field::Host, _) => "Host:",
         (Field::Port, _) => "Port:",
         (Field::ActiveProfiles, _) => "Active profiles:",
+        (Field::TestMethod, _) => "Method:",
+        (Field::TestPackage, _) => "Package:",
+        (Field::TestPattern, _) => "Pattern:",
     }
 }
 
@@ -779,7 +786,11 @@ impl ConfigurationsDialog {
                         row(format!("configuration-{ix}").into(), depth, selected, cx)
                             .aria_label(configuration.name())
                             .child(div().w(px(16.)))
-                            .child(spork_workbench::image(configuration.icon(), cx).size(px(16.)))
+                            .child(
+                                spork_workbench::image(configuration.icon(), cx)
+                                    .size(px(16.))
+                                    .when(configuration.is_temporary(), |icon| icon.opacity(0.5)),
+                            )
                             .child(div().truncate().child(configuration.name()))
                             .on_click(cx.listener(move |this, _, window, cx| {
                                 this.select(Some(selection.clone()), window, cx)
@@ -904,6 +915,10 @@ impl ConfigurationsDialog {
                 )
                 .into_any_element();
         };
+        let label_width = match configuration.adapter.as_deref() {
+            Some(configurations::KOTLIN) => configurations::KOTLIN_LABEL_WIDTH,
+            _ => 160.,
+        };
         let field = |field: Field| -> AnyElement {
             let Some((_, input)) = self.fields.iter().find(|(f, _)| *f == field) else {
                 return div().into_any_element();
@@ -913,7 +928,7 @@ impl ConfigurationsDialog {
                 .gap(px(8.))
                 .child(
                     div()
-                        .w(px(160.))
+                        .w(px(label_width))
                         .flex_none()
                         .child(spork_workbench::controls::form_label(text)),
                 )
@@ -927,6 +942,8 @@ impl ConfigurationsDialog {
         };
         let shared = configuration.shared;
         let multiple = configuration.text(Field::AllowMultiple) == "true";
+        let controls_last =
+            configurations::runner(&configuration, cx).is_some_and(|runner| runner.controls_last());
         let header = match self.templates_mode {
             true => None,
             false => Some(
@@ -978,7 +995,9 @@ impl ConfigurationsDialog {
             })
             // the type's own Modify options, over its fields (a runner's hook)
             .children(self.modify_options(&configuration, cx))
-            .children(self.runner_controls(&configuration, cx));
+            .when(!controls_last, |form| {
+                form.children(self.runner_controls(&configuration, cx))
+            });
         let form = match configuration.adapter.as_deref() {
             Some(configurations::REMOTE_JVM_DEBUG) => form
                 .child(remote_jvm_debug_form(&configuration, &field, cx))
@@ -1001,12 +1020,30 @@ impl ConfigurationsDialog {
             // IntelliJ's Application: VM options, the main class, then the program's arguments
             .when(
                 (configurations::is_java(configuration.adapter.as_deref())
-                    || configuration.adapter.as_deref() == Some(configurations::JUNIT))
+                    || configurations::is_test(configuration.adapter.as_deref()))
                     && configurations::runner(configuration, cx)
                         .is_none_or(|runner| runner.shows(configuration, Field::VmOptions)),
                 |form| form.child(field(Field::VmOptions)),
             )
-            .child(field(Field::Command))
+            // IntelliJ's test kind, then the fields it takes
+            .when(
+                configurations::is_test(configuration.adapter.as_deref()),
+                |form| {
+                    let kind = configurations::test_kind(configuration);
+                    let fields: &[Field] = match kind {
+                        "method" => &[Field::Command, Field::TestMethod],
+                        "package" => &[Field::TestPackage],
+                        "pattern" => &[Field::TestPattern],
+                        _ => &[Field::Command],
+                    };
+                    form.child(self.test_kind(configuration, cx))
+                        .children(fields.iter().map(|f| field(*f)))
+                },
+            )
+            .when(
+                !configurations::is_test(configuration.adapter.as_deref()),
+                |form| form.child(field(Field::Command)),
+            )
             // IntelliJ's Kotlin form: the main class, then the Java parameters, VM options first
             .when(
                 configuration.adapter.as_deref() == Some(configurations::KOTLIN),
@@ -1023,9 +1060,17 @@ impl ConfigurationsDialog {
             .child(field(Field::Environment))
             .child(
                 div()
-                    .pl(px(168.))
+                    .pl(px(match configuration.adapter.as_deref() {
+                        Some(configurations::KOTLIN) => configurations::KOTLIN_LABEL_WIDTH + 8.,
+                        _ => 168.,
+                    }))
                     .text_color(tokens.text_secondary)
                     .child("Separate variables with semicolon: VAR=value; VAR1=value1"),
+            )
+            .when(
+                configurations::runner(configuration, cx)
+                    .is_some_and(|runner| runner.controls_last()),
+                |form| form.children(self.runner_controls(configuration, cx)),
             )
             .when(
                 configuration
@@ -1171,6 +1216,49 @@ impl ConfigurationsDialog {
             .log_err();
         });
         runner.controls(configuration, edit, cx)
+    }
+
+    /// A test configuration's Test kind (IntelliJ's `TestKind` combo box).
+    fn test_kind(&self, configuration: &Configuration, cx: &mut Context<Self>) -> AnyElement {
+        let kinds = configurations::test_kinds(configuration.adapter.as_deref());
+        let kind = configurations::test_kind(configuration);
+        let text = kinds
+            .iter()
+            .find(|(key, _)| *key == kind)
+            .map_or("Class", |(_, text)| *text);
+        let this = cx.entity().downgrade();
+        let combo = spork_workbench::controls::dropdown(
+            spork_workbench::controls::ComboBox::new("test-kind", text)
+                .aria_label("Test kind:")
+                .w_full(),
+            false,
+            move |menu, _, _| {
+                kinds.iter().fold(menu, |menu, (key, text)| {
+                    let this = this.clone();
+                    menu.item(PopupMenuItem::new(*text).on_click(move |_, _, cx| {
+                        this.update(cx, |this, cx| {
+                            if let Some(configuration) = this.edited_mut() {
+                                configuration
+                                    .entry
+                                    .insert(configurations::TEST_KIND.into(), (*key).into());
+                            }
+                            cx.notify();
+                        })
+                        .log_err();
+                    }))
+                })
+            },
+        );
+        h_flex()
+            .gap(px(8.))
+            .child(
+                div()
+                    .w(px(160.))
+                    .flex_none()
+                    .child(spork_workbench::controls::form_label("Test kind:")),
+            )
+            .child(div().flex_1().min_w_0().child(combo))
+            .into_any_element()
     }
 
     /// IntelliJ's "Build and run" title with the Modify options link (⌥M) and its popup of the

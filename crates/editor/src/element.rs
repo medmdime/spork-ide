@@ -2627,6 +2627,53 @@ impl EditorElement {
         (offset_y, length, row_range)
     }
 
+    /// Spork IDE: the app's line markers ([`crate::LineMarkers`]) of a single buffer's rows.
+    fn layout_line_markers(
+        &self,
+        gutter: &Gutter<'_>,
+        snapshot: &EditorSnapshot,
+        rows: Range<DisplayRow>,
+        taken: &HashSet<DisplayRow>,
+        window: &mut Window,
+        cx: &mut App,
+    ) -> Vec<AnyElement> {
+        let Some(markers) = cx.try_global::<crate::LineMarkers>().cloned() else {
+            return Vec::new();
+        };
+        if self.split_side == Some(SplitSide::Left) {
+            return Vec::new();
+        }
+        let Some(buffer) = self.editor.read(cx).buffer().read(cx).as_singleton() else {
+            return Vec::new();
+        };
+        let marked = (markers.0)(&buffer, window, cx);
+        self.editor.update(cx, |_, cx| {
+            marked
+                .into_iter()
+                .filter_map(|(row, element)| {
+                    let row = Point::new(row, 0)
+                        .to_display_point(&snapshot.display_snapshot)
+                        .row();
+                    if !rows.contains(&row) || taken.contains(&row) {
+                        return None;
+                    }
+                    let element = std::cell::RefCell::new(Some(element));
+                    gutter.layout_item_skipping_folds(
+                        row,
+                        |_, _| {
+                            element
+                                .borrow_mut()
+                                .take()
+                                .unwrap_or_else(|| gpui::Empty.into_any_element())
+                        },
+                        window,
+                        cx,
+                    )
+                })
+                .collect_vec()
+        })
+    }
+
     fn layout_bookmarks(
         &self,
         gutter: &Gutter<'_>,
@@ -2787,27 +2834,26 @@ impl EditorElement {
             run_indicators
                 .iter()
                 .filter_map(|display_row| {
-                    let task_status = gutter
+                    let runnable = gutter
                         .row_infos
                         .get((display_row.0.saturating_sub(gutter.range.start.0)) as usize)
-                        .and_then(|row_info| Some((row_info.buffer_id?, row_info.buffer_row?)))
-                        .and_then(|(buffer_id, buffer_row)| {
-                            editor.runnable_task_status(buffer_id, buffer_row)
-                        });
+                        .and_then(|row_info| Some((row_info.buffer_id?, row_info.buffer_row?)));
+                    let task_status = runnable.and_then(|(buffer_id, buffer_row)| {
+                        editor.runnable_task_status(buffer_id, buffer_row)
+                    });
 
                     gutter.layout_item(
                         *display_row,
                         |cx, _| {
-                            editor
-                                .render_run_indicator(
-                                    &self.style,
-                                    Some(*display_row) == active_task_indicator_row,
-                                    breakpoints.get(&display_row).map(|(anchor, _, _)| *anchor),
-                                    task_status,
-                                    *display_row,
-                                    cx,
-                                )
-                                .into_any_element()
+                            editor.render_run_indicator(
+                                &self.style,
+                                Some(*display_row) == active_task_indicator_row,
+                                breakpoints.get(&display_row).map(|(anchor, _, _)| *anchor),
+                                task_status,
+                                *display_row,
+                                runnable,
+                                cx,
+                            )
                         },
                         window,
                         cx,
@@ -9542,7 +9588,7 @@ impl Element for EditorElement {
                         cx,
                     );
 
-                    let test_indicators = if gutter_settings.runnables {
+                    let mut test_indicators = if gutter_settings.runnables {
                         self.layout_run_indicators(
                             &gutter,
                             &run_indicator_rows,
@@ -9553,6 +9599,15 @@ impl Element for EditorElement {
                     } else {
                         Vec::new()
                     };
+                    // Spork IDE: the app's line markers, on the rows a run icon leaves free
+                    test_indicators.extend(self.layout_line_markers(
+                        &gutter,
+                        &snapshot,
+                        start_row..end_row,
+                        &run_indicator_rows,
+                        window,
+                        cx,
+                    ));
 
                     let show_bookmarks =
                         snapshot.show_bookmarks.unwrap_or(gutter_settings.bookmarks);

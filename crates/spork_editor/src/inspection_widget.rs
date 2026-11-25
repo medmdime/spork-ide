@@ -122,6 +122,21 @@ pub(crate) fn init(cx: &mut App) {
     cx.set_global(EditorCornerWidget(Rc::new(widget)));
 }
 
+/// A floating toolbar another crate shows in a file editor's top right corner, left of the
+/// inspections (IntelliJ's `FloatingToolbarProvider`s: HotSwap's "Code changed:").
+pub type FloatingToolbar =
+    Rc<dyn Fn(&mut Editor, &mut Window, &mut Context<Editor>) -> Option<AnyElement>>;
+
+#[derive(Default)]
+struct FloatingToolbars(Vec<FloatingToolbar>);
+
+impl gpui::Global for FloatingToolbars {}
+
+/// Shows `toolbar` in every file editor's top right corner while it draws something.
+pub fn add_floating_toolbar(toolbar: FloatingToolbar, cx: &mut App) {
+    cx.default_global::<FloatingToolbars>().0.push(toolbar);
+}
+
 /// Registers F2 and ⇧F2 on a file editor.
 pub(crate) fn register(editor: &mut Editor, handle: WeakEntity<Editor>) {
     editor
@@ -333,6 +348,13 @@ fn widget(
             .flex()
             .items_center()
             .gap(px(BETWEEN))
+            .children(
+                cx.try_global::<FloatingToolbars>()
+                    .map(|toolbars| toolbars.0.clone())
+                    .unwrap_or_default()
+                    .into_iter()
+                    .filter_map(|toolbar| toolbar(editor, window, cx)),
+            )
             .child(toolbar)
             // a Markdown file's layout actions, IntelliJ's beside its inspections
             .children(crate::markdown::editor_corner(editor, window, cx))

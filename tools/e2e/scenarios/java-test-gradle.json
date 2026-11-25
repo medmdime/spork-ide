@@ -1,0 +1,121 @@
+{
+ "id": "java-test-gradle",
+ "fixture": "tests-gradle",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Gradle"
+   },
+   "within": 20000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 600000
+  },
+  {
+   "do": "open",
+   "path": "src/test/java/com/example/CalculatorTest.java"
+  },
+  {
+   "find": {
+    "label": "Run test 'CalculatorTest'",
+    "role": "AXButton"
+   },
+   "within": 30000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "click",
+   "label": "Run test 'CalculatorTest'",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    "Run 'CalculatorTest'",
+    "Debug 'CalculatorTest'",
+    "Modify Run Configuration\u2026"
+   ],
+   "ordered": true,
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Run 'CalculatorTest'"
+  },
+  {
+   "expect": {
+    "run.tabs.0.running": false,
+    "run.tabs.0.text": {
+     "contains": ":cleanTest :test --tests com.example.CalculatorTest"
+    },
+    "run.tabs.0.tests.rows": [
+     "Test Results failed",
+     "  CalculatorTest failed",
+     "    adds() passed",
+     "    divides() ignored",
+     "    greetsAda() failed"
+    ],
+    "run.tabs.0.tests.status": "1 test failed, 1 passed, 1 ignored"
+   },
+   "within": 300000
+  },
+  {
+   "do": "click",
+   "label": "greetsAda()",
+   "role": "AXRow"
+  },
+  {
+   "expect": {
+    "run.tabs.0.tests.output": {
+     "contains": "Expected :Hello, Ada!\nActual   :Hello, world!\n<Click to see difference>"
+    }
+   },
+   "within": 5000
+  },
+  {
+   "find": [
+    {
+     "label": "Run test 'CalculatorTest.adds'",
+     "value": "passed"
+    },
+    {
+     "label": "Run test 'CalculatorTest.greetsAda'",
+     "value": "failed"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "gradle"
+  }
+ ]
+}

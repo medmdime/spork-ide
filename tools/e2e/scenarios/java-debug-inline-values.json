@@ -106,6 +106,15 @@
    "within": 20000
   },
   {
+   "expect": {
+    "editor.inline_values": [
+     "43: static int measure(String name) {  name: \"Ada\"",
+     "44: counter += name.length();  name: \"Ada\""
+    ]
+   },
+   "within": 10000
+  },
+  {
    "wait": 1500
   },
   {
@@ -116,6 +125,34 @@
   },
   {
    "shot": "inline-values"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-alt-r"
+  },
+  {
+   "expect": {
+    "run.debug.variables": [
+     "name = \"Grace\""
+    ],
+    "editor.inline_values": [
+     "43: static int measure(String name) {  name: \"Grace\"",
+     "44: counter += name.length();  name: \"Grace\""
+    ]
+   },
+   "within": 20000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "inline-values-changed"
   },
   {
    "do": "keys",

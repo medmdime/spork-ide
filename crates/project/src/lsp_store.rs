@@ -4611,6 +4611,15 @@ impl LspStoreMode {
     }
 }
 
+/// Spork IDE: turns a location's URI that isn't a file's (JDT LS's `jdt://contents/…` classes) into
+/// a local file the app writes, which a definition then opens; set once by the app.
+#[derive(Clone)]
+pub struct NonFileUriResolver(
+    pub Arc<dyn Fn(&lsp::Uri, &mut App) -> Option<Task<Result<PathBuf>>> + Send + Sync>,
+);
+
+impl gpui::Global for NonFileUriResolver {}
+
 pub struct LspStore {
     mode: LspStoreMode,
     last_formatting_failure: Option<String>,
@@ -10580,6 +10589,25 @@ impl LspStore {
         language_server_id: LanguageServerId,
         cx: &mut Context<Self>,
     ) -> Task<Result<Entity<Buffer>>> {
+        // Spork IDE: a location the app writes as a local file first (JDT LS's `jdt://` classes),
+        // asked once this store's update is over, as the app reads the project
+        if abs_path.scheme() != "file"
+            && let Some(resolver) = cx.try_global::<NonFileUriResolver>().cloned()
+        {
+            return cx.spawn(async move |lsp_store, cx| {
+                let resolved = cx
+                    .update(|cx| (resolver.0)(&abs_path, cx))
+                    .ok_or_else(|| anyhow!("can't convert URI to path"))?;
+                let path = resolved.await?;
+                let uri = lsp::Uri::from_file_path(&path)
+                    .map_err(|()| anyhow!("can't convert {path:?} to a URI"))?;
+                lsp_store
+                    .update(cx, |lsp_store, cx| {
+                        lsp_store.open_local_buffer_via_lsp(uri, language_server_id, cx)
+                    })?
+                    .await
+            });
+        }
         let path_style = self.worktree_store.read(cx).path_style();
         cx.spawn(async move |lsp_store, cx| {
             // Escape percent-encoded string.

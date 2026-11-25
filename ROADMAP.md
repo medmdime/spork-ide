@@ -475,14 +475,42 @@ debugged); the thread chooser, the frames' popup (Reset Frame, Copy Stack, Hide 
 variables' popup in IntelliJ's items (Set Value…, Copy Value, Copy Name, Evaluate Expression…, Add to Watches, Toggle
 Field Watchpoint, Zed's write data breakpoint, untested on Java), each item java-debug can't serve greyed; Java's
 inline values (a `debugger.scm`). Left (P0/P1 of
-the report): Suspend: Thread per breakpoint and log + suspend together (Zed's breakpoint store has no such property),
-the exit code after Stop (java-debug 0.53.1's `vm.exit(0)`), method breakpoints and IntelliJ's field watchpoints in
-the Breakpoints dialog (the store has no breakpoint kinds), the floating "Code changed:" HotSwap toolbar, inline
-values after the line's end (Zed's editor draws them after each name), thread groups and states, Smart Step Into in
-place and on lambdas, Run to Cursor on a line number, temporary and dependent breakpoints, lambda breakpoints, the
-Debugger settings pages, Debug for Maven goals and Gradle tasks, "Attach debugger" in a console, JUnit 5 and TestNG and
-IntelliJ's test tree. java-debug listens on every network interface without authentication (its `ServerSocket(0,
-1)`): only a patched java-debug can bind it to the loopback, a decision for the user.
+the report), after the second debugger wave's paragraph below: log + suspend together, the exit code after Stop
+(java-debug's `vm.exit(0)`), thread groups and states, Smart Step Into on lambdas, lambda breakpoints, Debug for Maven
+goals and Gradle tasks, "Attach debugger" in a console, JUnit 5 and TestNG and IntelliJ's test tree. java-debug
+listens on every network interface without authentication (its `ServerSocket(0, 1)`): only a patched java-debug can
+bind it to the loopback, a decision for the user.
+
+**The debugger wave 2, Java (2026-11-25).** Done (`spork_run`'s `breakpoints.rs` and `smart_step_into.rs`,
+`spork_java`'s `debugger.rs`, `breakpoints.rs` and `hotswap.rs`, `spork_settings`' `debugger.rs`; small marked
+patches in `editor`, `project`, `workspace` and `debugger_ui`, PATCHES.md), each tested on java-debug by a
+`java-debug-*` scenario: inline values for every language as IntelliJ draws them, after the line's end (`name: value`
+once per variable in the line's order, `DEBUGGER_INLINED_VALUES`' italic grey, the execution line's colour and a value
+changed since the last stop in `DEBUGGER_INLINED_VALUES_MODIFIED`'s); IntelliJ's breakpoint properties kept with the
+breakpoint (the store, and a table of Spork IDE's own in the workspace database) and edited in the popup (its light
+variant) and the Breakpoints dialog: Suspend: All or Thread (sent as the `thread` breakpoint mode, which the Java
+proxy offers and serves with java-debug's own event-thread suspension), Remove once hit (Toggle Temporary Line
+Breakpoint ⌥⇧⌘F8; the breakpoint a session stops at is removed), "Disable until hitting the following breakpoint"
+with After hit (not sent until its master is hit in the session), pass count shown in the popup when set; method
+breakpoints (Toggle Method Breakpoint: a breakpoint on the declaration line, which java-debug makes the method's
+entry; Watch: Method entry, Method exit greyed, Emulated) and field watchpoints (Toggle Field Watchpoint in the editor
+or on a field in the variables: java-debug's data breakpoint of `com.example.Debuggee#counter`; Field access, Field
+modification), their gutter icons and the dialog's Java Method Breakpoints and Java Field Watchpoints groups, Run ▸
+Toggle Breakpoint's items; Run to Cursor (⌥F9) and a click on a line number running a suspended program to it; Smart
+Step Into in place (the line's calls highlighted in `DEBUGGER_SMART_STEP_INTO_*`'s colours, ←/→/⇥ to choose, ⏎ to step,
+⎋ to leave, IntelliJ's hint), the popup where a call has no place; HotSwap's floating "Code changed:" toolbar in Java
+editors after an edit during a session (Apply HotSwap saves, builds and reloads, then "Code has been reloaded"; Hide);
+Settings › Build, Execution, Deployment › Debugger (Click line number to perform run to cursor), Data Views › Java
+(java-debug's views), HotSwap (Build project before reloading classes, Suggest HotSwap in the editor, Reload classes
+after compilation: Always, Never, Ask) and Stepping (Skip synthetic methods, Skip constructors, Do not step into the
+classes with IntelliJ's list, Resume only the current thread), applied to JDT LS and the running sessions as they
+change. Left: method exit (java-debug has none; a fork's decision), dependent and temporary method breakpoints (the
+stop is on the method's first line, not its declaration's), the Make Default suspend policy, adding and removing
+stepping filter patterns (the list only turns them on and off), the HotSwap page's radio buttons under their label (IntelliJ's sit on its row), Smart Step Into's mouse choice and lambda targets (java-debug lists none), the HotSwap
+toolbar's not-hot-swappable state ("Restart Debug"), live refresh of the variables after a Data Views change (the
+next stop shows it), the exit code after Stop: java-debug 0.53.2 (its newest, only in VS Code's extension, not on Maven
+Central) destroys the process it launched itself, but a program in Spork IDE's console is attached through the JDI
+listening connector (no `vm.process()`), so it still calls `vm.exit(0)`: not upgraded.
 
 ### Phase 9: settings
 
@@ -640,17 +668,31 @@ in the status bar; diagnostics, completion (Java's members from Kotlin too) and 
 `src/main/kotlin` and `src/test/kotlin` as source and test roots; the gutter's run icon on `main` (top level, an
 `object`'s or a companion's) run by the project's tool, IntelliJ's "Build and run using: Gradle" (a `MainKt.main()`
 `JavaExec` task an init script adds) or Maven (`compile`, then `java` on the runtime classpath through the exec
-plugin), its popup's Debug through a debug locator (not yet checked end to end); the Kotlin run configuration (Main
+plugin), its popup's Debug through a debug locator; the Kotlin run configuration (Main
 class, VM options, Program arguments, Working directory, Environment variables) in the Run/Debug Configurations
 dialog, run in the Run tool window and debugged in the Debug tool window by the server's debug adapter: breakpoints in
 top-level functions, inlined lambdas, classes and the Java classes of a mixed project, stepping, Kotlin expressions in
 watches and evaluation, frames as IntelliJ writes them (`greet:13, MainKt (com.example)`), Stop; New ▸ Kotlin
-Class/File (IntelliJ's popup, kinds, templates and name checks). Left: the form's "Use classpath of module:", "JRE:"
-and "Shorten command line:" and the Gradle module of a configuration (the root project's is used), test gutters and
-runs, Kotlin function breakpoints, property watchpoints and lambda variants, coroutine stacks as frames and the
-Coroutines view, Refactor ▸ Extract/Introduce's Kotlin items, Convert Java to Kotlin, the Kotlin Generate items,
-"Kotlin is not configured", the `build.gradle.kts` task gutter, Kotlin Bytecode, scratch files and scripts, Languages
-& Frameworks › Kotlin; a project without Kotlin files isn't analysed until one is opened.
+Class/File (IntelliJ's popup, kinds, templates and name checks). Wave 2 (2026-11-25): the form's "Use classpath of
+module:" (the build's modules as IntelliJ names them, `fixture.app.main`), "JRE:" (the Application's) and "Shorten
+command line:" (none, JAR manifest, @argfile, as IntelliJ's init script shortens Gradle's `JavaExec`; Maven's exec
+plugin's manifest jar), a configuration running in its module's Gradle project and source set (a subproject's main in
+the subproject); Debug from the gutter's run icon (its popup IntelliJ's Run 'MainKt' and Debug 'MainKt'); Kotlin
+function breakpoints (the line that declares a function, IntelliJ's method breakpoint icon, the server's function
+breakpoints, stopping as the function starts; the debugger's method breakpoints, in the Breakpoints dialog's Kotlin
+Function Breakpoints) and lambda breakpoints (IntelliJ's Set Breakpoint popup: Line, each lambda, Line and Lambda(s), the
+server's breakpoints at the lambdas' columns), both kept across restarts with the breakpoints' other properties; coroutine stacks as frames under
+IntelliJ's "Async stack trace" separators (the server's label frames, which Zed's protocol types refused); "Kotlin is
+not configured" over a Kotlin file of a build without Kotlin, with Ignore and Configure ("Configure Kotlin with
+Gradle"/"Maven", writing the build as IntelliJ's configurators do); the `build.gradle.kts` task gutter (`tasks.register`,
+`by tasks.registering`, run as `fixture [hello]`); the server started on a Kotlin Gradle script in a Kotlin project
+without Kotlin files. Left: property watchpoints (the server's debugger has no data breakpoints), the Coroutines view
+(the debugger exposes no coroutine dump), Convert Java to Kotlin and the Kotlin Generate items (the server offers neither
+a command nor a code action for them, 271.2085.0), the variants' highlight in the editor and IntelliJ
+2026.3's inline breakpoint markers (its default over the popup), Configure's version list (IntelliJ reads
+Maven Central's; 2.4.10 only) and its Single module choice, the Gradle task gutter's Debug, test gutters and runs,
+Refactor ▸ Extract/Introduce's Kotlin items, Kotlin Bytecode, scratch files and scripts, Languages & Frameworks ›
+Kotlin; a Maven or Groovy Gradle project without Kotlin files isn't analysed until one is opened.
 
 **Spring Boot, the Spring wave (2026-11-25).** IntelliJ IDEA 2026.3's Spring Boot (its paid edition's plugin) on Spring
 Tools' Spring Boot language server (EPL-1.0, the `vscode-spring-boot` 2.4.1 vsix from Open VSX, SHA-256 checked,
@@ -675,9 +717,8 @@ is not enabled." with its link adding the starter and "Restart application", "Ma
 read as IntelliJ reads it, attaching to the application's JVM and calling its endpoint MBeans over JMX;
 `application*.properties` and `application*.yml` as languages of their own (Properties on tree-sitter-properties)
 with the Spring Boot configuration file icon, completion, quick documentation, validation in IntelliJ's messages
-and go to declaration from the Spring LS. Left: Update Running Application and the On 'Update' action / On frame
-deactivation policies, New Project › Spring Boot (Initializr), the request-mapping, bean and autowiring gutters, the
-Endpoints and Beans tool windows, go to declaration into a library's class (`jdt://` sources), JMX authentication and
+and go to declaration from the Spring LS. Left (the second Spring wave below did Update Running Application, New
+Project › Spring Boot, the gutters, Endpoints and the `jdt://` declarations): the Beans tool window, JMX authentication and
 the Scheduled debugger, Show/Hide Values, the Actuator tab in the Run and Debug tool windows (it is in Services, where
 Spring Boot runs show), the YAML and Properties names IntelliJ shows for the two languages.
 
@@ -694,6 +735,70 @@ downloaded into the data folder's `jdks`, never offered as a project's JDK; a do
 unpacked; `spring-boot-actuator-states` finds the Actuator tab before clicking it (a window's first accessibility
 lookup comes back empty). Left: the JDWP socket java-debug listens on while it launches a program to debug is on
 every interface until the program connects, a few seconds (Eclipse JDI's `SocketTransportService`, in JDT LS).
+
+**Spring Boot, the second Spring wave (2026-11-25).** Done: run configurations are the workspace's as IntelliJ's
+(`workspace.xml`): one made on import, from the gutter or with Add New Configuration has "Store as project file" off
+and is kept in the IDE's files of the project (the data folder's `workspace/<folder>-<hash>`), ticking the box moves it
+into `.zed/tasks.json` or `.zed/debug.json` and unticking moves it back, for every type (`run-configurations-store`;
+the user's global `tasks.json` and `debug.json` are no longer read as configurations). Update Running Application (⌘F10,
+Run ▸ Debugging Actions) on a running configuration whose type updates it, a choice of them ("Select Process to
+Update") when several do; the Spring Boot configuration's On 'Update' action and On frame deactivation (Modify options
+▸ Spring, a combo row each) with IntelliJ's policies: Update resources and Update classes and resources build the
+project (a debug session then reloads the classes as the build's HotSwap asks), Update trigger file writes
+`.restartTriggerFile` into the module's class folders for DevTools, Hot swap classes and update trigger file if failed
+builds, reloads the classes in a debug session and writes the trigger file when it isn't debugged or HotSwap fails; the
+trigger file policies need DevTools and add `-Dspring.devtools.restart.trigger-file` (`spring-boot-update`, a run's
+class changed and restarted by DevTools). New Project ▸ Spring Boot (`initializr.rs`, a generator `spork_projects`'
+New Project lists beside Empty Project): IntelliJ's two pages on start.spring.io's metadata API (Server URL, Name,
+Location, Create Git repository, Language, Type, Group, Artifact, Package name, JDK, Java, Packaging, Configuration;
+then Spring Boot and the dependencies' tree with its search and Added dependencies), Create downloading `starter.zip`,
+unpacking it and opening it, which links and imports it and makes its Spring Boot configuration
+(`spring-boot-new-project`, on start.spring.io's answers recorded in `tools/e2e/fixtures/initializr`); IntelliJ's
+segmented button in `spork_workbench`. The Endpoints tool window (right, IntelliJ's Web icon standing in): the HTTP
+Server endpoints of the Spring LS's request mappings under the module, Show From Tests, Group by Module, the selected
+one's details, a double click going to its handler; the request mapping's gutter globe with Show all endpoints of
+module and Open in web browser; the bean icon on a `@Component` class or `@Bean` method (Navigate to the autowired
+dependencies) and the autowired icon on an injection point (Choose Autowired Candidate), from the Spring LS's index
+(`spring/index/beans`, read again on `spring/index/updated`), in the gutter's icons area through `editor`'s
+`LineMarkers` hook (`spring-boot-endpoints`, `spring-boot-beans`). Go to Declaration into a library's class (`jdt://`
+sources, JDT LS's `classFileContentsSupport` on): the definition's class written read-only from JDT LS's
+`java/classFileContents` and opened, as a debugger frame's (`project`'s `NonFileUriResolver`;
+`spring-boot-library-declaration`). A project outside git whose sources are deeper than the worktree's first scan
+starts JDT LS too. Left: IntelliJ's variant tags for the update policies (Spork's forms have no tags; the policies are
+combo rows), the Run tool window's Update button and the menu item's "Update 'X' application" text, Update resources
+copying the resources alone; the Initializr's Server URL dialog and Retry, "Requires Spring Boot version", the
+dependency links (Guide, Reference), Reformat code; Endpoints' Compact List Items, the HTTP Client and other endpoint
+types, Go to Endpoint and Search Everywhere's tab, the Examples tab; Open in HTTP Client and Navigate to related views;
+the Beans tool window; IntelliJ's own Endpoints and bean icons (theirs are the paid edition's).
+
+**The test wave (2026-11-25).** IntelliJ's test running for Java and Kotlin. Done (`spork_java`'s `testing.rs` and
+`test-runner/`, `spork_run`'s `test_runner.rs`, Kotlin's in `spork_kotlin`; hooks in `editor` and `project_panel`): the
+gutter's run icons on JUnit 4, JUnit 5 and TestNG test classes and methods in Java and Kotlin (IntelliJ's `gutter/run`
+icon, also on `main` now), their popup (Run '…' ⌃⇧R, Debug '…' ⌃⇧D, Modify Run Configuration…) and, after a run, each
+test's and class's last state (passed, failed, error); the JUnit configuration as IntelliJ's form (Test kind: All in
+package, Pattern, Class, Method, with the fields each takes) and a TestNG type; a run from the gutter, the Project tool
+window's Run/Debug 'Tests in 'com.example'' (or a test file's, or the test root's 'All Tests') and the test tree's menu
+makes a temporary configuration (kept for the project, the last five, its icon translucent, selected), which the run
+widget's Save Configuration keeps (private until "Store as project file"); tests run as IntelliJ runs them: a Gradle
+project's by Gradle (`:cleanTest :test --tests …` with an init script whose test listener reports each test), a Maven
+project's on Spork IDE's own test runner (`spork.tests.TestRunner`, JUnit 4, the JUnit Platform with its launcher of the
+engine's version from Maven Central when the project lacks it, TestNG) after JDT LS's build on its test classpath, or
+for Kotlin after Maven's `test-compile` on the exec plugin's; the events (IntelliJ's service messages) reach the Run
+tool window on a port of the loopback interface. The Run tool window's test runner: the tree (Test Results, the classes,
+their tests, state icons, durations), the status line ("1 test failed, 1 passed, 1 ignored  3 tests total, 14 ms", as
+2026.3's `TestStatusLine` writes it), the toolbar (Rerun, Rerun Failed Tests, Stop, Show Passed, Show Ignored, the
+Sorting Options popup, ⋮ with Expand/Collapse All, Previous/Next Failed Test, Export Test Results… and Test Runner
+Settings), the options kept from run to run, the root's console and a node's own output and failure with its stack
+trace's links to the project's sources and a comparison failure's "Click to see difference" (Zed's file diff of Expected
+and Actual), Jump to Source on a double click; Debug from the gutter: Java's test on java-debug, Kotlin's by Gradle's
+`--debug-jvm` (or the runner's JDWP agent on Maven) with the Kotlin server's debugger attached. Left: the test tree in
+the Debug tool window (a debugged test reports no tree), Run with Coverage and the profiler, ⌃⇧R/⌃⇧D on the caret's
+test, Recent Tests, test history and Import Tests from File, auto-test, Exclude from Suite and the Add to Suite actions,
+the export dialog (XML into the project's folder only), IntelliJ's diff window for a comparison (Zed's file diff stands
+in), Scroll To and Open Source at Exception, a multi-project Gradle build's test task (the root's runs), JUnit 5 on
+Kotlin + Maven (the exec plugin's classpath lacks the launcher), the fork mode, Category/Tags/UniqueId/All in directory
+kinds, TestNG's Suite and Group kinds, a debugged Java test in a Gradle project runs on the test runner rather than
+Gradle.
 
 ### Next (the user's plan, 2026-11-23)
 

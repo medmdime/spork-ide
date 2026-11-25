@@ -1,0 +1,134 @@
+{
+ "id": "kotlin-test-debug",
+ "fixture": "tests-kotlin-gradle",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Kotlin": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Gradle",
+    "kotlin.detected": true
+   },
+   "within": 20000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "kotlin.server.running": true
+   },
+   "within": 600000
+  },
+  {
+   "expect": {
+    "kotlin.server.busy": false
+   },
+   "within": 300000
+  },
+  {
+   "do": "open",
+   "path": "src/main/kotlin/com/example/Main.kt"
+  },
+  {
+   "expect": {
+    "active": "src/main/kotlin/com/example/Main.kt"
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "type",
+   "text": "13:9"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "do": "open",
+   "path": "src/test/kotlin/com/example/GreetingTest.kt"
+  },
+  {
+   "find": {
+    "label": "Run test 'GreetingTest.greets'",
+    "role": "AXButton"
+   },
+   "within": 30000
+  },
+  {
+   "wait": 3000
+  },
+  {
+   "do": "click",
+   "label": "Run test 'GreetingTest.greets'",
+   "role": "AXButton"
+  },
+  {
+   "find": "Debug 'GreetingTest.greets'",
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Debug 'GreetingTest.greets'"
+  },
+  {
+   "expect": {
+    "run.debug.status": "Stopped"
+   },
+   "within": 300000
+  },
+  {
+   "find": {
+    "label": "greet:13, MainKt (com.example)",
+    "selected": true
+   },
+   "within": 20000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "stopped"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-alt-r"
+  },
+  {
+   "expect": {
+    "run.tabs.0.running": false,
+    "run.tabs.0.tests.rows": [
+     "Test Results passed",
+     "  GreetingTest passed",
+     "    greets() passed"
+    ]
+   },
+   "within": 120000
+  }
+ ]
+}

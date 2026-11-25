@@ -9,12 +9,13 @@ use gpui_kit::component::input::{InputEvent, InputState};
 use gpui_kit::component::menu::PopupMenuItem;
 use gpui_kit::component::notification::Notification;
 use gpui_kit::component::{WindowExt as _, h_flex, v_flex};
+use gpui_kit::prelude::FluentBuilder as _;
 use gpui_kit::*;
 use spork_workbench::controls::dialog_title as title;
 use spork_workbench::tokens::{Tokens, Typography as _};
 
 /// Where IntelliJ-based IDEs suggest new projects go (IntelliJ IDEA's `~/IdeaProjects`).
-fn projects_folder() -> PathBuf {
+pub fn projects_folder() -> PathBuf {
     util::paths::home_dir().join("SporkIdeProjects")
 }
 
@@ -61,13 +62,50 @@ fn expand_home(text: &str) -> PathBuf {
 }
 
 /// Whether `folder` can take a new project: missing, or empty.
-fn usable(folder: &Path) -> bool {
+pub fn usable(folder: &Path) -> bool {
     std::fs::read_dir(folder).map_or(true, |mut entries| entries.next().is_none())
 }
 
+/// A row of the New Project dialog's list: a generator's icon and name.
+fn generator_row(
+    id: impl Into<ElementId>,
+    icon: Option<&'static str>,
+    name: SharedString,
+    selected: bool,
+    cx: &App,
+) -> Stateful<Div> {
+    let tokens = Tokens::get(cx);
+    h_flex()
+        .id(id)
+        .role(Role::ListItem)
+        .aria_label(name.clone())
+        .aria_selected(selected)
+        .h(px(28.))
+        .px(px(8.))
+        .gap(px(6.))
+        .rounded(px(spork_workbench::tokens::metrics::RADIUS))
+        .cursor_pointer()
+        .when(selected, |row| row.bg(tokens.selection))
+        .when(!selected, |row| {
+            row.hover(move |row| row.bg(tokens.selection_hover))
+        })
+        .when_some(icon, |row, icon| {
+            row.child(spork_workbench::image(icon, cx).size(px(16.)))
+        })
+        .child(name)
+}
+
 /// New Project: IntelliJ's Empty Project, a folder (made under the location) with an optional
-/// git repository, opened in a window of its own.
+/// git repository, opened in a window of its own; the generators other crates add
+/// (`crate::register_generator`) are listed beside it, each showing its own page.
 pub(crate) fn new_project(window: &mut Window, cx: &mut App) {
+    let generators = cx
+        .try_global::<crate::Generators>()
+        .map(|generators| generators.0.clone())
+        .unwrap_or_default();
+    // the generator shown, none for Empty Project, and the pages shown so far
+    let chosen = cx.new(|_| None::<usize>);
+    let pages = cx.new(|_| std::collections::HashMap::<usize, AnyView>::new());
     let name = cx.new(|cx| InputState::new(window, cx).default_value("untitled"));
     let location = cx.new(|cx| {
         InputState::new(window, cx).default_value(projects_folder().display().to_string())
@@ -83,8 +121,76 @@ pub(crate) fn new_project(window: &mut Window, cx: &mut App) {
             .detach();
     }
     let focused = name.clone();
-    window.open_dialog(cx, move |dialog, _, cx| {
+    window.open_dialog(cx, move |dialog, window, cx| {
         let tokens = Tokens::get(cx);
+        let shown = *chosen.read(cx);
+        let page = shown.and_then(|ix| {
+            let generator = generators.get(ix)?;
+            Some(pages.update(cx, |pages, cx| {
+                pages
+                    .entry(ix)
+                    .or_insert_with(|| (generator.page)(window, cx))
+                    .clone()
+            }))
+        });
+        let list = (!generators.is_empty()).then(|| {
+            let choose = |ix: Option<usize>| {
+                let chosen = chosen.clone();
+                move |_: &ClickEvent, window: &mut Window, cx: &mut App| {
+                    chosen.update(cx, |chosen, _| *chosen = ix);
+                    window.refresh();
+                }
+            };
+            v_flex()
+                .w(px(200.))
+                .flex_none()
+                .gap(px(2.))
+                .child(
+                    generator_row(
+                        "new-project-empty",
+                        None,
+                        "Empty Project".into(),
+                        shown.is_none(),
+                        cx,
+                    )
+                    .on_click(choose(None)),
+                )
+                .child(
+                    spork_workbench::controls::form_label("Generators")
+                        .pt(px(10.))
+                        .pb(px(4.))
+                        .px(px(8.))
+                        .text_ui_small()
+                        .text_color(tokens.text_secondary),
+                )
+                .children(generators.iter().enumerate().map(|(ix, generator)| {
+                    generator_row(
+                        ("new-project-generator", ix),
+                        Some(generator.icon),
+                        generator.name.clone(),
+                        shown == Some(ix),
+                        cx,
+                    )
+                    .on_click(choose(Some(ix)))
+                }))
+        });
+        let dialog = dialog
+            .title(title("New Project"))
+            // IntelliJ's dialog is a window of its own; this one stays inside the window it is in
+            .w(match list {
+                Some(_) => px(860.).min(window.viewport_size().width - px(48.)),
+                None => px(560.),
+            })
+            .close_button(false);
+        if let Some(page) = page {
+            return dialog.on_ok(|_, _, _| false).child(
+                h_flex()
+                    .items_start()
+                    .gap(px(16.))
+                    .children(list)
+                    .child(div().flex_1().min_w_0().child(page)),
+            );
+        }
         let project = name.read(cx).value().trim().to_owned();
         let folder = expand_home(&location.read(cx).value()).join(&project);
         let problem = (!project.is_empty() && !usable(&folder)).then(|| {
@@ -104,9 +210,6 @@ pub(crate) fn new_project(window: &mut Window, cx: &mut App) {
         };
         let on_enter = create.clone();
         dialog
-            .title(title("New Project"))
-            .w(px(560.))
-            .close_button(false)
             .on_ok(move |_, window, cx| {
                 if ready {
                     on_enter(window, cx);
@@ -114,77 +217,81 @@ pub(crate) fn new_project(window: &mut Window, cx: &mut App) {
                 false
             })
             .child(
-                v_flex()
-                    .gap(px(12.))
-                    .child(
-                        h_flex().child(label("Name:")).child(
-                            spork_workbench::TextField::new(&name)
-                                .aria_label("Name:")
-                                .flex_1(),
-                        ),
-                    )
-                    .child(
-                        h_flex().child(label("Location:")).child(
-                            spork_workbench::TextField::new(&location)
-                                .aria_label("Location:")
-                                .suffix(browse("new-project-browse", location.clone()))
-                                .flex_1(),
-                        ),
-                    )
-                    .child(
-                        div()
-                            .pl(px(90.))
-                            .text_ui_small()
-                            .text_color(tokens.text_secondary)
-                            .child(format!(
-                                "Project will be created in: {}",
-                                util::paths::PathExt::compact(&folder).display()
-                            )),
-                    )
-                    .children(problem.map(|problem| {
-                        div()
-                            .pl(px(90.))
-                            .text_ui_small()
-                            .text_color(tokens.text_error)
-                            .child(problem)
-                    }))
-                    .child(
-                        div().pl(px(90.)).child(
-                            spork_workbench::controls::labeled_check(
-                                "new-project-git",
-                                "Create Git repository",
-                                git_on,
-                                cx,
-                            )
-                            .on_click(move |_, window, cx| {
-                                toggle.update(cx, |on, _| *on = !*on);
-                                window.refresh();
-                            }),
-                        ),
-                    )
-                    .child(
-                        h_flex()
-                            .pt(px(8.))
-                            .gap(px(8.))
-                            .justify_end()
-                            .child(
-                                spork_workbench::Button::new("new-project-cancel", "Cancel")
-                                    .on_click(|_, window, cx| window.close_dialog(cx)),
-                            )
-                            .child(
-                                spork_workbench::Button::new("new-project-create", "Create")
-                                    .primary(true)
-                                    .disabled(!ready)
-                                    .on_click(move |_, window, cx| create(window, cx)),
+                h_flex().items_start().gap(px(16.)).children(list).child(
+                    v_flex()
+                        .flex_1()
+                        .min_w_0()
+                        .gap(px(12.))
+                        .child(
+                            h_flex().child(label("Name:")).child(
+                                spork_workbench::TextField::new(&name)
+                                    .aria_label("Name:")
+                                    .flex_1(),
                             ),
-                    ),
+                        )
+                        .child(
+                            h_flex().child(label("Location:")).child(
+                                spork_workbench::TextField::new(&location)
+                                    .aria_label("Location:")
+                                    .suffix(browse("new-project-browse", location.clone()))
+                                    .flex_1(),
+                            ),
+                        )
+                        .child(
+                            div()
+                                .pl(px(90.))
+                                .text_ui_small()
+                                .text_color(tokens.text_secondary)
+                                .child(format!(
+                                    "Project will be created in: {}",
+                                    util::paths::PathExt::compact(&folder).display()
+                                )),
+                        )
+                        .children(problem.map(|problem| {
+                            div()
+                                .pl(px(90.))
+                                .text_ui_small()
+                                .text_color(tokens.text_error)
+                                .child(problem)
+                        }))
+                        .child(
+                            div().pl(px(90.)).child(
+                                spork_workbench::controls::labeled_check(
+                                    "new-project-git",
+                                    "Create Git repository",
+                                    git_on,
+                                    cx,
+                                )
+                                .on_click(move |_, window, cx| {
+                                    toggle.update(cx, |on, _| *on = !*on);
+                                    window.refresh();
+                                }),
+                            ),
+                        )
+                        .child(
+                            h_flex()
+                                .pt(px(8.))
+                                .gap(px(8.))
+                                .justify_end()
+                                .child(
+                                    spork_workbench::Button::new("new-project-cancel", "Cancel")
+                                        .on_click(|_, window, cx| window.close_dialog(cx)),
+                                )
+                                .child(
+                                    spork_workbench::Button::new("new-project-create", "Create")
+                                        .primary(true)
+                                        .disabled(!ready)
+                                        .on_click(move |_, window, cx| create(window, cx)),
+                                ),
+                        ),
+                ),
             )
     });
     focused.update(cx, |name, cx| name.focus(window, cx));
 }
 
 /// Makes the project's folder (and its repository), then opens it.
-fn create_project(folder: PathBuf, git: bool, window: &mut Window, cx: &mut App) {
+pub fn create_project(folder: PathBuf, git: bool, window: &mut Window, cx: &mut App) {
     let work = cx.background_spawn({
         let folder = folder.clone();
         async move {

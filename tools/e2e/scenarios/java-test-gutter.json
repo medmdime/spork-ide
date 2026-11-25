@@ -1,0 +1,270 @@
+{
+ "id": "java-test-gutter",
+ "fixture": "tests-maven",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven"
+   },
+   "within": 20000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 600000
+  },
+  {
+   "do": "open",
+   "path": "src/test/java/com/example/GreetingTest.java"
+  },
+  {
+   "find": [
+    {
+     "label": "Run test 'GreetingTest'",
+     "role": "AXButton"
+    },
+    {
+     "label": "Run test 'GreetingTest.greetsByName'",
+     "role": "AXButton"
+    }
+   ],
+   "within": 20000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "junit4"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "click",
+   "label": "Run test 'GreetingTest.greetsByName'",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    "Run 'GreetingTest.greetsByName'",
+    "Debug 'GreetingTest.greetsByName'",
+    "Modify Run Configuration\u2026"
+   ],
+   "ordered": true,
+   "within": 10000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "popup"
+  },
+  {
+   "do": "click",
+   "label": "Run 'GreetingTest.greetsByName'"
+  },
+  {
+   "expect": {
+    "run.tabs.0.running": false,
+    "run.tabs.0.title": "GreetingTest.greetsByName",
+    "run.tabs.0.tests.rows": [
+     "Test Results passed",
+     "  GreetingTest passed",
+     "    greetsByName passed"
+    ],
+    "run.tabs.0.tests.status": "1 test passed"
+   },
+   "within": 120000
+  },
+  {
+   "find": {
+    "label": "Run test 'GreetingTest.greetsByName'",
+    "role": "AXButton",
+    "value": "passed"
+   },
+   "within": 5000
+  },
+  {
+   "do": "open",
+   "path": "src/test/java/com/example/CalculatorTest.java"
+  },
+  {
+   "find": [
+    {
+     "label": "Run test 'CalculatorTest'",
+     "role": "AXButton"
+    },
+    {
+     "label": "Run test 'CalculatorTest.adds'",
+     "role": "AXButton"
+    },
+    {
+     "label": "Run test 'CalculatorTest.greetsAda'",
+     "role": "AXButton"
+    },
+    {
+     "label": "Run test 'CalculatorTest.divides'",
+     "role": "AXButton"
+    }
+   ],
+   "within": 20000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "click",
+   "label": "Run test 'CalculatorTest'",
+   "role": "AXButton"
+  },
+  {
+   "find": "Run 'CalculatorTest'",
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Run 'CalculatorTest'"
+  },
+  {
+   "expect": {
+    "run.tabs.1.running": false,
+    "run.tabs.1.tests.status": "1 test failed, 1 passed, 1 ignored"
+   },
+   "within": 120000
+  },
+  {
+   "find": [
+    {
+     "label": "Run test 'CalculatorTest'",
+     "role": "AXButton",
+     "value": "failed"
+    },
+    {
+     "label": "Run test 'CalculatorTest.adds'",
+     "role": "AXButton",
+     "value": "passed"
+    },
+    {
+     "label": "Run test 'CalculatorTest.greetsAda'",
+     "role": "AXButton",
+     "value": "failed"
+    },
+    {
+     "label": "Run test 'CalculatorTest.divides'",
+     "role": "AXButton",
+     "value": "ignored"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleBottomDock"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "junit5"
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleBottomDock"
+  },
+  {
+   "do": "open",
+   "path": "src/test/java/com/example/OrderTest.java"
+  },
+  {
+   "find": {
+    "label": "Run test 'OrderTest.countsItems'",
+    "role": "AXButton"
+   },
+   "within": 20000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "click",
+   "label": "Run test 'OrderTest'",
+   "role": "AXButton"
+  },
+  {
+   "find": "Run 'OrderTest'",
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Run 'OrderTest'"
+  },
+  {
+   "expect": {
+    "run.tabs.2.running": false,
+    "run.tabs.2.tests.rows": [
+     "Test Results passed",
+     "  OrderTest passed",
+     "    countsItems passed"
+    ]
+   },
+   "within": 120000
+  },
+  {
+   "find": {
+    "label": "Run test 'OrderTest'",
+    "role": "AXButton",
+    "value": "passed"
+   },
+   "within": 5000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleBottomDock"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "testng"
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleBottomDock"
+  }
+ ]
+}

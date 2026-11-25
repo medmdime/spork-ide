@@ -53,6 +53,18 @@
   },
   {
    "do": "click",
+   "label": "Build, Execution, Deployment",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "do": "click",
+   "label": "Build, Execution, Deployment",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "do": "click",
    "label": "Languages & Frameworks",
    "role": "AXRow",
    "in": "Settings categories"

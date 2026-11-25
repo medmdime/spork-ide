@@ -94,6 +94,9 @@ fn tool_window(name: &str) -> ToolWindow {
         ),
         "Maven" => ("Maven", Some("toolwindows/maven"), true, 2, false),
         "Gradle" => ("Gradle", Some("toolwindows/gradle"), true, 3, false),
+        // shortcut: the Web tool window's globe, as IntelliJ's own Endpoints icon is its paid
+        // edition's; draw one in its style once the user decides
+        "Endpoints" => ("Endpoints", Some("toolwindows/web"), false, 4, false),
         "Hierarchy" => ("Hierarchy", Some("toolwindows/hierarchy"), true, 4, false),
         _ => ("", None, false, usize::MAX, false),
     };

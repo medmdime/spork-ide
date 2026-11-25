@@ -58,6 +58,9 @@ pub struct Tokens {
     /// `accent` (`control-brand-bg`).
     pub progress_track: Hsla,
     pub control_border: Hsla,
+    /// `control-border-raised`: a segmented button's chosen segment
+    /// (`SegmentedButton.selectedStartBorderColor`).
+    pub control_border_raised: Hsla,
     pub control_border_disabled: Hsla,
     /// `dialog-border`: lines between areas.
     pub separator: Hsla,
@@ -256,6 +259,7 @@ static DARK: LazyLock<Tokens> = LazyLock::new(|| Tokens {
     control_bg_raised: color(0x26282C),
     progress_track: color(0x40434A),
     control_border: color(0x40434A),
+    control_border_raised: color(0x5F6269),
     control_border_disabled: color(0x33353B),
     separator: color(0x26282C),
     toolbar_border: alpha(0xFFFFFF21),
@@ -375,6 +379,7 @@ static LIGHT: LazyLock<Tokens> = LazyLock::new(|| Tokens {
     control_bg_raised: color(0xFFFFFF),
     progress_track: color(0xDDDFE4),
     control_border: color(0xD1D3D9),
+    control_border_raised: color(0xB5B7BD),
     control_border_disabled: color(0xE9EAEE),
     separator: color(0xE9EAEE),
     toolbar_border: alpha(0x00000020),

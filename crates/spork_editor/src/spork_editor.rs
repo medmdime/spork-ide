@@ -23,7 +23,9 @@ pub use editing::{
     SelectToCodeBlockEnd, SelectToCodeBlockStart, SelectToPageBottom, SelectToPageTop,
     ToggleColumnMode, column_mode,
 };
-pub use inspection_widget::{GoToNextError, GoToPreviousError};
+pub use inspection_widget::{
+    FloatingToolbar, GoToNextError, GoToPreviousError, add_floating_toolbar,
+};
 pub use markdown::{
     CreateLink, GenerateTableOfContents, MarkdownEditorAndPreview, MarkdownEditorOnly,
     MarkdownPreviewOnly, MoveTableRowDown, MoveTableRowUp, SelectTableColumnCells, SelectTableRow,

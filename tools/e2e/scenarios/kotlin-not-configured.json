@@ -1,0 +1,103 @@
+{
+ "id": "kotlin-not-configured",
+ "fixture": "kotlin-unconfigured",
+ "covers": [],
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Gradle"
+   },
+   "within": 20000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "do": "open",
+   "path": "src/main/kotlin/com/example/Main.kt"
+  },
+  {
+   "expect": {
+    "active": "src/main/kotlin/com/example/Main.kt"
+   },
+   "within": 5000
+  },
+  {
+   "find": [
+    {
+     "label": "Kotlin is not configured"
+    },
+    {
+     "label": "Configure"
+    },
+    {
+     "label": "Ignore"
+    }
+   ],
+   "ordered": true,
+   "within": 10000
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "shot": "banner"
+  },
+  {
+   "do": "click",
+   "label": "Configure"
+  },
+  {
+   "find": [
+    {
+     "label": "All modules"
+    },
+    {
+     "label": "Kotlin compiler and runtime version:",
+     "value": "2.4.10"
+    },
+    {
+     "label": "OK",
+     "role": "AXButton"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "shot": "dialog"
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "sh": "cat build.gradle.kts",
+   "contains": "    java\n    kotlin(\"jvm\") version \"2.4.10\"\n}",
+   "within": 5000
+  },
+  {
+   "sh": "cat build.gradle.kts",
+   "contains": "kotlin {\n    jvmToolchain(17)\n}"
+  },
+  {
+   "missing": [
+    {
+     "label": "Kotlin is not configured"
+    }
+   ],
+   "within": 5000
+  }
+ ]
+}

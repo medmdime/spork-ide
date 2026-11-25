@@ -1,0 +1,111 @@
+{
+ "id": "kotlin-test-maven",
+ "fixture": "tests-kotlin-maven",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Kotlin": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "kotlin.detected": true
+   },
+   "within": 20000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "kotlin.server.running": true
+   },
+   "within": 600000
+  },
+  {
+   "expect": {
+    "kotlin.server.busy": false
+   },
+   "within": 300000
+  },
+  {
+   "do": "open",
+   "path": "src/test/kotlin/com/example/GreetingTest.kt"
+  },
+  {
+   "find": {
+    "label": "Run test 'GreetingTest.greetsAda'",
+    "role": "AXButton"
+   },
+   "within": 30000
+  },
+  {
+   "wait": 3000
+  },
+  {
+   "do": "click",
+   "label": "Run test 'GreetingTest.greetsAda'",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    "Run 'GreetingTest.greetsAda'",
+    "Debug 'GreetingTest.greetsAda'",
+    "Modify Run Configuration\u2026"
+   ],
+   "ordered": true,
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Run 'GreetingTest.greetsAda'"
+  },
+  {
+   "expect": {
+    "run.tabs.0.running": false,
+    "run.tabs.0.tests.rows": [
+     "Test Results failed",
+     "  GreetingTest failed",
+     "    greetsAda failed"
+    ],
+    "run.tabs.0.tests.status": "1 test failed"
+   },
+   "within": 300000
+  },
+  {
+   "do": "click",
+   "label": "greetsAda",
+   "role": "AXRow"
+  },
+  {
+   "expect": {
+    "run.tabs.0.tests.output": {
+     "contains": "Expected :Hello, Ada!\nActual   :Hello, world!"
+    }
+   },
+   "within": 5000
+  },
+  {
+   "find": {
+    "label": "Run test 'GreetingTest.greetsAda'",
+    "value": "failed"
+   },
+   "within": 5000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "maven"
+  }
+ ]
+}

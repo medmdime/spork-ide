@@ -106,7 +106,7 @@
   {
    "expect": {
     "run.debug.console": {
-     "contains": "OK (1 test)"
+     "contains": "Process finished with exit code 0"
     }
    },
    "within": 60000
@@ -123,9 +123,7 @@
   },
   {
    "expect": {
-    "run.tabs.0.text": {
-     "contains": "OK (1 test)"
-    }
+    "run.tabs.0.tests.status": "1 test passed"
    },
    "within": 120000
   },

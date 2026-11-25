@@ -115,9 +115,11 @@ pub use element::{
 pub use git::blame::{BlameRenderer, GitBlame, MAX_RELATIVE_TIMESTAMP};
 pub use git::{
     AnnotationMenu, BookmarkGutterIcon, BreakpointGutterIcon, BreakpointLook, BreakpointMenu,
-    ChangeMarkerClick, DefaultDiffHunkRenderer, DiffHunkRenderer, EditorCornerWidget,
-    FoldPlaceholderLook, FoldToggleIcon, HiddenDiffHunkRenderer, HiddenUnstagedDiffHunkRenderer,
-    IntellijGutter, IntellijGutterAreas, render_diff_hunk_controls, set_blame_renderer,
+    BreakpointToggle, ChangeMarkerClick, DefaultDiffHunkRenderer, DiffHunkRenderer,
+    EditorCornerWidget, FoldPlaceholderLook, FoldToggleIcon, HiddenDiffHunkRenderer,
+    HiddenUnstagedDiffHunkRenderer, IntellijGutter, IntellijGutterAreas, LineMarkers,
+    LineNumberClick, RunIndicatorIcon, RunIndicatorLook, RunMenuModify, render_diff_hunk_controls,
+    set_blame_renderer,
 };
 pub(crate) use git::{DiffHunkKey, StoredReviewComment};
 use git::{DiffReviewDragState, DiffReviewOverlay, InlineBlamePopover};
@@ -180,7 +182,7 @@ use gpui::{
     UniformListScrollHandle, WeakEntity, WeakFocusHandle, Window, div, point, prelude::*,
     pulsating_between, px, relative, size,
 };
-use hover_links::{HoverLink, HoveredLinkState, find_file};
+use hover_links::{HoverLink, HoveredLinkState, InlayHighlight, find_file};
 use hover_popover::{HoverState, hide_hover};
 use indent_guides::ActiveIndentGuidesState;
 use inlays::{InlaySplice, inlay_hints::InlayHintRefreshReason};
@@ -221,8 +223,8 @@ use project::{
     bookmark_store::BookmarkStore,
     debugger::{
         breakpoint_store::{
-            Breakpoint, BreakpointEditAction, BreakpointSessionState, BreakpointState,
-            BreakpointStore, BreakpointStoreEvent,
+            Breakpoint, BreakpointEditAction, BreakpointKind, BreakpointSessionState,
+            BreakpointState, BreakpointStore, BreakpointStoreEvent,
         },
         session::{Session, SessionEvent},
     },
@@ -4769,6 +4771,9 @@ impl Editor {
                 conditional: breakpoint.condition.is_some() || breakpoint.hit_condition.is_some(),
                 logs: breakpoint.message.is_some(),
                 verified: state.map(|state| state.verified),
+                dependent: breakpoint.properties.master.is_some(),
+                method: matches!(breakpoint.properties.kind, BreakpointKind::Method { .. }),
+                field: matches!(breakpoint.properties.kind, BreakpointKind::Field { .. }),
             };
             let breakpoint = breakpoint.clone();
             return div()
@@ -4784,6 +4789,13 @@ impl Editor {
                         false => BreakpointEditAction::Toggle,
                     };
                     window.focus(&editor.focus_handle(cx), cx);
+                    if matches!(edit_action, BreakpointEditAction::Toggle)
+                        && cx.try_global::<BreakpointToggle>().cloned().is_some_and(
+                            |BreakpointToggle(toggle)| toggle(editor, position, window, cx),
+                        )
+                    {
+                        return;
+                    }
                     editor.edit_breakpoint_at_anchor(position, breakpoint.clone(), edit_action, cx);
                 }))
                 .on_mouse_down(
@@ -6536,6 +6548,7 @@ impl Editor {
                 state: BreakpointState::Enabled,
                 condition: None,
                 hit_condition: None,
+                properties: Default::default(),
             });
 
             self.add_edit_breakpoint_block(
@@ -6784,6 +6797,12 @@ impl Editor {
                     BreakpointEditAction::Toggle,
                     cx,
                 );
+            } else if cx
+                .try_global::<BreakpointToggle>()
+                .cloned()
+                .is_some_and(|BreakpointToggle(toggle)| toggle(self, anchor, window, cx))
+            {
+                // Spork IDE: the app added it
             } else {
                 self.edit_breakpoint_at_anchor(
                     anchor,
@@ -10105,6 +10124,11 @@ impl Editor {
             .highlighted_rows
             .get(&TypeId::of::<ActiveDebugLine>())
             .and_then(|lines| lines.last().map(|line| line.range.end));
+        // Spork IDE: the execution line's own start (the highlight ends on the next line)
+        let execution_line = self
+            .highlighted_rows
+            .get(&TypeId::of::<ActiveDebugLine>())
+            .and_then(|lines| lines.last().map(|line| line.range.start));
 
         self.inline_value_cache.refresh_task = cx.spawn(async move |editor, cx| {
             let inline_values = editor
@@ -10146,33 +10170,141 @@ impl Editor {
 
             editor
                 .update(cx, |editor, cx| {
-                    let snapshot = editor.buffer.read(cx).snapshot(cx);
-                    let mut new_inlays = Vec::default();
-
-                    for (_buffer_id, inline_values) in buffer_inline_values {
-                        for hint in inline_values {
-                            let Some(anchor) = snapshot.anchor_in_excerpt(hint.position) else {
-                                continue;
-                            };
-                            let inlay = Inlay::debugger(
-                                post_inc(&mut editor.next_inlay_id),
-                                anchor,
-                                hint.text(),
-                            );
-                            if !inlay.text().chars().contains(&'\n') {
-                                new_inlays.push(inlay);
-                            }
-                        }
-                    }
-
-                    let mut inlay_ids = new_inlays.iter().map(|inlay| inlay.id).collect();
-                    std::mem::swap(&mut editor.inline_value_cache.inlays, &mut inlay_ids);
-
-                    editor.splice_inlays(&inlay_ids, new_inlays, cx);
+                    editor.place_inline_values(buffer_inline_values, execution_line, cx)
                 })
                 .ok()?;
             Some(())
         });
+    }
+
+    /// Spork IDE: the values after their line's end, as IntelliJ draws them: `name: value` for
+    /// each variable of the line, in the line's order, once each; on the execution line in its
+    /// colour, a value changed since the last stop in another (`DEBUGGER_INLINED_VALUES*`).
+    fn place_inline_values(
+        &mut self,
+        buffer_inline_values: HashMap<BufferId, Vec<InlayHint>>,
+        execution_position: Option<Anchor>,
+        cx: &mut Context<Self>,
+    ) {
+        let snapshot = self.buffer.read(cx).snapshot(cx);
+        let execution_line = execution_position
+            .and_then(|position| snapshot.anchor_to_buffer_anchor(position))
+            .and_then(|(anchor, _)| {
+                let buffer = self.buffer.read(cx).buffer(anchor.buffer_id)?;
+                Some((
+                    anchor.buffer_id,
+                    anchor.to_point(&buffer.read(cx).snapshot()).row,
+                ))
+            });
+        let session = self.project.as_ref().and_then(|project| {
+            let store = project.read(cx).breakpoint_store();
+            let session = store.read(cx).active_position()?.session_id;
+            Some(session)
+        });
+        let cache = &mut self.inline_value_cache;
+        // a running program has no position: the values are forgotten with their session only
+        if session.is_some() && cache.session != session {
+            cache.session = session;
+            cache.values.clear();
+        }
+        let mut new_inlays = Vec::new();
+        let mut lines = Vec::new();
+        let mut styled: [Vec<InlayHighlight>; 3] = Default::default();
+        for (buffer_id, hints) in buffer_inline_values {
+            let Some(buffer) = self.buffer.read(cx).buffer(buffer_id) else {
+                continue;
+            };
+            let buffer_snapshot = buffer.read(cx).snapshot();
+            let mut rows: BTreeMap<u32, Vec<String>> = BTreeMap::new();
+            for hint in hints {
+                let text = hint.text().to_string();
+                if text.contains('\n') {
+                    continue;
+                }
+                let values = rows
+                    .entry(hint.position.to_point(&buffer_snapshot).row)
+                    .or_default();
+                if !values.contains(&text) {
+                    values.push(text);
+                }
+            }
+            for (row, values) in rows {
+                let end = Point::new(row, buffer_snapshot.line_len(row));
+                let Some(anchor) = snapshot.anchor_in_excerpt(buffer_snapshot.anchor_after(end))
+                else {
+                    continue;
+                };
+                let on_execution_line = execution_line == Some((buffer_id, row));
+                let mut line = String::new();
+                for (ix, value) in values.into_iter().enumerate() {
+                    let (name, value) = value.split_once(": ").unwrap_or(("", value.as_str()));
+                    // IntelliJ's gap before a value (a space and a half) and after one (two
+                    // spaces and its hover icon's room), in whole spaces
+                    let gap = if ix == 0 { "  " } else { "     " };
+                    let changed = {
+                        let key = (buffer_id, row, name.to_owned());
+                        let (actual, old) = cache
+                            .values
+                            .entry(key)
+                            .or_insert_with(|| (value.to_owned(), None));
+                        if actual != value {
+                            *old = Some(std::mem::replace(actual, value.to_owned()));
+                        }
+                        old.as_ref().is_some_and(|old| old != actual)
+                    };
+                    for (text, style) in [
+                        (format!("{gap}{name}: "), usize::from(on_execution_line)),
+                        (
+                            value.to_owned(),
+                            if changed {
+                                2
+                            } else {
+                                usize::from(on_execution_line)
+                            },
+                        ),
+                    ] {
+                        line.push_str(&text);
+                        let inlay = Inlay::debugger(
+                            post_inc(&mut self.next_inlay_id),
+                            anchor,
+                            text.as_str(),
+                        );
+                        styled[style].push(InlayHighlight {
+                            inlay: inlay.id,
+                            inlay_position: anchor,
+                            range: 0..text.len(),
+                        });
+                        new_inlays.push(inlay);
+                    }
+                }
+                lines.push((row, line));
+            }
+        }
+        self.inline_value_cache.lines = lines;
+        let mut inlay_ids = new_inlays.iter().map(|inlay| inlay.id).collect();
+        std::mem::swap(&mut self.inline_value_cache.inlays, &mut inlay_ids);
+        self.splice_inlays(&inlay_ids, new_inlays, cx);
+        let syntax = cx.theme().syntax().clone();
+        let hint = make_inlay_hints_style(cx);
+        for (ix, (highlights, name)) in styled
+            .into_iter()
+            .zip([
+                "debugger.inline_value",
+                "debugger.inline_value.execution_line",
+                "debugger.inline_value.modified",
+            ])
+            .enumerate()
+        {
+            let key = HighlightKey::DebuggerInlineValue(ix);
+            self.clear_highlights(key, cx);
+            let style = syntax.style_for_name(name).unwrap_or(hint);
+            self.highlight_inlays(key, highlights, style, cx);
+        }
+    }
+
+    /// Spork IDE: the rows showing debugger values, with what they show after the line's end.
+    pub fn inline_value_lines(&self) -> &[(u32, String)] {
+        &self.inline_value_cache.lines
     }
 
     fn on_buffer_event(

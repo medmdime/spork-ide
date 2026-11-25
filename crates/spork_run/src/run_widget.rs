@@ -141,7 +141,7 @@ pub(crate) fn launch(
         configuration.debug_scenario(),
     );
     let abs_path = ProjectConfigurations::of(workspace, cx)
-        .map(|c| c.read(cx).files(cx).user_tasks)
+        .and_then(|c| c.read(cx).files(cx).workspace_tasks)
         .unwrap_or_default();
     cx.spawn_in(window, async move |workspace, cx| {
         let contexts = contexts.await;
@@ -241,12 +241,16 @@ impl Render for RunWidget {
         let icon = selected
             .as_ref()
             .map_or("runConfigurations/application", |c| c.icon());
+        // IntelliJ draws a temporary configuration's icon translucent
+        let temporary = selected.as_ref().is_some_and(Configuration::is_temporary);
         let popup_configurations = configurations;
         let selector = Popover::new("run-configurations-popup")
             .appearance(false)
             .trigger(
                 ToolbarDropdown::new("run-configurations")
-                    .child(spork_workbench::image(icon, cx))
+                    .child(
+                        spork_workbench::image(icon, cx).when(temporary, |icon| icon.opacity(0.5)),
+                    )
                     .child(
                         div()
                             .max_w(px(metrics::MAIN_TOOLBAR_DROPDOWN_MAX_WIDTH))
@@ -661,6 +665,24 @@ fn submenu_items(
                     })
                     .into_any_element(),
             );
+            // IntelliJ's Save Configuration (`SaveTemporaryRunConfiguration`), for a temporary one
+            if configuration.is_temporary() {
+                let (saved, save_close, save_in) =
+                    (name.clone(), close.clone(), configurations.clone());
+                items.push(
+                    item("run-configuration-save", "Save Configuration".into(), cx)
+                        .on_click(move |_, window, cx| {
+                            cx.stop_propagation();
+                            save_close(window, cx);
+                            save_in
+                                .update(cx, |configurations, cx| {
+                                    configurations.save_temporary(&saved, cx)
+                                })
+                                .detach_and_log_err(cx);
+                        })
+                        .into_any_element(),
+                );
+            }
             let (deleted, delete_close, delete_from) =
                 (name.clone(), close.clone(), configurations.clone());
             items.push(

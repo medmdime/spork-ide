@@ -214,6 +214,13 @@ pub struct FlatScopeAdapters(pub collections::HashSet<SharedString>);
 
 impl gpui::Global for FlatScopeAdapters {}
 
+/// Spork IDE: Toggle Field Watchpoint on a variable, set once by the app: given the session and
+/// the adapter's data id, whether it made the watchpoint (else the session's data breakpoint).
+#[derive(Clone)]
+pub struct FieldWatchpointHook(pub std::rc::Rc<dyn Fn(&Entity<Session>, &str, &mut App) -> bool>);
+
+impl gpui::Global for FieldWatchpointHook {}
+
 /// Spork IDE: what the app's watches toolbar acts on.
 impl VariableList {
     /// The rows, `name = value` (a scope by its name), for the app's end-to-end tests.
@@ -897,6 +904,16 @@ impl VariableList {
             else {
                 return;
             };
+            // Spork IDE: the app's field watchpoint, kept with the breakpoints
+            let handled = session.upgrade().is_some_and(|session| {
+                cx.update(|cx| match cx.try_global::<FieldWatchpointHook>().cloned() {
+                    Some(FieldWatchpointHook(hook)) => hook(&session, &data_id, cx),
+                    None => false,
+                })
+            });
+            if handled {
+                return;
+            }
 
             // Because user's can manually add this action to the keymap
             // we check if access type is supported

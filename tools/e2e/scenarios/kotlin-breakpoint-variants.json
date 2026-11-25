@@ -1,0 +1,204 @@
+{
+ "id": "kotlin-breakpoint-variants",
+ "fixture": "kotlin-coroutines",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Kotlin": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "sh": "mkdir -p .zed && printf '[{\"label\": \"MainKt\", \"adapter\": \"Kotlin\", \"request\": \"launch\", \"mainClass\": \"com.example.MainKt\"}]' > .zed/debug.json"
+  },
+  {
+   "expect": {
+    "java.tool": "Gradle",
+    "kotlin.detected": true
+   },
+   "within": 20000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "kotlin.server.running": true
+   },
+   "within": 600000
+  },
+  {
+   "expect": {
+    "kotlin.server.busy": false
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "run.configurations.selected": "MainKt"
+   },
+   "within": 10000
+  },
+  {
+   "do": "open",
+   "path": "src/main/kotlin/com/example/Main.kt"
+  },
+  {
+   "expect": {
+    "active": "src/main/kotlin/com/example/Main.kt"
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "type",
+   "text": "14:9"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "find": [
+    {
+     "label": "Line"
+    },
+    {
+     "label": "work(21)"
+    },
+    {
+     "label": "Line and Lambda"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "shot": "set-breakpoint"
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "run.breakpoints.0.at": "Main.kt:14",
+    "run.breakpoints.0.kind": "line",
+    "run.breakpoints.0.columns": [
+     27
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "type",
+   "text": "8:5"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "expect": {
+    "run.breakpoints.0.at": "Main.kt:8",
+    "run.breakpoints.0.kind": "method",
+    "run.breakpoints.0.name": "com.example.MainKt.work",
+    "run.breakpoints.0.function": "com.example.MainKt.work",
+    "run.breakpoints.1.at": "Main.kt:14",
+    "run.breakpoints.1.columns": [
+     27
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "find": {
+    "label": "Debug 'MainKt'",
+    "role": "AXButton",
+    "enabled": true
+   },
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-d"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "DebugPanel",
+    "run.debug.status": "Stopped"
+   },
+   "within": 180000
+  },
+  {
+   "find": {
+    "label": "invokeSuspend:14, MainKt$main$1$doubled$1 (com.example)",
+    "selected": true
+   },
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "f9"
+  },
+  {
+   "find": {
+    "label": "work:8, MainKt (com.example)",
+    "selected": true
+   },
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f2"
+  },
+  {
+   "expect": {
+    "run.debug.terminated": true
+   },
+   "within": 30000
+  }
+ ]
+}

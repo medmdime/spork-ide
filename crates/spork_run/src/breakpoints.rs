@@ -5,17 +5,21 @@
 //! The dialog lists the exception breakpoints too: a group per debug adapter ("CodeLLDB Exception
 //! Breakpoints", as IntelliJ's "Java Exception Breakpoints") with the filters the adapter offers
 //! (its `exceptionBreakpointFilters`), sent to its sessions and kept for its next ones as Zed keeps
-//! them. Left out, as neither Zed's breakpoint store nor the debug adapter protocol carries them:
-//! Suspend All or Thread (a breakpoint has no suspend policy), Remove once hit and "Disable until
-//! hitting the following breakpoint" (the store keeps no such properties).
+//! them. A breakpoint's properties beyond the protocol's (Suspend: All or Thread, Remove once hit,
+//! "Disable until hitting the following breakpoint") are kept with it in the store; the sessions
+//! send a Thread breakpoint with the adapter's `thread` mode and leave out the ones waiting for
+//! another, and the breakpoint a session stops at (`watch_hits`) is removed when temporary and
+//! sets the ones waiting for it.
 
-use std::collections::BTreeMap;
+use std::cell::RefCell;
+use std::collections::{BTreeMap, HashSet};
 use std::path::Path;
 use std::rc::Rc;
 use std::sync::Arc;
 
 use dap::ExceptionBreakpointsFilter;
 use dap::adapters::DebugAdapterName;
+use dap::client::SessionId;
 use editor::{BreakpointGutterIcon, BreakpointLook, BreakpointMenu, Editor};
 use gpui::TaskExt as _;
 use gpui::prelude::FluentBuilder as _;
@@ -26,14 +30,20 @@ use gpui::{
     WindowBounds, WindowOptions, anchored, div, point, px, size,
 };
 use gpui_kit::component::input::{InputEvent, InputState};
+use gpui_kit::component::menu::{PopupMenu, PopupMenuItem};
 use gpui_kit::component::{h_flex, v_flex};
 use project::Project;
 use project::debugger::breakpoint_store::{
-    Breakpoint, BreakpointEditAction, BreakpointState, BreakpointStore,
+    Breakpoint, BreakpointEditAction, BreakpointKind, BreakpointState, BreakpointStore,
+    BreakpointStoreEvent, BreakpointWithPosition,
 };
+use project::debugger::dap_store::DapStoreEvent;
 use project::debugger::dap_store::{PersistedAdapterOptions, PersistedExceptionBreakpoint};
+use project::debugger::session::SessionEvent;
 use serde_json::{Value, json};
-use spork_workbench::controls::{check_box, disabled_check, labeled_check, link};
+use spork_workbench::controls::{
+    check_box, disabled_check, disabled_radio, labeled_check, labeled_combo, labeled_radio, link,
+};
 use spork_workbench::{ActionButton, Tokens};
 use workspace::{ModalView, Workspace};
 
@@ -59,7 +69,7 @@ pub(crate) fn init(cx: &mut App) {
     )));
 }
 
-pub(crate) fn register(workspace: &mut Workspace) {
+pub(crate) fn register(workspace: &mut Workspace, cx: &mut Context<Workspace>) {
     workspace.register_action(|workspace, _: &run::ViewBreakpoints, window, cx| {
         open_dialog(workspace.project().clone(), None, window, cx)
     });
@@ -69,6 +79,10 @@ pub(crate) fn register(workspace: &mut Workspace) {
             cx.propagate();
         }
     });
+    workspace.register_action(|workspace, _: &run::ToggleTemporaryLineBreakpoint, _, cx| {
+        toggle_temporary(workspace, cx)
+    });
+    watch_hits(workspace, cx);
     workspace.register_action(|workspace, _: &run::MuteBreakpoints, _, cx| {
         let muted = !muted(cx);
         cx.set_global(Muted(muted));
@@ -92,6 +106,114 @@ pub(crate) fn register(workspace: &mut Workspace) {
     });
 }
 
+/// Toggle Temporary Line Breakpoint (⌥⇧⌘F8): a breakpoint removed once hit on the caret line,
+/// or the line's breakpoint removed (`XBreakpointUtil.toggleLineBreakpoint`).
+fn toggle_temporary(workspace: &mut Workspace, cx: &mut Context<Workspace>) {
+    let Some(editor) = workspace.active_item_as::<Editor>(cx) else {
+        return;
+    };
+    let Some((path, row)) = caret_line(&editor, cx) else {
+        return;
+    };
+    let project = workspace.project().clone();
+    let store = project.read(cx).breakpoint_store();
+    if breakpoint(&store, &path, row, cx).is_some() {
+        remove(&store, &path, row, cx);
+        return;
+    }
+    let Some(project_path) = project.read(cx).find_project_path(&*path, cx) else {
+        return;
+    };
+    let open = project.update(cx, |project, cx| project.open_buffer(project_path, cx));
+    cx.spawn(async move |_, cx| {
+        let buffer = open.await?;
+        store.update(cx, |store, cx| {
+            let position = buffer
+                .read(cx)
+                .snapshot()
+                .anchor_after(text::Point::new(row, 0));
+            let mut breakpoint = Breakpoint::new_standard();
+            breakpoint.properties.temporary = true;
+            store.toggle_breakpoint(
+                buffer,
+                BreakpointWithPosition {
+                    position,
+                    bp: breakpoint,
+                },
+                BreakpointEditAction::Toggle,
+                cx,
+            );
+        });
+        anyhow::Ok(())
+    })
+    .detach_and_log_err(cx);
+}
+
+/// The breakpoint each debug session stops at, as IntelliJ's `breakpointReached` handles it: the
+/// ones waiting for it are set, and a temporary one is removed. The first execution line shown
+/// after a stop is where the program stopped.
+fn watch_hits(workspace: &mut Workspace, cx: &mut Context<Workspace>) {
+    let project = workspace.project().clone();
+    let dap_store = project.read(cx).dap_store();
+    let store = project.read(cx).breakpoint_store();
+    let stopped: Rc<RefCell<HashSet<SessionId>>> = Rc::default();
+    cx.subscribe(&dap_store, {
+        let stopped = stopped.clone();
+        move |_, dap_store, event, cx| {
+            let DapStoreEvent::DebugClientStarted(id) = event else {
+                return;
+            };
+            let Some(session) = dap_store.read(cx).session_by_id(*id) else {
+                return;
+            };
+            let stopped = stopped.clone();
+            cx.subscribe(&session, move |_, session, event: &SessionEvent, cx| {
+                if let SessionEvent::Stopped(_) = event {
+                    stopped.borrow_mut().insert(session.read(cx).session_id());
+                }
+            })
+            .detach();
+        }
+    })
+    .detach();
+    cx.subscribe(&store, move |_, store, event, cx| {
+        if !matches!(event, BreakpointStoreEvent::SetDebugLine) {
+            return;
+        }
+        let Some(frame) = store.read(cx).active_position().cloned() else {
+            return;
+        };
+        if !stopped.borrow_mut().remove(&frame.session_id) {
+            return;
+        }
+        let Some(session) = dap_store.read(cx).session_by_id(frame.session_id) else {
+            return;
+        };
+        if session.read(cx).ignore_breakpoints() {
+            return;
+        }
+        let buffer = project
+            .read(cx)
+            .find_project_path(&*frame.path, cx)
+            .and_then(|path| project.read(cx).get_open_buffer(&path, cx));
+        let Some(buffer) = buffer else {
+            return;
+        };
+        let row = text::ToPoint::to_point(&frame.position, &buffer.read(cx).snapshot()).row;
+        let Some(hit) = breakpoint(&store, &frame.path, row, cx).filter(Breakpoint::is_enabled)
+        else {
+            return;
+        };
+        session.update(cx, |session, cx| {
+            session.breakpoint_hit(frame.path.clone(), row, cx)
+        });
+        if hit.properties.temporary {
+            remove(&store, &frame.path, row, cx);
+        }
+    })
+    .detach();
+}
+
 /// The debug sessions skip the breakpoints, or stop skipping them, as Mute Breakpoints says;
 /// also for a session that starts while they are muted.
 pub(crate) fn apply_mute(project: &Entity<Project>, cx: &mut App) {
@@ -112,34 +234,46 @@ pub(crate) fn apply_mute(project: &Entity<Project>, cx: &mut App) {
     }
 }
 
-/// IntelliJ's breakpoint icon for how a breakpoint stands (`XBreakpointUIUtil`): a conditional
-/// one wears the question badge.
+/// IntelliJ's breakpoint icon for how a breakpoint stands (`XBreakpointUIUtil`), a method
+/// breakpoint's and a field watchpoint's of their own: a conditional one wears the question badge.
 fn gutter_icon(look: BreakpointLook, muted: bool, cx: &App) -> AnyElement {
-    let name = match (muted, look.disabled, look.verified, look.logs) {
-        (true, true, _, _) => "breakpoints/breakpointMutedDisabled",
-        (true, false, _, _) => "breakpoints/breakpointMuted",
-        (false, true, _, true) => "breakpoints/breakpointUnsuspendentDisabled",
-        (false, true, _, false) => "breakpoints/breakpointDisabled",
-        (false, false, Some(false), _) => "breakpoints/breakpointInvalid",
-        (false, false, Some(true), true) => "breakpoints/breakpointUnsuspendentValid",
-        (false, false, Some(true), false) => "breakpoints/breakpointValid",
-        (false, false, None, true) => "breakpoints/breakpointUnsuspendent",
-        (false, false, None, false) => "breakpoints/breakpoint",
+    let (kind, plain) = match (look.method, look.field) {
+        (true, _) => ("breakpointMethod", "Method breakpoint"),
+        (_, true) => ("breakpointField", "Field watchpoint"),
+        _ => ("breakpoint", "Line breakpoint"),
     };
+    let line = !look.method && !look.field;
+    let state = match (muted, look.disabled, look.verified, look.logs) {
+        (true, true, _, _) => "MutedDisabled",
+        (true, false, _, _) if look.dependent => "MutedDependent",
+        (true, false, _, _) => "Muted",
+        (false, false, _, _) if look.dependent => "Dependent",
+        (false, true, _, true) => "UnsuspendentDisabled",
+        (false, true, _, false) => "Disabled",
+        // the method and field icons have no invalid look
+        (false, false, Some(false), _) if line => "Invalid",
+        (false, false, Some(false), _) => "",
+        (false, false, Some(true), true) => "UnsuspendentValid",
+        (false, false, Some(true), false) => "Valid",
+        (false, false, None, true) => "Unsuspendent",
+        (false, false, None, false) => "",
+    };
+    let name = SharedString::from(format!("breakpoints/{kind}{state}"));
     let label = match (muted, look.disabled, look.verified, look.conditional) {
         (true, _, _, _) => "Muted breakpoint",
         (false, true, _, _) => "Disabled breakpoint",
         (false, false, Some(false), _) => "Invalid breakpoint",
+        (false, false, _, _) if look.dependent => "Dependent breakpoint",
         (false, false, _, true) => "Conditional breakpoint",
-        (false, false, _, false) => "Line breakpoint",
+        (false, false, _, false) => plain,
     };
     div()
-        .id(SharedString::from(name))
+        .id(name.clone())
         .role(Role::Image)
         .aria_label(label)
         .relative()
         .size(px(14.))
-        .child(spork_workbench::image(name, cx).size(px(14.)))
+        .child(spork_workbench::image(&name, cx).size(px(14.)))
         .when(look.conditional && !look.disabled, |icon| {
             // the badge at (7, 6) of the 16 px icon, as IntelliJ's New UI layers it
             icon.child(
@@ -219,6 +353,27 @@ fn short_name(path: &Path, row: u32) -> String {
     format!("{file}:{}", row + 1)
 }
 
+/// IntelliJ's name for a breakpoint in the Breakpoints dialog: a line breakpoint's file and
+/// line, a method's or field's own (`com.example.Debuggee.measure`, `Debuggee.counter`).
+fn display_name(path: &Path, row: u32, breakpoint: &Breakpoint) -> String {
+    match &breakpoint.properties.kind {
+        BreakpointKind::Line => short_name(path, row),
+        BreakpointKind::Method { name, .. } | BreakpointKind::Field { name, .. } => name.clone(),
+    }
+}
+
+/// The dialog's group of a breakpoint: line, method, field, Kotlin function.
+fn kind_index(breakpoint: &Breakpoint) -> usize {
+    match breakpoint.properties.kind {
+        BreakpointKind::Line => 0,
+        BreakpointKind::Method { function: None, .. } => 1,
+        BreakpointKind::Field { .. } => 2,
+        BreakpointKind::Method {
+            function: Some(_), ..
+        } => 3,
+    }
+}
+
 /// The text a log message without one of its own says: IntelliJ's "Breakpoint hit" message.
 /// (Java's debugger writes IntelliJ's own, `Breakpoint reached at com.example.Main.main(Main.java:5)`.)
 fn hit_message(path: &Path, row: u32) -> String {
@@ -250,6 +405,243 @@ fn log_message(path: &Path, row: u32, hit: bool, expression: Option<&str>) -> Ar
         lines.push(format!("{{{}}}", expression.trim()));
     }
     lines.join("\n").into()
+}
+
+/// IntelliJ's suspend policy (`XSuspendPolicyPanel`): Suspend, then All or Thread. A breakpoint
+/// that doesn't suspend logs IntelliJ's "Breakpoint hit" message.
+fn suspend_policy(
+    store: &Entity<BreakpointStore>,
+    path: &Arc<Path>,
+    row: u32,
+    current: &Breakpoint,
+    cx: &App,
+) -> AnyElement {
+    let suspends = current.message.is_none();
+    let thread = current.properties.suspend_thread;
+    let toggle = {
+        let (store, path) = (store.clone(), path.clone());
+        move |_: &gpui::ClickEvent, _: &mut Window, cx: &mut App| {
+            edit(&store, &path, row, cx, |breakpoint| {
+                breakpoint.message = match breakpoint.message {
+                    Some(_) => None,
+                    None => Some(hit_message(&path, row).into()),
+                };
+            })
+        }
+    };
+    let policy = |label: &'static str, on: bool, value: bool| match suspends {
+        false => disabled_radio(
+            SharedString::from(format!("suspend-{label}")),
+            label,
+            on,
+            cx,
+        )
+        .into_any_element(),
+        true => {
+            let (store, path) = (store.clone(), path.clone());
+            labeled_radio(
+                SharedString::from(format!("suspend-{label}")),
+                label,
+                on,
+                cx,
+            )
+            .on_click(move |_, _, cx| {
+                edit(&store, &path, row, cx, |breakpoint| {
+                    breakpoint.properties.suspend_thread = value
+                })
+            })
+            .into_any_element()
+        }
+    };
+    h_flex()
+        .gap(px(12.))
+        .child(
+            labeled_check("breakpoint-suspend", "Suspend:", suspends, cx)
+                .aria_label("Suspend")
+                .on_click(toggle),
+        )
+        .child(policy("All", !thread, false))
+        .child(policy("Thread", thread, true))
+        .into_any_element()
+}
+
+/// "Remove once hit" (`XBreakpointActionsPanel`'s temporary breakpoint).
+fn remove_once_hit(
+    store: &Entity<BreakpointStore>,
+    path: &Arc<Path>,
+    row: u32,
+    current: &Breakpoint,
+    cx: &App,
+) -> AnyElement {
+    let (store, path) = (store.clone(), path.clone());
+    labeled_check(
+        "breakpoint-temporary",
+        "Remove once hit",
+        current.properties.temporary,
+        cx,
+    )
+    .on_click(move |_, _, cx| {
+        edit(&store, &path, row, cx, |breakpoint| {
+            breakpoint.properties.temporary = !breakpoint.properties.temporary
+        })
+    })
+    .into_any_element()
+}
+
+/// IntelliJ's dependent breakpoint (`XMasterBreakpointPanel`): "Disable until hitting the
+/// following breakpoint:" `<None>` or another breakpoint, then After hit: Disable again or Leave
+/// enabled.
+fn master_breakpoint(
+    store: &Entity<BreakpointStore>,
+    path: &Arc<Path>,
+    row: u32,
+    current: &Breakpoint,
+    cx: &App,
+) -> AnyElement {
+    let master = current.properties.master.clone();
+    let others: Vec<(Arc<Path>, u32)> = store
+        .read(cx)
+        .all_source_breakpoints(cx)
+        .into_iter()
+        .flat_map(|(file, breakpoints)| {
+            let mut rows: Vec<u32> = breakpoints.iter().map(|b| b.row).collect();
+            rows.sort_unstable();
+            rows.into_iter().map(move |row| (file.clone(), row))
+        })
+        .filter(|other| *other != (path.clone(), row))
+        .collect();
+    let current_name = master
+        .as_ref()
+        .map(|(file, row)| short_name(file, *row))
+        .unwrap_or_else(|| "<None>".to_owned());
+    let choose = {
+        let (store, path) = (store.clone(), path.clone());
+        move |menu: PopupMenu, _: &mut Window, _: &mut Context<PopupMenu>| {
+            std::iter::once(None)
+                .chain(others.iter().cloned().map(Some))
+                .fold(menu, |menu, choice| {
+                    let label = choice
+                        .as_ref()
+                        .map(|(file, row)| short_name(file, *row))
+                        .unwrap_or_else(|| "<None>".to_owned());
+                    let (store, path) = (store.clone(), path.clone());
+                    menu.item(PopupMenuItem::new(label).on_click(move |_, _, cx| {
+                        let choice = choice.clone();
+                        edit(&store, &path, row, cx, |breakpoint| {
+                            breakpoint.properties.master = choice
+                        })
+                    }))
+                })
+        }
+    };
+    let after = |label: &'static str, on: bool, leave: bool| match master.is_some() {
+        false => disabled_radio(
+            SharedString::from(format!("after-hit-{label}")),
+            label,
+            on,
+            cx,
+        )
+        .into_any_element(),
+        true => {
+            let (store, path) = (store.clone(), path.clone());
+            labeled_radio(
+                SharedString::from(format!("after-hit-{label}")),
+                label,
+                on,
+                cx,
+            )
+            .on_click(move |_, _, cx| {
+                edit(&store, &path, row, cx, |breakpoint| {
+                    breakpoint.properties.leave_enabled = leave
+                })
+            })
+            .into_any_element()
+        }
+    };
+    let leave = current.properties.leave_enabled;
+    v_flex()
+        .gap(px(6.))
+        .child("Disable until hitting the following breakpoint:")
+        .child(div().pl(px(20.)).child(labeled_combo(
+            "breakpoint-master",
+            "Disable until hitting the following breakpoint:",
+            current_name,
+            220.,
+            false,
+            choose,
+        )))
+        .child(
+            h_flex()
+                .pl(px(20.))
+                .gap(px(12.))
+                .child("After hit:")
+                .child(after("Disable again", !leave, false))
+                .child(after("Leave enabled", leave, true)),
+        )
+        .into_any_element()
+}
+
+/// A method breakpoint's or field watchpoint's Watch (`MethodBreakpointPropertiesPanel`,
+/// `FieldBreakpointPropertiesPanel`): a method's entry, as java-debug stops at it, its exit greyed
+/// (java-debug has no method exit) and Emulated (the line breakpoint of its first line); a
+/// field's access and modification.
+fn watch_panel(
+    store: &Entity<BreakpointStore>,
+    path: &Arc<Path>,
+    row: u32,
+    current: &Breakpoint,
+    cx: &App,
+) -> Option<AnyElement> {
+    let checks = match &current.properties.kind {
+        BreakpointKind::Line => return None,
+        BreakpointKind::Method { .. } => vec![
+            disabled_check("watch-entry", "Method entry", true, cx).into_any_element(),
+            disabled_check("watch-exit", "Method exit", false, cx).into_any_element(),
+            disabled_check("watch-emulated", "Emulated", true, cx).into_any_element(),
+        ],
+        BreakpointKind::Field {
+            access,
+            modification,
+            ..
+        } => {
+            let toggle = |id: &'static str, label: &'static str, on: bool, access: bool| {
+                let (store, path) = (store.clone(), path.clone());
+                labeled_check(id, label, on, cx)
+                    .on_click(move |_, _, cx| {
+                        edit(&store, &path, row, cx, |breakpoint| {
+                            if let BreakpointKind::Field {
+                                access: read,
+                                modification: write,
+                                ..
+                            } = &mut breakpoint.properties.kind
+                            {
+                                match access {
+                                    true => *read = !*read,
+                                    false => *write = !*write,
+                                }
+                            }
+                        })
+                    })
+                    .into_any_element()
+            };
+            vec![
+                toggle("watch-access", "Field access", *access, true),
+                toggle(
+                    "watch-modification",
+                    "Field modification",
+                    *modification,
+                    false,
+                ),
+            ]
+        }
+    };
+    Some(
+        v_flex()
+            .gap(px(6.))
+            .child(div().pt(px(6.)).child("Watch"))
+            .child(v_flex().pl(px(20.)).gap(px(6.)).children(checks))
+            .into_any_element(),
+    )
 }
 
 /// Edit Breakpoint: the popup of the caret line's breakpoint, under that line; false when the
@@ -411,7 +803,6 @@ impl Render for BreakpointPopup {
         };
         let (path, row) = (self.path.clone(), self.row);
         let enabled = current.is_enabled();
-        let suspends = current.message.is_none();
         let toggle_enabled = {
             let (store, path) = (store.clone(), path.clone());
             move |_: &gpui::ClickEvent, _: &mut Window, cx: &mut App| {
@@ -423,16 +814,18 @@ impl Render for BreakpointPopup {
                 })
             }
         };
-        let toggle_suspend = {
-            move |_: &gpui::ClickEvent, _: &mut Window, cx: &mut App| {
-                edit(&store, &path, row, cx, |breakpoint| {
-                    breakpoint.message = match breakpoint.message {
-                        Some(_) => None,
-                        None => Some(hit_message(&path, row).into()),
-                    };
-                })
-            }
-        };
+        // the light variant (`XLightBreakpointPropertiesPanel`): the other panels when they are set
+        let temporary = current
+            .properties
+            .temporary
+            .then(|| remove_once_hit(&store, &path, row, &current, cx));
+        let master = current
+            .properties
+            .master
+            .is_some()
+            .then(|| master_breakpoint(&store, &path, row, &current, cx));
+        let suspend = suspend_policy(&store, &path, row, &current, cx);
+        let pass_count = current.hit_condition;
         anchored()
             .position(self.position + point(px(0.), px(8.)))
             .snap_to_window_with_margin(px(8.))
@@ -462,15 +855,17 @@ impl Render for BreakpointPopup {
                             labeled_check("breakpoint-enabled", "Enabled", enabled, cx)
                                 .on_click(toggle_enabled),
                         )
-                        .child(
-                            labeled_check("breakpoint-suspend", "Suspend", suspends, cx)
-                                .on_click(toggle_suspend),
-                        )
+                        .child(suspend)
                         .child("Condition:")
                         .child(
                             spork_workbench::TextField::new(&self.condition)
                                 .aria_label("Condition"),
                         )
+                        .children(temporary)
+                        .children(master)
+                        .when_some(pass_count, |popup, count| {
+                            popup.child(format!("Pass count: {count}"))
+                        })
                         .child(
                             h_flex()
                                 .justify_between()
@@ -793,6 +1188,7 @@ impl BreakpointsDialog {
                             hit_condition: source.hit_condition,
                             condition: source.condition,
                             state: source.state,
+                            properties: source.properties,
                         },
                     )
                 })
@@ -930,57 +1326,81 @@ impl BreakpointsDialog {
     ) -> AnyElement {
         let tokens = Tokens::get(cx);
         let store = self.store(cx);
-        let all_on = match rows.iter().filter(|(_, _, b)| b.is_enabled()).count() {
-            0 => Some(false),
-            n if n == rows.len() => Some(true),
-            _ => None,
-        };
-        let group_store = store.clone();
-        let group_rows: Vec<_> = rows
-            .iter()
-            .map(|(path, row, _)| (path.clone(), *row))
-            .collect();
-        let group = h_flex()
-            .id("breakpoints-group")
-            .role(Role::TreeItem)
-            .aria_label("Line Breakpoints")
-            .aria_expanded(true)
-            .h(px(24.))
-            .px(px(6.))
-            .gap(px(4.))
-            .child(
-                spork_workbench::icon("general/chevronDown")
-                    .size(px(16.))
-                    .text_color(tokens.icon),
-            )
-            .child(
-                check_box("breakpoints-group-check", all_on, cx)
-                    .role(Role::CheckBox)
-                    .aria_label("Line Breakpoints")
-                    .aria_toggled(match all_on {
-                        Some(true) => gpui::Toggled::True,
-                        Some(false) => gpui::Toggled::False,
-                        None => gpui::Toggled::Mixed,
-                    })
-                    .on_click(move |_, _, cx| {
-                        let on = all_on != Some(true);
-                        for (path, row) in &group_rows {
-                            edit(&group_store, path, *row, cx, |breakpoint| {
-                                breakpoint.state = match on {
-                                    true => BreakpointState::Enabled,
-                                    false => BreakpointState::Disabled,
+        // IntelliJ's groups by breakpoint type, the line breakpoints first
+        let mut groups: Vec<AnyElement> = Vec::new();
+        for (group_ix, (title, icon, kind)) in [
+            ("Line Breakpoints", "breakpoints/breakpoint", 0),
+            ("Java Method Breakpoints", "breakpoints/breakpointMethod", 1),
+            ("Java Field Watchpoints", "breakpoints/breakpointField", 2),
+            // `KotlinDebuggerCoreBundle`'s `function.breakpoint.tab.title`
+            (
+                "Kotlin Function Breakpoints",
+                "breakpoints/breakpointMethod",
+                3,
+            ),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let rows: Vec<_> = rows
+                .iter()
+                .enumerate()
+                .filter(|(_, (_, _, breakpoint))| kind_index(breakpoint) == kind)
+                .collect();
+            if rows.is_empty() {
+                continue;
+            }
+            let all_on = match rows.iter().filter(|(_, (_, _, b))| b.is_enabled()).count() {
+                0 => Some(false),
+                n if n == rows.len() => Some(true),
+                _ => None,
+            };
+            let group_store = store.clone();
+            let group_rows: Vec<_> = rows
+                .iter()
+                .map(|(_, (path, row, _))| (path.clone(), *row))
+                .collect();
+            groups.push(
+                h_flex()
+                    .id(("breakpoints-group", group_ix))
+                    .role(Role::TreeItem)
+                    .aria_label(title)
+                    .aria_expanded(true)
+                    .h(px(24.))
+                    .px(px(6.))
+                    .gap(px(4.))
+                    .child(
+                        spork_workbench::icon("general/chevronDown")
+                            .size(px(16.))
+                            .text_color(tokens.icon),
+                    )
+                    .child(
+                        check_box(("breakpoints-group-check", group_ix), all_on, cx)
+                            .role(Role::CheckBox)
+                            .aria_label(title)
+                            .aria_toggled(match all_on {
+                                Some(true) => gpui::Toggled::True,
+                                Some(false) => gpui::Toggled::False,
+                                None => gpui::Toggled::Mixed,
+                            })
+                            .on_click(move |_, _, cx| {
+                                let on = all_on != Some(true);
+                                for (path, row) in &group_rows {
+                                    edit(&group_store, path, *row, cx, |breakpoint| {
+                                        breakpoint.state = match on {
+                                            true => BreakpointState::Enabled,
+                                            false => BreakpointState::Disabled,
+                                        }
+                                    });
                                 }
-                            });
-                        }
-                    }),
-            )
-            .child(spork_workbench::image("breakpoints/breakpoint", cx).size(px(16.)))
-            .child("Line Breakpoints");
-        let items = rows
-            .iter()
-            .enumerate()
-            .map(|(ix, (path, row, breakpoint))| {
-                let name = short_name(path, *row);
+                            }),
+                    )
+                    .child(spork_workbench::image(icon, cx).size(px(16.)))
+                    .child(title)
+                    .into_any_element(),
+            );
+            for (ix, (path, row, breakpoint)) in rows {
+                let name = display_name(path, *row, breakpoint);
                 let selected = self.selected.as_ref() == Some(&(path.clone(), *row));
                 let (check_store, check_path, check_row) = (store.clone(), path.clone(), *row);
                 let pick = (path.clone(), *row);
@@ -990,45 +1410,51 @@ impl BreakpointsDialog {
                         || breakpoint.hit_condition.is_some(),
                     logs: breakpoint.message.is_some(),
                     verified: None,
+                    dependent: breakpoint.properties.master.is_some(),
+                    method: kind == 1,
+                    field: kind == 2,
                 };
-                h_flex()
-                    .id(("breakpoint-row", ix))
-                    .role(Role::TreeItem)
-                    .aria_label(SharedString::from(name.clone()))
-                    .aria_selected(selected)
-                    .h(px(24.))
-                    .mx(px(6.))
-                    .pl(px(26.))
-                    .pr(px(6.))
-                    .gap(px(4.))
-                    .rounded(px(4.))
-                    .cursor_pointer()
-                    .when(selected, |row| row.bg(tokens.selection))
-                    .when(!selected, |row| {
-                        row.hover(move |row| row.bg(tokens.selection_hover))
-                    })
-                    .child(
-                        check_box(("breakpoint-check", ix), Some(breakpoint.is_enabled()), cx)
-                            .role(Role::CheckBox)
-                            .aria_label(SharedString::from(name.clone()))
-                            .aria_toggled(breakpoint.is_enabled().into())
-                            .on_click(move |_, _, cx| {
-                                cx.stop_propagation();
-                                edit(&check_store, &check_path, check_row, cx, |breakpoint| {
-                                    breakpoint.state = match breakpoint.state {
-                                        BreakpointState::Enabled => BreakpointState::Disabled,
-                                        BreakpointState::Disabled => BreakpointState::Enabled,
-                                    };
-                                });
-                            }),
-                    )
-                    .child(gutter_icon(look, false, cx))
-                    .child(name)
-                    .on_click(cx.listener(move |this, _, window, cx| {
-                        this.select(Some(pick.clone()), window, cx)
-                    }))
-                    .into_any_element()
-            });
+                groups.push(
+                    h_flex()
+                        .id(("breakpoint-row", ix))
+                        .role(Role::TreeItem)
+                        .aria_label(SharedString::from(name.clone()))
+                        .aria_selected(selected)
+                        .h(px(24.))
+                        .mx(px(6.))
+                        .pl(px(26.))
+                        .pr(px(6.))
+                        .gap(px(4.))
+                        .rounded(px(4.))
+                        .cursor_pointer()
+                        .when(selected, |row| row.bg(tokens.selection))
+                        .when(!selected, |row| {
+                            row.hover(move |row| row.bg(tokens.selection_hover))
+                        })
+                        .child(
+                            check_box(("breakpoint-check", ix), Some(breakpoint.is_enabled()), cx)
+                                .role(Role::CheckBox)
+                                .aria_label(SharedString::from(name.clone()))
+                                .aria_toggled(breakpoint.is_enabled().into())
+                                .on_click(move |_, _, cx| {
+                                    cx.stop_propagation();
+                                    edit(&check_store, &check_path, check_row, cx, |breakpoint| {
+                                        breakpoint.state = match breakpoint.state {
+                                            BreakpointState::Enabled => BreakpointState::Disabled,
+                                            BreakpointState::Disabled => BreakpointState::Enabled,
+                                        };
+                                    });
+                                }),
+                        )
+                        .child(gutter_icon(look, false, cx))
+                        .child(name)
+                        .on_click(cx.listener(move |this, _, window, cx| {
+                            this.select(Some(pick.clone()), window, cx)
+                        }))
+                        .into_any_element(),
+                );
+            }
+        }
         let mut exception_groups: Vec<AnyElement> = Vec::new();
         for (group_ix, (adapter, filters)) in exceptions.iter().enumerate() {
             let title = SharedString::from(format!("{adapter} Exception Breakpoints"));
@@ -1221,7 +1647,7 @@ impl BreakpointsDialog {
             .flex_1()
             .py(px(4.))
             .overflow_y_scroll()
-            .when(!rows.is_empty(), |tree| tree.child(group).children(items))
+            .children(groups)
             .children(exception_groups)
             .into_any_element()
     }
@@ -1358,7 +1784,7 @@ impl BreakpointsDialog {
         };
         let store = self.store(cx);
         let toggle_enabled = {
-            let (store, path) = (store, path.clone());
+            let (store, path) = (store.clone(), path.clone());
             move |_: &gpui::ClickEvent, _: &mut Window, cx: &mut App| {
                 edit(&store, &path, row, cx, |breakpoint| {
                     breakpoint.state = match breakpoint.state {
@@ -1368,7 +1794,20 @@ impl BreakpointsDialog {
                 })
             }
         };
-        let suspends = current.message.is_none();
+        let suspend = suspend_policy(&store, &path, row, &current, cx);
+        let temporary = remove_once_hit(&store, &path, row, &current, cx);
+        let master = master_breakpoint(&store, &path, row, &current, cx);
+        let watch = watch_panel(&store, &path, row, &current, cx);
+        let title = match &current.properties.kind {
+            BreakpointKind::Line => format!("{}, Line breakpoint", short_name(&path, row)),
+            // `KotlinDebuggerCoreBundle`'s `function.breakpoint.description`
+            BreakpointKind::Method {
+                name,
+                function: Some(_),
+            } => format!("{name}, Function breakpoint"),
+            BreakpointKind::Method { name, .. } => format!("{name}, Method breakpoint"),
+            BreakpointKind::Field { name, .. } => format!("{name}, Field watchpoint"),
+        };
         let has_condition = current.condition.is_some();
         let (hit, evaluates) = match &current.message {
             Some(message) => {
@@ -1382,28 +1821,23 @@ impl BreakpointsDialog {
             .id("breakpoint-details")
             .flex_1()
             .min_w_0()
+            .h_full()
+            .overflow_y_scroll()
             .p(px(16.))
             .gap(px(10.))
             .child(
                 div()
                     .id("breakpoint-title")
                     .role(Role::Heading)
-                    .aria_label(SharedString::from(format!(
-                        "{}, Line breakpoint",
-                        short_name(&path, row)
-                    )))
+                    .aria_label(SharedString::from(title.clone()))
                     .font_weight(gpui::FontWeight::BOLD)
-                    .child(format!("{}, Line breakpoint", short_name(&path, row))),
+                    .child(title),
             )
             .child(
                 labeled_check("details-enabled", "Enabled", current.is_enabled(), cx)
                     .on_click(toggle_enabled),
             )
-            .child(
-                labeled_check("details-suspend", "Suspend", suspends, cx).on_click(
-                    cx.listener(move |this, _, _, cx| this.check(Text::Log, suspends, cx)),
-                ),
-            )
+            .child(suspend)
             .child(
                 labeled_check("details-condition", "Condition:", has_condition, cx).on_click(
                     cx.listener(move |this, _, _, cx| {
@@ -1431,6 +1865,8 @@ impl BreakpointsDialog {
                     spork_workbench::TextField::new(&self.log).aria_label("Evaluate and log"),
                 ),
             )
+            .child(temporary)
+            .child(master)
             .child(
                 labeled_check("details-pass-count", "Pass count:", counts, cx).on_click(
                     cx.listener(move |this, _, _, cx| this.check(Text::PassCount, !counts, cx)),
@@ -1441,6 +1877,7 @@ impl BreakpointsDialog {
                     spork_workbench::TextField::new(&self.pass_count).aria_label("Pass count"),
                 ),
             )
+            .children(watch)
             .into_any_element()
     }
 }
@@ -1551,7 +1988,8 @@ pub(crate) fn e2e_breakpoints(workspace: &Workspace, cx: &App) -> Value {
     let store = workspace.project().read(cx).breakpoint_store();
     let all = store.read(cx).all_source_breakpoints(cx);
     all.into_iter()
-        .flat_map(|(path, breakpoints)| {
+        .flat_map(|(path, mut breakpoints)| {
+            breakpoints.sort_by_key(|breakpoint| breakpoint.row);
             breakpoints.into_iter().map(move |breakpoint| {
                 json!({
                     "at": short_name(&path, breakpoint.row),
@@ -1559,6 +1997,24 @@ pub(crate) fn e2e_breakpoints(workspace: &Workspace, cx: &App) -> Value {
                     "condition": breakpoint.condition.as_deref(),
                     "log": breakpoint.message.as_deref(),
                     "pass_count": breakpoint.hit_condition.as_deref(),
+                    "suspend": match (breakpoint.message.is_none(), breakpoint.properties.suspend_thread) {
+                        (false, _) => "none",
+                        (true, false) => "all",
+                        (true, true) => "thread",
+                    },
+                    "temporary": breakpoint.properties.temporary,
+                    "depends_on": breakpoint.properties.master.as_ref().map(|(path, row)| short_name(path, *row)),
+                    "kind": match &breakpoint.properties.kind {
+                        BreakpointKind::Line => "line",
+                        BreakpointKind::Method { .. } => "method",
+                        BreakpointKind::Field { .. } => "field",
+                    },
+                    "name": match &breakpoint.properties.kind {
+                        BreakpointKind::Line => None,
+                        BreakpointKind::Method { name, .. } | BreakpointKind::Field { name, .. } => Some(name.as_str()),
+                    },
+                    "function": breakpoint.properties.function(),
+                    "columns": breakpoint.properties.columns,
                 })
             })
         })

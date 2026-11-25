@@ -1,0 +1,249 @@
+{
+ "id": "java-debug-run-to-cursor",
+ "fixture": "maven",
+ "covers": [
+  "action:RunToCursor"
+ ],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "sh": "mkdir -p .zed && printf '%s' '[{\"label\": \"Debuggee\", \"adapter\": \"Java\", \"request\": \"launch\", \"mainClass\": \"com.example.Debuggee\"}]' > .zed/debug.json"
+  },
+  {
+   "expect": {
+    "java.tool": "Maven"
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 600000
+  },
+  {
+   "expect": {
+    "run.configurations.selected": "Debuggee"
+   },
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "do": "open",
+   "path": "src/main/java/com/example/Debuggee.java"
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/Debuggee.java",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "type",
+   "text": "23:1"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "find": {
+    "label": "Debug 'Debuggee'",
+    "role": "AXButton",
+    "enabled": true
+   },
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-d"
+  },
+  {
+   "expect": {
+    "run.debug.status": "Stopped"
+   },
+   "within": 120000
+  },
+  {
+   "expect": {
+    "run.debug.frames.0": "main:23, Debuggee (com.example)"
+   },
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "type",
+   "text": "25:9"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "do": "keys",
+   "keys": "alt-f9"
+  },
+  {
+   "expect": {
+    "run.debug.frames.0": "main:25, Debuggee (com.example)"
+   },
+   "within": 20000
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "do": "click",
+   "line_number": 31
+  },
+  {
+   "expect": {
+    "run.debug.frames.0": "main:31, Debuggee (com.example)",
+    "run.debug.status": "Stopped"
+   },
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f2"
+  },
+  {
+   "expect": {
+    "run.debug.terminated": true
+   },
+   "within": 30000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "type",
+   "text": "21:1"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-d"
+  },
+  {
+   "expect": {
+    "run.debug.status": "Stopped",
+    "run.debug.terminated": false
+   },
+   "within": 120000
+  },
+  {
+   "expect": {
+    "run.debug.frames.0": "main:21, Debuggee (com.example)"
+   },
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "shift-f7"
+  },
+  {
+   "expect": {
+    "run.smart_step.targets": [
+     "names.get(i)",
+     "measure(names.get(i))"
+    ],
+    "run.smart_step.selected": "names.get(i)"
+   },
+   "within": 10000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "front"
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "smart-step-into"
+  },
+  {
+   "do": "keys",
+   "keys": "right"
+  },
+  {
+   "expect": {
+    "run.smart_step.selected": "measure(names.get(i))"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "run.smart_step": null,
+    "run.debug.frames.0": "measure:44, Debuggee (com.example)"
+   },
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f2"
+  },
+  {
+   "expect": {
+    "run.debug.terminated": true
+   },
+   "within": 30000
+  }
+ ]
+}

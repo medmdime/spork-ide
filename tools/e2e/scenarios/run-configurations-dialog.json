@@ -162,7 +162,8 @@
     "Node.js",
     "Python",
     "Remote JVM Debug",
-    "Spring Boot"
+    "Spring Boot",
+    "TestNG"
    ]
   },
   {
@@ -231,7 +232,7 @@
    "role": "AXButton"
   },
   {
-   "sh": "cat .zed/tasks.json",
+   "sh": "cat \"../home/Library/Application Support/Spork IDE/workspace/\"*/tasks.json",
    "contains": "\"label\": \"greet\"",
    "within": 8000
   },
@@ -318,12 +319,12 @@
    "within": 5000
   },
   {
-   "sh": "cat ../home/.config/spork-ide/tasks.json",
+   "sh": "cat .zed/tasks.json",
    "contains": "\"folder\": \"New Folder\"",
    "within": 8000
   },
   {
-   "sh": "cat .zed/tasks.json",
+   "sh": "cat \"../home/Library/Application Support/Spork IDE/workspace/\"*/tasks.json",
    "lacks": "greet"
   },
   {

@@ -150,7 +150,7 @@ pub(crate) struct Projects(pub(crate) HashMap<EntityId, Entity<JavaProject>>);
 impl Global for Projects {}
 
 pub struct JavaProject {
-    pub(crate) workspace: WeakEntity<Workspace>,
+    pub workspace: WeakEntity<Workspace>,
     pub(crate) project: Entity<Project>,
     /// The project's first folder.
     pub root: Option<PathBuf>,
@@ -215,9 +215,17 @@ pub(crate) fn register(
         }
         if let Some(tool) = java.read(cx).tool {
             added = true;
+            let spring = java
+                .read(cx)
+                .root
+                .as_deref()
+                .is_some_and(crate::spring_boot::is_project);
             cx.defer_in(window, move |workspace, window, cx| {
                 crate::build_tool_window::add(workspace, tool, window, cx);
                 crate::build_view::add(workspace, window, cx);
+                if spring {
+                    crate::endpoints::add(workspace, window, cx);
+                }
             });
         }
     })
@@ -492,7 +500,8 @@ impl JavaProject {
             if let Some(scanned) = scanned {
                 scanned.await;
             }
-            let Some(java_file) = worktree.read_with(cx, |worktree, _| {
+            let root = worktree.read_with(cx, |worktree, _| worktree.abs_path().to_path_buf());
+            let found = worktree.read_with(cx, |worktree, _| {
                 worktree
                     .entries(false, 0)
                     .find(|entry| {
@@ -506,7 +515,17 @@ impl JavaProject {
                             .find(|entry| entry.is_file() && entry.path.extension() == Some("java"))
                     })
                     .map(|entry| worktree.abs_path().join(entry.path.as_std_path()))
-            }) else {
+            });
+            // a folder outside git is scanned 5 levels deep at first, `src/main/java/com/x`'s
+            // sources deeper still
+            let found = match found {
+                Some(file) => Some(file),
+                None => {
+                    cx.background_spawn(async move { first_java_file(&root) })
+                        .await
+                }
+            };
+            let Some(java_file) = found else {
                 return;
             };
             let opened = project
@@ -1062,6 +1081,42 @@ impl JavaProject {
     }
 }
 
+/// The first Java source under `root` on disk, a main source before a test's, past the build's
+/// output and hidden folders.
+fn first_java_file(root: &Path) -> Option<PathBuf> {
+    let mut folders = std::collections::VecDeque::from([root.join("src/main"), root.to_path_buf()]);
+    let mut seen = 0;
+    while let Some(folder) = folders.pop_front() {
+        seen += 1;
+        // shortcut: a bounded walk; the worktree's own scan finds what this misses
+        if seen > 2000 {
+            return None;
+        }
+        let Ok(entries) = std::fs::read_dir(&folder) else {
+            continue;
+        };
+        let mut entries: Vec<PathBuf> = entries.filter_map(|e| e.ok().map(|e| e.path())).collect();
+        entries.sort();
+        for path in entries {
+            let name = path
+                .file_name()
+                .and_then(|name| name.to_str())
+                .unwrap_or_default();
+            if path.is_dir() {
+                if !name.starts_with('.') && !matches!(name, "target" | "build" | "node_modules") {
+                    folders.push_back(path);
+                }
+            } else if path
+                .extension()
+                .is_some_and(|extension| extension == "java")
+            {
+                return Some(path);
+            }
+        }
+    }
+    None
+}
+
 /// The JDT LS of `project`, once it runs.
 pub(crate) fn language_server(project: &Entity<Project>, cx: &App) -> Option<Arc<LanguageServer>> {
     let lsp_store = project.read(cx).lsp_store();
@@ -1210,6 +1265,16 @@ impl project_panel::FolderRoles for JavaFolderRoles {
         }
     }
 
+    fn run_items(&self, abs_path: &Path) -> Vec<project_panel::NewItem> {
+        let Some(test_root) = self
+            .source_root_of(abs_path)
+            .filter(|root| root.ends_with("src/test/java") || root.ends_with("src/test/kotlin"))
+        else {
+            return Vec::new();
+        };
+        crate::testing::run_items(&test_root, abs_path)
+    }
+
     fn extra_roots(&self) -> Vec<PathBuf> {
         self.1
             .read()
@@ -1328,9 +1393,23 @@ impl lsp::notification::Notification for ProjectConfigurationUpdate {
 
 #[cfg(test)]
 mod tests {
-    use super::{JavaFolderRoles, Tool};
+    use super::{JavaFolderRoles, Tool, first_java_file};
     use project_panel::FolderRoles as _;
     use std::path::Path;
+
+    #[test]
+    fn finds_a_main_source_deeper_than_the_first_scan() -> std::io::Result<()> {
+        let root = tempfile::tempdir()?;
+        let main = root.path().join("src/main/java/com/example/demo/app");
+        let test = root.path().join("src/test/java/com/example");
+        std::fs::create_dir_all(&main)?;
+        std::fs::create_dir_all(&test)?;
+        std::fs::write(test.join("ATest.java"), "")?;
+        std::fs::write(main.join("App.java"), "")?;
+        assert_eq!(first_java_file(root.path()), Some(main.join("App.java")));
+        assert_eq!(first_java_file(&root.path().join("missing")), None);
+        Ok(())
+    }
 
     #[test]
     fn finds_each_build_tool_at_the_root() -> std::io::Result<()> {

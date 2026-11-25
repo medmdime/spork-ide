@@ -1,0 +1,133 @@
+{
+ "id": "java-test-debug",
+ "fixture": "tests-maven",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven"
+   },
+   "within": 20000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 600000
+  },
+  {
+   "do": "open",
+   "path": "src/main/java/com/example/Debuggee.java"
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/Debuggee.java"
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "type",
+   "text": "44:1"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "do": "open",
+   "path": "src/test/java/com/example/DebuggeeTest.java"
+  },
+  {
+   "find": {
+    "label": "Run test 'DebuggeeTest'",
+    "role": "AXButton"
+   },
+   "within": 30000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "click",
+   "label": "Run test 'DebuggeeTest'",
+   "role": "AXButton"
+  },
+  {
+   "find": "Debug 'DebuggeeTest'",
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Debug 'DebuggeeTest'"
+  },
+  {
+   "expect": {
+    "run.debug.status": "Stopped"
+   },
+   "within": 180000
+  },
+  {
+   "expect": {
+    "run.debug.frames.0": "measure:44, Debuggee (com.example)",
+    "run.debug.frames.1": "measuresANameByItsLength:10, DebuggeeTest (com.example)",
+    "run.debug.variables": [
+     "name = \"Grace\""
+    ]
+   },
+   "within": 20000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "stopped"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-alt-r"
+  },
+  {
+   "expect": {
+    "run.debug.console": {
+     "contains": "Process finished with exit code 0"
+    }
+   },
+   "within": 60000
+  }
+ ]
+}

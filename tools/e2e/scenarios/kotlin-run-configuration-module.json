@@ -1,0 +1,263 @@
+{
+ "id": "kotlin-run-configuration-module",
+ "fixture": "kotlin-multi",
+ "covers": [],
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Gradle",
+    "kotlin.detected": true
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "java.linked": true
+   },
+   "within": 600000
+  },
+  {
+   "do": "action",
+   "name": "run::EditConfigurations"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Run/Debug Configurations"
+   },
+   "within": 8000
+  },
+  {
+   "find": {
+    "label": "Add New Configuration",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Add New Configuration",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Kotlin",
+    "role": "AXMenuItem"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Kotlin",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "Name:",
+     "role": "AXTextField",
+     "value": "Unnamed"
+    },
+    {
+     "label": "Main class:",
+     "role": "AXTextField"
+    },
+    {
+     "label": "VM options:",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Program arguments:",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Working directory:",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Environment variables:",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Use classpath of module:",
+     "role": "AXPopUpButton",
+     "value": "<no module>"
+    },
+    {
+     "label": "JRE:",
+     "role": "AXPopUpButton",
+     "value": "Default"
+    },
+    {
+     "label": "Shorten command line:",
+     "role": "AXPopUpButton",
+     "value": "none"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Name:",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "do": "type",
+   "text": "AppKt",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "do": "click",
+   "label": "Main class:",
+   "role": "AXTextField"
+  },
+  {
+   "do": "type",
+   "text": "com.example.app.AppKt",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "do": "click",
+   "label": "Use classpath of module:",
+   "role": "AXPopUpButton"
+  },
+  {
+   "menu": "Run/Debug Configurations",
+   "items": [
+    "<no module>",
+    "fixture",
+    "fixture.app",
+    "fixture.app.main",
+    "fixture.app.test"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "fixture.app.main",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Use classpath of module:",
+    "role": "AXPopUpButton",
+    "value": "fixture.app.main"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "JRE:",
+   "role": "AXPopUpButton"
+  },
+  {
+   "menu": "Run/Debug Configurations",
+   "items": [
+    "Default",
+    "zulu-17 Azul Zulu 17.0.20.1 - aarch64",
+    "Download JDK…",
+    "Select alternative JRE…"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "zulu-17 Azul Zulu 17.0.20.1 - aarch64",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "JRE:",
+    "role": "AXPopUpButton",
+    "value": "zulu-17"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Shorten command line:",
+   "role": "AXPopUpButton"
+  },
+  {
+   "menu": "Run/Debug Configurations",
+   "items": [
+    "none - java [options] className [args]",
+    "JAR manifest - java -cp classpath.jar className [args]",
+    "@argfile (Java 9+) - java @argfile className [args]"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "JAR manifest - java -cp classpath.jar className [args]",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Shorten command line:",
+    "role": "AXPopUpButton",
+    "value": "JAR manifest"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Main class:",
+   "role": "AXTextField"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "activate",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "dialog",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Run",
+   "role": "AXButton",
+   "nth": 1
+  },
+  {
+   "expect": {
+    "windows.1": null
+   },
+   "within": 5000
+  },
+  {
+   "sh": "cat \"../home/Library/Application Support/Spork IDE/workspace/\"*/debug.json",
+   "contains": "\"module\": \"fixture.app.main\"",
+   "within": 8000
+  },
+  {
+   "sh": "cat \"../home/Library/Application Support/Spork IDE/workspace/\"*/debug.json",
+   "contains": "\"shortenCommandLine\": \"MANIFEST\""
+  },
+  {
+   "sh": "cat \"../home/Library/Application Support/Spork IDE/workspace/\"*/debug.json",
+   "contains": "\"javaExec\": \"/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home/bin/java\""
+  },
+  {
+   "expect": {
+    "run.tabs.0.title": "AppKt",
+    "run.tabs.0.running": false,
+    "run.tabs.0.output": {
+     "contains": "> Task :app:AppKt.main()\nHello from app\nclasspath.jar\n"
+    },
+    "run.tabs.0.last_line": "Process finished with exit code 0"
+   },
+   "within": 240000
+  }
+ ]
+}

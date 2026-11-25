@@ -253,7 +253,7 @@ fn main() {
     static mut GLOBAL: usize = 1;
 
     fn main() {
-        let x: 10 = 10;
+        let x = 10;  x: 10
         let value = 42;
         let y = 4;
         let tester = {
@@ -310,8 +310,8 @@ fn main() {
     static mut GLOBAL: usize = 1;
 
     fn main() {
-        let x: 10 = 10;
-        let value: 42 = 42;
+        let x = 10;  x: 10
+        let value = 42;  value: 42
         let y = 4;
         let tester = {
             let y = 10;
@@ -367,9 +367,9 @@ fn main() {
     static mut GLOBAL: usize = 1;
 
     fn main() {
-        let x: 10 = 10;
-        let value: 42 = 42;
-        let y: 4 = 4;
+        let x = 10;  x: 10
+        let value = 42;  value: 42
+        let y = 4;  y: 4
         let tester = {
             let y = 10;
             let y = 5;
@@ -424,9 +424,9 @@ fn main() {
     static mut GLOBAL: usize = 1;
 
     fn main() {
-        let x: 10 = 10;
-        let value: 42 = 42;
-        let y: 4 = 4;
+        let x = 10;  x: 10
+        let value = 42;  value: 42
+        let y = 4;  y: 4
         let tester = {
             let y = 10;
             let y = 5;
@@ -481,11 +481,11 @@ fn main() {
     static mut GLOBAL: usize = 1;
 
     fn main() {
-        let x: 10 = 10;
-        let value: 42 = 42;
-        let y: 4 = 4;
+        let x = 10;  x: 10
+        let value = 42;  value: 42
+        let y = 4;  y: 4
         let tester = {
-            let y: 4 = 10;
+            let y = 10;  y: 4
             let y = 5;
             let b = 3;
             vec![y, 20, 30]
@@ -588,12 +588,12 @@ fn main() {
     static mut GLOBAL: usize = 1;
 
     fn main() {
-        let x: 10 = 10;
-        let value: 42 = 42;
-        let y: 10 = 4;
+        let x = 10;  x: 10
+        let value = 42;  value: 42
+        let y = 4;  y: 10
         let tester = {
-            let y: 10 = 10;
-            let y: 10 = 5;
+            let y = 10;  y: 10
+            let y = 5;  y: 10
             let b = 3;
             vec![y, 20, 30]
         };
@@ -695,12 +695,12 @@ fn main() {
     static mut GLOBAL: usize = 1;
 
     fn main() {
-        let x: 10 = 10;
-        let value: 42 = 42;
-        let y: 5 = 4;
+        let x = 10;  x: 10
+        let value = 42;  value: 42
+        let y = 4;  y: 5
         let tester = {
-            let y: 5 = 10;
-            let y: 5 = 5;
+            let y = 10;  y: 5
+            let y = 5;  y: 5
             let b = 3;
             vec![y, 20, 30]
         };
@@ -814,14 +814,14 @@ fn main() {
     static mut GLOBAL: usize = 1;
 
     fn main() {
-        let x: 10 = 10;
-        let value: 42 = 42;
-        let y: 5 = 4;
+        let x = 10;  x: 10
+        let value = 42;  value: 42
+        let y = 4;  y: 5
         let tester = {
-            let y: 5 = 10;
-            let y: 5 = 5;
-            let b: 3 = 3;
-            vec![y: 5, 20, 30]
+            let y = 10;  y: 5
+            let y = 5;  y: 5
+            let b = 3;  b: 3
+            vec![y, 20, 30]  y: 5
         };
 
         let caller = || {
@@ -933,10 +933,10 @@ fn main() {
     static mut GLOBAL: usize = 1;
 
     fn main() {
-        let x: 10 = 10;
-        let value: 42 = 42;
-        let y: 4 = 4;
-        let tester: size=3 = {
+        let x = 10;  x: 10
+        let value = 42;  value: 42
+        let y = 4;  y: 4
+        let tester = {  tester: size=3
             let y = 10;
             let y = 5;
             let b = 3;
@@ -1065,17 +1065,17 @@ fn main() {
     static mut GLOBAL: usize = 1;
 
     fn main() {
-        let x: 10 = 10;
-        let value: 42 = 42;
-        let y: 4 = 4;
-        let tester: size=3 = {
+        let x = 10;  x: 10
+        let value = 42;  value: 42
+        let y = 4;  y: 4
+        let tester = {  tester: size=3
             let y = 10;
             let y = 5;
             let b = 3;
             vec![y, 20, 30]
         };
 
-        let caller: <not available> = || {
+        let caller = || {  caller: <not available>
             let x = 3;
             println!("x={}", x);
         };
@@ -1122,18 +1122,18 @@ fn main() {
     static mut GLOBAL: usize = 1;
 
     fn main() {
-        let x: 10 = 10;
-        let value: 42 = 42;
-        let y: 4 = 4;
-        let tester: size=3 = {
+        let x = 10;  x: 10
+        let value = 42;  value: 42
+        let y = 4;  y: 4
+        let tester = {  tester: size=3
             let y = 10;
             let y = 5;
             let b = 3;
             vec![y, 20, 30]
         };
 
-        let caller: <not available> = || {
-            let x: 10 = 3;
+        let caller = || {  caller: <not available>
+            let x = 3;  x: 10
             println!("x={}", x);
         };
 
@@ -1200,7 +1200,7 @@ fn main() {
     static mut GLOBAL: usize = 1;
 
     fn main() {
-        let x: 3 = 10;
+        let x = 10;  x: 3
         let value = 42;
         let y = 4;
         let tester = {
@@ -1211,8 +1211,8 @@ fn main() {
         };
 
         let caller = || {
-            let x: 3 = 3;
-            println!("x={}", x: 3);
+            let x = 3;  x: 3
+            println!("x={}", x);  x: 3
         };
 
         caller();
@@ -1345,17 +1345,17 @@ fn main() {
     static mut GLOBAL: usize = 1;
 
     fn main() {
-        let x: 10 = 10;
-        let value: 42 = 42;
-        let y: 4 = 4;
-        let tester: size=3 = {
+        let x = 10;  x: 10
+        let value = 42;  value: 42
+        let y = 4;  y: 4
+        let tester = {  tester: size=3
             let y = 10;
             let y = 5;
             let b = 3;
             vec![y, 20, 30]
         };
 
-        let caller: <not available> = || {
+        let caller = || {  caller: <not available>
             let x = 3;
             println!("x={}", x);
         };
@@ -1366,7 +1366,7 @@ fn main() {
             GLOBAL = 2;
         }
 
-        let result = value: 42 * 2 * x: 10;
+        let result = value * 2 * x;  value: 42     x: 10
         println!("Simple test executed: value={}, result={}", value, result);
         assert!(true);
     }
@@ -1490,17 +1490,17 @@ fn main() {
     static mut GLOBAL: usize = 1;
 
     fn main() {
-        let x: 10 = 10;
-        let value: 42 = 42;
-        let y: 4 = 4;
-        let tester: size=3 = {
+        let x = 10;  x: 10
+        let value = 42;  value: 42
+        let y = 4;  y: 4
+        let tester = {  tester: size=3
             let y = 10;
             let y = 5;
             let b = 3;
             vec![y, 20, 30]
         };
 
-        let caller: <not available> = || {
+        let caller = || {  caller: <not available>
             let x = 3;
             println!("x={}", x);
         };
@@ -1511,8 +1511,8 @@ fn main() {
             GLOBAL = 2;
         }
 
-        let result: 840 = value: 42 * 2 * x: 10;
-        println!("Simple test executed: value={}, result={}", value: 42, result: 840);
+        let result = value * 2 * x;  result: 840     value: 42     x: 10
+        println!("Simple test executed: value={}, result={}", value, result);  value: 42     result: 840
         assert!(true);
     }
     "#
@@ -1805,15 +1805,15 @@ def process_data(untyped_param, typed_param: int, another_typed: str):
     editor.update_in(cx, |editor, window, cx| {
         pretty_assertions::assert_eq!(
             r#"
-        def process_data(untyped_param: test_value, typed_param: 42: int, another_typed: world: str):
+        def process_data(untyped_param, typed_param: int, another_typed: str):  untyped_param: test_value     typed_param: 42     another_typed: world
             # Local variables
-            x: 10 = 10
-            result: 84 = typed_param: 42 * 2
-            text: Hello, world = "Hello, " + another_typed: world
+            x = 10  x: 10
+            result = typed_param * 2  result: 84     typed_param: 42
+            text = "Hello, " + another_typed  text: Hello, world     another_typed: world
 
             # For loop with range
-            sum_value: 10 = 0
-            for i: 4 in range(5):
+            sum_value = 0  sum_value: 10
+            for i in range(5):  i: 4
                 sum_value += i
 
             # Final result
@@ -2122,10 +2122,10 @@ fn main() {
 
     let after = r#"
 fn main() {
-    let x: 10 = 10;
-    let y: 20 = 20;
-    let result: 30 = x: 10 + y: 20;
-    println!("Result: {}", result: 30);
+    let x = 10;  x: 10
+    let y = 20;  y: 20
+    let result = x + y;  result: 30     x: 10     y: 20
+    println!("Result: {}", result);  result: 30
 }
 "#
     .unindent();
@@ -2162,11 +2162,11 @@ fn main() {
     .unindent();
 
     let after = r#"
-static mut GLOBAL_COUNTER: 42: usize = 42;
+static mut GLOBAL_COUNTER: usize = 42;  GLOBAL_COUNTER: 42
 
 fn main() {
-    let x: 5 = 5;
-    let y: 10 = 10;
+    let x = 5;  x: 5
+    let y = 10;  y: 10
     unsafe {
         GLOBAL_COUNTER += 1;
     }
@@ -2209,10 +2209,10 @@ func main() {
     let after = r#"
 package main
 
-var globalCounter: 100 int = 100
+var globalCounter int = 100  globalCounter: 100
 
 func main() {
-    x: 42 := 42
+    x := 42  x: 42
     y := "hello"
     z := x + 10
     println(x, y, z)
@@ -2246,7 +2246,7 @@ fn main() {
 
     let after = r#"
 fn main() {
-    let y: hello… = "hello\n world";
+    let y = "hello\n world";  y: hello…
 }
 "#
     .unindent();
@@ -2346,10 +2346,10 @@ function calculate() {
 
     let after = r#"
 function calculate() {
-    const x: 10 = 10;
-    const y: 20 = 20;
-    const sum: 30 = x: 10 + y: 20;
-    const message: Hello = "Hello";
+    const x = 10;  x: 10
+    const y = 20;  y: 20
+    const sum = x + y;  sum: 30     x: 10     y: 20
+    const message = "Hello";  message: Hello
     console.log(message, "Sum:", sum);
 }
 "#
@@ -2390,11 +2390,11 @@ function processData(count: number, name: string): number {
 
     let after = r#"
 function processData(count: number, name: string): number {
-    let result: 84 = count: 42 * 2;
-    for (let i: 3 = 0; i: 3 < 5; i: 3++) {
+    let result = count * 2;  result: 84     count: 42
+    for (let i = 0; i < 5; i++) {  i: 3
         console.log(i);
     }
-    return result: 84;
+    return result;  result: 84
 }
 "#
     .unindent();
@@ -2432,11 +2432,11 @@ const Counter = () => {
 
     let after = r#"
 const Counter = () => {
-    const count: 5 = 5;
-    const message: Hello React = "Hello React";
+    const count = 5;  count: 5
+    const message = "Hello React";  message: Hello React
     return (
         <div>
-            <p>{message: Hello React}</p>
+            <p>{message}</p>  message: Hello React
             <span>{count}</span>
         </div>
     );
@@ -2471,8 +2471,8 @@ const double = (x) => {
 
     let after = r#"
 const double = (x) => {
-    const result: 84 = x: 42 * 2;
-    return result: 84;
+    const result = x * 2;  result: 84     x: 42
+    return result;  result: 84
 };
 "#
     .unindent();
@@ -2506,8 +2506,8 @@ function iterate() {
 
     let after = r#"
 function iterate() {
-    const obj: {name: 'test'} = {name: 'test'};
-    for (const key: name in obj) {
+    const obj = {name: 'test'};  obj: {name: 'test'}
+    for (const key in obj) {  key: name
         console.log(key);
     }
 }

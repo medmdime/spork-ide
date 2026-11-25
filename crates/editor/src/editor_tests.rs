@@ -37181,6 +37181,7 @@ fn assert_breakpoint(
                         state: breakpoint.state,
                         condition: breakpoint.condition.clone(),
                         hit_condition: breakpoint.hit_condition.clone(),
+                        properties: Default::default(),
                     },
                 )
             })

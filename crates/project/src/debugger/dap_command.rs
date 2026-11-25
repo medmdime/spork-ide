@@ -1713,6 +1713,30 @@ impl LocalDapCommand for SetBreakpoints {
     }
 }
 
+/// Spork IDE: the function breakpoints (`setFunctionBreakpoints`), all of them at once.
+#[derive(Debug, Hash, PartialEq, Eq)]
+pub(super) struct SetFunctionBreakpoints {
+    pub(super) breakpoints: Vec<dap::FunctionBreakpoint>,
+}
+
+impl LocalDapCommand for SetFunctionBreakpoints {
+    type Response = Vec<dap::Breakpoint>;
+    type DapRequest = dap::requests::SetFunctionBreakpoints;
+
+    fn to_dap(&self) -> <Self::DapRequest as dap::requests::Request>::Arguments {
+        dap::SetFunctionBreakpointsArguments {
+            breakpoints: self.breakpoints.clone(),
+        }
+    }
+
+    fn response_from_dap(
+        &self,
+        message: <Self::DapRequest as dap::requests::Request>::Response,
+    ) -> Result<Self::Response> {
+        Ok(message.breakpoints)
+    }
+}
+
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum DataBreakpointContext {
     Variable {

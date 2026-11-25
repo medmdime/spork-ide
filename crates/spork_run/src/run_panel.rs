@@ -28,6 +28,8 @@ use util::ResultExt as _;
 use workspace::dock::{DockPosition, Panel, PanelEvent};
 use workspace::{TerminalProvider, Workspace};
 
+use crate::configurations::{self, Configuration};
+use crate::test_runner::{TabActions, TestRunView};
 use crate::{ProjectConfigurations, run};
 
 pub mod run_panel {
@@ -123,6 +125,8 @@ struct RunTab {
     pinned: bool,
     /// How the process ended: its exit code, `None` while it runs.
     ended: Option<Option<i32>>,
+    /// A test run's tree, toolbar and consoles, in place of the console alone.
+    tests: Option<Entity<TestRunView>>,
 }
 
 impl RunTab {
@@ -154,6 +158,16 @@ impl TerminalProvider for Consoles {
     ) -> Task<Option<Result<ExitStatus>>> {
         let panel = self.0.clone();
         window.spawn(cx, async move |cx| {
+            let task = panel
+                .update_in(cx, |panel, window, cx| {
+                    panel.from_configuration(task, window, cx)
+                })
+                .ok()?
+                .await;
+            let task = match task {
+                Ok(task) => task,
+                Err(error) => return Some(Err(error)),
+            };
             let started = panel
                 .update_in(cx, |panel, window, cx| panel.start(task, window, cx))
                 .ok()?
@@ -237,14 +251,77 @@ pub(crate) fn exit_message(status: Option<ExitStatus>) -> String {
 }
 
 impl RunPanel {
+    /// A task that runs a configuration (the gutter's, [`configurations::CONFIGURATION_ENV`]):
+    /// the configuration made temporary and selected, then its runner's task; another task as
+    /// it is.
+    fn from_configuration(
+        &mut self,
+        task: SpawnInTerminal,
+        _: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Task<Result<SpawnInTerminal>> {
+        let Some(entry) = task.env.get(configurations::CONFIGURATION_ENV) else {
+            return Task::ready(Ok(task));
+        };
+        let configuration = match serde_json::from_str::<serde_json::Map<String, Value>>(entry) {
+            Ok(entry) => Configuration {
+                adapter: entry
+                    .get("adapter")
+                    .and_then(Value::as_str)
+                    .map(|adapter| adapter.to_owned().into()),
+                shared: false,
+                entry,
+            },
+            Err(error) => return Task::ready(Err(error.into())),
+        };
+        let (Some(workspace), Some(runner)) = (
+            self.workspace.upgrade(),
+            configurations::runner(&configuration, cx),
+        ) else {
+            return Task::ready(Err(anyhow::anyhow!(
+                "Unknown run configuration type {}",
+                configuration.type_name()
+            )));
+        };
+        if let Some(configurations) = ProjectConfigurations::of(workspace.read(cx), cx) {
+            let name = configuration.name();
+            configurations.update(cx, |configurations, cx| {
+                configurations.run_temporary(configuration.clone(), cx);
+                configurations.started(&name, cx);
+            });
+        }
+        let template = workspace.update(cx, |workspace, cx| {
+            runner.task(&configuration, workspace, cx)
+        });
+        cx.background_spawn(async move {
+            let template = template.await?;
+            let resolved = template
+                .resolve_task("run configuration", &task::TaskContext::default())
+                .ok_or_else(|| anyhow::anyhow!("The run configuration has no command"))?;
+            Ok(resolved.resolved)
+        })
+    }
+
     /// Runs a task in a console: in the unpinned tab of its last run (stopping that run unless
     /// it may run beside it), in a new tab otherwise.
     fn start(
         &mut self,
-        task: SpawnInTerminal,
+        mut task: SpawnInTerminal,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Task<Result<Entity<Terminal>>> {
+        // a test run's tree listens for its runner's events
+        let tests = match task.env.contains_key(crate::test_runner::TEST_RUN) {
+            true => match self.test_view(&task, cx) {
+                Ok((view, port)) => {
+                    task.env
+                        .insert(crate::test_runner::TEST_PORT.into(), port.to_string());
+                    Some(view)
+                }
+                Err(error) => return Task::ready(Err(error)),
+            },
+            false => None,
+        };
         let is_windows = self.project.read(cx).path_style(cx).is_windows();
         let mut spawn =
             terminal_view::terminal_panel::prepare_task_for_spawn(&task, &task.shell, is_windows);
@@ -274,11 +351,70 @@ impl RunPanel {
                     terminal.write_output(&command_line, cx)
                 });
                 let (reveal, label) = (task.reveal, task.label.clone());
-                this.add_tab(task, terminal.clone(), reuse, window, cx);
+                this.add_tab(task, terminal.clone(), reuse, tests, window, cx);
                 this.reveal(reveal, label, window, cx);
             })?;
             Ok(terminal)
         })
+    }
+
+    /// A test run's view, listening on a port its runner gets.
+    fn test_view(
+        &mut self,
+        task: &SpawnInTerminal,
+        cx: &mut Context<Self>,
+    ) -> Result<(Entity<TestRunView>, u16)> {
+        let listener = std::net::TcpListener::bind((std::net::Ipv4Addr::LOCALHOST, 0))?;
+        let port = listener.local_addr()?.port();
+        let listener = smol::net::TcpListener::try_from(listener)?;
+        let panel = cx.entity().downgrade();
+        let name: SharedString = task.label.clone().into();
+        let workspace = self.workspace.clone();
+        let view = cx.new(|cx: &mut Context<TestRunView>| {
+            let view = cx.entity().downgrade();
+            // the tab of this view, found again each time: tabs close and move
+            let tab = move |panel: &RunPanel| {
+                let view = view.upgrade()?;
+                panel
+                    .tabs
+                    .iter()
+                    .position(|tab| tab.tests.as_ref() == Some(&view))
+            };
+            let (rerun_panel, rerun_tab) = (panel.clone(), tab.clone());
+            let (failed_panel, failed_tab) = (panel.clone(), tab.clone());
+            let (stop_panel, stop_tab) = (panel, tab);
+            let actions = TabActions {
+                rerun: Box::new(move |window, cx| {
+                    rerun_panel
+                        .update(cx, |panel, cx| {
+                            if let Some(ix) = rerun_tab(panel) {
+                                panel.rerun(ix, window, cx);
+                            }
+                        })
+                        .log_err();
+                }),
+                rerun_failed: Box::new(move |tests, window, cx| {
+                    failed_panel
+                        .update(cx, |panel, cx| {
+                            if let Some(ix) = failed_tab(panel) {
+                                panel.rerun_tests(ix, Some(tests), window, cx);
+                            }
+                        })
+                        .log_err();
+                }),
+                stop: Box::new(move |_, cx| {
+                    stop_panel
+                        .update(cx, |panel, cx| {
+                            if let Some(ix) = stop_tab(panel) {
+                                panel.stop(ix, cx);
+                            }
+                        })
+                        .log_err();
+                }),
+            };
+            TestRunView::new(name, workspace, actions, listener, cx)
+        });
+        Ok((view, port))
     }
 
     fn add_tab(
@@ -286,6 +422,7 @@ impl RunPanel {
         task: SpawnInTerminal,
         terminal: Entity<Terminal>,
         reuse: Option<usize>,
+        tests: Option<Entity<TestRunView>>,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
@@ -305,6 +442,9 @@ impl RunPanel {
             None => None,
         }
         .unwrap_or_else(|| self.unique_title(&task.label));
+        if let Some(tests) = &tests {
+            tests.update(cx, |tests, _| tests.set_console(view.clone()));
+        }
         let tab = RunTab {
             title,
             icon,
@@ -313,6 +453,7 @@ impl RunPanel {
             view,
             pinned: false,
             ended: None,
+            tests,
         };
         match reuse.filter(|ix| *ix < self.tabs.len()) {
             Some(ix) => {
@@ -388,6 +529,9 @@ impl RunPanel {
     ) {
         if let Some(tab) = self.tabs.iter_mut().find(|tab| &tab.terminal == terminal) {
             tab.ended = Some(status.and_then(|status| status.code()));
+            if let Some(tests) = &tab.tests {
+                tests.update(cx, |tests, cx| tests.finished(cx));
+            }
         }
         let mut message = system_text(&format!("\r\n{}\r\n", exit_message(status)), cx);
         // a finished console has no caret, as IntelliJ's
@@ -407,7 +551,7 @@ impl RunPanel {
         cx.notify();
     }
 
-    fn stop(&mut self, ix: usize, cx: &mut Context<Self>) {
+    pub(crate) fn stop(&mut self, ix: usize, cx: &mut Context<Self>) {
         if let Some(tab) = self.tabs.get(ix) {
             tab.terminal
                 .update(cx, |terminal, _| terminal.kill_active_task());
@@ -415,8 +559,50 @@ impl RunPanel {
         cx.notify();
     }
 
+    /// Rerun: the tab's task again, in the tab; a test run's configuration again (built
+    /// first, as IntelliJ's), the failed tests alone for Rerun Failed Tests.
+    pub(crate) fn rerun_tests(
+        &mut self,
+        ix: usize,
+        tests: Option<Vec<String>>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> bool {
+        let Some(tab) = self.tabs.get(ix).filter(|tab| tab.tests.is_some()) else {
+            return false;
+        };
+        let Some(workspace) = self.workspace.upgrade() else {
+            return false;
+        };
+        let label = tab.task.label.clone();
+        let Some(mut configuration) = ProjectConfigurations::of(workspace.read(cx), cx)
+            .and_then(|c| c.read(cx).list.iter().find(|c| c.name() == label).cloned())
+        else {
+            return false;
+        };
+        if let Some(tests) = tests {
+            configuration.entry.insert(
+                configurations::RERUN_TESTS.into(),
+                Value::Array(tests.into_iter().map(Value::from).collect()),
+            );
+        }
+        if let Some(tab) = self.tabs.get_mut(ix) {
+            tab.pinned = false;
+        }
+        // the workspace runs it once this panel's update is over
+        window.defer(cx, move |window, cx| {
+            workspace.update(cx, |workspace, cx| {
+                crate::run_widget::launch(Some(&configuration), false, workspace, window, cx)
+            })
+        });
+        true
+    }
+
     /// Rerun: the tab's task again, in the tab.
-    fn rerun(&mut self, ix: usize, window: &mut Window, cx: &mut Context<Self>) {
+    pub(crate) fn rerun(&mut self, ix: usize, window: &mut Window, cx: &mut Context<Self>) {
+        if self.rerun_tests(ix, None, window, cx) {
+            return;
+        }
         let Some(tab) = self.tabs.get(ix) else {
             return;
         };
@@ -611,6 +797,7 @@ impl Render for RunPanel {
         let tokens = Tokens::get(cx);
         let header = self.header(cx);
         let console = self.tabs.get(self.active).map(|tab| tab.view.clone());
+        let tests = self.tabs.get(self.active).and_then(|tab| tab.tests.clone());
         spork_vcs::spork_look(cx).size_full().child(
             v_flex()
                 .size_full()
@@ -627,24 +814,31 @@ impl Render for RunPanel {
                     }
                 }))
                 .child(header)
-                .when(console.is_some(), |this| this.child(self.top_toolbar(cx)))
-                .child(
-                    h_flex()
-                        .flex_1()
-                        .min_h_0()
-                        .items_start()
-                        .when(console.is_some(), |this| this.child(self.left_toolbar()))
-                        .child(
-                            div()
-                                .id("run-console")
-                                .role(Role::Group)
-                                .aria_label("Console")
-                                .flex_1()
-                                .min_w_0()
-                                .h_full()
-                                .children(console),
-                        ),
-                ),
+                .when_some(tests.clone(), |this, tests| {
+                    this.child(div().flex_1().min_h_0().child(tests))
+                })
+                .when(console.is_some() && tests.is_none(), |this| {
+                    this.child(self.top_toolbar(cx))
+                })
+                .when(tests.is_none(), |this| {
+                    this.child(
+                        h_flex()
+                            .flex_1()
+                            .min_h_0()
+                            .items_start()
+                            .when(console.is_some(), |this| this.child(self.left_toolbar()))
+                            .child(
+                                div()
+                                    .id("run-console")
+                                    .role(Role::Group)
+                                    .aria_label("Console")
+                                    .flex_1()
+                                    .min_w_0()
+                                    .h_full()
+                                    .children(console),
+                            ),
+                    )
+                }),
         )
     }
 }
@@ -705,6 +899,8 @@ impl Panel for RunPanel {
 /// A configuration's run, for the Services tool window and the running list.
 pub(crate) struct Run {
     pub title: SharedString,
+    /// The configuration's name (a second run's title is "Main (1)").
+    pub label: SharedString,
     pub view: Entity<TerminalView>,
     pub terminal: Entity<Terminal>,
     pub running: bool,
@@ -723,6 +919,7 @@ pub(crate) fn runs(workspace: &Workspace, cx: &App) -> Vec<Run> {
         .iter()
         .map(|tab| Run {
             title: tab.title.clone(),
+            label: tab.task.label.clone().into(),
             view: tab.view.clone(),
             terminal: tab.terminal.clone(),
             running: tab.running(cx),
@@ -855,6 +1052,7 @@ pub(crate) fn e2e_tabs(workspace: &Workspace, cx: &App) -> Value {
                     .filter(|(_, color)| *color == Some(error))
                     .map(|(line, _)| line.trim_end().to_owned())
                     .collect::<Vec<_>>(),
+                "tests": tab.tests.as_ref().map(|tests| tests.read(cx).e2e_state()),
             })
         })
         .collect()

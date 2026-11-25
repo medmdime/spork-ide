@@ -23,7 +23,27 @@ use workspace::{
     SerializedWorkspaceLocation, Workspace, WorkspaceDb,
 };
 
+pub use dialogs::{create_project, projects_folder, usable};
 pub use project_popup::ProjectPopup;
+
+/// A New Project generator another crate adds (IntelliJ's generators, under "Generators" in the
+/// dialog's list): its name and icon, and its page, which creates the project.
+#[derive(Clone)]
+pub struct Generator {
+    pub name: SharedString,
+    pub icon: &'static str,
+    pub page: std::rc::Rc<dyn Fn(&mut Window, &mut App) -> gpui::AnyView>,
+}
+
+#[derive(Default)]
+struct Generators(Vec<Generator>);
+
+impl Global for Generators {}
+
+/// Adds a generator to the New Project dialog's list.
+pub fn register_generator(generator: Generator, cx: &mut App) {
+    cx.default_global::<Generators>().0.push(generator);
+}
 
 actions!(
     projects,
@@ -234,7 +254,7 @@ fn any_project_window(cx: &App) -> bool {
 }
 
 /// Opens `paths` as a project in a window of its own, or brings forward the window that has it.
-pub(crate) fn open_project(paths: Vec<PathBuf>, cx: &mut App) {
+pub fn open_project(paths: Vec<PathBuf>, cx: &mut App) {
     let Some(app_state) = AppState::try_global(cx) else {
         return;
     };

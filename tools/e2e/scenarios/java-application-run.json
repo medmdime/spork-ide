@@ -68,7 +68,8 @@
     "Node.js",
     "Python",
     "Remote JVM Debug",
-    "Spring Boot"
+    "Spring Boot",
+    "TestNG"
    ]
   },
   {
@@ -170,7 +171,7 @@
    "within": 5000
   },
   {
-   "sh": "cat .zed/debug.json",
+   "sh": "cat \"../home/Library/Application Support/Spork IDE/workspace/\"*/debug.json",
    "contains": "\"mainClass\": \"com.example.Main\"",
    "within": 8000
   },

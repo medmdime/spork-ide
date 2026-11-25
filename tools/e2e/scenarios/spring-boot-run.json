@@ -198,7 +198,7 @@
    "within": 5000
   },
   {
-   "sh": "cat .zed/debug.json",
+   "sh": "cat \"../home/Library/Application Support/Spork IDE/workspace/\"*/debug.json",
    "contains": "\"urlPath\": \"hello\"",
    "within": 8000
   },

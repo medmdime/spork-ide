@@ -100,7 +100,7 @@
    "role": "AXButton"
   },
   {
-   "sh": "cat .zed/debug.json",
+   "sh": "cat \"../home/Library/Application Support/Spork IDE/workspace/\"*/debug.json",
    "contains": "\"javaExec\": \"/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home/bin/java\""
   }
  ]

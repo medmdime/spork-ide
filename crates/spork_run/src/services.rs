@@ -69,7 +69,15 @@ pub(crate) fn register(workspace: &mut Workspace) {
     workspace.register_action_renderer(|div, workspace, _, cx| {
         let running = !running_list(workspace, cx).is_empty();
         let cancellable = !cancellable_work(workspace.project(), cx).is_empty();
-        div.when(running, |div| {
+        let updatable = running && !updaters(workspace, cx).is_empty();
+        div.when(updatable, |div| {
+            div.on_action(cx.listener(
+                |workspace, _: &run::UpdateRunningApplication, window, cx| {
+                    update_running_application(workspace, window, cx)
+                },
+            ))
+        })
+        .when(running, |div| {
             div.on_action(
                 cx.listener(|workspace, _: &run::ShowRunningList, window, cx| {
                     show_running_list(workspace, window, cx)
@@ -1117,6 +1125,13 @@ fn debug_session_of(
         })
 }
 
+/// Whether the configuration `name` runs, in the Run tool window or a debug session.
+pub fn is_running(workspace: &Workspace, name: &str, cx: &App) -> bool {
+    run_panel::run_of(workspace, name, cx).is_some_and(|run| run.running)
+        || debug_session_of(workspace, name, cx)
+            .is_some_and(|running| !running.read(cx).session().read(cx).is_terminated())
+}
+
 /// The key the types added to Services are kept under, per project.
 fn types_key(project: &Entity<Project>, cx: &App) -> Option<String> {
     let root = project
@@ -1236,6 +1251,101 @@ fn running_list(workspace: &Workspace, cx: &App) -> Vec<(SharedString, &'static 
                 .then(|| (session.label().unwrap_or_default(), "run/debug", true))
         });
     runs.chain(sessions).collect()
+}
+
+/// A running configuration Update Running Application updates: it, its debug session when it
+/// is debugged, its runner and what the update says.
+struct Updater {
+    configuration: Configuration,
+    session: Option<Entity<project::debugger::session::Session>>,
+    runner: std::rc::Rc<dyn crate::configurations::Runner>,
+    text: SharedString,
+}
+
+/// The running configurations whose type updates them (IntelliJ's `RunningApplicationUpdater`s),
+/// the runs first.
+fn updaters(workspace: &Workspace, cx: &App) -> Vec<Updater> {
+    let Some(configurations) = ProjectConfigurations::of(workspace, cx) else {
+        return Vec::new();
+    };
+    let list = &configurations.read(cx).list;
+    let runs = run_panel::runs(workspace, cx)
+        .into_iter()
+        .filter(|run| run.running)
+        .map(|run| (run.label, None));
+    let sessions = workspace
+        .panel::<debugger_ui::debugger_panel::DebugPanel>(cx)
+        .map(|panel| panel.read(cx).session_items())
+        .unwrap_or_default()
+        .into_iter()
+        .filter_map(|item| {
+            let session = item.read(cx).running_state().read(cx).session().clone();
+            let label = session.read(cx).label()?;
+            (!session.read(cx).is_terminated()).then_some((label, Some(session)))
+        });
+    runs.chain(sessions)
+        .filter_map(|(name, session)| {
+            let configuration = list.iter().find(|c| c.name() == name)?.clone();
+            let runner = crate::configurations::runner(&configuration, cx)?;
+            let text = runner.update_text(&configuration, workspace, cx)?;
+            Some(Updater {
+                configuration,
+                session,
+                runner,
+                text,
+            })
+        })
+        .collect()
+}
+
+/// Update Running Application (⌘F10): the one running application's update, or a choice of
+/// them ("Select Process to Update").
+fn update_running_application(
+    workspace: &mut Workspace,
+    window: &mut Window,
+    cx: &mut Context<Workspace>,
+) {
+    let mut updaters = updaters(workspace, cx);
+    let handle = cx.entity();
+    if updaters.len() == 1
+        && let Some(updater) = updaters.pop()
+    {
+        cx.defer(move |cx| {
+            updater
+                .runner
+                .update(&updater.configuration, updater.session, &handle, cx)
+        });
+        return;
+    }
+    let rows = updaters
+        .iter()
+        .map(|updater| Row::new(updater.configuration.name()).image(updater.configuration.icon()))
+        .collect();
+    ListPopup::show(
+        workspace,
+        "Select Process to Update",
+        rows,
+        "",
+        300.,
+        move |ix, _, cx| {
+            if let Some(updater) = updaters.get(ix) {
+                updater
+                    .runner
+                    .update(&updater.configuration, updater.session.clone(), &handle, cx);
+            }
+        },
+        window,
+        cx,
+    );
+}
+
+/// What the end-to-end tests read of Update Running Application: each updatable configuration and
+/// what its update says.
+pub(crate) fn e2e_updaters(workspace: &Workspace, cx: &App) -> Value {
+    updaters(workspace, cx)
+        .iter()
+        .map(|updater| json!([updater.configuration.name(), updater.text]))
+        .collect()
 }
 
 /// Show Running List (`ShowLiveRunConfigurations`): IntelliJ's "Running List" balloon under the

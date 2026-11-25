@@ -1,0 +1,40 @@
+{
+ "id": "kotlin-server-without-kotlin-files",
+ "fixture": "kotlin-gradle",
+ "covers": [],
+ "prepare": "rm -rf src/main/kotlin src/test/kotlin",
+ "settings": {
+  "languages": {
+   "Kotlin": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Gradle",
+    "kotlin.detected": true
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "kotlin.server.running": true
+   },
+   "within": 600000
+  },
+  {
+   "expect": {
+    "kotlin.server.busy": false
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "items": []
+   }
+  }
+ ]
+}

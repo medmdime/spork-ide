@@ -73,6 +73,53 @@ const NO_LAUNCH_OPTIMIZATION: &str = "disableLaunchOptimization";
 const NO_JMX: &str = "disableJmx";
 const ACTIVE_PROFILES: &str = "activeProfiles";
 
+/// The configuration's Running Application Update Policies: a policy's id, "" for Do nothing.
+const UPDATE_ACTION: &str = "updateAction";
+const FRAME_DEACTIVATION: &str = "frameDeactivation";
+
+/// IntelliJ's update policies (`SpringBootApplicationUpdatePolicy`), by id, in its order.
+const UPDATE_RESOURCES: &str = "UpdateResources";
+const UPDATE_CLASSES: &str = "UpdateClassesAndResources";
+const UPDATE_TRIGGER_FILE: &str = "UpdateTriggerFile";
+const HOT_SWAP_OR_TRIGGER_FILE: &str = "UpdateClassesAndTriggerFile";
+const POLICIES: [(&str, &str); 4] = [
+    (UPDATE_RESOURCES, "Update resources"),
+    (UPDATE_CLASSES, "Update classes and resources"),
+    (UPDATE_TRIGGER_FILE, "Update trigger file"),
+    (
+        HOT_SWAP_OR_TRIGGER_FILE,
+        "Hot swap classes and update trigger file if failed",
+    ),
+];
+const DO_NOTHING: &str = "Do nothing";
+
+/// The file Spring Boot's DevTools restarts on, in the classes' folders (IntelliJ's
+/// `TriggerFilePolicy`).
+const TRIGGER_FILE: &str = ".restartTriggerFile";
+
+/// The policy a configuration sets for `key`, when it sets one.
+fn policy(entry: &Map<String, Value>, key: &str) -> Option<&'static str> {
+    let id = entry.get(key)?.as_str()?;
+    POLICIES
+        .iter()
+        .map(|(id, _)| *id)
+        .find(|known| *known == id)
+}
+
+fn is_trigger_file(policy: &str) -> bool {
+    matches!(policy, UPDATE_TRIGGER_FILE | HOT_SWAP_OR_TRIGGER_FILE)
+}
+
+/// Whether the project at `root` has Spring Boot's DevTools, which the trigger file policies need.
+fn has_devtools(root: &Path) -> bool {
+    ["pom.xml", "build.gradle", "build.gradle.kts"]
+        .iter()
+        .any(|file| {
+            std::fs::read_to_string(root.join(file))
+                .is_ok_and(|text| text.contains("spring-boot-devtools"))
+        })
+}
+
 /// The property naming a run's JVM so it can be found again, as IntelliJ's
 /// `ij.spring.boot.application.process`.
 const PROCESS_MARKER: &str = "spork.boot.process";
@@ -133,6 +180,11 @@ pub(crate) fn vm_options(
         if !name.trim().is_empty() {
             options.push(format!("-D{}={value}", name.trim()));
         }
+    }
+    if policy(entry, UPDATE_ACTION).is_some_and(is_trigger_file) {
+        options.push(format!(
+            "-Dspring.devtools.restart.trigger-file={TRIGGER_FILE}"
+        ));
     }
     options.push("-Dspring.output.ansi.enabled=always".to_owned());
     if !flag(entry, NO_JMX) {
@@ -303,19 +355,57 @@ impl Runner for SpringBootRunner {
         ApplicationRunner.can_debug(cx)
     }
 
-    /// The Application's rows: its JRE.
+    /// The Application's rows (its JRE), then the update policies Modify options shows.
     fn controls(
         &self,
         configuration: &Configuration,
         edit: configurations::Edit,
         cx: &mut App,
     ) -> Vec<gpui::AnyElement> {
-        ApplicationRunner.controls(configuration, edit, cx)
+        let mut rows = ApplicationRunner.controls(configuration, edit.clone(), cx);
+        for (key, label, on_deactivation) in [
+            (UPDATE_ACTION, "On 'Update' action:", false),
+            (FRAME_DEACTIVATION, "On frame deactivation:", true),
+        ] {
+            if configuration.entry.contains_key(key) {
+                rows.push(policy_field(
+                    configuration,
+                    key,
+                    label,
+                    on_deactivation,
+                    edit.clone(),
+                ));
+            }
+        }
+        rows
+    }
+
+    fn update_text(
+        &self,
+        configuration: &Configuration,
+        workspace: &Workspace,
+        cx: &App,
+    ) -> Option<SharedString> {
+        let policy = policy(&configuration.entry, UPDATE_ACTION)?;
+        let root = JavaProject::of(workspace, cx)?.read(cx).root.clone()?;
+        // IntelliJ's trigger file policies are there with DevTools only
+        (!is_trigger_file(policy) || has_devtools(&root))
+            .then(|| SharedString::from(format!("Update '{}' application", configuration.name())))
+    }
+
+    fn update(
+        &self,
+        configuration: &Configuration,
+        session: Option<Entity<project::debugger::session::Session>>,
+        workspace: &Entity<Workspace>,
+        cx: &mut App,
+    ) {
+        if let Some(policy) = policy(&configuration.entry, UPDATE_ACTION) {
+            run_policy(policy, session, workspace, cx);
+        }
     }
 
     // IntelliJ's Spring Boot options: the Application's, then the "Spring" group
-    // shortcut: On 'Update' action and On frame deactivation are greyed until Update Running
-    // Application lands
     fn modify_options(&self, configuration: &Configuration) -> Vec<ModifyOption> {
         let entry = &configuration.entry;
         let mut options = ApplicationRunner.modify_options(configuration);
@@ -359,14 +449,14 @@ impl Runner for SpringBootRunner {
             ModifyOption {
                 group: "Spring",
                 label: "On 'Update' action",
-                checked: false,
-                toggle: None,
+                checked: entry.contains_key(UPDATE_ACTION),
+                toggle: Some(|configuration| toggle_policy(configuration, UPDATE_ACTION)),
             },
             ModifyOption {
                 group: "Spring",
                 label: "On frame deactivation",
-                checked: false,
-                toggle: None,
+                checked: entry.contains_key(FRAME_DEACTIVATION),
+                toggle: Some(|configuration| toggle_policy(configuration, FRAME_DEACTIVATION)),
             },
             ModifyOption {
                 group: "Spring",
@@ -463,6 +553,153 @@ pub(crate) fn started(console: &str) -> bool {
     STARTED
         .as_ref()
         .is_some_and(|started| started.is_match(console))
+}
+
+/// Modify options' On 'Update' action or On frame deactivation: its row, Do nothing at first.
+fn toggle_policy(configuration: &mut Configuration, key: &str) {
+    if configuration.entry.remove(key).is_none() {
+        configuration.entry.insert(key.into(), "".into());
+    }
+}
+
+/// An update policy's combo: Do nothing and the policies, those of the trigger file not on frame
+/// deactivation (IntelliJ's `isAvailableOnFrameDeactivation`).
+fn policy_field(
+    configuration: &Configuration,
+    key: &'static str,
+    label: &'static str,
+    on_deactivation: bool,
+    edit: configurations::Edit,
+) -> gpui::AnyElement {
+    use gpui::{IntoElement as _, ParentElement as _, Styled as _};
+    let chosen = policy(&configuration.entry, key)
+        .and_then(|id| POLICIES.iter().find(|(known, _)| *known == id))
+        .map_or(DO_NOTHING, |(_, name)| *name);
+    let choices: Vec<(&str, &str)> = std::iter::once(("", DO_NOTHING))
+        .chain(
+            POLICIES
+                .iter()
+                .copied()
+                .filter(|(id, _)| !(on_deactivation && is_trigger_file(id))),
+        )
+        .collect();
+    let combo = spork_workbench::controls::dropdown(
+        spork_workbench::controls::ComboBox::new(key, chosen)
+            .aria_label(label)
+            .w_full(),
+        false,
+        move |mut menu, _, _| {
+            for (id, name) in &choices {
+                let (edit, id) = (edit.clone(), *id);
+                menu = menu.item(
+                    gpui_kit::component::menu::PopupMenuItem::new(*name).on_click(
+                        move |_, _, cx| {
+                            edit(
+                                &|configuration: &mut Configuration| {
+                                    configuration.entry.insert(key.into(), id.into());
+                                },
+                                cx,
+                            )
+                        },
+                    ),
+                );
+            }
+            menu
+        },
+    );
+    gpui_kit::component::h_flex()
+        .gap(gpui::px(8.))
+        .child(
+            gpui::div()
+                .w(gpui::px(160.))
+                .flex_none()
+                .child(spork_workbench::controls::form_label(label)),
+        )
+        .child(gpui::div().flex_1().min_w_0().child(combo))
+        .into_any_element()
+}
+
+/// Runs an update policy on a running application (IntelliJ's `runUpdate`): the build for the
+/// resources and classes, then for the trigger file policies the file DevTools restarts on,
+/// written once HotSwap fails when the application is debugged.
+// shortcut: Update resources builds the classes too (JDT LS builds the whole project), where
+// IntelliJ copies the resources only
+fn run_policy(
+    policy: &'static str,
+    session: Option<Entity<project::debugger::session::Session>>,
+    workspace: &Entity<Workspace>,
+    cx: &mut App,
+) {
+    let Some(java) = JavaProject::of(workspace.read(cx), cx) else {
+        return;
+    };
+    let Some(root) = java.read(cx).root.clone() else {
+        return;
+    };
+    let build = (policy != UPDATE_TRIGGER_FILE).then(|| java.read(cx).build(cx));
+    let classpath = java.read(cx).classpath(&root, cx);
+    let proxy = session
+        .filter(|_| policy == HOT_SWAP_OR_TRIGGER_FILE)
+        .and_then(|session| crate::debugger::proxy_of(session.read(cx), cx));
+    if let Some(proxy) = &proxy {
+        // the build's classes are reloaded here, not asked about
+        proxy.reloading.store(true, Ordering::Relaxed);
+    }
+    let workspace = workspace.downgrade();
+    cx.spawn(async move |cx| {
+        if let Some(build) = build {
+            build.await?;
+        }
+        if !is_trigger_file(policy) {
+            return Ok(());
+        }
+        if let Some(proxy) = proxy {
+            let reloaded = cx.update(|cx| crate::debugger::reload_classes(workspace, proxy, cx));
+            if reloaded.await {
+                return Ok(());
+            }
+        }
+        let folders: Vec<PathBuf> = classpath
+            .await?
+            .into_iter()
+            .map(PathBuf::from)
+            .filter(|path| path.starts_with(&root) && path.is_dir())
+            .collect();
+        anyhow::ensure!(
+            !folders.is_empty(),
+            "Failed to update trigger file: class roots not found"
+        );
+        cx.background_spawn(async move {
+            for folder in folders {
+                std::fs::write(folder.join(TRIGGER_FILE), "")?;
+            }
+            anyhow::Ok(())
+        })
+        .await
+    })
+    .detach_and_log_err(cx);
+}
+
+/// On frame deactivation: once the IDE is no longer the active app, each running Spring Boot
+/// configuration's frame deactivation policy (IntelliJ's `FrameStateListener`).
+fn frame_deactivated(workspace: &Entity<Workspace>, cx: &mut App) {
+    let Some(configurations) = ProjectConfigurations::of(workspace.read(cx), cx) else {
+        return;
+    };
+    let running: Vec<&'static str> = configurations
+        .read(cx)
+        .list
+        .iter()
+        .filter(|configuration| configuration.adapter.as_deref() == Some(SPRING_BOOT))
+        .filter(|configuration| {
+            spork_run::is_running(workspace.read(cx), &configuration.name(), cx)
+        })
+        .filter_map(|configuration| policy(&configuration.entry, FRAME_DEACTIVATION))
+        .collect();
+    // both policies build the project, once is enough
+    if let Some(policy) = running.first() {
+        run_policy(policy, None, workspace, cx);
+    }
 }
 
 /// The Spring Boot type's debug adapter: java-debug, given Spring's VM options.
@@ -569,6 +806,8 @@ pub(crate) struct SpringBoot {
     pub(crate) markers: HashMap<String, String>,
     /// Each configuration's Actuator tab.
     pub(crate) actuators: HashMap<String, Entity<crate::actuator::ActuatorView>>,
+    /// The Spring LS's index: the endpoints and beans.
+    pub(crate) index: crate::endpoints::SpringIndex,
     task: Option<Task<()>>,
 }
 
@@ -731,14 +970,21 @@ async fn connect(this: gpui::WeakEntity<JavaProject>, cx: &mut AsyncApp) {
             let classpath = this
                 .read_with(cx, |this, _| this.spring.classpath.clone())
                 .unwrap_or_default();
-            let bridge = spring_boot_ls::bridge(&jdtls, &spring, move |_| {
-                classpath.store(true, Ordering::Relaxed);
-            });
+            let indexed = this.clone();
+            let bridge = spring_boot_ls::bridge(
+                &jdtls,
+                &spring,
+                move |_| {
+                    classpath.store(true, Ordering::Relaxed);
+                },
+                move |cx| crate::endpoints::on_index_updated(indexed.clone(), cx),
+            );
             this.update(cx, |this, _| this.spring.bridge = Some(bridge))
                 .ok();
             spring_boot_ls::enable_classpath_listening(&spring)
                 .await
                 .log_err();
+            this.update(cx, crate::endpoints::refresh).log_err();
             return;
         }
         cx.background_executor()
@@ -748,7 +994,7 @@ async fn connect(this: gpui::WeakEntity<JavaProject>, cx: &mut AsyncApp) {
 }
 
 /// The Spring LS of `project`, once it runs.
-fn spring_language_server(
+pub(crate) fn spring_language_server(
     project: &Entity<project::Project>,
     cx: &App,
 ) -> Option<Arc<lsp::LanguageServer>> {
@@ -807,6 +1053,29 @@ pub(crate) fn gutter_options(
 pub(crate) fn init(cx: &mut App) {
     configurations::register_runner(SPRING_BOOT, std::rc::Rc::new(SpringBootRunner), cx);
     dap::DapRegistry::global(cx).add_adapter(Arc::new(SpringBootDebugAdapter));
+    cx.observe_new(|_: &mut Workspace, window, cx| {
+        let Some(window) = window else { return };
+        cx.observe_window_activation(window, |_, window, cx| {
+            if window.is_window_active() {
+                return;
+            }
+            // a dialog of the IDE's taking the focus isn't the frame's deactivation
+            let workspace = cx.entity();
+            cx.spawn(async move |_, cx| {
+                cx.background_executor()
+                    .timer(Duration::from_millis(200))
+                    .await;
+                cx.update(|cx| {
+                    if cx.active_window().is_none() {
+                        frame_deactivated(&workspace, cx);
+                    }
+                });
+            })
+            .detach();
+        })
+        .detach();
+    })
+    .detach();
 }
 
 /// What the end-to-end tests read of a Spring Boot project: whether it is one, its applications,
@@ -822,6 +1091,11 @@ pub(crate) fn e2e_state(java: &JavaProject, cx: &App) -> Value {
         "server": spring_language_server(&java.project, cx).map(|server| server.process_id()),
         "bridged": spring.bridge.as_ref().is_some_and(|bridge| bridge.spring.upgrade().is_some()),
         "classpath": spring.classpath.load(Ordering::Relaxed),
+        "index": crate::endpoints::e2e_state(
+            java,
+            java.workspace.upgrade().as_ref().map(|workspace| workspace.read(cx)),
+            cx,
+        ),
         "actuator": spring
             .actuators
             .iter()
@@ -883,6 +1157,13 @@ mod tests {
                 "-Dspork.boot.process=m1",
             ]
         );
+        let trigger = |policy: &str| {
+            let entry = json!({ "updateAction": policy });
+            vm_options(entry.as_object().expect("an object"), 17, "demo", "m3")
+                .contains(&"-Dspring.devtools.restart.trigger-file=.restartTriggerFile".to_owned())
+        };
+        assert!(trigger("UpdateTriggerFile") && trigger("UpdateClassesAndTriggerFile"));
+        assert!(!trigger("UpdateResources") && !trigger(""));
         let off = json!({"disableLaunchOptimization": true, "disableJmx": true});
         let options = vm_options(off.as_object().expect("an object"), 11, "demo", "m2");
         assert_eq!(options[0], "-Dspring.output.ansi.enabled=always");

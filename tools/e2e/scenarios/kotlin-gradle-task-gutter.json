@@ -1,0 +1,54 @@
+{
+ "id": "kotlin-gradle-task-gutter",
+ "fixture": "kotlin-unconfigured",
+ "covers": [],
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Gradle"
+   },
+   "within": 20000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "do": "open",
+   "path": "build.gradle.kts"
+  },
+  {
+   "expect": {
+    "active": "build.gradle.kts"
+   },
+   "within": 5000
+  },
+  {
+   "wait": 2000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "shot": "gutter"
+  },
+  {
+   "do": "click",
+   "at": [
+    76,
+    216
+   ]
+  },
+  {
+   "expect": {
+    "run.tabs.0.title": "fixture [hello]",
+    "run.tabs.0.running": false,
+    "run.tabs.0.output": {
+     "contains": "> Task :hello\nHello from Gradle\n"
+    },
+    "run.tabs.0.last_line": "Process finished with exit code 0"
+   },
+   "within": 180000
+  }
+ ]
+}

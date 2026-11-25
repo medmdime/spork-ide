@@ -590,7 +590,9 @@ impl LspAdapter for JdtlsAdapter {
             "settings": settings,
             "extendedClientCapabilities": {
                 "progressReportProvider": false,
-                "classFileContentsSupport": false,
+                // a library's class comes back as a `jdt://` location, which the app opens as
+                // its source (`project::lsp_store::NonFileUriResolver`)
+                "classFileContentsSupport": true,
                 "advancedOrganizeImportsSupport": false,
             },
         })))

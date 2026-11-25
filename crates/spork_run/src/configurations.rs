@@ -1,7 +1,8 @@
 //! Run configurations: Zed's tasks (`tasks.json`) and debug scenarios (`debug.json`) as IntelliJ's
 //! run configurations. A task is a Shell Script configuration, a debug scenario one of its debug
 //! adapter's type. "Store as project file" keeps a configuration in the project's `.zed` folder,
-//! otherwise in the user's files; the dialog writes them back there.
+//! otherwise in the IDE's own files of the project (IntelliJ's `workspace.xml`, where it keeps
+//! the configurations it makes); the dialog writes them back there.
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -22,14 +23,126 @@ pub const JAVA: &str = "Java";
 /// port, its sessions Java's.
 pub const REMOTE_JVM_DEBUG: &str = "Remote JVM Debug";
 
-/// IntelliJ's JUnit: a test class run by JUnit 4's runner (`org.junit.runner.JUnitCore`) on the
-/// project's test classpath, debugged by Java's debugger.
+/// IntelliJ's JUnit: the tests of a class, a method, a package or a pattern, run by Spork IDE's
+/// test runner (`spork_java`'s) with the project's framework on its test classpath, or by Gradle,
+/// and debugged by Java's debugger.
 pub const JUNIT: &str = "JUnit";
 
-/// JUnit 4's console runner, the main class a JUnit configuration runs.
-pub const JUNIT_RUNNER: &str = "org.junit.runner.JUnitCore";
+/// IntelliJ's TestNG, run and debugged as JUnit is.
+pub const TESTNG: &str = "TestNG";
+
+/// The main class a test configuration runs: Spork IDE's test runner, its arguments the tests
+/// ([`test_selectors`]).
+pub const TEST_RUNNER: &str = "spork.tests.TestRunner";
+
+/// A configuration that runs tests: JUnit's or TestNG's.
+pub fn is_test(adapter: Option<&str>) -> bool {
+    matches!(adapter, Some(JUNIT | TESTNG))
+}
+
+/// What a test configuration runs (IntelliJ's Test kind), by the key its entry keeps it under,
+/// and its text in the form; the kinds of `adapter`'s form.
+pub fn test_kinds(adapter: Option<&str>) -> &'static [(&'static str, &'static str)] {
+    match adapter {
+        Some(TESTNG) => &[
+            ("package", "All in package"),
+            ("class", "Class"),
+            ("method", "Method"),
+            ("pattern", "Pattern"),
+        ],
+        _ => &[
+            ("package", "All in package"),
+            ("pattern", "Pattern"),
+            ("class", "Class"),
+            ("method", "Method"),
+        ],
+    }
+}
+
+/// The key of a test configuration's kind (`class` by default).
+pub const TEST_KIND: &str = "testKind";
+
+/// The tests Rerun Failed Tests runs again, each `com.example.GreetingTest#greets`, over the
+/// configuration's kind.
+pub const RERUN_TESTS: &str = "rerunTests";
+
+/// A test configuration's kind: `class`, `method`, `package` or `pattern`.
+pub fn test_kind(configuration: &Configuration) -> &str {
+    configuration
+        .entry
+        .get(TEST_KIND)
+        .and_then(Value::as_str)
+        .unwrap_or("class")
+}
+
+/// The tests a test configuration runs, as the test runner takes them: `class:<class>`,
+/// `method:<class>#<method>`, `package:<package>`, `pattern:<regex>`.
+pub fn test_selectors(configuration: &Configuration) -> Vec<String> {
+    if let Some(Value::Array(tests)) = configuration.entry.get(RERUN_TESTS) {
+        return tests
+            .iter()
+            .filter_map(Value::as_str)
+            .map(|test| match test.contains('#') {
+                true => format!("method:{test}"),
+                false => format!("class:{test}"),
+            })
+            .collect();
+    }
+    let text = |field| configuration.text(field).trim().to_owned();
+    match test_kind(configuration) {
+        "method" => vec![format!(
+            "method:{}#{}",
+            text(Field::Command),
+            text(Field::TestMethod)
+        )],
+        "package" => vec![format!("package:{}", text(Field::TestPackage))],
+        "pattern" => vec![format!("pattern:{}", text(Field::TestPattern))],
+        _ => vec![format!("class:{}", text(Field::Command))],
+    }
+}
+
+/// A test run whose JVM waits for a debugger on port 5005 (Gradle's `--debug-jvm`), for a debug
+/// adapter that attaches: set on the run, never kept in a configuration.
+pub const DEBUG_JVM: &str = "debugJvm";
+
+/// The line a JVM waiting for a debugger writes (the JDWP agent's).
+pub const DEBUG_JVM_LISTENING: &str = "Listening for transport dt_socket at address: 5005";
+
+/// The JUnit or TestNG configuration of a test class or method, named as IntelliJ names it
+/// (`GreetingTest`, `GreetingTest.greets`): the gutter's, the test tree's.
+pub fn test_configuration(adapter: &str, class: &str, method: Option<&str>) -> Configuration {
+    let simple = class.rsplit('.').next().unwrap_or(class);
+    let name = match method {
+        Some(method) => format!("{simple}.{method}"),
+        None => simple.to_owned(),
+    };
+    let mut configuration = Configuration::new_debug(adapter, &name);
+    configuration.set_text(Field::Command, class);
+    let kind = match method {
+        Some(method) => {
+            configuration.set_text(Field::TestMethod, method);
+            "method"
+        }
+        None => "class",
+    };
+    configuration.entry.insert(TEST_KIND.into(), kind.into());
+    configuration
+}
+
+/// A configuration made by running something from the gutter or a context menu, kept for the
+/// project (not in its files) until saved, as IntelliJ's temporary configurations are.
+pub const TEMPORARY: &str = "temporary";
+
+/// The environment variable of a task that runs a configuration (the gutter's): the
+/// configuration's entry as JSON, which the Run tool window makes a temporary configuration of
+/// and runs with its type's runner.
+pub const CONFIGURATION_ENV: &str = "SPORK_RUN_CONFIGURATION";
 /// Kotlin's debug adapter (`spork_kotlin`'s), whose configurations are IntelliJ's Kotlin ones.
 pub const KOTLIN: &str = "Kotlin";
+
+/// The labels' column of IntelliJ's Kotlin form, as wide as its longest label ("Use classpath of
+/// module:"), where the other forms' is 160 px.
+pub const KOTLIN_LABEL_WIDTH: f32 = 176.;
 
 /// The Spring Boot type (`spork_java`'s): an Application with IntelliJ's Spring options.
 pub const SPRING_BOOT: &str = "Spring Boot";
@@ -92,6 +205,7 @@ pub fn type_icon(adapter: Option<&str>) -> &'static str {
         Some("JavaScript") => "fileTypes/javaScript",
         Some(REMOTE_JVM_DEBUG) => "runConfigurations/remoteDebug",
         Some(JUNIT) => "runConfigurations/junit",
+        Some(TESTNG) => "runConfigurations/testng",
         Some(KOTLIN) => "fileTypes/kotlin",
         Some(SPRING_BOOT) => "runConfigurations/springBoot",
         Some(_) => "runConfigurations/application",
@@ -146,6 +260,27 @@ pub trait Runner {
         None
     }
 
+    /// What Update Running Application does to a running configuration of the type, as its menu
+    /// item says it ("Update 'DemoApplication' application"); `None` when it does nothing.
+    fn update_text(
+        &self,
+        _configuration: &Configuration,
+        _workspace: &workspace::Workspace,
+        _cx: &gpui::App,
+    ) -> Option<SharedString> {
+        None
+    }
+
+    /// Updates the running configuration, `session` its debug session when it is debugged.
+    fn update(
+        &self,
+        _configuration: &Configuration,
+        _session: Option<gpui::Entity<project::debugger::session::Session>>,
+        _workspace: &gpui::Entity<workspace::Workspace>,
+        _cx: &mut gpui::App,
+    ) {
+    }
+
     /// The type's own rows of the form, after Build and run's title (Application's JRE); `edit`
     /// changes the configuration the form edits.
     fn controls(
@@ -155,6 +290,12 @@ pub trait Runner {
         _cx: &mut gpui::App,
     ) -> Vec<gpui::AnyElement> {
         Vec::new()
+    }
+
+    /// Whether the form shows [`Runner::controls`] after the program's fields rather than before
+    /// them (IntelliJ's Kotlin form: module, JRE and Shorten command line last).
+    fn controls_last(&self) -> bool {
+        false
     }
 }
 
@@ -205,7 +346,7 @@ pub fn runner(configuration: &Configuration, cx: &gpui::App) -> Option<std::rc::
 pub struct Configuration {
     /// The debug adapter of a debug scenario; `None` for a task.
     pub adapter: Option<SharedString>,
-    /// Stored as a project file (`.zed/`), or in the user's files.
+    /// Stored as a project file (`.zed/`), or in the IDE's files of the project.
     pub shared: bool,
     pub entry: Map<String, Value>,
 }
@@ -230,6 +371,10 @@ pub enum Field {
     Port,
     /// A Spring Boot configuration's Active profiles.
     ActiveProfiles,
+    /// A test configuration's method, package and pattern (its class is `Command`).
+    TestMethod,
+    TestPackage,
+    TestPattern,
 }
 
 impl Configuration {
@@ -237,9 +382,10 @@ impl Configuration {
         let mut entry = Map::new();
         entry.insert("label".into(), name.into());
         entry.insert("command".into(), "".into());
+        // IntelliJ's new configurations are the workspace's until "Store as project file"
         Self {
             adapter: None,
-            shared: true,
+            shared: false,
             entry,
         }
     }
@@ -255,14 +401,14 @@ impl Configuration {
             entry.insert("port".into(), 5005.into());
             return Self {
                 adapter: Some(adapter.to_owned().into()),
-                shared: true,
+                shared: false,
                 entry,
             };
         }
         entry.insert("request".into(), "launch".into());
         let mut configuration = Self {
             adapter: Some(adapter.to_owned().into()),
-            shared: true,
+            shared: false,
             entry,
         };
         let program = configuration.key(Field::Command);
@@ -286,6 +432,11 @@ impl Configuration {
         self.adapter.is_none()
     }
 
+    /// Whether it is temporary: made by a run from the gutter or a context menu, not saved yet.
+    pub fn is_temporary(&self) -> bool {
+        self.entry.get(TEMPORARY).and_then(Value::as_bool) == Some(true)
+    }
+
     fn key(&self, field: Field) -> &'static str {
         match (field, self.is_task()) {
             (Field::Name, _) => "label",
@@ -296,7 +447,10 @@ impl Configuration {
             {
                 "mainClass"
             }
-            (Field::Command, false) if self.adapter.as_deref() == Some(JUNIT) => "testClass",
+            (Field::Command, false) if is_test(self.adapter.as_deref()) => "testClass",
+            (Field::TestMethod, _) => "testMethod",
+            (Field::TestPackage, _) => "testPackage",
+            (Field::TestPattern, _) => "testPattern",
             (Field::VmOptions, _) => "vmArgs",
             (Field::ActiveProfiles, _) => "activeProfiles",
             (Field::Command, false) => "program",
@@ -370,7 +524,10 @@ impl Configuration {
             | Field::WorkingDirectory
             | Field::BeforeLaunch
             | Field::VmOptions
-            | Field::ActiveProfiles => (!text.trim().is_empty()).then(|| Value::from(text)),
+            | Field::ActiveProfiles
+            | Field::TestMethod
+            | Field::TestPackage
+            | Field::TestPattern => (!text.trim().is_empty()).then(|| Value::from(text)),
         };
         match value {
             Some(value) => {
@@ -401,12 +558,23 @@ impl Configuration {
             entry.insert("adapter".into(), JAVA.into());
             entry.insert("request".into(), "attach".into());
         }
-        // JUnit's runner runs the class on the test classpath
-        if self.adapter.as_deref() == Some(JUNIT) {
-            let class = entry.remove("testClass").unwrap_or_default();
+        // the test runner runs the tests on the test classpath
+        if is_test(self.adapter.as_deref()) {
+            let selectors = test_selectors(self).into_iter().map(Value::from).collect();
+            for key in [
+                "testClass",
+                "testMethod",
+                "testPackage",
+                "testPattern",
+                TEST_KIND,
+                RERUN_TESTS,
+                TEMPORARY,
+            ] {
+                entry.remove(key);
+            }
             entry.insert("adapter".into(), JAVA.into());
-            entry.insert("mainClass".into(), JUNIT_RUNNER.into());
-            entry.insert("args".into(), Value::Array(vec![class]));
+            entry.insert("mainClass".into(), TEST_RUNNER.into());
+            entry.insert("args".into(), Value::Array(selectors));
             entry.insert("classpathScope".into(), "test".into());
         }
         serde_json::from_value(Value::Object(entry)).ok()
@@ -450,24 +618,30 @@ pub fn split_arguments(text: &str) -> Vec<String> {
     arguments
 }
 
-/// Where a project's configurations are kept: its first folder's `.zed` files and the user's.
+/// Where a project's configurations are kept: its first folder's `.zed` files, shared, and the
+/// IDE's files of the project, private (IntelliJ's `workspace.xml`).
 #[derive(Clone, Debug, PartialEq)]
 pub struct Files {
     pub project_tasks: Option<PathBuf>,
     pub project_debug: Option<PathBuf>,
-    pub user_tasks: PathBuf,
-    pub user_debug: PathBuf,
+    pub workspace_tasks: Option<PathBuf>,
+    pub workspace_debug: Option<PathBuf>,
+    /// The list's order, kept apart from where each configuration is stored, as IntelliJ's
+    /// `workspace.xml` keeps its RunManager `<list>`.
+    pub order: Option<PathBuf>,
 }
 
 impl Files {
     pub fn new(root: Option<&Path>) -> Self {
         let local =
             |relative: &util::rel_path::RelPath| root.map(|root| root.join(relative.as_std_path()));
+        let workspace = root.map(workspace_folder);
         Self {
             project_tasks: local(paths::local_tasks_file_relative_path()),
             project_debug: local(paths::local_debug_file_relative_path()),
-            user_tasks: paths::tasks_file().clone(),
-            user_debug: paths::debug_scenarios_file().clone(),
+            workspace_tasks: workspace.as_ref().map(|folder| folder.join("tasks.json")),
+            workspace_debug: workspace.as_ref().map(|folder| folder.join("debug.json")),
+            order: workspace.map(|folder| folder.join("order.json")),
         }
     }
 
@@ -475,15 +649,65 @@ impl Files {
         match (task, shared) {
             (true, true) => self.project_tasks.as_ref(),
             (false, true) => self.project_debug.as_ref(),
-            (true, false) => Some(&self.user_tasks),
-            (false, false) => Some(&self.user_debug),
+            (true, false) => self.workspace_tasks.as_ref(),
+            (false, false) => self.workspace_debug.as_ref(),
         }
     }
 }
 
-/// Reads the configurations of the project's and the user's files, the project's first, each
-/// file's in its order.
+/// The IDE's folder of the project at `root` in its data folder, named after the folder and a
+/// hash of its path.
+pub fn workspace_folder(root: &Path) -> PathBuf {
+    use sha2::Digest as _;
+    let digest = sha2::Sha256::digest(root.to_string_lossy().as_bytes());
+    let hash: String = digest[..6]
+        .iter()
+        .map(|byte| format!("{byte:02x}"))
+        .collect();
+    let name = root
+        .file_name()
+        .map(|name| name.to_string_lossy().into_owned())
+        .unwrap_or_default();
+    paths::data_dir()
+        .join("workspace")
+        .join(format!("{name}-{hash}"))
+}
+
+/// A configuration's key in the order file: its type and name, as IntelliJ's `Type.Name`.
+fn order_key(configuration: &Configuration) -> String {
+    format!("{}.{}", configuration.type_name(), configuration.name())
+}
+
+/// Sorts `configurations` by the saved order; those it doesn't list keep their files' order,
+/// after the listed ones.
+fn ordered(configurations: &mut [Configuration], order: &[String]) {
+    configurations.sort_by_key(|configuration| {
+        let key = order_key(configuration);
+        order
+            .iter()
+            .position(|listed| *listed == key)
+            .unwrap_or(usize::MAX)
+    });
+}
+
+/// Reads the configurations of the project's and the IDE's files in the saved order, or the
+/// project's first, each file's in its order.
 pub async fn load(fs: Arc<dyn Fs>, files: Files) -> Vec<Configuration> {
+    let mut configurations = load_files(fs.clone(), &files).await;
+    if let Some(path) = &files.order
+        && let Ok(text) = fs.load(path).await
+    {
+        match serde_json::from_str::<Vec<String>>(&text) {
+            Ok(order) => ordered(&mut configurations, &order),
+            Err(error) => {
+                log::warn!("reading the run configurations' order from {path:?}: {error:#}")
+            }
+        }
+    }
+    configurations
+}
+
+async fn load_files(fs: Arc<dyn Fs>, files: &Files) -> Vec<Configuration> {
     let mut configurations = Vec::new();
     for (task, shared) in [(true, true), (false, true), (true, false), (false, false)] {
         let Some(path) = files.file(task, shared) else {
@@ -552,12 +776,41 @@ pub async fn save(
             .await
             .with_context(|| format!("writing {path:?}"))?;
     }
+    let keys = |configurations: &[Configuration]| -> Vec<String> {
+        configurations.iter().map(order_key).collect()
+    };
+    if let Some(path) = &files.order
+        && keys(&before) != keys(&after)
+    {
+        if let Some(folder) = path.parent() {
+            fs.create_dir(folder)
+                .await
+                .with_context(|| format!("creating {folder:?}"))?;
+        }
+        let text = serde_json::to_string_pretty(&keys(&after))?;
+        fs.atomic_write(path.clone(), format!("{text}\n"))
+            .await
+            .with_context(|| format!("writing {path:?}"))?;
+    }
     Ok(())
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{Configuration, Field, split_arguments};
+    use super::{Configuration, Field, order_key, ordered, split_arguments};
+
+    #[test]
+    fn the_saved_order_wins_over_where_configurations_are_stored() {
+        let mut list = vec![
+            Configuration::new_task("hello"),
+            Configuration::new_task("greet"),
+            Configuration::new_task("new"),
+        ];
+        let order = vec![order_key(&list[1]), order_key(&list[0])];
+        ordered(&mut list, &order);
+        let names: Vec<_> = list.iter().map(Configuration::name).collect();
+        assert_eq!(names, ["greet", "hello", "new"]);
+    }
 
     #[test]
     fn fields_round_trip_through_their_text() {

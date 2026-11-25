@@ -31,6 +31,12 @@ pub trait FolderRoles: 'static + Send + Sync {
         Vec::new()
     }
 
+    /// What the menu runs for the file or folder at `abs_path`: IntelliJ's Run 'Tests in …' and
+    /// Debug 'Tests in …' in a test root.
+    fn run_items(&self, _abs_path: &Path) -> Vec<NewItem> {
+        Vec::new()
+    }
+
     /// The roots of the invisible worktrees the tree shows after the project's folders (the
     /// app adds and holds them): IntelliJ's External Libraries.
     fn extra_roots(&self) -> Vec<PathBuf> {

@@ -1,0 +1,94 @@
+{
+ "id": "spring-boot-library-declaration",
+ "fixture": "spring-maven",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   },
+   "Spring Boot Properties": {
+    "enable_language_server": true
+   },
+   "Spring Boot YAML": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "run.configurations.names": [
+     "DemoApplication"
+    ]
+   },
+   "within": 60000
+  },
+  {
+   "expect": {
+    "java.spring.classpath": true
+   },
+   "within": 300000
+  },
+  {
+   "do": "open",
+   "path": "src/main/resources/application.properties"
+  },
+  {
+   "expect": {
+    "active": "src/main/resources/application.properties",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ],
+    "editor.language": "Spring Boot Properties"
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down right right"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-b"
+  },
+  {
+   "expect": {
+    "active": {
+     "contains": "ServerProperties.java"
+    }
+   },
+   "within": 15000
+  },
+  {
+   "sh": "find \"../home/Library/Application Support/Spork IDE/java/sources\" -name ServerProperties.java | wc -l | tr -d ' '",
+   "is": "1"
+  }
+ ]
+}

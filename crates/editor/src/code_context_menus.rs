@@ -2234,13 +2234,23 @@ impl CodeActionsMenu {
                                     }
                                 }
                                 CodeActionsItem::CodeAction { .. } => CodeActionRowKind::Action,
-                                CodeActionsItem::Task(..) | CodeActionsItem::DebugScenario(_) => {
-                                    CodeActionRowKind::Run
+                                CodeActionsItem::Task(..) => CodeActionRowKind::Run,
+                                CodeActionsItem::DebugScenario(_) => CodeActionRowKind::Debug,
+                            };
+                            // IntelliJ's executors in the gutter's popup: Run 'MainKt',
+                            // Debug 'MainKt'
+                            let label = match &action {
+                                CodeActionsItem::Task(_, task) => {
+                                    format!("Run '{}'", task.resolved_label.replace('\n', ""))
                                 }
+                                CodeActionsItem::DebugScenario(scenario) => {
+                                    format!("Debug '{}'", scenario.label)
+                                }
+                                CodeActionsItem::CodeAction { .. } => action.menu_label(),
                             };
                             let row = CodeActionRow {
                                 editor: cx.entity().downgrade(),
-                                label: action.menu_label().into(),
+                                label: label.into(),
                                 kind,
                                 selected,
                             };
@@ -2313,11 +2323,60 @@ impl CodeActionsMenu {
         )
         .with_sizing_behavior(ListSizingBehavior::Infer);
 
-        // Spork IDE: the app's popup (IntelliJ's intentions)
+        // Spork IDE: the app's popup (IntelliJ's intentions), the run icon's with Modify Run
+        // Configuration… last
         match CodeMenuLook::get(cx) {
-            Some(look) => (look.code_actions)(list.into_any_element(), cx),
+            Some(look) => {
+                let modify = self.modify_run_configuration_row(&look, cx);
+                let list = match modify {
+                    Some(row) => div()
+                        .flex()
+                        .flex_col()
+                        .child(list)
+                        .child(row)
+                        .into_any_element(),
+                    None => list.into_any_element(),
+                };
+                (look.code_actions)(list, cx)
+            }
             None => Popover::new().child(list).into_any_element(),
         }
+    }
+
+    /// Spork IDE: IntelliJ's Modify Run Configuration… after the run icon's tasks, when the app
+    /// handles it.
+    fn modify_run_configuration_row(
+        &self,
+        look: &CodeMenuLook,
+        cx: &mut Context<Editor>,
+    ) -> Option<AnyElement> {
+        if !matches!(self.deployed_from, Some(CodeActionSource::RunMenu(_))) {
+            return None;
+        }
+        let crate::RunMenuModify(modify) = cx.try_global::<crate::RunMenuModify>().cloned()?;
+        let task = self
+            .actions
+            .tasks()?
+            .templates
+            .first()
+            .map(|(_, task)| task.clone())?;
+        let row = CodeActionRow {
+            editor: cx.entity().downgrade(),
+            label: "Modify Run Configuration…".into(),
+            kind: CodeActionRowKind::ModifyRunConfiguration,
+            selected: false,
+        };
+        Some(
+            div()
+                .id("modify_run_configuration")
+                .child((look.code_action_row)(row, cx))
+                .on_click(cx.listener(move |editor, _, window, cx| {
+                    cx.stop_propagation();
+                    editor.hide_context_menu(window, cx);
+                    modify(&task, window, cx);
+                }))
+                .into_any_element(),
+        )
     }
 
     fn render_aside(

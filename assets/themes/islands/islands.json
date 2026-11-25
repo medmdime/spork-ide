@@ -240,6 +240,21 @@
             "font_style": null,
             "font_weight": null
           },
+          "debugger.inline_value": {
+            "color": "#666d75ff",
+            "font_style": "italic",
+            "font_weight": null
+          },
+          "debugger.inline_value.execution_line": {
+            "color": "#849fbfff",
+            "font_style": "italic",
+            "font_weight": null
+          },
+          "debugger.inline_value.modified": {
+            "color": "#b2ae60ff",
+            "font_style": "italic",
+            "font_weight": null
+          },
           "keyword": {
             "color": "#cf8e6dff",
             "font_style": null,
@@ -379,6 +394,18 @@
             "color": "#bcbec4ff",
             "font_style": null,
             "font_weight": 700
+          },
+          "debugger.smart_step_into.target": {
+            "color": null,
+            "background_color": "#53385eff",
+            "font_style": null,
+            "font_weight": null
+          },
+          "debugger.smart_step_into.selection": {
+            "color": null,
+            "background_color": "#824991ff",
+            "font_style": null,
+            "font_weight": null
           },
           "emphasis": {
             "color": "#bcbec4ff",
@@ -645,6 +672,21 @@
             "font_style": null,
             "font_weight": null
           },
+          "debugger.inline_value": {
+            "color": "#868686ff",
+            "font_style": "italic",
+            "font_weight": null
+          },
+          "debugger.inline_value.execution_line": {
+            "color": "#a9b7d6ff",
+            "font_style": "italic",
+            "font_weight": null
+          },
+          "debugger.inline_value.modified": {
+            "color": "#ca8021ff",
+            "font_style": "italic",
+            "font_weight": null
+          },
           "keyword": {
             "color": "#0033b3ff",
             "font_style": null,
@@ -782,6 +824,18 @@
           },
           "lifetime": {
             "color": "#080808ff",
+            "font_style": null,
+            "font_weight": null
+          },
+          "debugger.smart_step_into.target": {
+            "color": "#000000ff",
+            "background_color": "#e2d3f0ff",
+            "font_style": null,
+            "font_weight": null
+          },
+          "debugger.smart_step_into.selection": {
+            "color": "#000000ff",
+            "background_color": "#f2b3ffff",
             "font_style": null,
             "font_weight": null
           },
@@ -1050,6 +1104,21 @@
             "font_style": null,
             "font_weight": null
           },
+          "debugger.inline_value": {
+            "color": "#666d75ff",
+            "font_style": "italic",
+            "font_weight": null
+          },
+          "debugger.inline_value.execution_line": {
+            "color": "#7b94b3ff",
+            "font_style": "italic",
+            "font_weight": null
+          },
+          "debugger.inline_value.modified": {
+            "color": "#ca7e03ff",
+            "font_style": "italic",
+            "font_weight": null
+          },
           "keyword": {
             "color": "#cc7832ff",
             "font_style": null,
@@ -1189,6 +1258,18 @@
             "color": "#a9b7c6ff",
             "font_style": null,
             "font_weight": 700
+          },
+          "debugger.smart_step_into.target": {
+            "color": null,
+            "background_color": "#53385eff",
+            "font_style": null,
+            "font_weight": null
+          },
+          "debugger.smart_step_into.selection": {
+            "color": null,
+            "background_color": "#824991ff",
+            "font_style": null,
+            "font_weight": null
           },
           "emphasis": {
             "color": "#a9b7c6ff",
@@ -1454,6 +1535,21 @@
             "font_style": null,
             "font_weight": null
           },
+          "debugger.inline_value": {
+            "color": "#ccccccff",
+            "font_style": "italic",
+            "font_weight": null
+          },
+          "debugger.inline_value.execution_line": {
+            "color": "#ccccccff",
+            "font_style": "italic",
+            "font_weight": null
+          },
+          "debugger.inline_value.modified": {
+            "color": "#00aaffff",
+            "font_style": "italic",
+            "font_weight": 700
+          },
           "keyword": {
             "color": "#ed864aff",
             "font_style": null,
@@ -1593,6 +1689,18 @@
             "color": "#ebebebff",
             "font_style": null,
             "font_weight": 700
+          },
+          "debugger.smart_step_into.target": {
+            "color": null,
+            "background_color": "#53385eff",
+            "font_style": null,
+            "font_weight": null
+          },
+          "debugger.smart_step_into.selection": {
+            "color": null,
+            "background_color": "#824991ff",
+            "font_style": null,
+            "font_weight": null
           },
           "emphasis": {
             "color": "#ebebebff",
@@ -1859,6 +1967,21 @@
             "font_style": null,
             "font_weight": null
           },
+          "debugger.inline_value": {
+            "color": "#666d75ff",
+            "font_style": "italic",
+            "font_weight": null
+          },
+          "debugger.inline_value.execution_line": {
+            "color": "#849fbfff",
+            "font_style": "italic",
+            "font_weight": null
+          },
+          "debugger.inline_value.modified": {
+            "color": "#b2ae60ff",
+            "font_style": "italic",
+            "font_weight": null
+          },
           "keyword": {
             "color": "#cf8e6dff",
             "font_style": null,
@@ -1998,6 +2121,18 @@
             "color": "#bcbec4ff",
             "font_style": null,
             "font_weight": 700
+          },
+          "debugger.smart_step_into.target": {
+            "color": null,
+            "background_color": "#53385eff",
+            "font_style": null,
+            "font_weight": null
+          },
+          "debugger.smart_step_into.selection": {
+            "color": null,
+            "background_color": "#824991ff",
+            "font_style": null,
+            "font_weight": null
           },
           "emphasis": {
             "color": "#bcbec4ff",
@@ -2264,6 +2399,21 @@
             "font_style": null,
             "font_weight": null
           },
+          "debugger.inline_value": {
+            "color": "#868686ff",
+            "font_style": "italic",
+            "font_weight": null
+          },
+          "debugger.inline_value.execution_line": {
+            "color": "#a9b7d6ff",
+            "font_style": "italic",
+            "font_weight": null
+          },
+          "debugger.inline_value.modified": {
+            "color": "#ca8021ff",
+            "font_style": "italic",
+            "font_weight": null
+          },
           "keyword": {
             "color": "#0033b3ff",
             "font_style": null,
@@ -2401,6 +2551,18 @@
           },
           "lifetime": {
             "color": "#080808ff",
+            "font_style": null,
+            "font_weight": null
+          },
+          "debugger.smart_step_into.target": {
+            "color": "#000000ff",
+            "background_color": "#e2d3f0ff",
+            "font_style": null,
+            "font_weight": null
+          },
+          "debugger.smart_step_into.selection": {
+            "color": "#000000ff",
+            "background_color": "#f2b3ffff",
             "font_style": null,
             "font_weight": null
           },
@@ -2669,6 +2831,21 @@
             "font_style": null,
             "font_weight": null
           },
+          "debugger.inline_value": {
+            "color": "#868686ff",
+            "font_style": "italic",
+            "font_weight": null
+          },
+          "debugger.inline_value.execution_line": {
+            "color": "#a9b7d6ff",
+            "font_style": "italic",
+            "font_weight": null
+          },
+          "debugger.inline_value.modified": {
+            "color": "#ca8021ff",
+            "font_style": "italic",
+            "font_weight": null
+          },
           "keyword": {
             "color": "#0033b3ff",
             "font_style": null,
@@ -2806,6 +2983,18 @@
           },
           "lifetime": {
             "color": "#080808ff",
+            "font_style": null,
+            "font_weight": null
+          },
+          "debugger.smart_step_into.target": {
+            "color": "#000000ff",
+            "background_color": "#e2d3f0ff",
+            "font_style": null,
+            "font_weight": null
+          },
+          "debugger.smart_step_into.selection": {
+            "color": "#000000ff",
+            "background_color": "#f2b3ffff",
             "font_style": null,
             "font_weight": null
           },
@@ -3066,6 +3255,21 @@
             "font_style": null,
             "font_weight": null
           },
+          "debugger.inline_value": {
+            "color": "#666d75ff",
+            "font_style": "italic",
+            "font_weight": null
+          },
+          "debugger.inline_value.execution_line": {
+            "color": "#7b94b3ff",
+            "font_style": "italic",
+            "font_weight": null
+          },
+          "debugger.inline_value.modified": {
+            "color": "#ca7e03ff",
+            "font_style": "italic",
+            "font_weight": null
+          },
           "keyword": {
             "color": "#cc7832ff",
             "font_style": null,
@@ -3205,6 +3409,18 @@
             "color": "#a9b7c6ff",
             "font_style": null,
             "font_weight": 700
+          },
+          "debugger.smart_step_into.target": {
+            "color": null,
+            "background_color": "#53385eff",
+            "font_style": null,
+            "font_weight": null
+          },
+          "debugger.smart_step_into.selection": {
+            "color": null,
+            "background_color": "#824991ff",
+            "font_style": null,
+            "font_weight": null
           },
           "emphasis": {
             "color": "#a9b7c6ff",
@@ -3471,6 +3687,21 @@
             "font_style": null,
             "font_weight": null
           },
+          "debugger.inline_value": {
+            "color": "#868686ff",
+            "font_style": "italic",
+            "font_weight": null
+          },
+          "debugger.inline_value.execution_line": {
+            "color": "#a9b7d6ff",
+            "font_style": "italic",
+            "font_weight": null
+          },
+          "debugger.inline_value.modified": {
+            "color": "#ca8021ff",
+            "font_style": "italic",
+            "font_weight": null
+          },
           "keyword": {
             "color": "#0033b3ff",
             "font_style": null,
@@ -3608,6 +3839,18 @@
           },
           "lifetime": {
             "color": "#080808ff",
+            "font_style": null,
+            "font_weight": null
+          },
+          "debugger.smart_step_into.target": {
+            "color": "#000000ff",
+            "background_color": "#e2d3f0ff",
+            "font_style": null,
+            "font_weight": null
+          },
+          "debugger.smart_step_into.selection": {
+            "color": "#000000ff",
+            "background_color": "#f2b3ffff",
             "font_style": null,
             "font_weight": null
           },

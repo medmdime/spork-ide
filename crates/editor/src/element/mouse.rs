@@ -607,6 +607,16 @@ impl EditorElement {
             cx.notify();
             return;
         } else if gutter_hitbox.is_hovered(window) {
+            // Spork IDE: a click on a line number is the app's first (IntelliJ's run to cursor)
+            if editor
+                .gutter_dimensions
+                .intellij
+                .is_some_and(|areas| event.position.x - gutter_hitbox.bounds.origin.x < areas.icons)
+                && editor.line_number_clicked(point_for_position.nearest_valid.row(), window, cx)
+            {
+                cx.stop_propagation();
+                return;
+            }
             click_count = 3; // Simulate triple-click when clicking the gutter to select lines
         } else if !text_hitbox.is_hovered(window) {
             return;

@@ -19,10 +19,12 @@ pub mod inlay_hints;
 
 use std::sync::OnceLock;
 
+use collections::HashMap;
+use dap::client::SessionId;
 use gpui::{Context, HighlightStyle, Hsla, Rgba, Task};
 use multi_buffer::Anchor;
 use project::{InlayHint, InlayId};
-use text::Rope;
+use text::{BufferId, Rope};
 
 use crate::{Editor, HighlightKey, hover_links::InlayHighlight};
 
@@ -136,6 +138,12 @@ pub struct InlineValueCache {
     pub enabled: bool,
     pub inlays: Vec<InlayId>,
     pub refresh_task: Task<Option<()>>,
+    /// Spork IDE: the rows showing values and the text after each one's end.
+    pub lines: Vec<(u32, String)>,
+    /// Spork IDE: each variable's value by its line and name, with the one before it when it
+    /// changed, during the session (IntelliJ's `LinePainter.CACHE`).
+    pub values: HashMap<(BufferId, u32, String), (String, Option<String>)>,
+    pub session: Option<SessionId>,
 }
 
 impl InlineValueCache {
@@ -144,6 +152,9 @@ impl InlineValueCache {
             enabled,
             inlays: Vec::new(),
             refresh_task: Task::ready(None),
+            lines: Vec::new(),
+            values: HashMap::default(),
+            session: None,
         }
     }
 }

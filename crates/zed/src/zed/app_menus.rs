@@ -459,6 +459,8 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
             MenuItem::action("Show Running List", run::ShowRunningList),
             MenuItem::separator(),
             MenuItem::submenu(Menu::new("Debugging Actions").items([
+                MenuItem::action("Update Running Application…", run::UpdateRunningApplication),
+                MenuItem::separator(),
                 MenuItem::action("Step Over", debugger_ui::StepOver),
                 MenuItem::action("Force Step Over", run::ForceStepOver),
                 MenuItem::action("Step Into", debugger_ui::StepInto),
@@ -476,6 +478,12 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
             ])),
             MenuItem::submenu(Menu::new("Toggle Breakpoint").items([
                 MenuItem::action("Line Breakpoint", editor::actions::ToggleBreakpoint),
+                MenuItem::action("Method Breakpoint", run::ToggleMethodBreakpoint),
+                MenuItem::action("Field Watchpoint", run::ToggleFieldWatchpoint),
+                MenuItem::action(
+                    "Temporary Line Breakpoint",
+                    run::ToggleTemporaryLineBreakpoint,
+                ),
                 MenuItem::action("Toggle Breakpoint Enabled", run::ToggleBreakpointEnabled),
             ])),
             MenuItem::action("View Breakpoints…", run::ViewBreakpoints),

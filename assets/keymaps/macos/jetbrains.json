@@ -13,6 +13,7 @@
       "cmd-}": "pane::ActivateNextItem",
       "shift-escape": "workspace::CloseActiveDock", // IntelliJ: Hide Active Tool Window, in place of workspace::ToggleZoom
       "cmd-f2": "run::Stop",
+      "cmd-f10": "run::UpdateRunningApplication",
       "f7": "debugger::StepInto",
       "alt-shift-f7": "run::ForceStepInto",
       "shift-f7": "run::SmartStepInto",
@@ -94,6 +95,7 @@
       "cmd-shift-home": "editor::SelectToBeginning",
       "cmd-shift-end": "editor::SelectToEnd",
       "cmd-f8": "editor::ToggleBreakpoint",
+      "alt-shift-cmd-f8": "run::ToggleTemporaryLineBreakpoint",
       // IntelliJ's run keys, over the default keymap's editing ones
       "f7": "debugger::StepInto", // the default's breakpoint and diagnostics keys otherwise
       "shift-f7": "run::SmartStepInto",

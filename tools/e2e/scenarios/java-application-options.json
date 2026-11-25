@@ -68,7 +68,8 @@
     "Node.js",
     "Python",
     "Remote JVM Debug",
-    "Spring Boot"
+    "Spring Boot",
+    "TestNG"
    ]
   },
   {
@@ -227,16 +228,16 @@
    "within": 5000
   },
   {
-   "sh": "cat .zed/debug.json",
+   "sh": "cat \"../home/Library/Application Support/Spork IDE/workspace/\"*/debug.json",
    "contains": "\"vmArgs\": \"-Xmx256m\"",
    "within": 8000
   },
   {
-   "sh": "cat .zed/debug.json",
+   "sh": "cat \"../home/Library/Application Support/Spork IDE/workspace/\"*/debug.json",
    "contains": "\"skipBuild\": true"
   },
   {
-   "sh": "cat .zed/debug.json",
+   "sh": "cat \"../home/Library/Application Support/Spork IDE/workspace/\"*/debug.json",
    "contains": "\"allowMultipleInstances\": true"
   },
   {

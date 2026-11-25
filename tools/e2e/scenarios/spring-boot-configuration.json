@@ -106,8 +106,8 @@
     "Hide banner",
     "Disable launch optimization",
     "Disable JMX endpoints",
-    "On 'Update' action (disabled)",
-    "On frame deactivation (disabled)",
+    "On 'Update' action",
+    "On frame deactivation",
     "Override configuration properties"
    ],
    "part": true,
@@ -261,16 +261,16 @@
    "within": 5000
   },
   {
-   "sh": "cat .zed/debug.json",
+   "sh": "cat \"../home/Library/Application Support/Spork IDE/workspace/\"*/debug.json",
    "contains": "\"activeProfiles\": \"dev\"",
    "within": 8000
   },
   {
-   "sh": "cat .zed/debug.json",
+   "sh": "cat \"../home/Library/Application Support/Spork IDE/workspace/\"*/debug.json",
    "contains": "\"name\": \"server.port\""
   },
   {
-   "sh": "cat .zed/debug.json",
+   "sh": "cat \"../home/Library/Application Support/Spork IDE/workspace/\"*/debug.json",
    "contains": "\"hideBanner\": true"
   },
   {

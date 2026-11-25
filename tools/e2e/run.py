@@ -22,7 +22,8 @@ Kotlin and Spring Boot's language servers link to cache/, filled by the first ru
 "reference-app": [screenshots under spork/docs/reference-app], "prepare": a shell command run in the fixture project
 before the IDE opens it, "env": {variables set for the IDE, as
 SPORK_IDE_JDKS "" for no JDK, SPORK_IDE_DISCO "$SPORK_E2E_DISCO" for the Disco API's recorded answers
-(fixtures/disco, served for the run), "$E2E" this folder and other variables the harness's; the harness
+(fixtures/disco, served for the run), SPORK_IDE_INITIALIZR "$SPORK_E2E_INITIALIZR" for Spring Initializr's
+(fixtures/initializr), "$E2E" this folder and other variables the harness's; the harness
 sets SPORK_IDE_KEEP_JDK_ARCHIVES for every scenario, so a downloaded JDK's archive stays in cache/ for
 the next run}, "settings": {the test HOME's settings over
 SETTINGS below, null leaving one out; "$RUST_ANALYZER" in them is the rust-analyzer of this
@@ -135,6 +136,39 @@ def serve_disco() -> None:
     server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Disco)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     os.environ["SPORK_E2E_DISCO"] = f"http://127.0.0.1:{server.server_address[1]}"
+
+
+class Initializr(http.server.BaseHTTPRequestHandler):
+    """Spring Initializr's answers recorded in fixtures/initializr for New Project ▸ Spring Boot: its
+    metadata (`/`), and `starter.zip` for the one query recorded with it (`starter.query`); another
+    query is refused, so a scenario checks what the wizard asked for."""
+
+    def do_GET(self) -> None:
+        url = urllib.parse.urlparse(self.path)
+        folder = HERE / "fixtures" / "initializr"
+        if url.path in ("", "/"):
+            body, kind = (folder / "metadata.json").read_bytes(), "application/vnd.initializr.v2.3+json"
+        elif url.path == "/starter.zip" and url.query == (folder / "starter.query").read_text().strip():
+            body, kind = (folder / "starter.zip").read_bytes(), "application/zip"
+        else:
+            self.send_error(400, f"not recorded: {self.path}")
+            return
+        self.send_response(200)
+        self.send_header("Content-Type", kind)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, *_) -> None:
+        pass
+
+
+def serve_initializr() -> None:
+    """Serves fixtures/initializr on a free port for the run; a scenario's env names it
+    "$SPORK_E2E_INITIALIZR"."""
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Initializr)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    os.environ["SPORK_E2E_INITIALIZR"] = f"http://127.0.0.1:{server.server_address[1]}"
 
 
 def walk(node: dict):
@@ -567,6 +601,7 @@ def main() -> int:
     only = [a for a in args if not a.startswith("--")]
     tools()
     serve_disco()
+    serve_initializr()
     if build:
         subprocess.run(["cargo", "build", "-p", "zed"], cwd=ROOT, check=True)
     scenarios = [json.loads(p.read_text()) for p in sorted((HERE / "scenarios").glob("*.json"))]

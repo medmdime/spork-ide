@@ -137,7 +137,33 @@ impl DebugAdapterClient {
 
         match response.success {
             true => {
-                if let Some(json) = response.body {
+                if let Some(mut json) = response.body {
+                    // Spork IDE: the Kotlin language server's adapter gives a stack trace's label
+                    // frames ("Async stack trace") negative ids and a frame without a line
+                    // (`Unknown Source:-1`) line -1, where the protocol's are unsigned: an id is
+                    // taken as its two's complement, unique all the same, and a line as 0, none
+                    if command == "stackTrace"
+                        && let Some(frames) = json
+                            .get_mut("stackFrames")
+                            .and_then(serde_json::Value::as_array_mut)
+                    {
+                        for frame in frames {
+                            if let Some(id) = frame.get("id").and_then(serde_json::Value::as_i64)
+                                && id < 0
+                            {
+                                frame["id"] = (id as u64).into();
+                            }
+                            for key in ["line", "column", "endLine", "endColumn"] {
+                                if frame
+                                    .get(key)
+                                    .and_then(serde_json::Value::as_i64)
+                                    .is_some_and(|number| number < 0)
+                                {
+                                    frame[key] = 0.into();
+                                }
+                            }
+                        }
+                    }
                     Ok(serde_json::from_value(json)?)
                 // Note: dap types configure themselves to return `None` when an empty object is received,
                 // which then fails here...

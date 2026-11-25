@@ -15,6 +15,8 @@ mod list_popup;
 pub mod run_panel;
 pub mod run_widget;
 pub mod services;
+mod smart_step_into;
+pub mod test_runner;
 
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -39,6 +41,7 @@ pub use debug_window::{
 };
 pub use docker::Confirm;
 pub use run_widget::RunWidget;
+pub use services::is_running;
 
 pub mod run {
     gpui::actions!(
@@ -60,6 +63,12 @@ pub mod run {
             MuteBreakpoints,
             /// Enables or disables the caret line's breakpoint.
             ToggleBreakpointEnabled,
+            /// Sets a breakpoint removed once hit on the caret line, or removes the line's.
+            ToggleTemporaryLineBreakpoint,
+            /// Sets a breakpoint on the entry of the method at the caret, or removes it.
+            ToggleMethodBreakpoint,
+            /// Watches the field at the caret, or stops watching it.
+            ToggleFieldWatchpoint,
             /// Shows the line where the debugged program stopped.
             ShowExecutionPoint,
             /// Opens the Evaluate dialog on the selected frame.
@@ -88,12 +97,16 @@ pub mod run {
             /// Ends the input of the process of the Run tool window's selected tab (IntelliJ's
             /// Send EOF).
             SendEof,
+            /// Updates a running application as its configuration's On 'Update' action says
+            /// (IntelliJ's Update Running Application).
+            UpdateRunningApplication,
         ]
     );
 }
 
 pub fn init(cx: &mut App) {
     breakpoints::init(cx);
+    test_runner::init(cx);
     debug_window::init(cx);
     cx.observe_new(|workspace: &mut Workspace, _, cx| {
         let configurations = cx.new(|cx| ProjectConfigurations::new(workspace, cx));
@@ -105,7 +118,7 @@ pub fn init(cx: &mut App) {
         .detach();
         run_widget::register(workspace);
         run_panel::register(workspace);
-        breakpoints::register(workspace);
+        breakpoints::register(workspace, cx);
         configurations_dialog::register(workspace);
         debug_window::register(workspace);
         attach::register(workspace);
@@ -119,6 +132,60 @@ pub fn init(cx: &mut App) {
 pub fn add_run_panel(workspace: &mut Workspace, window: &mut Window, cx: &mut Context<Workspace>) {
     run_panel::add(workspace, window, cx);
     services::add(workspace, window, cx);
+}
+
+/// Runs or debugs a configuration made from the code (a context menu's Run 'Tests in …'), made
+/// temporary and selected unless one of its name exists, as IntelliJ's.
+pub fn run_temporary(
+    configuration: Configuration,
+    debug: bool,
+    workspace: &mut Workspace,
+    window: &mut Window,
+    cx: &mut Context<Workspace>,
+) {
+    if let Some(configurations) = ProjectConfigurations::of(workspace, cx) {
+        configurations.update(cx, |configurations, cx| {
+            configurations.run_temporary(configuration.clone(), cx)
+        });
+    }
+    run_widget::launch(Some(&configuration), debug, workspace, window, cx);
+}
+
+/// Runs a test configuration for a debugger to attach to (a debug adapter that attaches, as
+/// Kotlin's does): the configuration made temporary as a run of it would, then run with its JVM
+/// waiting for the debugger ([`configurations::DEBUG_JVM`]) in the window of `workspace`.
+pub fn run_for_debugger(workspace: &Entity<Workspace>, configuration: Configuration, cx: &mut App) {
+    let Some(window) = cx.windows().into_iter().find(|window| {
+        window
+            .update(cx, |_, window, cx| {
+                Workspace::for_window(window, cx).as_ref() == Some(workspace)
+            })
+            .unwrap_or(false)
+    }) else {
+        return;
+    };
+    window
+        .update(cx, |_, window, cx| {
+            workspace.update(cx, |workspace, cx| {
+                if let Some(configurations) = ProjectConfigurations::of(workspace, cx) {
+                    configurations.update(cx, |configurations, cx| {
+                        configurations.run_temporary(configuration.clone(), cx)
+                    });
+                }
+                let mut debugged = configuration;
+                debugged
+                    .entry
+                    .insert(configurations::DEBUG_JVM.into(), Value::Bool(true));
+                run_widget::launch(Some(&debugged), false, workspace, window, cx);
+            })
+        })
+        .log_err();
+}
+
+/// Whether the running run of the configuration `name` has written `text` to its console.
+pub fn run_console_shows(workspace: &Workspace, name: &str, text: &str, cx: &App) -> bool {
+    run_panel::run_of(workspace, name, cx)
+        .is_some_and(|run| run.running && run.terminal.read(cx).get_content().contains(text))
 }
 
 /// The configurations of each workspace, by its entity.
@@ -214,8 +281,15 @@ impl ProjectConfigurations {
         }
         let load = configurations::load(self.fs.clone(), self.files(cx));
         self._load = cx.spawn(async move |this, cx| {
-            let list = load.await;
+            let mut list = load.await;
             this.update(cx, |this, cx| {
+                list.extend(this.history.temporary.iter().filter_map(|entry| {
+                    Some(Configuration {
+                        adapter: Some(entry.get("adapter")?.as_str()?.to_owned().into()),
+                        shared: false,
+                        entry: entry.clone(),
+                    })
+                }));
                 // the run widget keeps the first configuration once one appears, as IntelliJ
                 // selects one it creates
                 if this.selected.is_none() && this.list.is_empty() {
@@ -239,18 +313,31 @@ impl ProjectConfigurations {
         self.list.iter().find(|c| &c.name() == name)
     }
 
-    /// Saves the dialog's configurations to their files, then reads them again.
+    /// Saves the dialog's configurations to their files, the temporary ones for the project,
+    /// then reads them again.
     pub fn save(
         &mut self,
         list: Vec<Configuration>,
         cx: &mut Context<Self>,
     ) -> Task<anyhow::Result<()>> {
+        let kept = |list: &[Configuration]| -> Vec<Configuration> {
+            list.iter().filter(|c| !c.is_temporary()).cloned().collect()
+        };
         let save = configurations::save(
             self.fs.clone(),
             self.files(cx),
-            self.list.clone(),
-            list.clone(),
+            kept(&self.list),
+            kept(&list),
         );
+        let temporary: Vec<_> = list
+            .iter()
+            .filter(|c| c.is_temporary())
+            .map(|c| c.entry.clone())
+            .collect();
+        if temporary != self.history.temporary {
+            self.history.temporary = temporary;
+            self.write_history(cx);
+        }
         self.list = list;
         cx.notify();
         cx.spawn(async move |this, cx| {
@@ -258,6 +345,45 @@ impl ProjectConfigurations {
             this.update(cx, |this, cx| this.reload(cx))?;
             Ok(())
         })
+    }
+
+    /// A run from the gutter or a context menu: the configuration of that name, made temporary
+    /// when there is none (IntelliJ keeps the last five), selected in the run widget.
+    pub fn run_temporary(&mut self, configuration: Configuration, cx: &mut Context<Self>) {
+        let name = configuration.name();
+        self.selected = Some(name.clone());
+        if self.list.iter().any(|c| c.name() == name) {
+            cx.notify();
+            return;
+        }
+        let mut configuration = configuration;
+        configuration
+            .entry
+            .insert(configurations::TEMPORARY.into(), Value::Bool(true));
+        configuration.shared = false;
+        let mut list = self.list.clone();
+        list.push(configuration);
+        let temporary: Vec<usize> = (0..list.len())
+            .filter(|ix| list[*ix].is_temporary())
+            .collect();
+        if let Some(oldest) = temporary.first().filter(|_| temporary.len() > 5) {
+            list.remove(*oldest);
+        }
+        self.save(list, cx).detach_and_log_err(cx);
+    }
+
+    /// Save Configuration: a temporary configuration kept with the others, private until "Store
+    /// as project file".
+    pub fn save_temporary(
+        &mut self,
+        name: &str,
+        cx: &mut Context<Self>,
+    ) -> Task<anyhow::Result<()>> {
+        let mut list = self.list.clone();
+        for configuration in list.iter_mut().filter(|c| c.name().as_ref() == name) {
+            configuration.entry.remove(configurations::TEMPORARY);
+        }
+        self.save(list, cx)
     }
 
     /// A configuration was run or debugged: it leads the Recent Configurations.
@@ -321,6 +447,9 @@ pub struct StartHistory {
     pub history: Vec<String>,
     pub pinned: Vec<String>,
     pub all_expanded: bool,
+    /// The temporary configurations' entries.
+    #[serde(default)]
+    pub temporary: Vec<serde_json::Map<String, Value>>,
 }
 
 impl StartHistory {
@@ -358,5 +487,9 @@ pub fn e2e_state(workspace: &Workspace, cx: &App) -> Value {
         "evaluate": evaluate_dialog::e2e_evaluate(cx),
         "exceptions": breakpoints::e2e_exceptions(workspace, cx),
         "services": services::e2e_services(workspace, cx),
+        "smart_step": workspace
+            .active_modal::<smart_step_into::SmartStepChooser>(cx)
+            .map(|chooser| chooser.read(cx).e2e_state()),
+        "updaters": services::e2e_updaters(workspace, cx),
     })
 }

@@ -386,6 +386,9 @@
    ],
    "items": [
     "Line Breakpoint",
+    "Method Breakpoint",
+    "Field Watchpoint",
+    "Temporary Line Breakpoint",
     "Toggle Breakpoint Enabled"
    ]
   },

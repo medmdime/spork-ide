@@ -63,8 +63,12 @@ pub enum CodeActionRowKind {
     InspectionFix,
     /// Any other language server's action (refactorings, source actions).
     Action,
-    /// A task or a debug scenario to run.
+    /// A task to run.
     Run,
+    /// A debug scenario to debug.
+    Debug,
+    /// IntelliJ's Modify Run Configuration…, the run icon popup's last row.
+    ModifyRunConfiguration,
 }
 
 pub struct CodeActionRow {

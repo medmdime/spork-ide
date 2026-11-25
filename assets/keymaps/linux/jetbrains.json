@@ -4,6 +4,7 @@
       "ctrl-alt-s": "zed::OpenSettings",
       "shift-escape": "workspace::CloseActiveDock", // IntelliJ: Hide Active Tool Window, in place of workspace::ToggleZoom
       "ctrl-f2": "run::Stop",
+      "ctrl-f10": "run::UpdateRunningApplication",
       "f7": "debugger::StepInto",
       "shift-f7": "run::SmartStepInto",
       "alt-shift-f8": "run::ForceStepOver",
@@ -81,6 +82,7 @@
       "ctrl-shift-home": "editor::SelectToBeginning",
       "ctrl-shift-end": "editor::SelectToEnd",
       "ctrl-f8": "editor::ToggleBreakpoint",
+      "ctrl-alt-shift-f8": "run::ToggleTemporaryLineBreakpoint",
       // IntelliJ's run keys, over the default keymap's editing ones
       "f7": "debugger::StepInto", // the default's breakpoint and diagnostics keys otherwise
       "shift-f7": "run::SmartStepInto",

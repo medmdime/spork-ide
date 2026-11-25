@@ -59,9 +59,30 @@ fn java_executable(entry: &serde_json::Map<String, Value>, jdk: &Jdk) -> String 
         .map_or_else(|| jdk.java().to_string_lossy().into_owned(), str::to_owned)
 }
 
-/// The JRE field's combo box (IntelliJ's `JrePathEditor`): Default (the module's SDK), the JDKs,
-/// Download JDK… and Select alternative JRE….
+/// The JRE field: its label and [`jre_combo`].
 fn jre_field(configuration: &Configuration, edit: Edit, cx: &mut App) -> AnyElement {
+    let combo = jre_combo(configuration, None, edit, cx);
+    h_flex()
+        .gap(px(8.))
+        .child(
+            div()
+                .w(px(160.))
+                .flex_none()
+                .child(spork_workbench::controls::form_label("JRE:")),
+        )
+        .child(div().flex_1().min_w_0().child(combo))
+        .into_any_element()
+}
+
+/// The JRE field's combo box (IntelliJ's `JrePathEditor`): Default (the module's SDK), the JDKs,
+/// Download JDK… and Select alternative JRE…; `module` names the module Default's SDK is of, the
+/// project's when `None`.
+pub fn jre_combo(
+    configuration: &Configuration,
+    module: Option<String>,
+    edit: Edit,
+    cx: &mut App,
+) -> AnyElement {
     let env = crate::jdk::process_env();
     let module_jdk = JavaProject::containing(
         &configuration
@@ -82,6 +103,7 @@ fn jre_field(configuration: &Configuration, edit: Edit, cx: &mut App) -> AnyElem
             (java.name(), java.jdk.clone())
         })
         .unwrap_or_default();
+    let module_name = module.unwrap_or(module_name);
     let jdks = crate::jdk::find(&env);
     let chosen = configuration
         .entry
@@ -123,7 +145,7 @@ fn jre_field(configuration: &Configuration, edit: Edit, cx: &mut App) -> AnyElem
             cx,
         )
     };
-    let combo = spork_workbench::controls::dropdown(
+    spork_workbench::controls::dropdown(
         spork_workbench::controls::ComboBox::new("jre", label)
             .aria_label("JRE:")
             .detail(detail)
@@ -187,17 +209,7 @@ fn jre_field(configuration: &Configuration, edit: Edit, cx: &mut App) -> AnyElem
                 }),
             )
         },
-    );
-    h_flex()
-        .gap(px(8.))
-        .child(
-            div()
-                .w(px(160.))
-                .flex_none()
-                .child(spork_workbench::controls::form_label("JRE:")),
-        )
-        .child(div().flex_1().min_w_0().child(combo))
-        .into_any_element()
+    )
 }
 
 /// The configuration's keys of its Modify options (java-debug ignores them).
@@ -371,65 +383,6 @@ impl Runner for ApplicationRunner {
     }
 }
 
-/// IntelliJ's JUnit configuration, run: JUnit 4's runner on the test class, on the project's test
-/// classpath, after JDT LS's build.
-// shortcut: JUnit 4's console runner and its text in the Run tool window, where IntelliJ has its
-// test runner and the test results tree; JUnit 5 and TestNG need a runner of their own
-pub(crate) struct JUnitRunner;
-
-impl Runner for JUnitRunner {
-    fn task(
-        &self,
-        configuration: &Configuration,
-        workspace: &Workspace,
-        cx: &mut App,
-    ) -> Task<Result<TaskTemplate>> {
-        let Some(java) = JavaProject::of(workspace, cx) else {
-            return Task::ready(Err(anyhow::anyhow!("The project isn't a Java project")));
-        };
-        let (Some(jdk), Some(root)) = (java.read(cx).jdk.clone(), java.read(cx).root.clone())
-        else {
-            return Task::ready(Err(anyhow::anyhow!(crate::jdtls::NO_JDK)));
-        };
-        let class = configuration.text(Field::Command).trim().to_owned();
-        if class.is_empty() {
-            return Task::ready(Err(anyhow::anyhow!("Class not specified")));
-        }
-        let (entry, label) = (
-            configuration.entry.clone(),
-            configuration.name().to_string(),
-        );
-        let build = java.read(cx).build(cx);
-        let classpath = java.read(cx).test_classpath(&root, cx);
-        cx.background_spawn(async move {
-            build.await?;
-            let classpath = classpath.await?;
-            Ok(TaskTemplate {
-                label,
-                command: jdk.java().to_string_lossy().into_owned(),
-                args: java_command(
-                    &arguments(&entry, "vmArgs"),
-                    &classpath,
-                    configurations::JUNIT_RUNNER,
-                    &[class],
-                ),
-                cwd: Some(
-                    entry
-                        .get("cwd")
-                        .and_then(Value::as_str)
-                        .map(str::to_owned)
-                        .unwrap_or_else(|| root.to_string_lossy().into_owned()),
-                ),
-                ..TaskTemplate::default()
-            })
-        })
-    }
-
-    fn can_debug(&self, cx: &App) -> bool {
-        ApplicationRunner.can_debug(cx)
-    }
-}
-
 /// Java's debug adapter, by which the Application configurations are debug scenarios.
 pub(crate) struct JavaDebugAdapter;
 
@@ -498,7 +451,7 @@ impl DebugAdapter for JavaDebugAdapter {
             .await;
         }
         build.await?;
-        crate::debugger::update_settings(&server, true).await?;
+        crate::debugger::update_settings(&server, true, cx).await?;
         let main = configuration["mainClass"]
             .as_str()
             .map(str::trim)
@@ -514,7 +467,7 @@ impl DebugAdapter for JavaDebugAdapter {
             vec![root_uri.into()],
         )
         .await?;
-        // a JUnit configuration's runner is in a jar: the project is the one with main classes
+        // the test runner isn't the project's: the project is the one with main classes
         let test = configuration["classpathScope"] == "test";
         let project = mains
             .as_array()
@@ -530,8 +483,29 @@ impl DebugAdapter for JavaDebugAdapter {
         if test {
             classpath_arguments.push("test".into());
         }
-        let paths =
+        let mut paths =
             execute_command(&server, "vscode.java.resolveClasspath", classpath_arguments).await?;
+        // a test configuration's runner and the JUnit Platform's launcher on its classpath
+        if main == configurations::TEST_RUNNER {
+            let classpath: Vec<String> = paths[1]
+                .as_array()
+                .map(|paths| {
+                    paths
+                        .iter()
+                        .filter_map(|path| path.as_str().map(str::to_owned))
+                        .collect()
+                })
+                .unwrap_or_default();
+            let http = cx.update(|cx| cx.http_client());
+            let mut classpath = crate::testing::with_launcher(classpath, http).await?;
+            classpath.insert(
+                0,
+                crate::testing::runner_classes()?
+                    .to_string_lossy()
+                    .into_owned(),
+            );
+            paths[1] = Value::from(classpath);
+        }
         let port = execute_command(&server, "vscode.java.startDebugSession", Vec::new())
             .await?
             .as_u64()
@@ -619,7 +593,7 @@ async fn attach(
     label: gpui::SharedString,
     cx: &mut AsyncApp,
 ) -> Result<DebugAdapterBinary> {
-    crate::debugger::update_settings(server, true).await?;
+    crate::debugger::update_settings(server, true, cx).await?;
     let object = configuration
         .as_object_mut()
         .context("a Java debug configuration is a JSON object")?;
@@ -712,6 +686,26 @@ impl ContextProvider for JavaContextProvider {
             return Task::ready(Ok(TaskVariables::default()));
         };
         let text = location.file_location.buffer.read(cx).text();
+        // a test class or method: the JUnit or TestNG configuration its run makes
+        if custom("annotation_name").is_some() {
+            let package = custom("java_package_name")
+                .filter(|package| !package.is_empty())
+                .map(str::to_owned)
+                .or_else(|| package_of(&text));
+            let class = match custom("java_outer_class_name") {
+                Some(outer) => format!("{outer}${class}"),
+                None => class,
+            };
+            let class = match package {
+                Some(package) => format!("{package}.{class}"),
+                None => class,
+            };
+            return Task::ready(Ok(test_variables(
+                crate::testing::configuration_type(&text),
+                &class,
+                custom("java_method_name"),
+            )));
+        }
         // the runnable's capture, or the file's package line when the match has none
         let package = custom("java_package_name")
             .filter(|package| !package.is_empty())
@@ -761,23 +755,129 @@ impl ContextProvider for JavaContextProvider {
     }
 
     fn associated_tasks(&self, _: Option<Entity<Buffer>>, _: &App) -> Task<Option<TaskTemplates>> {
-        Task::ready(Some(TaskTemplates(vec![TaskTemplate {
-            // IntelliJ names the configuration it makes after the class
-            label: "$ZED_CUSTOM_java_class_name".into(),
-            command: format!("${{ZED_CUSTOM_{JAVA_COMMAND}}}"),
-            // the shell reads the VM options and arguments as words: a Spring Boot class's are
-            // its configuration's
-            args: vec![
-                format!("${{ZED_CUSTOM_{VM_OPTIONS}}}"),
-                "-classpath".into(),
-                format!("${{ZED_CUSTOM_{CLASSPATH}}}"),
-                format!("${{ZED_CUSTOM_{MAIN_CLASS}}}"),
-                format!("${{ZED_CUSTOM_{PROGRAM_ARGUMENTS}}}"),
-            ],
-            cwd: Some("$ZED_WORKTREE_ROOT".into()),
-            tags: vec!["java-main".into()],
-            ..TaskTemplate::default()
-        }])))
+        Task::ready(Some(TaskTemplates(vec![
+            test_template(&[
+                "java-test-class",
+                "java-test-method",
+                "java-test-class-nested",
+                "java-test-method-nested",
+            ]),
+            TaskTemplate {
+                // IntelliJ names the configuration it makes after the class
+                label: "$ZED_CUSTOM_java_class_name".into(),
+                command: format!("${{ZED_CUSTOM_{JAVA_COMMAND}}}"),
+                // the shell reads the VM options and arguments as words: a Spring Boot class's are
+                // its configuration's
+                args: vec![
+                    format!("${{ZED_CUSTOM_{VM_OPTIONS}}}"),
+                    "-classpath".into(),
+                    format!("${{ZED_CUSTOM_{CLASSPATH}}}"),
+                    format!("${{ZED_CUSTOM_{MAIN_CLASS}}}"),
+                    format!("${{ZED_CUSTOM_{PROGRAM_ARGUMENTS}}}"),
+                ],
+                cwd: Some("$ZED_WORKTREE_ROOT".into()),
+                tags: vec!["java-main".into()],
+                ..TaskTemplate::default()
+            },
+        ])))
+    }
+}
+
+/// The gutter's test run: the name and entry of the configuration its run makes, and the
+/// test runner's selector the gutter's Debug launches.
+const TEST_NAME: &str = "SPORK_TEST_NAME";
+/// The gutter's test configuration as JSON, a task variable (`${ZED_CUSTOM_…}`).
+pub const TEST_CONFIGURATION: &str = "SPORK_TEST_CONFIGURATION";
+const TEST_SELECTOR: &str = "SPORK_TEST_SELECTOR";
+
+/// The variables of a test class's or method's run from the gutter.
+pub fn test_variables(adapter: &str, class: &str, method: Option<&str>) -> TaskVariables {
+    let configuration = crate::testing::gutter_configuration(adapter, class, method);
+    let selector = configurations::test_selectors(&configuration)
+        .into_iter()
+        .next()
+        .unwrap_or_default();
+    TaskVariables::from_iter([
+        (
+            VariableName::Custom(TEST_NAME.into()),
+            configuration.name().to_string(),
+        ),
+        (
+            VariableName::Custom(TEST_CONFIGURATION.into()),
+            Value::Object(configuration.entry).to_string(),
+        ),
+        (VariableName::Custom(TEST_SELECTOR.into()), selector),
+    ])
+}
+
+/// The gutter's test task, for the runnables tagged `tags`: the Run tool window makes its
+/// configuration temporary and runs that ([`configurations::CONFIGURATION_ENV`]).
+pub fn test_template(tags: &[&str]) -> TaskTemplate {
+    TaskTemplate {
+        label: format!("${{ZED_CUSTOM_{TEST_NAME}}}"),
+        // never run as written: the configuration's runner gives the command
+        command: configurations::TEST_RUNNER.into(),
+        env: [(
+            configurations::CONFIGURATION_ENV.to_owned(),
+            format!("${{ZED_CUSTOM_{TEST_CONFIGURATION}}}"),
+        )]
+        .into_iter()
+        .collect(),
+        cwd: Some("$ZED_WORKTREE_ROOT".into()),
+        tags: tags.iter().map(|tag| (*tag).to_owned()).collect(),
+        ..TaskTemplate::default()
+    }
+}
+
+/// The gutter's Debug for Java: a test task as a launch of the test runner on the test
+/// classpath, a `main` task as a launch of its class.
+struct JavaLocator;
+
+#[async_trait]
+impl dap::DapLocator for JavaLocator {
+    fn name(&self) -> gpui::SharedString {
+        gpui::SharedString::new_static("Java")
+    }
+
+    async fn create_scenario(
+        &self,
+        build: &TaskTemplate,
+        resolved_label: &str,
+        adapter: &DebugAdapterName,
+    ) -> Option<DebugScenario> {
+        if adapter.0.as_ref() != configurations::JAVA {
+            return None;
+        }
+        let config = if build.env.contains_key(configurations::CONFIGURATION_ENV) {
+            serde_json::json!({
+                "request": "launch",
+                "mainClass": configurations::TEST_RUNNER,
+                "args": [format!("${{ZED_CUSTOM_{TEST_SELECTOR}}}")],
+                "classpathScope": "test",
+            })
+        } else if build.tags.iter().any(|tag| tag == "java-main") {
+            serde_json::json!({
+                "request": "launch",
+                "mainClass": format!("${{ZED_CUSTOM_{MAIN_CLASS}}}"),
+            })
+        } else {
+            return None;
+        };
+        Some(DebugScenario {
+            adapter: adapter.0.clone(),
+            label: resolved_label.to_owned().into(),
+            build: None,
+            config,
+            tcp_connection: None,
+        })
+    }
+
+    async fn run(
+        &self,
+        _: task::SpawnInTerminal,
+        _: gpui::BackgroundExecutor,
+    ) -> Result<task::DebugRequest> {
+        anyhow::bail!("Java's launch builds the program itself")
     }
 }
 
@@ -796,8 +896,9 @@ pub(crate) fn init(cx: &mut App) {
         std::rc::Rc::new(ApplicationRunner),
         cx,
     );
-    configurations::register_runner(configurations::JUNIT, std::rc::Rc::new(JUnitRunner), cx);
-    dap::DapRegistry::global(cx).add_adapter(Arc::new(JavaDebugAdapter));
+    let registry = dap::DapRegistry::global(cx);
+    registry.add_adapter(Arc::new(JavaDebugAdapter));
+    registry.add_locator(Arc::new(JavaLocator));
     // java-debug's filters, IntelliJ's "Any exception" before the first session
     let filter = |filter: &str, label: &str| dap::ExceptionBreakpointsFilter {
         filter: filter.into(),
@@ -818,6 +919,26 @@ pub(crate) fn init(cx: &mut App) {
     );
     cx.set_global(debugger_ui::FrameSourceResolver(std::rc::Rc::new(
         crate::debugger::class_source,
+    )));
+    // a definition in a library's class (the Spring LS's from a configuration key) opens its
+    // source as a frame's does
+    cx.set_global(project::lsp_store::NonFileUriResolver(Arc::new(
+        |uri, cx| {
+            let uri = uri.to_string();
+            if !uri.starts_with("jdt://") {
+                return None;
+            }
+            let project = cx
+                .try_global::<crate::java_project::Projects>()?
+                .0
+                .values()
+                .find(|java| java.read(cx).language_server(cx).is_some())?
+                .read(cx)
+                .project
+                .clone();
+            let source = crate::debugger::class_source(&uri, &project, cx)?;
+            Some(cx.spawn(async move |_| source.await.map(|path| path.to_path_buf())))
+        },
     )));
     // Spring Boot's sessions are java-debug's too
     for adapter in [configurations::JAVA, configurations::SPRING_BOOT] {

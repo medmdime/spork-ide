@@ -1,0 +1,249 @@
+{
+ "id": "run-configurations-store",
+ "covers": [],
+ "reference-app": [],
+ "settings": {
+  "languages": {
+   "JSON": {
+    "prettier": {
+     "allowed": false
+    }
+   },
+   "JSONC": {
+    "prettier": {
+     "allowed": false
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "sh": "mkdir -p .zed && printf '[{\"label\": \"hello\", \"command\": \"echo hello\"}]' > .zed/tasks.json"
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "find": {
+    "label": "hello, Run / Debug Configurations",
+    "role": "AXButton"
+   },
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "run::EditConfigurations"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Run/Debug Configurations"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "find": {
+    "label": "Store as project file",
+    "role": "AXCheckBox",
+    "value": "1"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Add New Configuration",
+   "role": "AXButton"
+  },
+  {
+   "do": "click",
+   "label": "Shell Script",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "Unnamed",
+     "role": "AXRow",
+     "selected": true
+    },
+    {
+     "label": "Name:",
+     "role": "AXTextField",
+     "value": "Unnamed"
+    },
+    {
+     "label": "Store as project file",
+     "role": "AXCheckBox",
+     "value": "0"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "Name:",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "do": "type",
+   "text": "greet",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "do": "click",
+   "label": "Script text:",
+   "role": "AXTextField"
+  },
+  {
+   "do": "type",
+   "text": "echo greet",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "windows.1": null
+   },
+   "within": 5000
+  },
+  {
+   "sh": "cat \"../home/Library/Application Support/Spork IDE/workspace/\"*/tasks.json",
+   "contains": "\"label\": \"greet\"",
+   "within": 8000
+  },
+  {
+   "sh": "cat .zed/tasks.json",
+   "lacks": "greet"
+  },
+  {
+   "expect": {
+    "run.configurations.names": [
+     "hello",
+     "greet"
+    ]
+   },
+   "within": 8000
+  },
+  {
+   "do": "action",
+   "name": "run::EditConfigurations"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Run/Debug Configurations"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "greet",
+   "role": "AXRow"
+  },
+  {
+   "find": {
+    "label": "Store as project file",
+    "role": "AXCheckBox",
+    "value": "0"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Store as project file",
+   "role": "AXCheckBox"
+  },
+  {
+   "find": {
+    "label": "Store as project file",
+    "role": "AXCheckBox",
+    "value": "1"
+   }
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "windows.1": null
+   },
+   "within": 5000
+  },
+  {
+   "sh": "cat .zed/tasks.json",
+   "contains": "\"label\": \"greet\"",
+   "within": 8000
+  },
+  {
+   "sh": "cat \"../home/Library/Application Support/Spork IDE/workspace/\"*/tasks.json",
+   "lacks": "greet"
+  },
+  {
+   "do": "action",
+   "name": "run::EditConfigurations"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Run/Debug Configurations"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "greet",
+   "role": "AXRow"
+  },
+  {
+   "do": "click",
+   "label": "Store as project file",
+   "role": "AXCheckBox"
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "windows.1": null
+   },
+   "within": 5000
+  },
+  {
+   "sh": "cat \"../home/Library/Application Support/Spork IDE/workspace/\"*/tasks.json",
+   "contains": "\"label\": \"greet\"",
+   "within": 8000
+  },
+  {
+   "sh": "cat .zed/tasks.json",
+   "lacks": "greet"
+  },
+  {
+   "expect": {
+    "run.configurations.names": [
+     "hello",
+     "greet"
+    ]
+   },
+   "within": 8000
+  }
+ ]
+}

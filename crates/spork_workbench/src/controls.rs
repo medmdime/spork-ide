@@ -1034,6 +1034,58 @@ fn radio_look(
         .child(label)
 }
 
+/// IntelliJ's segmented button (`SegmentedButtonComponent`, the New Project wizards' Language and
+/// Type): the choices side by side in one control, the chosen one raised
+/// (`SegmentedButton.selectedButtonColor`, `selectedStartBorderColor`); each is a radio button
+/// named by its text, the group by `name`.
+pub fn segmented_button(
+    id: impl Into<SharedString>,
+    name: impl Into<SharedString>,
+    choices: &[&str],
+    selected: usize,
+    on_select: impl Fn(usize, &mut Window, &mut App) + 'static,
+    cx: &App,
+) -> Stateful<Div> {
+    let tokens = Tokens::get(cx);
+    let id = id.into();
+    let on_select = std::rc::Rc::new(on_select);
+    h_flex()
+        .id(ElementId::Name(id.clone()))
+        .role(Role::RadioGroup)
+        .aria_label(name.into())
+        .h(px(metrics::CONTROL_HEIGHT))
+        .p(px(1.))
+        .rounded(px(metrics::RADIUS))
+        .bg(tokens.control_bg)
+        .border_1()
+        .border_color(tokens.control_border)
+        .text_ui()
+        .text_color(tokens.text)
+        .children(choices.iter().enumerate().map(|(ix, choice)| {
+            let on_select = on_select.clone();
+            let chosen = ix == selected;
+            h_flex()
+                .id(ElementId::NamedInteger(id.clone(), ix as u64))
+                .role(Role::RadioButton)
+                .aria_label(SharedString::from(choice.to_string()))
+                .aria_toggled(chosen.into())
+                .h_full()
+                .px(px(12.))
+                .items_center()
+                .rounded(px(metrics::RADIUS - 1.))
+                .border_1()
+                .border_color(gpui::transparent_black())
+                .cursor_pointer()
+                .when(chosen, |segment| {
+                    segment
+                        .bg(tokens.control_bg_raised)
+                        .border_color(tokens.control_border_raised)
+                })
+                .child(choice.to_string())
+                .on_click(move |_, window, cx| on_select(ix, window, cx))
+        }))
+}
+
 /// A checkbox with its label 4 px on, both clickable. Add `on_click`.
 pub fn labeled_check(
     id: impl Into<SharedString>,

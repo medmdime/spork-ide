@@ -4,7 +4,8 @@ use clock::Global;
 use collections::{HashMap, HashSet};
 use gpui::{
     App, AppContext as _, AsyncWindowContext, ClickEvent, Context, Entity, Focusable as _,
-    MouseButton, Task, Window,
+    InteractiveElement as _, IntoElement as _, MouseButton, ParentElement as _,
+    StatefulInteractiveElement as _, Styled as _, Task, Window,
 };
 use language::{Buffer, BufferRow, Runnable};
 use lsp::LanguageServerName;
@@ -660,8 +661,74 @@ impl Editor {
         active_breakpoint: Option<Anchor>,
         task_status: Option<RunnableTaskStatus>,
         row: DisplayRow,
+        runnable: Option<(BufferId, BufferRow)>,
         cx: &mut Context<Self>,
-    ) -> IconButton {
+    ) -> gpui::AnyElement {
+        // Spork IDE: the app's icon (IntelliJ's), clicked as Zed's
+        if let Some(crate::RunIndicatorIcon(icon)) =
+            cx.try_global::<crate::RunIndicatorIcon>().cloned()
+        {
+            let empty = HashMap::default();
+            let tasks = runnable.and_then(|key| self.runnables.runnables(key));
+            let look = crate::RunIndicatorLook {
+                variables: tasks.map_or(&empty, |tasks| &tasks.extra_variables),
+                tags: tasks
+                    .map(|tasks| {
+                        tasks
+                            .templates
+                            .iter()
+                            .flat_map(|(_, template)| template.tags.iter().map(String::as_str))
+                            .collect()
+                    })
+                    .unwrap_or_default(),
+                running: task_status == Some(RunnableTaskStatus::Running),
+                passed: match task_status {
+                    Some(RunnableTaskStatus::Passed) => Some(true),
+                    Some(RunnableTaskStatus::Failed) => Some(false),
+                    _ => None,
+                },
+            };
+            let icon = icon(look, cx);
+            return gpui::div()
+                .id(("run_indicator", row.0 as usize))
+                .flex()
+                .items_center()
+                .justify_center()
+                .size_full()
+                .child(icon)
+                // the click is the icon's, not the line's selection
+                .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
+                .on_click(cx.listener(move |editor, event: &ClickEvent, window, cx| {
+                    // as Zed's: a single run with nothing else to offer starts at once
+                    let quick_launch = match event {
+                        ClickEvent::Mouse(event) => event.down.button == MouseButton::Left,
+                        ClickEvent::Keyboard(_) | ClickEvent::Touch(_) => true,
+                    };
+                    window.focus(&editor.focus_handle(cx), cx);
+                    editor.toggle_code_actions(
+                        &ToggleCodeActions {
+                            deployed_from: Some(CodeActionSource::RunMenu(row)),
+                            quick_launch,
+                        },
+                        window,
+                        cx,
+                    );
+                }))
+                .on_mouse_down(
+                    MouseButton::Right,
+                    cx.listener(move |editor, event: &gpui::MouseDownEvent, window, cx| {
+                        cx.stop_propagation();
+                        editor.set_gutter_context_menu(
+                            row,
+                            active_breakpoint,
+                            event.position,
+                            window,
+                            cx,
+                        );
+                    }),
+                )
+                .into_any_element();
+        }
         let (icon, color) = match task_status {
             Some(RunnableTaskStatus::Running) => (ui::IconName::PlayOutlined, Color::Accent),
             Some(RunnableTaskStatus::Passed) => (ui::IconName::Check, Color::Success),
@@ -670,6 +737,8 @@ impl Editor {
         };
 
         IconButton::new(("run_indicator", row.0 as usize), icon)
+            // Spork IDE: named for assistive technology as IntelliJ's gutter icon
+            .aria_label("Run")
             .shape(ui::IconButtonShape::Square)
             .icon_size(IconSize::XSmall)
             .icon_color(color)
@@ -700,6 +769,7 @@ impl Editor {
                     cx,
                 );
             }))
+            .into_any_element()
     }
 
     fn insert_runnables(

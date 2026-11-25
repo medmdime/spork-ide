@@ -1,0 +1,333 @@
+{
+ "id": "java-test-configurations",
+ "fixture": "tests-maven",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven"
+   },
+   "within": 20000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 600000
+  },
+  {
+   "do": "open",
+   "path": "src/test/java/com/example/CalculatorTest.java"
+  },
+  {
+   "find": {
+    "label": "Run test 'CalculatorTest.adds'",
+    "role": "AXButton"
+   },
+   "within": 20000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "click",
+   "label": "Run test 'CalculatorTest.adds'",
+   "role": "AXButton"
+  },
+  {
+   "find": "Run 'CalculatorTest.adds'",
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Run 'CalculatorTest.adds'"
+  },
+  {
+   "expect": {
+    "run.tabs.0.running": false,
+    "run.tabs.0.tests.status": "1 test passed",
+    "run.configurations.names": [
+     "CalculatorTest.adds"
+    ],
+    "run.configurations.selected": "CalculatorTest.adds"
+   },
+   "within": 120000
+  },
+  {
+   "sh": "test ! -e .zed/debug.json && ! ls \"../home/Library/Application Support/Spork IDE/workspace/\"*/debug.json 2>/dev/null"
+  },
+  {
+   "find": {
+    "label": "CalculatorTest.adds, Run / Debug Configurations",
+    "role": "AXButton"
+   },
+   "within": 5000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "adds()",
+   "role": "AXRow"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "temporary"
+  },
+  {
+   "do": "action",
+   "name": "run::EditConfigurations"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Run/Debug Configurations"
+   },
+   "within": 8000
+  },
+  {
+   "find": [
+    {
+     "label": "JUnit",
+     "role": "AXRow"
+    },
+    {
+     "label": "CalculatorTest.adds",
+     "role": "AXRow",
+     "selected": true
+    },
+    {
+     "label": "Name:",
+     "role": "AXTextField",
+     "value": "CalculatorTest.adds"
+    },
+    {
+     "label": "Test kind:",
+     "value": "Method"
+    },
+    {
+     "label": "Class:",
+     "role": "AXTextField",
+     "value": "com.example.CalculatorTest"
+    },
+    {
+     "label": "Method:",
+     "role": "AXTextField",
+     "value": "adds"
+    }
+   ],
+   "ordered": true,
+   "within": 8000
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "dialog",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "value": "Method"
+  },
+  {
+   "find": [
+    "All in package",
+    "Pattern",
+    "Class",
+    "Method"
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Class"
+  },
+  {
+   "find": {
+    "label": "Method:",
+    "role": "AXTextField"
+   },
+   "absent": true,
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "escape",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "expect": {
+    "windows.1": null
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "CalculatorTest.adds, Run / Debug Configurations",
+   "role": "AXButton"
+  },
+  {
+   "do": "click",
+   "label": "CalculatorTest.adds",
+   "role": "AXMenuItem",
+   "hover": true
+  },
+  {
+   "find": [
+    {
+     "label": "Run",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Debug",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Edit\u2026",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Save Configuration",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Delete\u2026",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Pin",
+     "role": "AXMenuItem"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Save Configuration",
+   "role": "AXMenuItem"
+  },
+  {
+   "sh": "cat \"../home/Library/Application Support/Spork IDE/workspace/\"*/debug.json",
+   "contains": "\"label\": \"CalculatorTest.adds\"",
+   "within": 8000
+  },
+  {
+   "sh": "cat \"../home/Library/Application Support/Spork IDE/workspace/\"*/debug.json",
+   "lacks": "temporary"
+  },
+  {
+   "do": "action",
+   "name": "project_panel::ToggleFocus"
+  },
+  {
+   "find": {
+    "label": "src",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "src",
+   "role": "AXRow",
+   "in": "Project Panel"
+  },
+  {
+   "find": {
+    "label": "test",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "test",
+   "role": "AXRow",
+   "in": "Project Panel"
+  },
+  {
+   "find": {
+    "label": "java",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "java",
+   "role": "AXRow",
+   "in": "Project Panel"
+  },
+  {
+   "find": {
+    "label": "com.example",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "com.example",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Project Panel"
+  },
+  {
+   "find": [
+    "Run 'Tests in 'com.example''",
+    "Debug 'Tests in 'com.example''"
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "Run 'Tests in 'com.example''"
+  },
+  {
+   "expect": {
+    "run.tabs.1.running": false,
+    "run.tabs.1.title": "Tests in 'com.example'",
+    "run.configurations.selected": "Tests in 'com.example'",
+    "run.tabs.1.tests.status": "1 test failed, 2 passed, 1 ignored"
+   },
+   "within": 120000
+  }
+ ]
+}

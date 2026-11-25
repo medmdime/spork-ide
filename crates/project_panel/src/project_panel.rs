@@ -1199,6 +1199,10 @@ impl ProjectPanel {
                     })
                     .unwrap_or_default(),
             );
+            // Spork IDE: what the file's or folder's role runs (Run 'Tests in …')
+            let run_items: Vec<folder_roles::NewItem> = folder_roles::folder_roles(cx)
+                .map(|roles| roles.run_items(&worktree.absolutize(&entry.path)))
+                .unwrap_or_default();
             let context_menu = ContextMenu::build(window, cx, |menu, _, _| {
                 menu.context(self.focus_handle.clone()).map(|menu| {
                     if is_read_only {
@@ -1256,6 +1260,17 @@ impl ProjectPanel {
                                 .action("Delete…", Box::new(Trash { skip_prompt: false }))
                         })
                         .separator()
+                        .when(!run_items.is_empty(), |menu| {
+                            run_items
+                                .iter()
+                                .fold(menu, |menu, item| {
+                                    let run = item.run.clone();
+                                    menu.entry(item.label.clone(), None, move |window, cx| {
+                                        run(window, cx)
+                                    })
+                                })
+                                .separator()
+                        })
                         .when(!is_dir, |menu| {
                             menu.action("Open in Right Split", Box::new(OpenSplitVertical))
                         })

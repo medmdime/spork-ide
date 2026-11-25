@@ -49,11 +49,14 @@
    "within": 60000
   },
   {
-   "sh": "cat .zed/debug.json",
+   "sh": "test ! -e .zed/debug.json"
+  },
+  {
+   "sh": "cat \"../home/Library/Application Support/Spork IDE/workspace/\"*/debug.json",
    "contains": "\"adapter\": \"Spring Boot\""
   },
   {
-   "sh": "cat .zed/debug.json",
+   "sh": "cat \"../home/Library/Application Support/Spork IDE/workspace/\"*/debug.json",
    "contains": "\"mainClass\": \"com.example.demo.DemoApplication\""
   },
   {

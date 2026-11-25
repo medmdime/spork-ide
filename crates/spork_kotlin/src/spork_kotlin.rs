@@ -4,6 +4,8 @@
 //! run configuration and the gutter's run icon on `main`, run by Gradle or Maven and debugged by
 //! the server's own debug adapter; New ▸ Kotlin Class/File.
 
+mod breakpoints;
+mod configure;
 mod kotlin_lsp;
 mod kotlin_project;
 mod new_file;
@@ -72,10 +74,14 @@ fn queries() -> LanguageQueries {
 /// configuration, New ▸ Kotlin Class/File and each workspace's Kotlin.
 pub fn init(languages: Arc<LanguageRegistry>, cx: &mut App) {
     run::init(cx);
+    breakpoints::init(cx);
     spork_java::add_new_items(new_file::new_items);
     kotlin_project::watch_expiry(&languages, cx);
-    cx.observe_new(|workspace: &mut Workspace, _, cx| {
+    cx.observe_new(|workspace: &mut Workspace, window, cx| {
         kotlin_project::register(workspace, cx);
+        if let Some(window) = window {
+            configure::register(workspace, window, cx);
+        }
     })
     .detach();
     let config = match config() {
@@ -183,5 +189,98 @@ mod tests {
             );
         }
         assert_eq!(found, [None, Some("App".into()), Some("Tool".into())]);
+    }
+
+    #[test]
+    fn the_runnables_find_a_gradle_scripts_tasks() {
+        let text = "plugins {\n    java\n}\n\ntasks.register(\"hello\") {\n    doLast { println(\"hi\") }\n}\n\nval bye by tasks.registering {\n}\n\nval other = listOf(\"a\").map { it }\n";
+        let mut parser = tree_sitter::Parser::new();
+        parser
+            .set_language(&tree_sitter_kotlin::LANGUAGE.into())
+            .expect("the grammar");
+        let tree = parser.parse(text, None).expect("a tree");
+        let query = tree_sitter::Query::new(
+            &tree_sitter_kotlin::LANGUAGE.into(),
+            include_str!("../languages/kotlin/runnables.scm"),
+        )
+        .expect("the runnables query");
+        let task = query
+            .capture_index_for_name("kotlin_gradle_task")
+            .expect("the task capture");
+        let mut cursor = tree_sitter::QueryCursor::new();
+        let mut found = Vec::new();
+        let mut matches = cursor.matches(&query, tree.root_node(), text.as_bytes());
+        while let Some(found_match) = tree_sitter::StreamingIterator::next(&mut matches) {
+            found.extend(
+                found_match
+                    .captures()
+                    .iter()
+                    .filter(|capture| capture.index == task)
+                    .filter_map(|capture| capture.node.utf8_text(text.as_bytes()).ok())
+                    .map(str::to_owned),
+            );
+        }
+        assert_eq!(found, ["hello", "bye"]);
+    }
+
+    #[test]
+    fn the_runnables_find_each_test() {
+        let text = "package com.example
+
+import kotlin.test.Test
+
+class GreetingTest {
+    @Test
+    fun greets() {}
+
+    @Test(expected = IllegalStateException::class)
+    fun fails() {}
+
+    fun helper() {}
+}
+";
+        let mut parser = tree_sitter::Parser::new();
+        parser
+            .set_language(&tree_sitter_kotlin::LANGUAGE.into())
+            .expect("the grammar");
+        let tree = parser.parse(text, None).expect("a tree");
+        let query = tree_sitter::Query::new(
+            &tree_sitter_kotlin::LANGUAGE.into(),
+            include_str!("../languages/kotlin/runnables.scm"),
+        )
+        .expect("the runnables query");
+        let names = [
+            "kotlin_package_name",
+            "kotlin_test_class",
+            "kotlin_test_method",
+        ];
+        let mut cursor = tree_sitter::QueryCursor::new();
+        let mut found: Vec<Vec<String>> = Vec::new();
+        let mut matches = cursor.matches(&query, tree.root_node(), text.as_bytes());
+        while let Some(found_match) = tree_sitter::StreamingIterator::next(&mut matches) {
+            let captured: Vec<String> = names
+                .iter()
+                .filter_map(|name| {
+                    let index = query.capture_index_for_name(name)?;
+                    let capture = found_match.captures().iter().find(|c| c.index == index)?;
+                    capture
+                        .node
+                        .utf8_text(text.as_bytes())
+                        .ok()
+                        .map(str::to_owned)
+                })
+                .collect();
+            if !found.contains(&captured) {
+                found.push(captured);
+            }
+        }
+        assert_eq!(
+            found,
+            [
+                vec!["com.example", "GreetingTest"],
+                vec!["com.example", "GreetingTest", "greets"],
+                vec!["com.example", "GreetingTest", "fails"],
+            ]
+        );
     }
 }

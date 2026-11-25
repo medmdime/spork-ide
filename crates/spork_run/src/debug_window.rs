@@ -38,6 +38,56 @@ pub(crate) fn init(cx: &mut App) {
     cx.set_global(debugger_ui::ProgramTerminalStarted(Rc::new(
         program_console,
     )));
+    cx.set_global(editor::LineNumberClick(Rc::new(run_to_line)));
+}
+
+/// A click on a line number while the program is suspended runs it to that line (IntelliJ's
+/// "Click line number to perform run to cursor"); false otherwise, the click selecting the line.
+fn run_to_line(
+    editor: &mut editor::Editor,
+    row: editor::display_map::DisplayRow,
+    window: &mut Window,
+    cx: &mut Context<editor::Editor>,
+) -> bool {
+    if !spork_settings::debugger::settings(cx).click_line_number_runs_to_cursor {
+        return false;
+    }
+    let Some(workspace) = editor.workspace() else {
+        return false;
+    };
+    let Some(running) = running_state(workspace.read(cx), cx) else {
+        return false;
+    };
+    let running = running.read(cx);
+    let (Some(thread), Some(ThreadStatus::Stopped)) =
+        (running.selected_thread_id(), running.thread_status(cx))
+    else {
+        return false;
+    };
+    let session = running.session().clone();
+    let snapshot = editor.snapshot(window, cx);
+    let point = editor::display_map::DisplayPoint::new(row, 0).to_point(&snapshot.display_snapshot);
+    let Some((buffer, point)) = editor.buffer().read(cx).point_to_buffer_point(point, cx) else {
+        return false;
+    };
+    let Some(path) =
+        project::debugger::breakpoint_store::BreakpointStore::abs_path_from_buffer(&buffer, cx)
+    else {
+        return false;
+    };
+    let target = SourceBreakpoint {
+        row: point.row,
+        path,
+        message: None,
+        condition: None,
+        hit_condition: None,
+        state: BreakpointState::Enabled,
+        properties: Default::default(),
+    };
+    session.update(cx, |session, cx| {
+        session.run_to_position(target, thread, cx)
+    });
+    true
 }
 
 /// The consoles of the programs debugged in terminals, by their terminal, kept while their
@@ -333,6 +383,7 @@ fn force_run_to_cursor(workspace: &mut Workspace, cx: &mut Context<Workspace>) {
         condition: None,
         hit_condition: None,
         state: BreakpointState::Enabled,
+        properties: Default::default(),
     };
     skipping_breakpoints(
         &running,
@@ -360,9 +411,29 @@ fn smart_step_into(workspace: &mut Workspace, window: &mut Window, cx: &mut Cont
         return;
     };
     let session = running.read(cx).session().clone();
+    // the frame's line, as the execution line shows it (counted from 1, as the adapter does)
+    let line = workspace
+        .project()
+        .read(cx)
+        .breakpoint_store()
+        .read(cx)
+        .active_position()
+        .and_then(|position| {
+            let buffer = workspace
+                .project()
+                .read(cx)
+                .find_project_path(&*position.path, cx)
+                .and_then(|path| workspace.project().read(cx).get_open_buffer(&path, cx))?;
+            let snapshot = buffer.read(cx).snapshot();
+            Some(u64::from(text::ToPoint::to_point(&position.position, &snapshot).row) + 1)
+        });
     let targets = session.update(cx, |session, cx| session.step_in_targets(frame, cx));
     cx.spawn_in(window, async move |workspace, cx| {
-        let targets = targets.await.unwrap_or_default();
+        let mut targets = targets.await.unwrap_or_default();
+        // IntelliJ's targets: the calls of the frame's line (java-debug adds the loop's condition),
+        // in the order they run, an argument's call before the call it is in
+        targets.retain(|target| line.is_none() || target.line.is_none() || target.line == line);
+        targets.sort_by_key(|target| (target.end_line.or(target.line), target.end_column));
         workspace.update_in(cx, |workspace, window, cx| {
             match targets.as_slice() {
                 [] => {
@@ -376,6 +447,17 @@ fn smart_step_into(workspace: &mut Workspace, window: &mut Window, cx: &mut Cont
                     return;
                 }
                 _ => {}
+            }
+            // IntelliJ's in-place chooser, its popup where a call has no place on the line
+            if crate::smart_step_into::SmartStepChooser::show(
+                workspace,
+                session.clone(),
+                thread,
+                &targets,
+                window,
+                cx,
+            ) {
+                return;
             }
             let rows = targets
                 .iter()
@@ -475,11 +557,12 @@ fn frame_rows(
             _ => false,
         }
     };
-    // IntelliJ folds each run of hidden library frames into one row; the top frame shows
+    // IntelliJ folds each run of hidden library frames into one row; the top frame shows, and
+    // the separators between a stack and its async stack trace
     let mut shown: Vec<Result<dap::StackFrame, usize>> = Vec::new();
     for (ix, frame) in frames.into_iter().map(|frame| frame.dap).enumerate() {
         match (
-            hide_library_frames && ix > 0 && !in_project(&frame),
+            hide_library_frames && ix > 0 && !in_project(&frame) && !is_separator(&frame),
             shown.last_mut(),
         ) {
             (true, Some(Err(hidden))) => *hidden += 1,
@@ -490,6 +573,7 @@ fn frame_rows(
     let labels = shown
         .iter()
         .map(|row| match row {
+            Ok(frame) if is_separator(frame) => frame.name.clone(),
             Ok(frame) => match label {
                 Some(label) => label(frame),
                 // the Kotlin server's stack trace names
@@ -520,6 +604,12 @@ fn frame_rows(
         shown,
         labels,
     }
+}
+
+/// A frame that only separates a stack from the async stack trace under it (the Kotlin language
+/// server's "Async stack trace" between a coroutine's frames and the frames that started it).
+fn is_separator(frame: &dap::StackFrame) -> bool {
+    frame.presentation_hint == Some(dap::StackFramePresentationHint::Label)
 }
 
 /// The active session's thread, threads and frames as the Debug tool window lists them, for the
@@ -1032,6 +1122,23 @@ impl DebugWindow {
                         }))
                         .into_any_element();
                 };
+                // IntelliJ's separator with its caption over the async stack trace
+                // (`frame.panel.async.stacktrace`)
+                if is_separator(frame) {
+                    return h_flex()
+                        .id(("debug-frame-separator", ix))
+                        .role(Role::Heading)
+                        .aria_label(SharedString::from(label.clone()))
+                        .flex_none()
+                        .h(px(24.))
+                        .mx(px(6.))
+                        .px(px(6.))
+                        .gap(px(6.))
+                        .text_color(tokens.text_secondary)
+                        .child(div().flex_none().child(label))
+                        .child(div().flex_1().h(px(1.)).bg(tokens.separator))
+                        .into_any_element();
+                }
                 let id = frame.id;
                 let selected = opened == Some(id);
                 let running = running.downgrade();

@@ -1,0 +1,336 @@
+{
+ "id": "spring-boot-new-project",
+ "fixture": "spring-maven",
+ "covers": [],
+ "env": {
+  "SPORK_IDE_INITIALIZR": "$SPORK_E2E_INITIALIZR"
+ },
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   },
+   "Spring Boot Properties": {
+    "enable_language_server": true
+   },
+   "Spring Boot YAML": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "do": "action",
+   "name": "workspace::CloseProject"
+  },
+  {
+   "find": "New Project",
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "New Project",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    "Empty Project",
+    "Generators",
+    "Spring Boot"
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Spring Boot"
+  },
+  {
+   "find": [
+    {
+     "label": "Server URL:"
+    },
+    {
+     "label": "Name:",
+     "role": "AXTextField",
+     "value": "demo"
+    },
+    {
+     "label": "Location:",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Create Git repository"
+    },
+    {
+     "label": "Language:"
+    },
+    {
+     "label": "Java",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "Kotlin",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "Groovy",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "Type:"
+    },
+    {
+     "label": "Gradle - Groovy",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "Gradle - Kotlin",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "Maven",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "Group:",
+     "role": "AXTextField",
+     "value": "com.example"
+    },
+    {
+     "label": "Artifact:",
+     "role": "AXTextField",
+     "value": "demo"
+    },
+    {
+     "label": "Package name:",
+     "role": "AXTextField",
+     "value": "com.example.demo"
+    },
+    {
+     "label": "JDK:",
+     "role": "AXPopUpButton"
+    },
+    {
+     "label": "Java:",
+     "role": "AXPopUpButton",
+     "value": "17"
+    },
+    {
+     "label": "Packaging:"
+    },
+    {
+     "label": "Jar",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "War",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "Configuration:"
+    },
+    {
+     "label": "Properties",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "YAML",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "Cancel",
+     "role": "AXButton"
+    },
+    {
+     "label": "Next",
+     "role": "AXButton"
+    }
+   ],
+   "ordered": true,
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Maven",
+   "role": "AXRadioButton"
+  },
+  {
+   "do": "click",
+   "label": "Java:",
+   "role": "AXPopUpButton"
+  },
+  {
+   "menu": "Java",
+   "items": [
+    "27",
+    "25",
+    "21",
+    "17"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "click",
+   "label": "Next",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "Spring Boot:",
+     "role": "AXPopUpButton",
+     "value": "4.2.0"
+    },
+    {
+     "label": "Dependencies:"
+    },
+    {
+     "label": "Search",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Developer Tools"
+    },
+    {
+     "label": "Spring Boot DevTools",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "Added dependencies:"
+    },
+    {
+     "label": "No dependencies added"
+    },
+    {
+     "label": "Cancel",
+     "role": "AXButton"
+    },
+    {
+     "label": "Previous",
+     "role": "AXButton"
+    },
+    {
+     "label": "Create",
+     "role": "AXButton"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Search",
+   "role": "AXTextField"
+  },
+  {
+   "do": "type",
+   "text": "spring web"
+  },
+  {
+   "find": {
+    "label": "Spring Boot DevTools",
+    "role": "AXCheckBox"
+   },
+   "absent": true,
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Spring Web",
+   "role": "AXCheckBox"
+  },
+  {
+   "find": [
+    {
+     "label": "Spring Web",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "Added dependencies:"
+    },
+    {
+     "label": "Web"
+    },
+    {
+     "label": "Spring Web"
+    },
+    {
+     "label": "Remove",
+     "role": "AXButton"
+    }
+   ],
+   "ordered": true,
+   "within": 3000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "dependencies"
+  },
+  {
+   "do": "click",
+   "label": "Create",
+   "role": "AXButton"
+  },
+  {
+   "sh": "grep -c '<artifactId>spring-boot-starter-webmvc</artifactId>' ../home/SporkIdeProjects/demo/pom.xml",
+   "is": "1",
+   "within": 20000
+  },
+  {
+   "sh": "test -x ../home/SporkIdeProjects/demo/mvnw && test -f ../home/SporkIdeProjects/demo/src/main/java/com/example/demo/DemoApplication.java && echo ok",
+   "is": "ok"
+  },
+  {
+   "find": {
+    "label": "demo",
+    "role": "AXButton",
+    "in": "Title bar"
+   },
+   "within": 15000
+  },
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "run.configurations.names": [
+     "DemoApplication"
+    ],
+    "run.configurations.selected": "DemoApplication",
+    "java.spring.applications": [
+     "com.example.demo.DemoApplication"
+    ]
+   },
+   "within": 60000
+  }
+ ]
+}

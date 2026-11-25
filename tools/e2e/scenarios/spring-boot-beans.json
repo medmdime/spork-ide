@@ -1,0 +1,166 @@
+{
+ "id": "spring-boot-beans",
+ "fixture": "spring-maven",
+ "covers": [],
+ "prepare": "cat > src/main/java/com/example/demo/GreetingService.java <<'JAVA'\npackage com.example.demo;\n\nimport org.springframework.stereotype.Service;\n\n@Service\npublic class GreetingService {\n\n    public String greet(String name) {\n        return \"Hello, \" + name + \"!\";\n    }\n}\nJAVA\ncat > src/main/java/com/example/demo/HelloController.java <<'JAVA'\npackage com.example.demo;\n\nimport org.springframework.web.bind.annotation.GetMapping;\nimport org.springframework.web.bind.annotation.RequestParam;\nimport org.springframework.web.bind.annotation.RestController;\n\n@RestController\npublic class HelloController {\n\n    private final GreetingService service;\n\n    public HelloController(GreetingService service) {\n        this.service = service;\n    }\n\n    @GetMapping(\"/hello\")\n    public String hello(@RequestParam(name = \"name\", defaultValue = \"world\") String name) {\n        return service.greet(name);\n    }\n}\nJAVA\ngit add -A && git commit -qm 'feat: a greeting service'",
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   },
+   "Spring Boot Properties": {
+    "enable_language_server": true
+   },
+   "Spring Boot YAML": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "run.configurations.names": [
+     "DemoApplication"
+    ]
+   },
+   "within": 60000
+  },
+  {
+   "expect": {
+    "java.spring.classpath": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.spring.index.loaded": true
+   },
+   "within": 120000
+  },
+  {
+   "do": "open",
+   "path": "src/main/java/com/example/demo/HelloController.java"
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/demo/HelloController.java"
+   },
+   "within": 5000
+  },
+  {
+   "find": [
+    {
+     "label": "Navigate to the autowired dependencies",
+     "role": "AXButton"
+    },
+    {
+     "label": "Navigate to autowired candidates",
+     "role": "AXButton"
+    },
+    {
+     "label": "Request mapping",
+     "role": "AXButton"
+    }
+   ],
+   "within": 60000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "gutter"
+  },
+  {
+   "do": "click",
+   "label": "Navigate to autowired candidates",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "Choose Autowired Candidate"
+    },
+    {
+     "label": "greetingService (GreetingService)",
+     "role": "AXMenuItem"
+    }
+   ],
+   "ordered": true,
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "greetingService (GreetingService)",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/demo/GreetingService.java"
+   },
+   "within": 10000
+  },
+  {
+   "find": {
+    "label": "Navigate to the autowired dependencies",
+    "role": "AXButton"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Navigate to the autowired dependencies",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "Autowired Dependencies"
+    },
+    {
+     "label": "service in HelloController",
+     "role": "AXMenuItem"
+    }
+   ],
+   "ordered": true,
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "service in HelloController",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/demo/HelloController.java"
+   },
+   "within": 10000
+  }
+ ]
+}

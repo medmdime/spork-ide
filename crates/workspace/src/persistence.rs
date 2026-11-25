@@ -1464,8 +1464,10 @@ impl WorkspaceDb {
                         condition: breakpoint.condition,
                         hit_condition: breakpoint.hit_condition,
                         state: breakpoint.state,
+                        properties: Default::default(),
                     });
                 }
+                self.breakpoint_properties(workspace_id, &mut map);
 
                 for (path, bps) in map.iter() {
                     log::info!(
@@ -1480,6 +1482,41 @@ impl WorkspaceDb {
             Err(msg) => {
                 log::error!("Breakpoints query failed with msg: {msg}");
                 Default::default()
+            }
+        }
+    }
+
+    /// Spork IDE: IntelliJ's breakpoint properties, in a table of Spork IDE's own that the first
+    /// save creates (outside Zed's migrations, whose steps an upstream merge appends to).
+    fn breakpoint_properties(
+        &self,
+        workspace_id: WorkspaceId,
+        breakpoints: &mut BTreeMap<Arc<Path>, Vec<SourceBreakpoint>>,
+    ) {
+        let rows: Result<Vec<(PathBuf, u32, String)>> = self
+            .select_bound(sql! {
+                SELECT path, row, properties
+                FROM spork_breakpoint_properties
+                WHERE workspace_id = ?
+            })
+            .and_then(|mut statement| (statement)(workspace_id));
+        let rows = match rows {
+            Ok(rows) => rows,
+            // the table is made by the first save
+            Err(error) => {
+                log::debug!("no breakpoint properties: {error}");
+                return;
+            }
+        };
+        for (path, row, properties) in rows {
+            let Some(properties) = serde_json::from_str(&properties).log_err() else {
+                continue;
+            };
+            if let Some(breakpoint) = breakpoints
+                .get_mut(path.as_path())
+                .and_then(|file| file.iter_mut().find(|breakpoint| breakpoint.row == row))
+            {
+                breakpoint.properties = properties;
             }
         }
     }
@@ -1600,6 +1637,21 @@ impl WorkspaceDb {
                         DELETE FROM breakpoints WHERE workspace_id = ?1;
                     )
                 )?(workspace.id).context("Clearing old breakpoints")?;
+                // Spork IDE: IntelliJ's breakpoint properties (`breakpoint_properties`)
+                conn.exec(sql!(
+                    CREATE TABLE IF NOT EXISTS spork_breakpoint_properties (
+                        workspace_id INTEGER NOT NULL,
+                        path TEXT NOT NULL,
+                        row INTEGER NOT NULL,
+                        properties TEXT NOT NULL,
+                        FOREIGN KEY(workspace_id) REFERENCES workspaces(workspace_id)
+                        ON DELETE CASCADE
+                        ON UPDATE CASCADE
+                    );
+                ))?().context("Creating the breakpoint properties' table")?;
+                conn.exec_bound(sql!(
+                    DELETE FROM spork_breakpoint_properties WHERE workspace_id = ?1;
+                ))?(workspace.id).context("Clearing old breakpoint properties")?;
 
                 for (path, breakpoints) in workspace.breakpoints {
                     for bp in breakpoints {
@@ -1617,6 +1669,14 @@ impl WorkspaceDb {
                             bp.hit_condition,
                             state,
                         )) {
+                            Ok(_) if !bp.properties.is_default() => {
+                                let properties = serde_json::to_string(&bp.properties)?;
+                                conn.exec_bound(sql!(
+                                    INSERT INTO spork_breakpoint_properties (workspace_id, path, row, properties)
+                                    VALUES (?1, ?2, ?3, ?4);
+                                ))?((workspace.id, path.as_ref(), bp.row, properties))
+                                    .context("Inserting breakpoint properties")?;
+                            }
                             Ok(_) => {
                                 log::debug!("Stored breakpoint at row: {} in path: {}", bp.row, path.to_string_lossy())
                             }
@@ -3218,6 +3278,7 @@ mod tests {
                             state: breakpoint.state,
                             condition: breakpoint.condition.clone(),
                             hit_condition: breakpoint.hit_condition.clone(),
+                            properties: Default::default(),
                         },
                         SourceBreakpoint {
                             row: log_breakpoint.position,
@@ -3226,6 +3287,7 @@ mod tests {
                             state: log_breakpoint.state,
                             condition: log_breakpoint.condition.clone(),
                             hit_condition: log_breakpoint.hit_condition.clone(),
+                            properties: Default::default(),
                         },
                         SourceBreakpoint {
                             row: disable_breakpoint.position,
@@ -3234,6 +3296,7 @@ mod tests {
                             state: disable_breakpoint.state,
                             condition: disable_breakpoint.condition.clone(),
                             hit_condition: disable_breakpoint.hit_condition.clone(),
+                            properties: Default::default(),
                         },
                         SourceBreakpoint {
                             row: condition_breakpoint.position,
@@ -3242,6 +3305,7 @@ mod tests {
                             state: condition_breakpoint.state,
                             condition: condition_breakpoint.condition.clone(),
                             hit_condition: condition_breakpoint.hit_condition.clone(),
+                            properties: Default::default(),
                         },
                         SourceBreakpoint {
                             row: hit_condition_breakpoint.position,
@@ -3250,6 +3314,7 @@ mod tests {
                             state: hit_condition_breakpoint.state,
                             condition: hit_condition_breakpoint.condition.clone(),
                             hit_condition: hit_condition_breakpoint.hit_condition.clone(),
+                            properties: Default::default(),
                         },
                     ],
                 );
@@ -3376,6 +3441,7 @@ mod tests {
                         state: BreakpointState::Enabled,
                         condition: None,
                         hit_condition: None,
+                        properties: Default::default(),
                     }],
                 );
                 map
@@ -5748,6 +5814,7 @@ mod tests {
             condition: None,
             hit_condition: None,
             state: BreakpointState::Enabled,
+            properties: Default::default(),
         };
         let saved_docks = DockStructure {
             left: DockData {
@@ -5915,6 +5982,7 @@ mod tests {
                 condition: None,
                 hit_condition: None,
                 state: BreakpointState::Enabled,
+                properties: Default::default(),
             }],
         )]);
         let restoring_from = SerializedWorkspace {

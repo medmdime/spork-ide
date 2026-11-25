@@ -624,7 +624,8 @@ impl DapStore {
                 .read(cx)
                 .variables_by_stack_frame_id(stack_frame_id, true, false);
 
-        fn format_value(mut value: String) -> String {
+        // Spork IDE: the hint says the variable's name, as IntelliJ's value after the line's end
+        fn format_value(name: &str, mut value: String) -> String {
             const LIMIT: usize = 100;
 
             if let Some(index) = value.find("\n") {
@@ -642,7 +643,7 @@ impl DapStore {
                 value.push_str("…");
             }
 
-            format!(": {}", value)
+            format!("{name}: {value}")
         }
 
         cx.spawn(async move |_, cx| {
@@ -675,7 +676,10 @@ impl DapStore {
 
                         inlay_hints.push(InlayHint {
                             position,
-                            label: InlayHintLabel::String(format_value(variable.value.clone())),
+                            label: InlayHintLabel::String(format_value(
+                                &inline_value_location.variable_name,
+                                variable.value.clone(),
+                            )),
                             kind: Some(InlayHintKind::Type),
                             padding_left: false,
                             padding_right: false,
@@ -697,7 +701,10 @@ impl DapStore {
                         if let Some(response) = eval_task.await.log_err() {
                             inlay_hints.push(InlayHint {
                                 position,
-                                label: InlayHintLabel::String(format_value(response.result)),
+                                label: InlayHintLabel::String(format_value(
+                                    &inline_value_location.variable_name,
+                                    response.result,
+                                )),
                                 kind: Some(InlayHintKind::Type),
                                 padding_left: false,
                                 padding_right: false,

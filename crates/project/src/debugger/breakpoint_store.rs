@@ -757,6 +757,7 @@ impl BreakpointStore {
                             message: bp.bp.message.clone(),
                             condition: bp.bp.condition.clone(),
                             hit_condition: bp.bp.hit_condition.clone(),
+                            properties: bp.bp.properties.clone(),
                         }
                     })
                     .collect()
@@ -796,6 +797,7 @@ impl BreakpointStore {
                                 state: breakpoint.bp.state,
                                 hit_condition: breakpoint.bp.hit_condition.clone(),
                                 condition: breakpoint.bp.condition.clone(),
+                                properties: breakpoint.bp.properties.clone(),
                             }
                         })
                         .collect(),
@@ -858,6 +860,7 @@ impl BreakpointStore {
                                     state: bp.state,
                                     condition: bp.condition,
                                     hit_condition: bp.hit_condition,
+                                    properties: bp.properties,
                                 },
                             }))
                     }
@@ -952,7 +955,87 @@ pub struct Breakpoint {
     pub hit_condition: Option<Arc<str>>,
     pub condition: Option<BreakpointMessage>,
     pub state: BreakpointState,
+    /// Spork IDE: IntelliJ's properties beyond the protocol's.
+    pub properties: BreakpointProperties,
 }
+
+/// Spork IDE: IntelliJ's properties of a breakpoint that the debug adapter protocol has no field
+/// for, kept with it.
+#[derive(Clone, Debug, Default, Hash, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
+pub struct BreakpointProperties {
+    /// Suspend: Thread (IntelliJ's `SuspendPolicy.THREAD`), where All is the default: sent as the
+    /// breakpoint's `thread` mode to an adapter that offers it.
+    pub suspend_thread: bool,
+    /// Remove once hit.
+    pub temporary: bool,
+    /// "Disable until hitting the following breakpoint": that breakpoint's file and row.
+    // shortcut: the master is found by its line, so an edit moving its line loses it; upgrade
+    // when the store gives breakpoints an identity
+    pub master: Option<(Arc<Path>, u32)>,
+    /// After hit: Leave enabled, where Disable again is the default.
+    pub leave_enabled: bool,
+    /// What it watches: a line, or a method or field declared on it.
+    pub kind: BreakpointKind,
+    /// A line breakpoint's variant (IntelliJ's Kotlin Line, λ, Line and Lambdas): the adapter's
+    /// breakpoints it stands for, each at its 1-based column of the line, `None` the line
+    /// itself; empty, the line alone.
+    pub columns: Vec<Option<u64>>,
+}
+
+/// Spork IDE: IntelliJ's breakpoint kinds a breakpoint on a declaration's line can be.
+#[derive(Clone, Debug, Default, Hash, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub enum BreakpointKind {
+    #[default]
+    Line,
+    /// A method breakpoint, sent as the line breakpoint of the method's declaration, which the
+    /// adapter makes the method's entry (java-debug's); named as IntelliJ names it. With
+    /// `function`, the adapter's function breakpoint of that name instead (a Kotlin function
+    /// breakpoint, `com.example.MainKt.greet`, the Kotlin language server's).
+    Method {
+        name: String,
+        #[serde(default)]
+        function: Option<String>,
+    },
+    /// A field watchpoint, sent as a data breakpoint of the adapter's `data_id`; named as IntelliJ
+    /// names it, watching the field's reads (`access`) and writes (`modification`).
+    Field {
+        name: String,
+        data_id: String,
+        access: bool,
+        modification: bool,
+    },
+}
+
+impl BreakpointProperties {
+    pub fn is_default(&self) -> bool {
+        *self == Self::default()
+    }
+
+    /// The name of the function breakpoint it is sent as, a Kotlin function breakpoint's.
+    pub fn function(&self) -> Option<&str> {
+        match &self.kind {
+            BreakpointKind::Method {
+                function: Some(function),
+                ..
+            } => Some(function),
+            _ => None,
+        }
+    }
+
+    /// How many of the adapter's source breakpoints it is sent as: its columns', none for a
+    /// function breakpoint.
+    pub fn dap_count(&self) -> usize {
+        match (self.function(), self.columns.len()) {
+            (Some(_), _) => 0,
+            (None, 0) => 1,
+            (None, columns) => columns,
+        }
+    }
+}
+
+/// Spork IDE: the breakpoint mode a Suspend: Thread breakpoint is sent with.
+pub const SUSPEND_THREAD_MODE: &str = "thread";
 
 impl Breakpoint {
     pub fn new_standard() -> Self {
@@ -961,6 +1044,7 @@ impl Breakpoint {
             hit_condition: None,
             condition: None,
             message: None,
+            properties: BreakpointProperties::default(),
         }
     }
 
@@ -970,6 +1054,7 @@ impl Breakpoint {
             hit_condition: None,
             condition: None,
             message: Some(log_message.into()),
+            properties: BreakpointProperties::default(),
         }
     }
 
@@ -1015,6 +1100,7 @@ impl Breakpoint {
             message: breakpoint.message.map(Into::into),
             condition: breakpoint.condition.map(Into::into),
             hit_condition: breakpoint.hit_condition.map(Into::into),
+            properties: BreakpointProperties::default(),
         })
     }
 
@@ -1038,6 +1124,30 @@ pub struct SourceBreakpoint {
     pub condition: Option<Arc<str>>,
     pub hit_condition: Option<Arc<str>>,
     pub state: BreakpointState,
+    /// Spork IDE: IntelliJ's properties beyond the protocol's.
+    pub properties: BreakpointProperties,
+}
+
+impl SourceBreakpoint {
+    /// Spork IDE: the adapter's source breakpoints it stands for: the line's, one per column of
+    /// its variant, none for a function breakpoint.
+    pub fn to_dap(&self) -> Vec<dap::SourceBreakpoint> {
+        if self.properties.function().is_some() {
+            return Vec::new();
+        }
+        let line: dap::SourceBreakpoint = self.clone().into();
+        if self.properties.columns.is_empty() {
+            return vec![line];
+        }
+        self.properties
+            .columns
+            .iter()
+            .map(|column| dap::SourceBreakpoint {
+                column: *column,
+                ..line.clone()
+            })
+            .collect()
+    }
 }
 
 impl From<SourceBreakpoint> for dap::SourceBreakpoint {
@@ -1052,7 +1162,11 @@ impl From<SourceBreakpoint> for dap::SourceBreakpoint {
                 .hit_condition
                 .map(|hit_condition| String::from(hit_condition.as_ref())),
             log_message: bp.message.map(|message| String::from(message.as_ref())),
-            mode: None,
+            // Spork IDE: Suspend: Thread, which the session leaves out for an adapter without it
+            mode: bp
+                .properties
+                .suspend_thread
+                .then(|| SUSPEND_THREAD_MODE.to_owned()),
         }
     }
 }

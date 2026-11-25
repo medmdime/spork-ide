@@ -1,5 +1,6 @@
 use super::breakpoint_store::{
-    BreakpointStore, BreakpointStoreEvent, BreakpointUpdatedReason, SourceBreakpoint,
+    BreakpointKind, BreakpointStore, BreakpointStoreEvent, BreakpointUpdatedReason,
+    BreakpointWithPosition, SourceBreakpoint,
 };
 use super::dap_command::{
     self, Attach, ConfigurationDone, ContinueCommand, DataBreakpointInfoCommand, DisconnectCommand,
@@ -47,7 +48,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use smol::net::{TcpListener, TcpStream};
 use std::any::TypeId;
-use std::collections::{BTreeMap, VecDeque};
+use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::net::{IpAddr, Ipv4Addr};
 use std::ops::RangeInclusive;
 use std::path::PathBuf;
@@ -164,17 +165,62 @@ pub struct RunningMode {
     client: Arc<DebugAdapterClient>,
     binary: DebugAdapterBinary,
     tmp_breakpoint: Option<SourceBreakpoint>,
+    /// Spork IDE: the breakpoints waiting for another to be hit ("Disable until hitting the
+    /// following breakpoint") that it was, by their file and row: the others aren't sent.
+    armed_dependents: HashSet<(Arc<Path>, u32)>,
+    /// Spork IDE: the adapter offers the `thread` breakpoint mode (Suspend: Thread).
+    thread_mode: bool,
     worktree: WeakEntity<Worktree>,
     executor: BackgroundExecutor,
     is_started: bool,
     has_ever_stopped: bool,
     messages_tx: UnboundedSender<Message>,
+    /// Spork IDE: function breakpoints were sent last time, so none left are sent as none.
+    function_breakpoints_sent: Arc<std::sync::atomic::AtomicBool>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub struct SessionQuirks {
     pub compact: bool,
     pub prefer_thread_name: bool,
+}
+
+/// Spork IDE: each breakpoint as many times as the adapter's breakpoints it is sent as.
+fn expanded(
+    breakpoints: impl IntoIterator<Item = BreakpointWithPosition>,
+) -> Vec<BreakpointWithPosition> {
+    breakpoints
+        .into_iter()
+        .flat_map(|breakpoint| {
+            let count = breakpoint.bp.properties.dap_count();
+            std::iter::repeat_n(breakpoint, count)
+        })
+        .collect()
+}
+
+/// The adapter's answer for each breakpoint sent; Spork IDE: one sent as several of the adapter's
+/// is verified when any of them is.
+fn verified_states(
+    answers: Vec<dap::Breakpoint>,
+    sent: Vec<BreakpointWithPosition>,
+) -> Vec<(BreakpointWithPosition, BreakpointSessionState)> {
+    let mut states: Vec<(BreakpointWithPosition, BreakpointSessionState)> = Vec::new();
+    for (answer, breakpoint) in answers.into_iter().zip(sent) {
+        let Some(id) = answer.id else { continue };
+        let state = BreakpointSessionState {
+            id,
+            verified: answer.verified,
+        };
+        match states.last_mut() {
+            Some((last, last_state)) if last.position == breakpoint.position => {
+                if !last_state.verified {
+                    *last_state = state;
+                }
+            }
+            _ => states.push((breakpoint, state)),
+        }
+    }
+    states
 }
 
 fn client_source(abs_path: &Path) -> dap::Source {
@@ -222,11 +268,14 @@ impl RunningMode {
             client: Arc::new(client),
             worktree,
             tmp_breakpoint: None,
+            armed_dependents: HashSet::default(),
+            thread_mode: false,
             binary,
             executor: cx.background_executor().clone(),
             is_started: false,
             has_ever_stopped: false,
             messages_tx,
+            function_breakpoints_sent: Arc::default(),
         })
     }
 
@@ -269,24 +318,26 @@ impl RunningMode {
         ignore_breakpoints: bool,
         cx: &mut App,
     ) -> Task<()> {
+        let store = breakpoint_store.read(cx);
+        // Spork IDE: the breakpoints sent and the store's, paired in one list
+        let (breakpoints, raw_breakpoints): (Vec<_>, Vec<_>) = store
+            .source_breakpoints_from_path(&abs_path, cx)
+            .into_iter()
+            .zip(store.breakpoints_from_path(&abs_path))
+            .filter(|(bp, _)| !ignore_breakpoints && self.sends(bp, store, cx))
+            .unzip();
         let breakpoints =
-            breakpoint_store
-                .read(cx)
-                .source_breakpoints_from_path(&abs_path, cx)
+            breakpoints
                 .into_iter()
-                .filter(|bp| bp.state.is_enabled() && !ignore_breakpoints)
                 .chain(self.tmp_breakpoint.iter().filter_map(|breakpoint| {
                     breakpoint.path.eq(&abs_path).then(|| breakpoint.clone())
                 }))
-                .map(Into::into)
+                .flat_map(|breakpoint| self.dap_breakpoints(breakpoint))
                 .collect();
-
-        let raw_breakpoints = breakpoint_store
-            .read(cx)
-            .breakpoints_from_path(&abs_path)
-            .into_iter()
-            .filter(|bp| bp.bp.state.is_enabled())
-            .collect::<Vec<_>>();
+        let raw_breakpoints = expanded(raw_breakpoints);
+        // Spork IDE: the function breakpoints go with every file's change
+        self.send_function_breakpoints(ignore_breakpoints, breakpoint_store, cx)
+            .detach();
 
         let task = self.request(dap_command::SetBreakpoints {
             source: client_source(&abs_path),
@@ -297,26 +348,83 @@ impl RunningMode {
         let breakpoint_store = breakpoint_store.downgrade();
         cx.spawn(async move |cx| match cx.background_spawn(task).await {
             Ok(breakpoints) => {
-                let breakpoints =
-                    breakpoints
-                        .into_iter()
-                        .zip(raw_breakpoints)
-                        .filter_map(|(dap_bp, zed_bp)| {
-                            Some((
-                                zed_bp,
-                                BreakpointSessionState {
-                                    id: dap_bp.id?,
-                                    verified: dap_bp.verified,
-                                },
-                            ))
-                        });
+                let breakpoints = verified_states(breakpoints, raw_breakpoints);
                 breakpoint_store
                     .update(cx, |this, _| {
-                        this.mark_breakpoints_verified(session_id, &abs_path, breakpoints);
+                        this.mark_breakpoints_verified(
+                            session_id,
+                            &abs_path,
+                            breakpoints.into_iter(),
+                        );
                     })
                     .ok();
             }
             Err(err) => log::warn!("Set breakpoints request failed for path: {}", err),
+        })
+    }
+
+    /// Spork IDE: every file's method breakpoints sent as function breakpoints (Kotlin's,
+    /// [`BreakpointProperties::function`]), once there are some, and again (none) once they are
+    /// gone.
+    fn send_function_breakpoints(
+        &self,
+        ignore_breakpoints: bool,
+        breakpoint_store: &Entity<BreakpointStore>,
+        cx: &App,
+    ) -> Task<()> {
+        let store = breakpoint_store.read(cx);
+        let mut raw_breakpoints = store.all_breakpoints();
+        let mut functions: Vec<(Arc<Path>, BreakpointWithPosition, String)> = Vec::new();
+        for (path, breakpoints) in store.all_source_breakpoints(cx) {
+            let raw = raw_breakpoints.remove(&path).unwrap_or_default();
+            for (breakpoint, raw) in breakpoints.into_iter().zip(raw) {
+                if let Some(name) = breakpoint.properties.function()
+                    && !ignore_breakpoints
+                    && self.sends(&breakpoint, store, cx)
+                {
+                    functions.push((path.clone(), raw, name.to_owned()));
+                }
+            }
+        }
+        let sent = self
+            .function_breakpoints_sent
+            .swap(!functions.is_empty(), std::sync::atomic::Ordering::Relaxed);
+        if functions.is_empty() && !sent {
+            return Task::ready(());
+        }
+        let task = self.request(dap_command::SetFunctionBreakpoints {
+            breakpoints: functions
+                .iter()
+                .map(|(_, breakpoint, name)| dap::FunctionBreakpoint {
+                    name: name.clone(),
+                    condition: breakpoint.bp.condition.as_ref().map(|c| c.to_string()),
+                    hit_condition: breakpoint.bp.hit_condition.as_ref().map(|c| c.to_string()),
+                })
+                .collect(),
+        });
+        let session_id = self.client.id();
+        let breakpoint_store = breakpoint_store.downgrade();
+        cx.spawn(async move |cx| match task.await {
+            Ok(breakpoints) => {
+                breakpoint_store
+                    .update(cx, |store, _| {
+                        for ((path, breakpoint, _), state) in functions.into_iter().zip(breakpoints)
+                        {
+                            let Some(id) = state.id else { continue };
+                            let state = BreakpointSessionState {
+                                id,
+                                verified: state.verified,
+                            };
+                            store.mark_breakpoints_verified(
+                                session_id,
+                                &path,
+                                std::iter::once((breakpoint, state)),
+                            );
+                        }
+                    })
+                    .ok();
+            }
+            Err(error) => log::warn!("Set function breakpoints request failed: {error}"),
         })
     }
 
@@ -344,6 +452,34 @@ impl RunningMode {
         self.request(arg)
     }
 
+    /// Spork IDE: whether a breakpoint goes to the adapter: an enabled one that waits for no
+    /// other, or whose other was hit, or is gone.
+    fn sends(&self, breakpoint: &SourceBreakpoint, store: &BreakpointStore, cx: &App) -> bool {
+        breakpoint.state.is_enabled()
+            && !matches!(breakpoint.properties.kind, BreakpointKind::Field { .. })
+            && breakpoint
+                .properties
+                .master
+                .as_ref()
+                .is_none_or(|(path, row)| {
+                    self.armed_dependents
+                        .contains(&(breakpoint.path.clone(), breakpoint.row))
+                        || store.breakpoint_at_row(path, *row, cx).is_none()
+                })
+    }
+
+    /// Spork IDE: a breakpoint as sent, its mode only to an adapter that offers it: one per
+    /// column of a line's lambdas, none for a function breakpoint.
+    fn dap_breakpoints(&self, breakpoint: SourceBreakpoint) -> Vec<dap::SourceBreakpoint> {
+        let mut breakpoints = breakpoint.to_dap();
+        if !self.thread_mode {
+            for breakpoint in &mut breakpoints {
+                breakpoint.mode = None;
+            }
+        }
+        breakpoints
+    }
+
     fn send_source_breakpoints(
         &self,
         ignore_breakpoints: bool,
@@ -351,26 +487,24 @@ impl RunningMode {
         cx: &App,
     ) -> Task<HashMap<Arc<Path>, anyhow::Error>> {
         let mut breakpoint_tasks = Vec::new();
-        let breakpoints = breakpoint_store.read(cx).all_source_breakpoints(cx);
-        let mut raw_breakpoints = breakpoint_store.read_with(cx, |this, _| this.all_breakpoints());
+        let store = breakpoint_store.read(cx);
+        let breakpoints = store.all_source_breakpoints(cx);
+        let mut raw_breakpoints = store.all_breakpoints();
         debug_assert_eq!(raw_breakpoints.len(), breakpoints.len());
         let session_id = self.client.id();
         for (path, breakpoints) in breakpoints {
-            let breakpoints = if ignore_breakpoints {
-                vec![]
-            } else {
-                breakpoints
-                    .into_iter()
-                    .filter(|bp| bp.state.is_enabled())
-                    .map(Into::into)
-                    .collect()
-            };
-
-            let raw_breakpoints = raw_breakpoints
-                .remove(&path)
-                .unwrap_or_default()
+            // Spork IDE: the breakpoints sent and the store's, paired in one list
+            let (breakpoints, raw_breakpoints): (Vec<_>, Vec<_>) = breakpoints
                 .into_iter()
-                .filter(|bp| bp.bp.state.is_enabled());
+                .zip(raw_breakpoints.remove(&path).unwrap_or_default())
+                .filter(|(bp, _)| !ignore_breakpoints && self.sends(bp, store, cx))
+                .unzip();
+            // Spork IDE: a line's lambdas are sent as several of the adapter's breakpoints
+            let breakpoints = breakpoints
+                .into_iter()
+                .flat_map(|breakpoint| self.dap_breakpoints(breakpoint))
+                .collect();
+            let raw_breakpoints = expanded(raw_breakpoints);
             let error_path = path.clone();
             let send_request = self
                 .request(dap_command::SetBreakpoints {
@@ -385,20 +519,14 @@ impl RunningMode {
                 async move |cx| {
                     let breakpoints = cx.background_spawn(send_request).await?;
 
-                    let breakpoints = breakpoints.into_iter().zip(raw_breakpoints).filter_map(
-                        |(dap_bp, zed_bp)| {
-                            Some((
-                                zed_bp,
-                                BreakpointSessionState {
-                                    id: dap_bp.id?,
-                                    verified: dap_bp.verified,
-                                },
-                            ))
-                        },
-                    );
+                    let breakpoints = verified_states(breakpoints, raw_breakpoints);
                     breakpoint_store
                         .update(cx, |this, _| {
-                            this.mark_breakpoints_verified(session_id, &path, breakpoints);
+                            this.mark_breakpoints_verified(
+                                session_id,
+                                &path,
+                                breakpoints.into_iter(),
+                            );
                         })
                         .ok();
 
@@ -407,6 +535,8 @@ impl RunningMode {
             });
             breakpoint_tasks.push(task);
         }
+        self.send_function_breakpoints(ignore_breakpoints, breakpoint_store, cx)
+            .detach();
 
         cx.background_spawn(async move {
             futures::future::join_all(breakpoint_tasks)
@@ -469,6 +599,12 @@ impl RunningMode {
                 let errors_by_path = cx
                     .update(|cx| this.send_source_breakpoints(false, &breakpoint_store, cx))
                     .await;
+                // Spork IDE: the field watchpoints, before the configuration is done
+                session.update(cx, |session, cx| {
+                    if session.has_field_watchpoints(cx) {
+                        session.send_data_breakpoints(cx);
+                    }
+                })?;
 
                 dap_store.update(cx, |_, cx| {
                     let Some(worktree) = worktree.upgrade() else {
@@ -862,6 +998,10 @@ impl Session {
                             .send_breakpoints_from_path(path.clone(), *reason, &store, false, cx)
                             .detach();
                     };
+                    // Spork IDE: a field watchpoint changed, or may have
+                    if this.capabilities.supports_data_breakpoints == Some(true) {
+                        this.send_data_breakpoints(cx);
+                    }
                 }
                 BreakpointStoreEvent::BreakpointsCleared(paths) => {
                     if let Some(local) = (!this.ignore_breakpoints)
@@ -1322,6 +1462,14 @@ impl Session {
                     }
                     Ok(capabilities) => {
                         this.update(cx, |session, cx| {
+                            // Spork IDE: Suspend: Thread breakpoints are sent with their mode
+                            let thread_mode =
+                                capabilities.breakpoint_modes.iter().flatten().any(|mode| {
+                                    mode.mode == super::breakpoint_store::SUSPEND_THREAD_MODE
+                                });
+                            if let Some(running) = session.as_running_mut() {
+                                running.thread_mode = thread_mode;
+                            }
                             session.capabilities = capabilities;
 
                             cx.emit(SessionEvent::CapabilitiesLoaded);
@@ -1384,6 +1532,46 @@ impl Session {
                 .detach();
             }
             SessionState::Booting(_) => {}
+        }
+    }
+
+    /// Spork IDE: a breakpoint stopped the program: the breakpoints waiting for it are set
+    /// (IntelliJ's "Disable until hitting the following breakpoint"), and it waits again when it
+    /// is one of them that doesn't stay enabled ("After hit: Disable again").
+    pub fn breakpoint_hit(&mut self, path: Arc<Path>, row: u32, cx: &mut Context<Self>) {
+        let store = self.breakpoint_store.clone();
+        let ignore_breakpoints = self.ignore_breakpoints;
+        let breakpoints = store.read(cx).all_source_breakpoints(cx);
+        let Some(running) = self.as_running_mut() else {
+            return;
+        };
+        let mut changed = BTreeSet::new();
+        let hit = (path, row);
+        for (file, file_breakpoints) in &breakpoints {
+            for breakpoint in file_breakpoints {
+                let key = (file.clone(), breakpoint.row);
+                let armed = match breakpoint.properties.master.as_ref() {
+                    Some(master) if *master == hit => running.armed_dependents.insert(key),
+                    Some(_) if key == hit && !breakpoint.properties.leave_enabled => {
+                        running.armed_dependents.remove(&key)
+                    }
+                    _ => false,
+                };
+                if armed {
+                    changed.insert(file.clone());
+                }
+            }
+        }
+        for file in changed {
+            running
+                .send_breakpoints_from_path(
+                    file,
+                    BreakpointUpdatedReason::Toggled,
+                    &store,
+                    ignore_breakpoints,
+                    cx,
+                )
+                .detach();
         }
     }
 
@@ -2042,6 +2230,10 @@ impl Session {
         }
 
         self.ignore_breakpoints = ignore;
+        // Spork IDE: the field watchpoints are muted too
+        if self.has_field_watchpoints(cx) {
+            self.send_data_breakpoints(cx);
+        }
 
         if let Some(local) = self.as_running() {
             local.send_source_breakpoints(ignore, &self.breakpoint_store, cx)
@@ -2095,16 +2287,64 @@ impl Session {
         }
     }
 
-    fn send_data_breakpoints(&mut self, cx: &mut Context<Self>) {
+    fn send_data_breakpoints(&self, cx: &App) {
         if let Some(mode) = self.as_running() {
             let breakpoints = self
                 .data_breakpoints
                 .values()
                 .filter_map(|state| state.is_enabled.then(|| state.dap.clone()))
+                .chain(self.field_watchpoints(cx))
                 .collect();
             let command = SetDataBreakpointsCommand { breakpoints };
             mode.request(command).detach_and_log_err(cx);
         }
+    }
+
+    /// Spork IDE: whether the adapter takes data breakpoints and the store has field watchpoints
+    /// for it.
+    fn has_field_watchpoints(&self, cx: &App) -> bool {
+        self.capabilities.supports_data_breakpoints == Some(true)
+            && self
+                .breakpoint_store
+                .read(cx)
+                .all_source_breakpoints(cx)
+                .values()
+                .flatten()
+                .any(|breakpoint| {
+                    matches!(breakpoint.properties.kind, BreakpointKind::Field { .. })
+                })
+    }
+
+    /// Spork IDE: the store's field watchpoints, as data breakpoints.
+    fn field_watchpoints(&self, cx: &App) -> Vec<dap::DataBreakpoint> {
+        if self.ignore_breakpoints {
+            return Vec::new();
+        }
+        self.breakpoint_store
+            .read(cx)
+            .all_source_breakpoints(cx)
+            .into_values()
+            .flatten()
+            .filter(|breakpoint| breakpoint.state.is_enabled())
+            .filter_map(|breakpoint| match breakpoint.properties.kind {
+                BreakpointKind::Field {
+                    data_id,
+                    access,
+                    modification,
+                    ..
+                } => Some(dap::DataBreakpoint {
+                    data_id,
+                    access_type: match (access, modification) {
+                        (true, true) => Some(dap::DataBreakpointAccessType::ReadWrite),
+                        (true, false) => Some(dap::DataBreakpointAccessType::Read),
+                        (false, _) => Some(dap::DataBreakpointAccessType::Write),
+                    },
+                    condition: breakpoint.condition.map(|condition| condition.to_string()),
+                    hit_condition: breakpoint.hit_condition.map(|count| count.to_string()),
+                }),
+                _ => None,
+            })
+            .collect()
     }
 
     pub fn create_data_breakpoint(

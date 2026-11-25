@@ -582,10 +582,23 @@ fn code_action_row(row: CodeActionRow, cx: &App) -> AnyElement {
     let icon = match row.kind {
         CodeActionRowKind::QuickFix => Some("codeInsight/quickfixBulb"),
         CodeActionRowKind::InspectionFix => Some("codeInsight/intentionBulb"),
-        CodeActionRowKind::Action => None,
+        CodeActionRowKind::Action | CodeActionRowKind::ModifyRunConfiguration => None,
         CodeActionRowKind::Run => Some("run/run"),
+        CodeActionRowKind::Debug => Some("run/debug"),
     };
-    let options = (row.kind != CodeActionRowKind::Run).then(|| {
+    // the run icon's popup: IntelliJ's executor actions, with their keys
+    let runs = matches!(
+        row.kind,
+        CodeActionRowKind::Run
+            | CodeActionRowKind::Debug
+            | CodeActionRowKind::ModifyRunConfiguration
+    );
+    let shortcut = match row.kind {
+        CodeActionRowKind::Run => Some("⌃⇧R"),
+        CodeActionRowKind::Debug => Some("⌃⇧D"),
+        _ => None,
+    };
+    let options = (!runs).then(|| {
         let key = MenuKey::Intention({
             let mut hasher = std::hash::DefaultHasher::new();
             std::hash::Hash::hash(&row.label, &mut hasher);
@@ -637,6 +650,13 @@ fn code_action_row(row: CodeActionRow, cx: &App) -> AnyElement {
                 .into_any_element(),
         })
         .child(row.label)
+        .children(shortcut.map(|shortcut| {
+            div()
+                .ml_auto()
+                .pl(px(LOOKUP_GAP * 2.))
+                .text_color(tokens.text_secondary)
+                .child(shortcut)
+        }))
         .children(options)
         .into_any_element()
 }

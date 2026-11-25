@@ -1,0 +1,368 @@
+{
+ "id": "java-test-runner",
+ "fixture": "tests-maven",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven"
+   },
+   "within": 20000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 600000
+  },
+  {
+   "do": "open",
+   "path": "src/test/java/com/example/CalculatorTest.java"
+  },
+  {
+   "find": {
+    "label": "Run test 'CalculatorTest'",
+    "role": "AXButton"
+   },
+   "within": 20000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "click",
+   "label": "Run test 'CalculatorTest'",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    "Run 'CalculatorTest'",
+    "Debug 'CalculatorTest'",
+    "Modify Run Configuration\u2026"
+   ],
+   "ordered": true,
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Run 'CalculatorTest'"
+  },
+  {
+   "expect": {
+    "run.tabs.0.running": false
+   },
+   "within": 120000
+  },
+  {
+   "expect": {
+    "run.tabs.0.tests.rows": [
+     "Test Results failed",
+     "  CalculatorTest failed",
+     "    adds() passed",
+     "    divides() ignored",
+     "    greetsAda() failed"
+    ],
+    "run.tabs.0.tests.status": "1 test failed, 1 passed, 1 ignored",
+    "run.tabs.0.tests.description": {
+     "contains": "3 tests total, "
+    }
+   },
+   "within": 10000
+  },
+  {
+   "find": [
+    {
+     "label": "Run test 'CalculatorTest.adds'",
+     "value": "passed"
+    },
+    {
+     "label": "Run test 'CalculatorTest.greetsAda'",
+     "value": "failed"
+    }
+   ],
+   "within": 10000
+  },
+  {
+   "find": {
+    "label": "Rerun Failed Tests",
+    "role": "AXButton",
+    "enabled": true
+   },
+   "within": 5000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "click",
+   "label": "adds()",
+   "role": "AXRow"
+  },
+  {
+   "expect": {
+    "run.tabs.0.tests.output": "adding 2 and 3\n"
+   },
+   "within": 5000
+  },
+  {
+   "shot": "results"
+  },
+  {
+   "do": "click",
+   "label": "greetsAda()",
+   "role": "AXRow"
+  },
+  {
+   "expect": {
+    "run.tabs.0.tests.selected": "greetsAda()",
+    "run.tabs.0.tests.output": {
+     "contains": "Expected :Hello, Ada!\nActual   :Hello, world!\n<Click to see difference>"
+    }
+   },
+   "within": 5000
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "failure"
+  },
+  {
+   "do": "click",
+   "label": "adds()",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "find": [
+    "Run 'CalculatorTest.adds'",
+    "Debug 'CalculatorTest.adds'",
+    "Jump to Source"
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Jump to Source"
+  },
+  {
+   "expect": {
+    "active": "src/test/java/com/example/CalculatorTest.java",
+    "editor.caret": "10:1"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Click to see difference"
+  },
+  {
+   "wait": 2000
+  },
+  {
+   "shot": "difference"
+  },
+  {
+   "find": "Expected \u2194 Actual",
+   "within": 5000
+  },
+  {
+   "do": "scroll",
+   "label": "Test Output",
+   "by": [
+    0,
+    -300
+   ]
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "CalculatorTest.java:17"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "expect": {
+    "active": "src/test/java/com/example/CalculatorTest.java"
+   },
+   "within": 5000
+  },
+  {
+   "expect": {
+    "editor.caret": "17:1"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Rerun Failed Tests",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "run.tabs.0.running": false,
+    "run.tabs.0.tests.rows": [
+     "Test Results failed",
+     "  CalculatorTest failed",
+     "    greetsAda() failed"
+    ]
+   },
+   "within": 120000
+  },
+  {
+   "do": "click",
+   "label": "Show Passed",
+   "role": "AXButton"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "Rerun 'CalculatorTest'",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "run.tabs.0.running": false,
+    "run.tabs.0.tests.rows": [
+     "Test Results failed",
+     "  CalculatorTest failed",
+     "    divides() ignored",
+     "    greetsAda() failed"
+    ]
+   },
+   "within": 120000
+  },
+  {
+   "do": "click",
+   "label": "Show Ignored",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "run.tabs.0.tests.rows": [
+     "Test Results failed",
+     "  CalculatorTest failed",
+     "    greetsAda() failed"
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Show Passed",
+   "role": "AXButton"
+  },
+  {
+   "do": "click",
+   "label": "Show Ignored",
+   "role": "AXButton"
+  },
+  {
+   "do": "click",
+   "label": "Sorting Options",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    "Suites Always on Top",
+    "Sort Alphabetically",
+    "Sort By Duration"
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Sort Alphabetically"
+  },
+  {
+   "expect": {
+    "run.tabs.0.tests.rows": [
+     "Test Results failed",
+     "  CalculatorTest failed",
+     "    adds() passed",
+     "    divides() ignored",
+     "    greetsAda() failed"
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "greetsAda()",
+   "role": "AXRow"
+  },
+  {
+   "do": "click",
+   "label": "More",
+   "role": "AXButton",
+   "in": "TestTreeViewToolbar"
+  },
+  {
+   "find": [
+    "Expand All",
+    "Collapse All",
+    "Previous Failed Test",
+    "Next Failed Test",
+    "Export Test Results\u2026",
+    "Test Runner Settings"
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "shot": "more"
+  },
+  {
+   "do": "click",
+   "label": "Next Failed Test"
+  },
+  {
+   "expect": {
+    "run.tabs.0.tests.selected": "greetsAda()"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "More",
+   "role": "AXButton",
+   "in": "TestTreeViewToolbar"
+  },
+  {
+   "do": "click",
+   "label": "Export Test Results\u2026"
+  },
+  {
+   "sh": "grep -c '<test ' 'Test Results - CalculatorTest.xml'",
+   "is": "3"
+  }
+ ]
+}

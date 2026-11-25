@@ -1,0 +1,257 @@
+{
+ "id": "spring-boot-update",
+ "fixture": "spring-maven",
+ "covers": [],
+ "prepare": "perl -0pi -e 's#</dependencies>#    <dependency>\\n            <groupId>org.springframework.boot</groupId>\\n            <artifactId>spring-boot-devtools</artifactId>\\n            <optional>true</optional>\\n        </dependency>\\n    </dependencies>#' pom.xml",
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   },
+   "Spring Boot Properties": {
+    "enable_language_server": true
+   },
+   "Spring Boot YAML": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "run.configurations.names": [
+     "DemoApplication"
+    ],
+    "run.configurations.selected": "DemoApplication"
+   },
+   "within": 60000
+  },
+  {
+   "expect": {
+    "java.spring.classpath": true
+   },
+   "within": 300000
+  },
+  {
+   "do": "action",
+   "name": "run::EditConfigurations"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Run/Debug Configurations"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "Modify options",
+   "role": "AXLink"
+  },
+  {
+   "do": "click",
+   "label": "On 'Update' action",
+   "role": "AXMenuItem",
+   "within": 3000
+  },
+  {
+   "find": {
+    "label": "On 'Update' action:",
+    "role": "AXPopUpButton",
+    "value": "Do nothing"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "On 'Update' action:",
+   "role": "AXPopUpButton"
+  },
+  {
+   "menu": "On 'Update' action",
+   "items": [
+    "Do nothing",
+    "Update resources",
+    "Update classes and resources",
+    "Update trigger file",
+    "Hot swap classes and update trigger file if failed"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Hot swap classes and update trigger file if failed",
+   "role": "AXMenuItem"
+  },
+  {
+   "do": "click",
+   "label": "Modify options",
+   "role": "AXLink"
+  },
+  {
+   "do": "click",
+   "label": "On frame deactivation",
+   "role": "AXMenuItem",
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "On frame deactivation:",
+   "role": "AXPopUpButton",
+   "within": 3000
+  },
+  {
+   "menu": "On frame deactivation",
+   "items": [
+    "Do nothing",
+    "Update resources",
+    "Update classes and resources"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "keys",
+   "keys": "escape",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "find": [
+    {
+     "label": "On 'Update' action:",
+     "role": "AXPopUpButton",
+     "value": "Hot swap classes and update trigger file if failed"
+    },
+    {
+     "label": "On frame deactivation:",
+     "role": "AXPopUpButton",
+     "value": "Do nothing"
+    }
+   ],
+   "within": 3000
+  },
+  {
+   "do": "activate",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "policies",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "windows.1": null
+   },
+   "within": 5000
+  },
+  {
+   "sh": "cat \"../home/Library/Application Support/Spork IDE/workspace/\"*/debug.json",
+   "contains": "\"updateAction\": \"UpdateClassesAndTriggerFile\"",
+   "within": 8000
+  },
+  {
+   "expect": {
+    "run.updaters": []
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-r"
+  },
+  {
+   "expect": {
+    "run.services.services.DemoApplication.starting": false
+   },
+   "within": 120000
+  },
+  {
+   "expect": {
+    "run.updaters": [
+     [
+      "DemoApplication",
+      "Update 'DemoApplication' application"
+     ]
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "sh": "ps -ax -o command= | grep -- '-Dspring.devtools.restart.trigger-file=.restartTriggerFile' | grep -v grep",
+   "contains": "com.example.demo.DemoApplication"
+  },
+  {
+   "sh": "curl -s -m 10 http://localhost:18081/hello",
+   "is": "Hello, world!"
+  },
+  {
+   "sh": "test ! -e target/classes/.restartTriggerFile"
+  },
+  {
+   "file": "src/main/java/com/example/demo/HelloController.java",
+   "text": "package com.example.demo;\n\nimport org.springframework.web.bind.annotation.GetMapping;\nimport org.springframework.web.bind.annotation.RequestParam;\nimport org.springframework.web.bind.annotation.RestController;\n\n@RestController\npublic class HelloController {\n\n    @GetMapping(\"/hello\")\n    public String hello(@RequestParam(name = \"name\", defaultValue = \"world\") String name) {\n        String greeting = \"Hi, \" + name + \"!\";\n        return greeting;\n    }\n}\n"
+  },
+  {
+   "wait": 2000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f10"
+  },
+  {
+   "sh": "test -f target/classes/.restartTriggerFile && echo ok",
+   "is": "ok",
+   "within": 20000
+  },
+  {
+   "expect": {
+    "run.services.services.DemoApplication.starting": false
+   },
+   "within": 60000
+  },
+  {
+   "sh": "curl -s -m 10 http://localhost:18081/hello",
+   "is": "Hi, world!",
+   "within": 30000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f2"
+  },
+  {
+   "expect": {
+    "run.tabs.0.running": false,
+    "run.updaters": []
+   },
+   "within": 20000
+  }
+ ]
+}

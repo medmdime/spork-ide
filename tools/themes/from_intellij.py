@@ -246,6 +246,9 @@ SYNTAX = {
     "function.method.call": ["DEFAULT_FUNCTION_CALL"],
     "function.builtin": ["DEFAULT_PREDEFINED_SYMBOL"],
     "hint": ["INLAY_DEFAULT"],
+    "debugger.inline_value": ["DEBUGGER_INLINED_VALUES"],
+    "debugger.inline_value.execution_line": ["DEBUGGER_INLINED_VALUES_EXECUTION_LINE"],
+    "debugger.inline_value.modified": ["DEBUGGER_INLINED_VALUES_MODIFIED"],
     "keyword": ["DEFAULT_KEYWORD"],
     "label": ["DEFAULT_LABEL"],
     "link_text": ["HYPERLINK_ATTRIBUTES"],
@@ -274,6 +277,13 @@ SYNTAX = {
     "variable.builtin": ["DEFAULT_KEYWORD"],
     "variant": ["DEFAULT_CONSTANT"],
     "lifetime": ["DEFAULT_LABEL"],
+}
+
+
+# highlights whose background the editor paints under the text (`DebuggerColors`)
+BACKGROUNDS = {
+    "debugger.smart_step_into.target": "DEBUGGER_SMART_STEP_INTO_TARGET",
+    "debugger.smart_step_into.selection": "DEBUGGER_SMART_STEP_INTO_SELECTION",
 }
 
 
@@ -487,6 +497,10 @@ def zed_theme(theme: Theme, scheme: Scheme) -> dict:
     style["players"] = [{"cursor": caret, "background": caret,
                          "selection": scheme.option("SELECTION_BACKGROUND")}]
     style["syntax"] = {name: syntax_style(scheme, keys, editor_fg) for name, keys in SYNTAX.items()}
+    # Smart Step Into's calls in place: a background over the text's own colours
+    for name, key in BACKGROUNDS.items():
+        style["syntax"][name] = {"color": scheme.fg(key), "background_color": scheme.bg(key),
+                                 "font_style": None, "font_weight": None}
     style["syntax"]["emphasis"] = {"color": editor_fg, "font_style": "italic", "font_weight": None}
     style["syntax"]["emphasis.strong"] = {"color": editor_fg, "font_style": None, "font_weight": 700}
     style["syntax"]["title"] = {"color": editor_fg, "font_style": None, "font_weight": 700}
