@@ -56,7 +56,7 @@ trademark.
 | 7 | UI components | Zed's `ui` crate long term, restyled with Spork's IntelliJ tokens; gpui-kit (Spork's views) bridges while they move over. |
 | 8 | Tests | An end-to-end scenario for every functionality. |
 | 9 | A second reference app | IntelliJ IDEA Community Edition 2025.2.5 (installed), catalogued the way the reference app was. The reference app is built from a newer platform (263), so where the two differ the reference app decides. |
-| 10 | Public GitHub fork | Later, when the user says. |
+| 10 | Public GitHub fork | Later, when the user says. Releases (2026-11-25): each wave's tag is published on a public release mirror, [medmdime/spork-ide](https://github.com/medmdime/spork-ide), one commit per release without the third-party catalogues (`script/publish-mirror`), its downloads built by `.github/workflows/release.yml`. |
 | 11 | Java, Kotlin, Maven and Gradle (366 tasks) | In scope, the Eclipse way under IntelliJ's interface: Eclipse's engines (the JDT language server, with m2e for Maven and Buildship for Gradle) behind IntelliJ's tool windows, dialogs and actions (phase 10). Eclipse has no maintained Kotlin engine: Kotlin's is chosen when phase 10 gets there. |
 | 12 | Zed's extension registry | Kept for now: the Plugins page lists and downloads extensions from `api.zed.dev/extensions`, and the app checks it for updates at startup, the one Zed service Spork IDE still calls. A registry of our own may come later. |
 | 13 | Darcula and IntelliJ Light | Keep the names, as IntelliJ has them. |
@@ -148,8 +148,10 @@ translations from the bundled language packs and its screenshot. `reference/idea
 Gradle, 320 from Git, GitHub, GitLab, Mercurial, Subversion and Perforce, 457 from the others (Jupyter, Markdown,
 Terminal, Code With Me…); 136 of the reference app's own have no plugin recorded.
 
-**Status (2026-11-22): done.** The rename, `PATCHES.md`, the catalogue and CI (`.github/workflows/ci.yml`, not yet run:
-the repository isn't on GitHub).
+**Status (2026-11-22): done.** The rename, `PATCHES.md`, the catalogue and CI (`.github/workflows/ci.yml`; it runs on
+the release mirror, its end-to-end jobs only when started by hand). Releases (2026-11-25): a tag pushed by
+`script/publish-mirror` builds Spork and Spork IDE for macOS (Apple silicon), Windows and Linux (x64) and publishes them
+on the mirror's Releases page, unsigned; the first is v0.1.0-alpha.1.
 
 ### Phase 1: strip
 

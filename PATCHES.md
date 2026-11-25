@@ -181,6 +181,7 @@ except `.github/workflows/ci.yml` and `release.yml`.
 | notifications | `status_toast.rs` re-exports `workspace::notifications::StatusToast`; Zed's toast view deleted | keep ours |
 | agent_ui | `worktree_service.rs`'s fetch-failed toast is a `StatusToast` with its two actions (`worktree_fetch_failed_toast`), its view deleted; `show_undo_reject_toast` takes the workspace's context | keep ours |
 | zed (menus) | Window ▸ Notifications: Close First before Close All | keep ours |
+| zed (menus) | no Tools menu on Windows: its one item, Create Command Line Launcher…, installs the CLI, which Windows doesn't have | keep ours |
 | workspace | `status_bar.rs`: `StatusBarMenu`, the app's right-click menu of the status bar's items, on every item (Zed's Hide Button when none is set) | keep ours: the marked global and the marked branch of `render_hideable_item` |
 | workspace | `status_bar.rs`: the bar is Spork's (`shell::status_bar`: 1.875 rem tall, 0.75 rem in); no threads sidebar toggle (`render_sidebar_toggle` gone, `SidebarStatus` only shapes the corners); `welcome.rs`'s Open Agent Panel doesn't open the threads sidebar; `Cargo.toml` depends on `spork_workbench` | keep ours: the marked lines; drop upstream's changes to the toggle |
 | workspace | `set_overlay`: a view drawn over the whole workspace, last (the gpui-kit `Root` of Spork's dialogs, toasts and tooltips) | keep ours: the `overlay` field, `set_overlay` after `set_titlebar_item`, `.children(self.overlay.clone())` at the end of `render` |

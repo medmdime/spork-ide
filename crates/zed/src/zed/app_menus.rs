@@ -477,6 +477,8 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
             ])),
             MenuItem::action("View Breakpoints…", run::ViewBreakpoints),
         ]),
+        // Spork IDE: its one item installs the CLI, which Windows doesn't have (as upstream's Install CLI)
+        #[cfg(not(target_os = "windows"))]
         Menu::new("Tools").items([MenuItem::action(
             "Create Command Line Launcher…",
             install_cli::InstallCliBinary,
