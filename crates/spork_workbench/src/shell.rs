@@ -385,7 +385,7 @@ fn intellij_slot(root: &std::path::Path) -> Option<usize> {
     let entry = format!("<entry key=\"{key}\">");
     let configs = ["Library/Application Support", ".config"]
         .into_iter()
-        .flat_map(|base| ["detachhead", "JetBrains"].map(|vendor| home.join(base).join(vendor)))
+        .map(|base| home.join(base).join("JetBrains"))
         .filter_map(|dir| std::fs::read_dir(dir).ok())
         .flatten()
         .flatten();

@@ -1,0 +1,209 @@
+{
+ "id": "spring-boot-actuator-states",
+ "fixture": "spring-worker",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   },
+   "Spring Boot Properties": {
+    "enable_language_server": true
+   },
+   "Spring Boot YAML": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "sh": "perl -0pi -e 's|\\s*<dependency>\\s*<groupId>org.springframework.boot</groupId>\\s*<artifactId>spring-boot-starter-actuator</artifactId>\\s*</dependency>||' pom.xml && git commit -qam 'no actuator'"
+  },
+  {
+   "sh": "cat pom.xml",
+   "lacks": "actuator"
+  },
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "run.configurations.names": [
+     "WorkerApplication"
+    ],
+    "run.configurations.selected": "WorkerApplication"
+   },
+   "within": 60000
+  },
+  {
+   "expect": {
+    "java.spring.classpath": true
+   },
+   "within": 300000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-r"
+  },
+  {
+   "expect": {
+    "run.services.selected": "WorkerApplication",
+    "run.services.services.WorkerApplication.starting": false,
+    "run.services.services.WorkerApplication.link": null
+   },
+   "within": 120000
+  },
+  {
+   "find": [
+    {
+     "label": "Console",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "Actuator",
+     "role": "AXRadioButton"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Actuator",
+   "role": "AXRadioButton"
+  },
+  {
+   "expect": {
+    "java.spring.actuator.WorkerApplication.no_actuator": true
+   },
+   "within": 60000
+  },
+  {
+   "find": [
+    {
+     "label": "Spring Boot Actuator is not enabled."
+    },
+    {
+     "label": "Add dependency to the spring-boot-starter-actuator to enable it",
+     "role": "AXLink"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "no-actuator"
+  },
+  {
+   "do": "click",
+   "label": "Add dependency to the spring-boot-starter-actuator to enable it",
+   "role": "AXLink"
+  },
+  {
+   "sh": "cat pom.xml",
+   "contains": "<artifactId>spring-boot-starter-actuator</artifactId>"
+  },
+  {
+   "find": [
+    {
+     "label": "Actuator dependency added."
+    },
+    {
+     "label": "Restart application",
+     "role": "AXLink"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 300000
+  },
+  {
+   "wait": 3000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 300000
+  },
+  {
+   "do": "click",
+   "label": "Restart application",
+   "role": "AXLink"
+  },
+  {
+   "expect": {
+    "java.spring.actuator.WorkerApplication.no_actuator": false,
+    "java.spring.actuator.WorkerApplication.mappings": null,
+    "java.spring.actuator.WorkerApplication.health.status": "UP",
+    "run.services.services.WorkerApplication.status": "Running"
+   },
+   "within": 120000
+  },
+  {
+   "do": "click",
+   "label": "Mappings",
+   "role": "AXRadioButton"
+  },
+  {
+   "find": [
+    {
+     "label": "Mapping endpoint is not enabled."
+    },
+    {
+     "label": "Add dependency to the spring-boot-starter-web to enable it"
+    }
+   ],
+   "ordered": true,
+   "within": 3000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "no-mappings"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f2"
+  },
+  {
+   "expect": {
+    "run.tabs.0.running": false
+   },
+   "within": 20000
+  }
+ ]
+}

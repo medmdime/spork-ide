@@ -49,7 +49,40 @@ enum Content {
     Spork(&'static str),
     /// Build, Execution, Deployment › Docker: `spork_docker`'s connections.
     Docker,
+    /// A page another crate draws ([`register_page`]), by its path in the tree.
+    External(&'static str),
 }
+
+/// A page another crate draws in the tree (spork_java's Kotlin Compiler), made for the project
+/// the dialog opens on, and applied with the dialog.
+pub trait ExternalPage {
+    fn view(&self) -> AnyView;
+    fn modified(&self, cx: &App) -> bool;
+    fn apply(&self, cx: &mut App);
+    fn e2e_state(&self, cx: &App) -> Value;
+}
+
+/// How an [`ExternalPage`] is made: for the project's first folder; `changed` tells the dialog
+/// of an edit.
+pub type MakePage = fn(
+    Option<std::path::PathBuf>,
+    std::rc::Rc<dyn Fn(&mut App)>,
+    &mut Window,
+    &mut App,
+) -> std::rc::Rc<dyn ExternalPage>;
+
+#[derive(Default)]
+struct ExternalPages(Vec<(&'static str, MakePage)>);
+
+impl Global for ExternalPages {}
+
+/// Lets another crate draw the page at `path` (`KOTLIN_COMPILER_PAGE`).
+pub fn register_page(path: &'static str, make: MakePage, cx: &mut App) {
+    cx.default_global::<ExternalPages>().0.push((path, make));
+}
+
+/// Build, Execution, Deployment › Compiler › Kotlin Compiler, which spork_java draws.
+pub const KOTLIN_COMPILER_PAGE: &str = "Build, Execution, Deployment/Compiler/Kotlin Compiler";
 
 /// A page of IntelliJ's tree, with the pages under it.
 struct Node {
@@ -195,6 +228,20 @@ const TREE: &[Node] = &[
         ),
     )
     .children(&[
+        Node::new("Compiler", Content::Group(""))
+            .project()
+            .children(&[Node::new(
+                "Kotlin Compiler",
+                Content::External(KOTLIN_COMPILER_PAGE),
+            )
+            .project()
+            .words(
+                "report compiler warnings kotlin compiler version language version api version \
+                 additional command line parameters keep compiler process alive between \
+                 invocations kotlin to jvm enable incremental compilation target jvm version \
+                 kotlin to javascript generate source maps embed source code into source map \
+                 copy library runtime files destination directory module kind",
+            )]),
         Node::new("Debugger", Content::Group("")).children(&[Node::new(
             "Data Views",
             Content::Options(pages::DATA_VIEWS),
@@ -210,7 +257,10 @@ const TREE: &[Node] = &[
             "Configure the settings related to specific frameworks and technologies used in your project",
         ),
     )
-    .children(&[Node::new("Markdown", Content::Options(pages::MARKDOWN))]),
+    .children(&[
+        Node::new("Markdown", Content::Options(pages::MARKDOWN)),
+        Node::new("Spring", Content::Options(pages::SPRING)),
+    ]),
     Node::new(
         "Tools",
         Content::Group(
@@ -235,14 +285,49 @@ pub(crate) struct Owned {
 /// Advanced Settings › IDE › Duration of storing changes in Local History.
 pub(crate) const LOCAL_HISTORY_DAYS: &str = "/spork/local_history/days_to_keep";
 
-pub(crate) const OWNED: &[Owned] = &[Owned {
-    path: LOCAL_HISTORY_DAYS,
-    get: |cx| serde_json::json!(spork_local_history::days_to_keep(cx)),
-    set: |days, cx| {
-        let days = days.as_i64().context("a number of days")?;
-        spork_local_history::set_days_to_keep(days, cx)
+/// Languages & Frameworks › Spring › Spring Boot › Project Import › "Create run configuration
+/// automatically", which `spork_java` reads on each import.
+pub(crate) const SPRING_BOOT_RUN_CONFIGURATIONS: &str =
+    "/spork/spring_boot/create_run_configuration";
+
+/// The key "Create run configuration automatically" is kept under.
+const SPRING_BOOT_RUN_CONFIGURATIONS_KEY: &str = "spork_spring_boot_create_run_configuration";
+
+/// Whether an import makes a Spring Boot run configuration for each application without one
+/// (on unless turned off).
+pub fn spring_boot_creates_run_configurations(cx: &App) -> bool {
+    db::kvp::KeyValueStore::global(cx)
+        .read_kvp(SPRING_BOOT_RUN_CONFIGURATIONS_KEY)
+        .log_err()
+        .flatten()
+        .is_none_or(|value| value != "false")
+}
+
+pub(crate) const OWNED: &[Owned] = &[
+    Owned {
+        path: LOCAL_HISTORY_DAYS,
+        get: |cx| serde_json::json!(spork_local_history::days_to_keep(cx)),
+        set: |days, cx| {
+            let days = days.as_i64().context("a number of days")?;
+            spork_local_history::set_days_to_keep(days, cx)
+        },
     },
-}];
+    Owned {
+        path: SPRING_BOOT_RUN_CONFIGURATIONS,
+        get: |cx| serde_json::json!(spring_boot_creates_run_configurations(cx)),
+        set: |on, cx| {
+            let on = on.as_bool().context("on or off")?;
+            let store = db::kvp::KeyValueStore::global(cx);
+            cx.background_spawn(async move {
+                store
+                    .write_kvp(SPRING_BOOT_RUN_CONFIGURATIONS_KEY.into(), on.to_string())
+                    .await
+            })
+            .detach_and_log_err(cx);
+            Ok(())
+        },
+    },
+];
 
 /// The labels of Spork's Git page, for the search.
 const GIT_WORDS: &str = "path to git executable exclude ignored directories commit staging area \
@@ -394,14 +479,23 @@ pub fn open(
             || TITLE.into(),
             |worktree| format!("{TITLE} – {}", worktree.read(cx).root_name_str()).into(),
         );
-    open_window(repo, title, target, cx);
+    let root = workspace
+        .and_then(|workspace| workspace.project().read(cx).visible_worktrees(cx).next())
+        .map(|worktree| worktree.read(cx).abs_path().to_path_buf());
+    open_window(repo, root, title, target, cx);
 }
 
 /// The project's repository view and window, for Version Control's pages.
 type Repo = Option<(Entity<spork::RepoView>, AnyWindowHandle)>;
 
 /// Opens the Settings window, pinned or not as the pin was left.
-fn open_window(repo: Repo, title: SharedString, target: Option<Target>, cx: &mut App) {
+fn open_window(
+    repo: Repo,
+    root: Option<std::path::PathBuf>,
+    title: SharedString,
+    target: Option<Target>,
+    cx: &mut App,
+) {
     let float = pinned(cx);
     let options = WindowOptions {
         window_bounds: Some(WindowBounds::centered(
@@ -429,7 +523,7 @@ fn open_window(repo: Repo, title: SharedString, target: Option<Target>, cx: &mut
         match gpui_kit::open_window(options, cx, move |window, cx| {
             follow_ide_theme(window, cx);
             cx.new(|cx| {
-                let mut dialog = SettingsDialog::new(repo, title, window, cx);
+                let mut dialog = SettingsDialog::new(repo, root, title, window, cx);
                 if let Some(target) = &target {
                     dialog.go_to(target, window, cx);
                 }
@@ -685,6 +779,9 @@ pub struct SettingsDialog {
     reveal: bool,
     /// What the window was opened with, to open it again when it's pinned or unpinned.
     repo: Repo,
+    root: Option<std::path::PathBuf>,
+    /// The pages other crates draw, by their path.
+    external: Vec<(&'static str, std::rc::Rc<dyn ExternalPage>)>,
     title: SharedString,
     /// The plugins the registry has a newer version of: the count on Plugins' row.
     plugin_updates: usize,
@@ -692,7 +789,27 @@ pub struct SettingsDialog {
 }
 
 impl SettingsDialog {
-    fn new(repo: Repo, title: SharedString, window: &mut Window, cx: &mut Context<Self>) -> Self {
+    fn new(
+        repo: Repo,
+        root: Option<std::path::PathBuf>,
+        title: SharedString,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Self {
+        let external = {
+            let makers = cx
+                .try_global::<ExternalPages>()
+                .map(|pages| pages.0.clone())
+                .unwrap_or_default();
+            let this = cx.entity().downgrade();
+            let changed: std::rc::Rc<dyn Fn(&mut App)> = std::rc::Rc::new(move |cx| {
+                this.update(cx, |_, cx| cx.notify()).ok();
+            });
+            makers
+                .into_iter()
+                .map(|(path, make)| (path, make(root.clone(), changed.clone(), window, cx)))
+                .collect()
+        };
         let search = cx.new(|cx| InputState::new(window, cx));
         let keymap = cx.new(|cx| keymap::KeymapPage::new(window, cx));
         let plugins = cx.new(|cx| plugins::PluginsPage::new(window, cx));
@@ -763,6 +880,8 @@ impl SettingsDialog {
             tree_scroll: ScrollHandle::new(),
             reveal: true,
             repo,
+            root,
+            external,
             title,
             plugin_updates: 0,
             _subscriptions,
@@ -854,6 +973,12 @@ impl SettingsDialog {
         if self.docker.read(cx).modified() {
             modified.push(DOCKER_PAGE.to_owned());
         }
+        modified.extend(
+            self.external
+                .iter()
+                .filter(|(_, page)| page.modified(cx))
+                .map(|(path, _)| (*path).to_owned()),
+        );
         if self.vcs.modified(cx) {
             modified.extend(
                 TREE.iter()
@@ -920,6 +1045,9 @@ impl SettingsDialog {
         self.keymap
             .update(cx, |keymap, cx| keymap.apply(window, cx));
         self.docker.update(cx, |docker, cx| docker.apply(cx));
+        for (_, page) in &self.external {
+            page.apply(cx);
+        }
         if self.vcs.modified(cx) {
             self.vcs.apply(window, cx);
         }
@@ -1076,6 +1204,14 @@ impl SettingsDialog {
             Content::FileTypes => self.file_types_page(cx),
             Content::Spork(_) => self.vcs.view().into_any_element(),
             Content::Docker => self.docker.clone().into_any_element(),
+            Content::External(path) => self
+                .external
+                .iter()
+                .find(|(page, _)| *page == path)
+                .map_or_else(
+                    || div().into_any_element(),
+                    |(_, page)| page.view().into_any_element(),
+                ),
         }
     }
 
@@ -1231,9 +1367,14 @@ impl SettingsDialog {
         if self.modified(cx) {
             return;
         }
-        let (repo, title, page) = (self.repo.clone(), self.title.clone(), self.page.clone());
+        let (repo, root, title, page) = (
+            self.repo.clone(),
+            self.root.clone(),
+            self.title.clone(),
+            self.page.clone(),
+        );
         window.remove_window();
-        open_window(repo, title, Some(Target::Page(page)), cx);
+        open_window(repo, root, title, Some(Target::Page(page)), cx);
     }
 }
 
@@ -1446,6 +1587,11 @@ pub fn e2e_state(cx: &mut App) -> Option<Value> {
                 "keymap": dialog.keymap.read(cx).e2e_state(cx),
                 "plugins": dialog.plugins.read(cx).e2e_state(cx),
                 "docker": dialog.docker.read(cx).e2e_state(cx),
+                "external": dialog
+                    .external
+                    .iter()
+                    .map(|(path, page)| ((*path).to_owned(), page.e2e_state(cx)))
+                    .collect::<serde_json::Map<_, _>>(),
             }))
         })
         .ok()

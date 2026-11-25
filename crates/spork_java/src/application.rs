@@ -13,16 +13,21 @@ use collections::HashMap;
 use dap::adapters::{
     DapDelegate, DebugAdapter, DebugAdapterBinary, DebugAdapterName, DebugTaskDefinition,
 };
+use gpui::{AnyElement, IntoElement as _, ParentElement as _, Styled as _, div, px};
 use gpui::{App, AppContext as _, AsyncApp, Entity, Task};
+use gpui_kit::component::h_flex;
+use gpui_kit::component::menu::PopupMenuItem;
 use language::{Buffer, ContextLocation, ContextProvider, LanguageName, LanguageToolchainStore};
 use serde_json::Value;
-use spork_run::configurations::{self, Configuration, Field, ModifyOption, Runner};
+use spork_run::configurations::{self, Configuration, Edit, Field, ModifyOption, Runner};
 use task::{
     DebugScenario, TaskTemplate, TaskTemplates, TaskVariables, VariableName, ZedDebugConfig,
 };
+use util::ResultExt as _;
 use workspace::Workspace;
 
 use crate::java_project::{JavaProject, execute_command};
+use crate::jdk::Jdk;
 
 /// The `java` command line that runs `main` on `classpath`.
 fn java_command(
@@ -40,6 +45,159 @@ fn java_command(
     command.push(main.to_owned());
     command.extend(args.iter().cloned());
     command
+}
+
+/// The JRE the configuration runs on (IntelliJ's JRE field): java-debug's `javaExec`, the
+/// module's JDK when it names none.
+const JAVA_EXEC: &str = "javaExec";
+
+fn java_executable(entry: &serde_json::Map<String, Value>, jdk: &Jdk) -> String {
+    entry
+        .get(JAVA_EXEC)
+        .and_then(Value::as_str)
+        .filter(|path| !path.is_empty())
+        .map_or_else(|| jdk.java().to_string_lossy().into_owned(), str::to_owned)
+}
+
+/// The JRE field's combo box (IntelliJ's `JrePathEditor`): Default (the module's SDK), the JDKs,
+/// Download JDK… and Select alternative JRE….
+fn jre_field(configuration: &Configuration, edit: Edit, cx: &mut App) -> AnyElement {
+    let env = crate::jdk::process_env();
+    let module_jdk = JavaProject::containing(
+        &configuration
+            .entry
+            .get("cwd")
+            .and_then(Value::as_str)
+            .map(PathBuf::from)
+            .unwrap_or_default(),
+        cx,
+    )
+    .or_else(|| {
+        cx.try_global::<crate::java_project::Projects>()
+            .and_then(|projects| projects.0.values().next().cloned())
+    });
+    let (module_name, default_jdk) = module_jdk
+        .map(|java| {
+            let java = java.read(cx);
+            (java.name(), java.jdk.clone())
+        })
+        .unwrap_or_default();
+    let jdks = crate::jdk::find(&env);
+    let chosen = configuration
+        .entry
+        .get(JAVA_EXEC)
+        .and_then(Value::as_str)
+        .filter(|path| !path.is_empty())
+        .map(str::to_owned);
+    let (label, detail) = match &chosen {
+        Some(path) => match jdks
+            .iter()
+            .find(|jdk| jdk.java().to_string_lossy() == *path)
+        {
+            Some(jdk) => (jdk.name(), jdk.version_string()),
+            None => (path.clone(), String::new()),
+        },
+        None => (
+            "Default".to_owned(),
+            format!(
+                "({} - SDK of '{module_name}' module)",
+                default_jdk
+                    .as_ref()
+                    .map_or_else(|| "<No JRE>".to_owned(), Jdk::name)
+            ),
+        ),
+    };
+    let set = move |edit: &Edit, java: Option<PathBuf>, cx: &mut App| {
+        let java = java.map(|java| java.to_string_lossy().into_owned());
+        edit(
+            &move |configuration: &mut Configuration| match &java {
+                Some(java) => {
+                    configuration
+                        .entry
+                        .insert(JAVA_EXEC.into(), Value::String(java.clone()));
+                }
+                None => {
+                    configuration.entry.remove(JAVA_EXEC);
+                }
+            },
+            cx,
+        )
+    };
+    let combo = spork_workbench::controls::dropdown(
+        spork_workbench::controls::ComboBox::new("jre", label)
+            .aria_label("JRE:")
+            .detail(detail)
+            .w_full(),
+        false,
+        move |menu, _, _| {
+            let mut menu = menu.item(PopupMenuItem::new("Default").on_click({
+                let edit = edit.clone();
+                move |_, _, cx| set(&edit, None, cx)
+            }));
+            for jdk in &jdks {
+                let (edit, java) = (edit.clone(), jdk.java());
+                menu = menu.item(
+                    PopupMenuItem::new(format!("{} {}", jdk.name(), jdk.version_string()))
+                        .on_click(move |_, _, cx| set(&edit, Some(java.clone()), cx)),
+                );
+            }
+            let download = edit.clone();
+            let browse = edit.clone();
+            menu.item(
+                PopupMenuItem::new("Download JDK…").on_click(move |_, window, cx| {
+                    let edit = download.clone();
+                    crate::jdk_download_dialog::open(
+                        std::rc::Rc::new(move |package, target, _, cx| {
+                            let edit = edit.clone();
+                            crate::jdk_download::start(
+                                package,
+                                target,
+                                Box::new(move |jdk, cx| set(&edit, Some(jdk.java()), cx)),
+                                None,
+                                cx,
+                            )
+                        }),
+                        window,
+                        cx,
+                    )
+                }),
+            )
+            .item(
+                PopupMenuItem::new("Select alternative JRE…").on_click(move |_, window, cx| {
+                    let picked = spork_workbench::prompt_for_paths(
+                        gpui::PathPromptOptions {
+                            files: false,
+                            directories: true,
+                            multiple: false,
+                            prompt: Some("Select Alternative JRE".into()),
+                        },
+                        cx,
+                    );
+                    let edit = browse.clone();
+                    window
+                        .spawn(cx, async move |cx| {
+                            let Ok(Ok(Some(mut paths))) = picked.await else {
+                                return;
+                            };
+                            let Some(home) = paths.pop() else { return };
+                            let java = crate::jdk::at_folder(&home).map(|jdk| jdk.java());
+                            cx.update(|_, cx| set(&edit, java, cx)).log_err();
+                        })
+                        .detach();
+                }),
+            )
+        },
+    );
+    h_flex()
+        .gap(px(8.))
+        .child(
+            div()
+                .w(px(160.))
+                .flex_none()
+                .child(spork_workbench::controls::form_label("JRE:")),
+        )
+        .child(div().flex_1().min_w_0().child(combo))
+        .into_any_element()
 }
 
 /// The configuration's keys of its Modify options (java-debug ignores them).
@@ -119,7 +277,7 @@ impl Runner for ApplicationRunner {
                 .unwrap_or_default();
             Ok(TaskTemplate {
                 label,
-                command: jdk.java().to_string_lossy().into_owned(),
+                command: java_executable(&entry, &jdk),
                 args: java_command(
                     &arguments(&entry, "vmArgs"),
                     &classpath,
@@ -190,6 +348,10 @@ impl Runner for ApplicationRunner {
         ]
     }
 
+    fn controls(&self, configuration: &Configuration, edit: Edit, cx: &mut App) -> Vec<AnyElement> {
+        vec![jre_field(configuration, edit, cx)]
+    }
+
     /// The VM options field once Add VM options is on, as IntelliJ's fragment.
     fn shows(&self, configuration: &Configuration, field: Field) -> bool {
         field != Field::VmOptions || configuration.entry.contains_key("vmArgs")
@@ -209,6 +371,65 @@ impl Runner for ApplicationRunner {
     }
 }
 
+/// IntelliJ's JUnit configuration, run: JUnit 4's runner on the test class, on the project's test
+/// classpath, after JDT LS's build.
+// shortcut: JUnit 4's console runner and its text in the Run tool window, where IntelliJ has its
+// test runner and the test results tree; JUnit 5 and TestNG need a runner of their own
+pub(crate) struct JUnitRunner;
+
+impl Runner for JUnitRunner {
+    fn task(
+        &self,
+        configuration: &Configuration,
+        workspace: &Workspace,
+        cx: &mut App,
+    ) -> Task<Result<TaskTemplate>> {
+        let Some(java) = JavaProject::of(workspace, cx) else {
+            return Task::ready(Err(anyhow::anyhow!("The project isn't a Java project")));
+        };
+        let (Some(jdk), Some(root)) = (java.read(cx).jdk.clone(), java.read(cx).root.clone())
+        else {
+            return Task::ready(Err(anyhow::anyhow!(crate::jdtls::NO_JDK)));
+        };
+        let class = configuration.text(Field::Command).trim().to_owned();
+        if class.is_empty() {
+            return Task::ready(Err(anyhow::anyhow!("Class not specified")));
+        }
+        let (entry, label) = (
+            configuration.entry.clone(),
+            configuration.name().to_string(),
+        );
+        let build = java.read(cx).build(cx);
+        let classpath = java.read(cx).test_classpath(&root, cx);
+        cx.background_spawn(async move {
+            build.await?;
+            let classpath = classpath.await?;
+            Ok(TaskTemplate {
+                label,
+                command: jdk.java().to_string_lossy().into_owned(),
+                args: java_command(
+                    &arguments(&entry, "vmArgs"),
+                    &classpath,
+                    configurations::JUNIT_RUNNER,
+                    &[class],
+                ),
+                cwd: Some(
+                    entry
+                        .get("cwd")
+                        .and_then(Value::as_str)
+                        .map(str::to_owned)
+                        .unwrap_or_else(|| root.to_string_lossy().into_owned()),
+                ),
+                ..TaskTemplate::default()
+            })
+        })
+    }
+
+    fn can_debug(&self, cx: &App) -> bool {
+        ApplicationRunner.can_debug(cx)
+    }
+}
+
 /// Java's debug adapter, by which the Application configurations are debug scenarios.
 pub(crate) struct JavaDebugAdapter;
 
@@ -218,18 +439,26 @@ impl DebugAdapter for JavaDebugAdapter {
         DebugAdapterName(configurations::JAVA.into())
     }
 
+    /// A launch of a main class, or an attach to a local JVM by its process (Attach to Process),
+    /// at the address its JDWP agent listens on.
     async fn config_from_zed_format(&self, zed_scenario: ZedDebugConfig) -> Result<DebugScenario> {
-        let program = match zed_scenario.request {
-            task::DebugRequest::Launch(launch) => launch.program,
-            task::DebugRequest::Attach(_) => {
-                anyhow::bail!("Spork IDE doesn't attach to a Java process yet")
+        let config = match zed_scenario.request {
+            task::DebugRequest::Launch(launch) => {
+                serde_json::json!({"request": "launch", "mainClass": launch.program})
+            }
+            task::DebugRequest::Attach(attach) => {
+                let pid = attach.process_id.context("No process to attach to")?;
+                let (host, port) = jdwp_address_of(pid).with_context(|| {
+                    format!("Process {pid} isn't a JVM listening for a debugger")
+                })?;
+                serde_json::json!({"request": "attach", "hostName": host, "port": port})
             }
         };
         Ok(DebugScenario {
             adapter: zed_scenario.adapter,
             label: zed_scenario.label,
             build: None,
-            config: serde_json::json!({"request": "launch", "mainClass": program}),
+            config,
             tcp_connection: None,
         })
     }
@@ -246,7 +475,7 @@ impl DebugAdapter for JavaDebugAdapter {
         cx: &mut AsyncApp,
     ) -> Result<DebugAdapterBinary> {
         let root = delegate.worktree_root_path().to_owned();
-        let (build, server, jdk) = cx.update(|cx| {
+        let (build, server, jdk, workspace) = cx.update(|cx| {
             let java =
                 JavaProject::containing(&root, cx).context("The project isn't a Java project")?;
             let java = java.read(cx);
@@ -254,10 +483,22 @@ impl DebugAdapter for JavaDebugAdapter {
                 .language_server(cx)
                 .context("The Java language server isn't running")?;
             let jdk = java.jdk.clone().context(crate::jdtls::NO_JDK)?;
-            anyhow::Ok((java.build(cx), server, jdk))
+            anyhow::Ok((java.build(cx), server, jdk, java.workspace.clone()))
         })?;
-        build.await?;
         let mut configuration = definition.config.clone();
+        if configuration["request"] == "attach" {
+            return attach(
+                &server,
+                &root,
+                configuration,
+                workspace,
+                definition.label.clone(),
+                cx,
+            )
+            .await;
+        }
+        build.await?;
+        crate::debugger::update_settings(&server, true).await?;
         let main = configuration["mainClass"]
             .as_str()
             .map(str::trim)
@@ -273,27 +514,30 @@ impl DebugAdapter for JavaDebugAdapter {
             vec![root_uri.into()],
         )
         .await?;
+        // a JUnit configuration's runner is in a jar: the project is the one with main classes
+        let test = configuration["classpathScope"] == "test";
         let project = mains
             .as_array()
             .and_then(|mains| {
                 mains
                     .iter()
-                    .find(|found| found["mainClass"] == main.as_str())
+                    .find(|found| test || found["mainClass"] == main.as_str())
             })
             .and_then(|found| found["projectName"].as_str())
             .with_context(|| format!("Could not find or load main class {main}"))?
             .to_owned();
-        let paths = execute_command(
-            &server,
-            "vscode.java.resolveClasspath",
-            vec![main.clone().into(), project.clone().into()],
-        )
-        .await?;
+        let mut classpath_arguments = vec![main.clone().into(), project.clone().into()];
+        if test {
+            classpath_arguments.push("test".into());
+        }
+        let paths =
+            execute_command(&server, "vscode.java.resolveClasspath", classpath_arguments).await?;
         let port = execute_command(&server, "vscode.java.startDebugSession", Vec::new())
             .await?
             .as_u64()
             .and_then(|port| u16::try_from(port).ok())
             .context("java-debug opened no port")?;
+        let port = crate::debugger::connect(port, workspace, definition.label.clone(), cx).await?;
         let object = configuration
             .as_object_mut()
             .context("a Java debug configuration is a JSON object")?;
@@ -313,15 +557,16 @@ impl DebugAdapter for JavaDebugAdapter {
             }
         }
         object.insert("request".into(), "launch".into());
+        object.remove("classpathScope");
         object.insert("mainClass".into(), main.into());
         object.insert("projectName".into(), project.into());
         object.insert("modulePaths".into(), paths[0].clone());
         object.insert("classPaths".into(), paths[1].clone());
-        object.insert(
-            "javaExec".into(),
-            jdk.java().to_string_lossy().into_owned().into(),
-        );
-        object.insert("console".into(), "internalConsole".into());
+        // the configuration's JRE, the module's JDK by default
+        let java = java_executable(object, &jdk);
+        object.insert(JAVA_EXEC.into(), java.into());
+        // the program runs in a terminal of its own, its input the console's as IntelliJ's
+        object.insert("console".into(), "integratedTerminal".into());
         object
             .entry("cwd")
             .or_insert_with(|| root.to_string_lossy().into_owned().into());
@@ -349,16 +594,96 @@ impl DebugAdapter for JavaDebugAdapter {
     fn dap_schema(&self) -> Value {
         serde_json::json!({
             "properties": {
-                "request": {"type": "string", "enum": ["launch"]},
+                "request": {"type": "string", "enum": ["launch", "attach"]},
                 "mainClass": {"type": "string", "description": "The main class to run"},
+                "hostName": {"type": "string", "description": "The host of the JVM to attach to"},
+                "port": {"type": "integer", "description": "The port of the JVM's debugger agent"},
                 "args": {"type": ["string", "array"], "description": "The program's arguments"},
                 "vmArgs": {"type": "string", "description": "The options for the JVM"},
                 "cwd": {"type": "string", "description": "The working directory"},
                 "env": {"type": "object", "description": "The environment variables"},
             },
-            "required": ["request", "mainClass"],
+            "required": ["request"],
         })
     }
+}
+
+/// IntelliJ's Remote JVM Debug and Attach to Process: java-debug attaches to a JVM's JDWP agent
+/// at `hostName`:`port` (IntelliJ's defaults `localhost`, `5005`), for the project's sources;
+/// stopping detaches and the JVM goes on.
+async fn attach(
+    server: &lsp::LanguageServer,
+    root: &std::path::Path,
+    mut configuration: Value,
+    workspace: gpui::WeakEntity<Workspace>,
+    label: gpui::SharedString,
+    cx: &mut AsyncApp,
+) -> Result<DebugAdapterBinary> {
+    crate::debugger::update_settings(server, true).await?;
+    let object = configuration
+        .as_object_mut()
+        .context("a Java debug configuration is a JSON object")?;
+    object
+        .entry("hostName")
+        .or_insert_with(|| "localhost".into());
+    object.entry("port").or_insert_with(|| 5005.into());
+    // the project whose sources and classpath evaluate expressions (IntelliJ's "Use module
+    // classpath: <whole project>")
+    if !object.contains_key("projectName") {
+        let root_uri = lsp::Uri::from_file_path(root)
+            .map_err(|()| anyhow::anyhow!("{root:?} isn't a file path"))?
+            .to_string();
+        let mains = execute_command(
+            server,
+            "vscode.java.resolveMainClass",
+            vec![root_uri.into()],
+        )
+        .await?;
+        if let Some(project) = mains[0]["projectName"].as_str() {
+            object.insert("projectName".into(), project.into());
+        }
+    }
+    let port = execute_command(server, "vscode.java.startDebugSession", Vec::new())
+        .await?
+        .as_u64()
+        .and_then(|port| u16::try_from(port).ok())
+        .context("java-debug opened no port")?;
+    let port = crate::debugger::connect(port, workspace, label, cx).await?;
+    Ok(DebugAdapterBinary {
+        command: None,
+        arguments: Vec::new(),
+        envs: HashMap::default(),
+        cwd: None,
+        connection: Some(dap::adapters::TcpArguments {
+            host: std::net::Ipv4Addr::LOCALHOST.into(),
+            port,
+            timeout: None,
+        }),
+        request_args: dap::StartDebuggingRequestArguments {
+            configuration,
+            request: dap::StartDebuggingRequestArgumentsRequest::Attach,
+        },
+    })
+}
+
+/// The host and port a local JVM's JDWP agent listens on, from its command line
+/// (`-agentlib:jdwp=…,server=y,…,address=[host:]port` or `-Xrunjdwp:…`).
+pub(crate) fn jdwp_address_of(pid: u32) -> Option<(String, u16)> {
+    use sysinfo::{ProcessRefreshKind, ProcessesToUpdate, System, UpdateKind};
+    let mut system = System::new();
+    let pid = sysinfo::Pid::from_u32(pid);
+    system.refresh_processes_specifics(
+        ProcessesToUpdate::Some(&[pid]),
+        true,
+        ProcessRefreshKind::nothing().with_cmd(UpdateKind::Always),
+    );
+    let command: Vec<String> = system
+        .process(pid)?
+        .cmd()
+        .iter()
+        .map(|arg| arg.to_string_lossy().into_owned())
+        .collect();
+    spork_run::jdwp_address(&command)
 }
 
 /// The gutter's run icon on a `main` method: the class, its package, the JDK and the classpath
@@ -368,6 +693,10 @@ pub(crate) struct JavaContextProvider;
 const JAVA_COMMAND: &str = "SPORK_JAVA";
 const MAIN_CLASS: &str = "SPORK_JAVA_MAIN";
 const CLASSPATH: &str = "SPORK_JAVA_CLASSPATH";
+/// A Spring Boot application's VM options and program arguments, its configuration's; empty for
+/// another class.
+const VM_OPTIONS: &str = "SPORK_JAVA_VM_OPTIONS";
+const PROGRAM_ARGUMENTS: &str = "SPORK_JAVA_ARGUMENTS";
 
 impl ContextProvider for JavaContextProvider {
     fn build_context(
@@ -382,11 +711,12 @@ impl ContextProvider for JavaContextProvider {
         let Some(class) = custom("java_class_name").map(str::to_owned) else {
             return Task::ready(Ok(TaskVariables::default()));
         };
+        let text = location.file_location.buffer.read(cx).text();
         // the runnable's capture, or the file's package line when the match has none
         let package = custom("java_package_name")
             .filter(|package| !package.is_empty())
             .map(str::to_owned)
-            .or_else(|| package_of(&location.file_location.buffer.read(cx).text()));
+            .or_else(|| package_of(&text));
         let main = match package {
             Some(package) => format!("{package}.{class}"),
             None => class,
@@ -402,6 +732,8 @@ impl ContextProvider for JavaContextProvider {
         let (Some(jdk), Some(root)) = (jdk, root) else {
             return Task::ready(Ok(TaskVariables::default()));
         };
+        let (vm_options, arguments) =
+            crate::spring_boot::gutter_options(&java, &main, &text, cx).unwrap_or_default();
         let classpath = java.read(cx).classpath(&root, cx);
         cx.background_spawn(async move {
             let separator = if cfg!(windows) { ";" } else { ":" };
@@ -416,6 +748,14 @@ impl ContextProvider for JavaContextProvider {
                     VariableName::Custom(CLASSPATH.into()),
                     classpath.join(separator),
                 ),
+                (
+                    VariableName::Custom(VM_OPTIONS.into()),
+                    vm_options.join(" "),
+                ),
+                (
+                    VariableName::Custom(PROGRAM_ARGUMENTS.into()),
+                    arguments.join(" "),
+                ),
             ]))
         })
     }
@@ -425,10 +765,14 @@ impl ContextProvider for JavaContextProvider {
             // IntelliJ names the configuration it makes after the class
             label: "$ZED_CUSTOM_java_class_name".into(),
             command: format!("${{ZED_CUSTOM_{JAVA_COMMAND}}}"),
+            // the shell reads the VM options and arguments as words: a Spring Boot class's are
+            // its configuration's
             args: vec![
+                format!("${{ZED_CUSTOM_{VM_OPTIONS}}}"),
                 "-classpath".into(),
                 format!("${{ZED_CUSTOM_{CLASSPATH}}}"),
                 format!("${{ZED_CUSTOM_{MAIN_CLASS}}}"),
+                format!("${{ZED_CUSTOM_{PROGRAM_ARGUMENTS}}}"),
             ],
             cwd: Some("$ZED_WORKTREE_ROOT".into()),
             tags: vec!["java-main".into()],
@@ -438,7 +782,7 @@ impl ContextProvider for JavaContextProvider {
 }
 
 /// The package a Java file declares.
-fn package_of(text: &str) -> Option<String> {
+pub(crate) fn package_of(text: &str) -> Option<String> {
     text.lines().find_map(|line| {
         let package = line.trim().strip_prefix("package ")?;
         Some(package.trim().trim_end_matches(';').trim().to_owned())
@@ -452,7 +796,43 @@ pub(crate) fn init(cx: &mut App) {
         std::rc::Rc::new(ApplicationRunner),
         cx,
     );
+    configurations::register_runner(configurations::JUNIT, std::rc::Rc::new(JUnitRunner), cx);
     dap::DapRegistry::global(cx).add_adapter(Arc::new(JavaDebugAdapter));
+    // java-debug's filters, IntelliJ's "Any exception" before the first session
+    let filter = |filter: &str, label: &str| dap::ExceptionBreakpointsFilter {
+        filter: filter.into(),
+        label: label.into(),
+        description: None,
+        default: Some(false),
+        supports_condition: None,
+        condition_description: None,
+    };
+    spork_run::register_exception_filters(
+        configurations::JAVA,
+        vec![
+            filter("uncaught", "Uncaught Exceptions"),
+            filter("caught", "Caught Exceptions"),
+        ],
+        Some(("caught", "uncaught")),
+        cx,
+    );
+    cx.set_global(debugger_ui::FrameSourceResolver(std::rc::Rc::new(
+        crate::debugger::class_source,
+    )));
+    // Spring Boot's sessions are java-debug's too
+    for adapter in [configurations::JAVA, configurations::SPRING_BOOT] {
+        cx.default_global::<debugger_ui::FlatScopeAdapters>()
+            .0
+            .insert(adapter.into());
+        spork_run::register_adapter_hooks(
+            adapter,
+            spork_run::AdapterHooks {
+                frame_label: |frame| crate::debugger::frame_label(&frame.name, frame.line),
+                force_step_into: crate::debugger::force_step_into,
+            },
+            cx,
+        );
+    }
 }
 
 #[cfg(test)]

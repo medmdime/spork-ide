@@ -101,6 +101,7 @@ restoring unsaved files) aren't on IntelliJ's pages: they stay in `settings.json
 | Build, Execution, Deployment › Remote Jar Repositories | c | no JAR repositories |
 | Languages & Frameworks › JavaFX · Languages & Frameworks › JavaScript · Languages & Frameworks › JVM Logging · … (14 pages) | c | language and framework settings the language servers don't take |
 | Languages & Frameworks › Markdown | b | Default layout (Editor, Preview), Preview font size. Left out: the rendering engine, Editor and Preview, Preview layout, scroll sync, code fence options, grouping, commands, PlantUML, Custom CSS, Pandoc |
+| Languages & Frameworks › Spring | b | Spring Boot › Project Import › Create run configuration automatically (kept by `spork_settings` for `spork_java`'s import). Left out: Spring Initializr's Reformat code, Configuration Files Editor, Completion and Autowiring Code Style (no Spring model of our own) |
 | Tools › Actions on Save | b | Reformat code (`format_on_save`, all file types, the whole file) and the link Configure autosave options…. Left out: the table's Activated On column (always Any save), the file types and changed-lines choices (Zed formats every language's file whole, a language's own `format_on_save` aside), optimize imports, rearrange, cleanup, copyright, build |
 | Tools › Code With Me · Tools › CSV Formats · Tools › Database · … (19 pages) | c | no such tool in the IDE |
 | Tools › Diff & Merge | c | Spork's page exists for the git client; the IDE's diffs don't follow it yet |

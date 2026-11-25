@@ -1,0 +1,305 @@
+{
+ "id": "spring-boot-configuration",
+ "fixture": "spring-maven",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   },
+   "Spring Boot Properties": {
+    "enable_language_server": true
+   },
+   "Spring Boot YAML": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "run.configurations.names": [
+     "DemoApplication"
+    ],
+    "run.configurations.selected": "DemoApplication"
+   },
+   "within": 60000
+  },
+  {
+   "expect": {
+    "java.spring.classpath": true
+   },
+   "within": 300000
+  },
+  {
+   "do": "action",
+   "name": "run::EditConfigurations"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Run/Debug Configurations"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "find": [
+    {
+     "label": "Spring Boot",
+     "role": "AXRow"
+    },
+    {
+     "label": "DemoApplication",
+     "role": "AXRow",
+     "selected": true
+    },
+    {
+     "label": "Name:",
+     "role": "AXTextField",
+     "value": "DemoApplication"
+    },
+    {
+     "label": "Modify options",
+     "role": "AXLink"
+    },
+    {
+     "label": "Main class:",
+     "role": "AXTextField",
+     "value": "com.example.demo.DemoApplication"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "Modify options",
+   "role": "AXLink"
+  },
+  {
+   "menu": "Modify options",
+   "items": [
+    "Spring (disabled)",
+    "Active profiles",
+    "Enable debug output",
+    "Hide banner",
+    "Disable launch optimization",
+    "Disable JMX endpoints",
+    "On 'Update' action (disabled)",
+    "On frame deactivation (disabled)",
+    "Override configuration properties"
+   ],
+   "part": true,
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Active profiles",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Active profiles:",
+    "role": "AXTextField"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Active profiles:",
+   "role": "AXTextField"
+  },
+  {
+   "do": "type",
+   "text": "dev",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "do": "click",
+   "label": "Modify options",
+   "role": "AXLink"
+  },
+  {
+   "do": "click",
+   "label": "Override configuration properties",
+   "role": "AXMenuItem",
+   "within": 3000
+  },
+  {
+   "find": [
+    {
+     "label": "Override configuration properties:"
+    },
+    {
+     "label": "No parameters added."
+    },
+    {
+     "label": "Add parameter",
+     "role": "AXLink"
+    }
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Add parameter",
+   "role": "AXLink"
+  },
+  {
+   "find": [
+    {
+     "label": "Name",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Value",
+     "role": "AXTextField"
+    }
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Name",
+   "role": "AXTextField"
+  },
+  {
+   "do": "type",
+   "text": "server.port",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "do": "click",
+   "label": "Value",
+   "role": "AXTextField"
+  },
+  {
+   "do": "type",
+   "text": "18090",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "do": "click",
+   "label": "Modify options",
+   "role": "AXLink"
+  },
+  {
+   "do": "click",
+   "label": "Hide banner",
+   "role": "AXMenuItem",
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Modify options",
+   "role": "AXLink"
+  },
+  {
+   "menu": "Modify options",
+   "items": [
+    "Spring (disabled)",
+    "Active profiles",
+    "Enable debug output",
+    "Hide banner",
+    "Disable launch optimization",
+    "Disable JMX endpoints"
+   ],
+   "part": true,
+   "checked": [
+    "Active profiles",
+    "Hide banner",
+    "Override configuration properties"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "keys",
+   "keys": "escape",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "do": "activate",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "form",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "windows.1": null
+   },
+   "within": 5000
+  },
+  {
+   "sh": "cat .zed/debug.json",
+   "contains": "\"activeProfiles\": \"dev\"",
+   "within": 8000
+  },
+  {
+   "sh": "cat .zed/debug.json",
+   "contains": "\"name\": \"server.port\""
+  },
+  {
+   "sh": "cat .zed/debug.json",
+   "contains": "\"hideBanner\": true"
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-r"
+  },
+  {
+   "expect": {
+    "run.services.services.DemoApplication.starting": false,
+    "run.services.services.DemoApplication.link": [
+     ":18090/",
+     "http://localhost:18090/"
+    ]
+   },
+   "within": 120000
+  },
+  {
+   "sh": "curl -s -m 10 http://localhost:18090/hello",
+   "is": "Hello, world!"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f2"
+  },
+  {
+   "expect": {
+    "run.tabs.0.running": false
+   },
+   "within": 20000
+  }
+ ]
+}

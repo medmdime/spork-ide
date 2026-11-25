@@ -27,6 +27,7 @@ spork_git.workspace = true
 spork_code.workspace = true
 spork_editor.workspace = true
 spork_java.workspace = true
+spork_kotlin.workspace = true
 spork_run.workspace = true
 spork_settings.workspace = true
 spork_tool_windows.workspace = true

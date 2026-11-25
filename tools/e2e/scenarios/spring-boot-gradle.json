@@ -1,0 +1,91 @@
+{
+ "id": "spring-boot-gradle",
+ "fixture": "spring-gradle",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   },
+   "Spring Boot Properties": {
+    "enable_language_server": true
+   },
+   "Spring Boot YAML": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Gradle",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "run.configurations.names": [
+     "DemoApplication"
+    ],
+    "run.configurations.selected": "DemoApplication"
+   },
+   "within": 60000
+  },
+  {
+   "expect": {
+    "java.spring.classpath": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.spring.applications": [
+     "com.example.demo.DemoApplication"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-r"
+  },
+  {
+   "expect": {
+    "run.services.services.DemoApplication.status": "Running",
+    "run.services.services.DemoApplication.starting": false,
+    "run.services.services.DemoApplication.link": [
+     ":18082/",
+     "http://localhost:18082/"
+    ]
+   },
+   "within": 120000
+  },
+  {
+   "sh": "curl -s -m 10 http://localhost:18082/hello?name=Gradle",
+   "is": "Hello, Gradle!"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f2"
+  },
+  {
+   "expect": {
+    "run.tabs.0.running": false
+   },
+   "within": 20000
+  }
+ ]
+}

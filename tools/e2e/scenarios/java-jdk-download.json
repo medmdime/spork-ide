@@ -1,0 +1,215 @@
+{
+ "id": "java-jdk-download",
+ "fixture": "maven",
+ "covers": [
+  "action:DownloadJdkAction"
+ ],
+ "env": {
+  "SPORK_IDE_JDKS": "",
+  "SPORK_IDE_DISCO": "$SPORK_E2E_DISCO"
+ },
+ "steps": [
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": null
+   },
+   "within": 20000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ClearAllNotifications"
+  },
+  {
+   "do": "open",
+   "path": "src/main/java/com/example/Main.java"
+  },
+  {
+   "find": [
+    {
+     "label": "Project JDK is not defined"
+    },
+    {
+     "label": "Setup SDK",
+     "role": "AXLink"
+    }
+   ],
+   "ordered": true,
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Setup SDK",
+   "role": "AXLink"
+  },
+  {
+   "menu": "action:AddJdkAction",
+   "items": [
+    "Download JDK…",
+    "Add JDK from Disk…"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Download JDK…"
+  },
+  {
+   "find": [
+    {
+     "label": "Version:",
+     "role": "AXPopUpButton",
+     "value": "27"
+    },
+    {
+     "label": "Vendor:",
+     "role": "AXPopUpButton",
+     "value": "Oracle OpenJDK"
+    },
+    {
+     "label": "Location:",
+     "value": "~/Library/Java/JavaVirtualMachines/openjdk-27.0.1.1"
+    },
+    "Archive size: 209.2 MB",
+    {
+     "label": "Cancel",
+     "role": "AXButton"
+    },
+    {
+     "label": "Download",
+     "role": "AXButton"
+    }
+   ],
+   "within": 10000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "dialog"
+  },
+  {
+   "do": "click",
+   "label": "Version:",
+   "role": "AXPopUpButton"
+  },
+  {
+   "menu": "action:DownloadJdkAction",
+   "items": [
+    "27",
+    "26",
+    "25",
+    "24",
+    "23",
+    "22",
+    "21",
+    "20",
+    "19",
+    "18",
+    "17",
+    "16",
+    "15",
+    "13",
+    "11",
+    "1.8"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "21",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Vendor:",
+    "role": "AXPopUpButton",
+    "value": "Oracle OpenJDK"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Vendor:",
+   "role": "AXPopUpButton"
+  },
+  {
+   "find": [
+    "Amazon Corretto",
+    "Azul Zulu Community™",
+    "BellSoft Liberica JDK",
+    "Eclipse Temurin (AdoptOpenJDK HotSpot)",
+    "GraalVM Community Edition",
+    "IBM Semeru (AdoptOpenJDK OpenJ9)",
+    "Microsoft OpenJDK",
+    "Oracle GraalVM",
+    "Oracle OpenJDK",
+    "SAP SapMachine"
+   ],
+   "ordered": true,
+   "within": 3000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "vendors"
+  },
+  {
+   "do": "click",
+   "label": "Eclipse Temurin (AdoptOpenJDK HotSpot)"
+  },
+  {
+   "find": [
+    {
+     "label": "Vendor:",
+     "role": "AXPopUpButton",
+     "value": "Eclipse Temurin (AdoptOpenJDK HotSpot)"
+    },
+    {
+     "label": "Location:",
+     "value": "~/Library/Java/JavaVirtualMachines/temurin-21.0.13.1"
+    },
+    "Archive size: 190.5 MB"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Download",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "java.downloads.0.text": "Installing Eclipse Temurin (AdoptOpenJDK HotSpot) 21.0.13.1 (aarch64)…"
+   },
+   "within": 5000
+  },
+  {
+   "expect": {
+    "java.jdk": "21.0.13.1",
+    "java.downloads": []
+   },
+   "within": 900000
+  },
+  {
+   "sh": "test -x ../home/Library/Java/JavaVirtualMachines/temurin-21.0.13.1/Contents/Home/bin/java && cat ../home/.config/spork-ide/jdk.table.json",
+   "contains": "temurin-21"
+  },
+  {
+   "missing": [
+    {
+     "label": "Project JDK is not defined"
+    }
+   ],
+   "within": 5000
+  }
+ ]
+}

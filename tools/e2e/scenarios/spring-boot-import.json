@@ -1,0 +1,106 @@
+{
+ "id": "spring-boot-import",
+ "fixture": "spring-maven",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   },
+   "Spring Boot Properties": {
+    "enable_language_server": true
+   },
+   "Spring Boot YAML": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "run.configurations.names": [
+     "DemoApplication"
+    ],
+    "run.configurations.selected": "DemoApplication",
+    "java.spring.applications": [
+     "com.example.demo.DemoApplication"
+    ]
+   },
+   "within": 60000
+  },
+  {
+   "sh": "cat .zed/debug.json",
+   "contains": "\"adapter\": \"Spring Boot\""
+  },
+  {
+   "sh": "cat .zed/debug.json",
+   "contains": "\"mainClass\": \"com.example.demo.DemoApplication\""
+  },
+  {
+   "find": {
+    "label": "DemoApplication, Run / Debug Configurations",
+    "role": "AXButton"
+   },
+   "within": 10000
+  },
+  {
+   "expect": {
+    "java.spring.classpath": true
+   },
+   "within": 300000
+  },
+  {
+   "sh": "test ! -e ../home/Library/Java/JavaVirtualMachines"
+  },
+  {
+   "do": "open",
+   "path": "src/main/resources/application.properties"
+  },
+  {
+   "expect": {
+    "active": "src/main/resources/application.properties"
+   },
+   "within": 5000
+  },
+  {
+   "do": "action",
+   "name": "pane::RevealInProjectPanel"
+  },
+  {
+   "find": {
+    "label": "application.properties",
+    "role": "AXRow"
+   },
+   "within": 3000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "imported"
+  }
+ ]
+}

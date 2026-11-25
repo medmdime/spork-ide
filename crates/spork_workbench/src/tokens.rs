@@ -54,6 +54,9 @@ pub struct Tokens {
     pub control_bg: Hsla,
     /// A non-editable combo box's fill.
     pub control_bg_raised: Hsla,
+    /// `ProgressBar.trackColor` (`control-bg-small`): a progress bar's track; its progress is
+    /// `accent` (`control-brand-bg`).
+    pub progress_track: Hsla,
     pub control_border: Hsla,
     pub control_border_disabled: Hsla,
     /// `dialog-border`: lines between areas.
@@ -251,6 +254,7 @@ static DARK: LazyLock<Tokens> = LazyLock::new(|| Tokens {
     focus: color(0x3871E1),
     control_bg: color(0x191A1C),
     control_bg_raised: color(0x26282C),
+    progress_track: color(0x40434A),
     control_border: color(0x40434A),
     control_border_disabled: color(0x33353B),
     separator: color(0x26282C),
@@ -369,6 +373,7 @@ static LIGHT: LazyLock<Tokens> = LazyLock::new(|| Tokens {
     focus: color(0x3871E1),
     control_bg: color(0xFFFFFF),
     control_bg_raised: color(0xFFFFFF),
+    progress_track: color(0xDDDFE4),
     control_border: color(0xD1D3D9),
     control_border_disabled: color(0xE9EAEE),
     separator: color(0xE9EAEE),
@@ -525,6 +530,10 @@ pub mod metrics {
     /// An on/off switch's track (`DarculaOnOffButtonUI-spec.md` §2).
     pub const SWITCH_WIDTH: f32 = 26.;
     pub const SWITCH_HEIGHT: f32 = 16.;
+    /// A progress bar's stripe (`DarculaProgressBarUI`'s default 4) and length (Swing's
+    /// `ProgressBar.horizontalSize`, 146).
+    pub const PROGRESS_BAR_HEIGHT: f32 = 4.;
+    pub const PROGRESS_BAR_WIDTH: f32 = 146.;
 }
 
 /// IntelliJ's type scale from its 13 px default, following the interface text size the user

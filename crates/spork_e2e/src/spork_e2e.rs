@@ -37,7 +37,8 @@
 //! holds those keys down. GPUI builds the tree once something asks for it (and only when the app
 //! runs with `ZED_EXPERIMENTAL_A11Y=1`), so the first `ui` may answer only the windows.
 //! `{"do": "activate"}` makes the project window the active one, as a click into it would: some
-//! actions (the theme selector's) open in the active window, or a new one when none is.
+//! actions (the theme selector's) open in the active window, or a new one when none is; with
+//! "window", the window of that title (a dialog's).
 //! `{"do": "front"}` puts the IDE's windows in front of other apps' before a screenshot, and
 //! `{"do": "framed"}` tells whether each has drawn a frame since.
 //! `{"do": "menubar", "path": ["File"]}` shows a menu bar menu (or `["File", "Open Recent"]`, its
@@ -71,7 +72,8 @@
 //! (`spork_code::e2e_state`); `editor` the active editor's language, diagnostics and the
 //! completions its menu shows; `context_servers` the project's context servers (MCP) and their
 //! status; `java` the JDK, the Java language server and the Maven and Gradle tool windows
-//! (`spork_java::e2e_state`); `documentation` the Documentation tool window's symbol (`shown`), its
+//! (`spork_java::e2e_state`); `kotlin` whether Kotlin is detected and its language server
+//! (`spork_kotlin::e2e_state`); `documentation` the Documentation tool window's symbol (`shown`), its
 //! `text`, `popup_first` and `auto_update` (`spork_editor::documentation_e2e_state`);
 //! `notifications` the Notifications tool window's `count`, `unread` and `expired` ones, the
 //! `balloons` shown (each its title or text, oldest first), the "N more" stub's count (`more`) and
@@ -237,7 +239,11 @@ fn run(command: &Value, cx: &mut App) -> Value {
             };
             done(window.update(cx, |_, window, cx| window.dispatch_action(action, cx)))
         }
-        "activate" => done(window.update(cx, |_, window, _| window.activate_window())),
+        "activate" => {
+            // a dialog's window by its title ("window"), the project window otherwise
+            let window = titled(command, cx).unwrap_or(window);
+            done(window.update(cx, |_, window, _| window.activate_window()))
+        }
         "keys" => {
             let keys = command["keys"].as_str().unwrap_or_default();
             let os = cx.platform_info().os;
@@ -640,11 +646,18 @@ fn state(window: AnyWindowHandle, workspace: Option<&Entity<Workspace>>, cx: &mu
             "settings": spork_settings::e2e_state(cx),
         });
     };
-    let run = spork_run::e2e_state(workspace.read(cx), cx);
+    let mut run = spork_run::e2e_state(workspace.read(cx), cx);
+    let frames = spork_run::e2e_frames(workspace, cx);
+    if let (Some(debug), Value::Object(frames)) =
+        (run.get_mut("debug").and_then(Value::as_object_mut), frames)
+    {
+        debug.extend(frames);
+    }
     let vcs = spork_vcs::e2e_state(workspace.read(cx), cx);
     let terminal = terminal_view::tool_window::e2e_state(workspace.read(cx), cx);
     let code = spork_code::e2e_state(workspace.read(cx), cx);
     let java = spork_java::e2e_state(workspace.read(cx), cx);
+    let kotlin = spork_kotlin::e2e_state(workspace.read(cx), cx);
     let documentation = spork_editor::documentation_e2e_state(workspace.read(cx), cx);
     let notifications = spork_tool_windows::notifications_e2e_state(workspace.read(cx), cx);
     let editor = editor_state(workspace.read(cx), cx);
@@ -719,6 +732,7 @@ fn state(window: AnyWindowHandle, workspace: Option<&Entity<Workspace>>, cx: &mu
         "terminal": terminal,
         "code": code,
         "java": java,
+        "kotlin": kotlin,
         "editor": editor,
         "documentation": documentation,
         "notifications": notifications,
@@ -727,8 +741,8 @@ fn state(window: AnyWindowHandle, workspace: Option<&Entity<Workspace>>, cx: &mu
 }
 
 /// The active editor's `language`, its `diagnostics` (each `"severity: message"`, as the language
-/// servers said them, top to bottom) and the `completions` its menu lists (their labels), when it
-/// shows one.
+/// servers said them, top to bottom), the `completions` its menu lists (their labels), when it
+/// shows one, and its `file`'s name and whether it is `read_only`.
 fn editor_state(workspace: &Workspace, cx: &App) -> Value {
     let Some(editor) = workspace.active_item_as::<editor::Editor>(cx) else {
         return Value::Null;
@@ -774,7 +788,18 @@ fn editor_state(workspace: &Workspace, cx: &App) -> Value {
             .language()
             .map(|language| language.name().to_string())
     });
-    json!({"language": language, "diagnostics": diagnostics, "completions": completions})
+    let file = editor.buffer().read(cx).as_singleton().and_then(|buffer| {
+        let buffer = buffer.read(cx);
+        let name = buffer.file()?.file_name(cx).to_owned();
+        Some((name, buffer.read_only()))
+    });
+    json!({
+        "language": language,
+        "diagnostics": diagnostics,
+        "completions": completions,
+        "file": file.as_ref().map(|(name, _)| name),
+        "read_only": file.map(|(_, read_only)| read_only),
+    })
 }
 
 /// The project's context servers (MCP) by id, each its status: "starting", "running",

@@ -1,0 +1,234 @@
+{
+ "id": "java-debug-gradle",
+ "fixture": "gradle",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "sh": "mkdir -p .zed && printf '%s' '[{\"label\": \"Debuggee\", \"adapter\": \"Java\", \"request\": \"launch\", \"mainClass\": \"com.example.Debuggee\"}]' > .zed/debug.json"
+  },
+  {
+   "expect": {
+    "java.tool": "Gradle"
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 600000
+  },
+  {
+   "expect": {
+    "run.configurations.selected": "Debuggee"
+   },
+   "within": 10000
+  },
+  {
+   "do": "open",
+   "path": "src/main/java/com/example/Debuggee.java"
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/Debuggee.java",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "type",
+   "text": "44:1"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "find": {
+    "label": "Debug 'Debuggee'",
+    "role": "AXButton",
+    "enabled": true
+   },
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-d"
+  },
+  {
+   "expect": {
+    "run.debug.status": "Stopped"
+   },
+   "within": 120000
+  },
+  {
+   "expect": {
+    "run.debug.frames": [
+     "measure:44, Debuggee (com.example)",
+     "main:21, Debuggee (com.example)"
+    ],
+    "run.debug.variables": [
+     "name = \"Ada\""
+    ],
+    "run.debug.thread": "\"main\"@1: STOPPED"
+   },
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "shift-f8"
+  },
+  {
+   "expect": {
+    "run.debug.frames": [
+     "main:21, Debuggee (com.example)"
+    ]
+   },
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "f8"
+  },
+  {
+   "expect": {
+    "run.debug.frames": [
+     "main:20, Debuggee (com.example)"
+    ]
+   },
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "f8"
+  },
+  {
+   "expect": {
+    "run.debug.frames": [
+     "main:21, Debuggee (com.example)"
+    ]
+   },
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "f7"
+  },
+  {
+   "expect": {
+    "run.debug.frames": [
+     "measure:44, Debuggee (com.example)",
+     "main:21, Debuggee (com.example)"
+    ],
+    "run.debug.variables": [
+     "name = \"Grace\""
+    ]
+   },
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "shift-f8"
+  },
+  {
+   "expect": {
+    "run.debug.frames": [
+     "main:21, Debuggee (com.example)"
+    ]
+   },
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "f8"
+  },
+  {
+   "expect": {
+    "run.debug.frames": [
+     "main:20, Debuggee (com.example)"
+    ]
+   },
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "f8"
+  },
+  {
+   "expect": {
+    "run.debug.frames": [
+     "main:21, Debuggee (com.example)"
+    ]
+   },
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "alt-shift-f7"
+  },
+  {
+   "expect": {
+    "run.debug.frames.0": "get:680, ImmutableCollections$ListN (java.util)"
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "editor.file": "ImmutableCollections.java",
+    "editor.read_only": true
+   },
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-alt-r"
+  },
+  {
+   "expect": {
+    "run.debug.frames": [
+     "measure:44, Debuggee (com.example)",
+     "main:21, Debuggee (com.example)"
+    ]
+   },
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-alt-r"
+  },
+  {
+   "expect": {
+    "run.debug.terminated": true
+   },
+   "within": 30000
+  }
+ ]
+}

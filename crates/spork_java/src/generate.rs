@@ -36,6 +36,9 @@ pub mod java {
             ImplementMethods,
             /// Chooses a field and the methods of its type to delegate to it.
             DelegateMethods,
+            /// Reloads the classes changed since the last reload into the debugged program
+            /// (IntelliJ's Reload Changed Classes, HotSwap), the project built first.
+            ReloadChangedClasses,
         ]
     );
 }

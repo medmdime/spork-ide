@@ -64,6 +64,17 @@ pub(crate) fn stack_frame_filter_key(
     format!("stack-frame-list-filter-{}-{}", adapter_name.0, database_id)
 }
 
+/// Spork IDE: the file that shows a frame's source when the source isn't a file (java-debug's
+/// `jdt://` classes), which the app writes, given the source's path and the project.
+#[derive(Clone)]
+pub struct FrameSourceResolver(
+    pub  std::rc::Rc<
+        dyn Fn(&str, &Entity<project::Project>, &mut App) -> Option<Task<Result<Arc<Path>>>>,
+    >,
+);
+
+impl gpui::Global for FrameSourceResolver {}
+
 pub struct StackFrameList {
     focus_handle: FocusHandle,
     _subscription: Subscription,
@@ -395,17 +406,35 @@ impl StackFrameList {
     ) -> Task<Result<()>> {
         let stack_frame_id = stack_frame.id;
         self.opened_stack_frame_id = Some(stack_frame_id);
-        let Some(abs_path) = Self::abs_path_from_stack_frame(&stack_frame) else {
-            return Task::ready(Err(anyhow!(
-                "no absolute source path in stack frame {stack_frame_id}, source: {:?}",
-                stack_frame.source
-            )));
+        let abs_path = match Self::abs_path_from_stack_frame(&stack_frame) {
+            Some(abs_path) => Task::ready(Ok(abs_path)),
+            // Spork IDE: a source that isn't a file, which the app writes to one
+            None => {
+                let resolved = stack_frame
+                    .source
+                    .as_ref()
+                    .and_then(|source| source.path.as_deref())
+                    .zip(cx.try_global::<FrameSourceResolver>().map(|r| r.0.clone()))
+                    .zip(self.workspace.upgrade())
+                    .and_then(|((path, resolve), workspace)| {
+                        let project = workspace.read(cx).project().clone();
+                        resolve(path, &project, cx)
+                    });
+                let Some(resolved) = resolved else {
+                    return Task::ready(Err(anyhow!(
+                        "no absolute source path in stack frame {stack_frame_id}, source: {:?}",
+                        stack_frame.source
+                    )));
+                };
+                resolved
+            }
         };
         let row = stack_frame.line.saturating_sub(1) as u32;
         cx.emit(StackFrameListEvent::SelectedStackFrameChanged(
             stack_frame_id,
         ));
         cx.spawn_in(window, async move |this, cx| {
+            let abs_path = abs_path.await?;
             let (worktree, relative_path) = this
                 .update(cx, |this, cx| {
                     this.workspace.update(cx, |workspace, cx| {

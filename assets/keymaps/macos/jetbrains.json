@@ -14,7 +14,7 @@
       "shift-escape": "workspace::CloseActiveDock", // IntelliJ: Hide Active Tool Window, in place of workspace::ToggleZoom
       "cmd-f2": "run::Stop",
       "f7": "debugger::StepInto",
-      "alt-shift-f7": "debugger::StepInto", // IntelliJ: Force Step Into; the adapters have no stepping filters
+      "alt-shift-f7": "run::ForceStepInto",
       "shift-f7": "run::SmartStepInto",
       "alt-shift-f8": "run::ForceStepOver",
       "alt-cmd-f9": "run::ForceRunToCursor",
@@ -97,7 +97,7 @@
       // IntelliJ's run keys, over the default keymap's editing ones
       "f7": "debugger::StepInto", // the default's breakpoint and diagnostics keys otherwise
       "shift-f7": "run::SmartStepInto",
-      "alt-shift-f7": "debugger::StepInto",
+      "alt-shift-f7": "run::ForceStepInto",
       "f8": "debugger::StepOver",
       "shift-f8": "debugger::StepOut",
       "alt-shift-f8": "run::ForceStepOver",
@@ -795,6 +795,14 @@
       "cmd-shift-c": "spork_editor::ToggleCodeSpan",
       "cmd-shift-u": "spork_editor::CreateLink",
       "cmd-u": "spork_editor::InsertImage", // over Go to Super Method
+    },
+  },
+  {
+    // IntelliJ's Project Structure… (spork_java), over the editor's own key
+    "context": "Workspace || Editor",
+    "use_key_equivalents": true,
+    "bindings": {
+      "cmd-;": "java::ShowProjectStructureSettings",
     },
   },
 ]

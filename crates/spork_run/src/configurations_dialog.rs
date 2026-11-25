@@ -34,7 +34,7 @@ pub(crate) fn register(workspace: &mut Workspace) {
 }
 
 /// The workbench's colors follow the IDE's theme, light or dark, in a dialog's window.
-pub(crate) fn follow_ide_theme(window: &mut Window, cx: &mut App) {
+pub fn follow_ide_theme(window: &mut Window, cx: &mut App) {
     use theme::ActiveTheme as _;
     let mode = match cx.theme().appearance {
         theme::Appearance::Light => gpui_kit::component::ThemeMode::Light,
@@ -96,6 +96,13 @@ pub(crate) fn types(cx: &mut App) -> Vec<Option<SharedString>> {
         .into_iter()
         .map(|name| name.0)
         .collect();
+    if adapters
+        .iter()
+        .any(|adapter| adapter == configurations::JAVA)
+    {
+        adapters.push(configurations::REMOTE_JVM_DEBUG.into());
+        adapters.push(configurations::JUNIT.into());
+    }
     adapters.sort_by_key(|adapter| configurations::type_name(Some(adapter)));
     std::iter::once(None)
         .chain(adapters.into_iter().map(Some))
@@ -128,6 +135,9 @@ struct ConfigurationsDialog {
     saved_templates: HashMap<String, Configuration>,
     selected: Option<Selection>,
     fields: Vec<(Field, Entity<InputState>)>,
+    /// A Spring Boot configuration's Override configuration properties: each row's name and
+    /// value.
+    properties: Vec<(Entity<InputState>, Entity<InputState>)>,
     folder_name: Entity<InputState>,
     /// A folder made with no configuration in it yet, shown until the dialog closes.
     empty_folder: Option<(Option<SharedString>, String)>,
@@ -166,6 +176,7 @@ impl ConfigurationsDialog {
             templates,
             selected: None,
             fields: Vec::new(),
+            properties: Vec::new(),
             folder_name,
             empty_folder: None,
             focus: focus.clone(),
@@ -224,19 +235,35 @@ impl ConfigurationsDialog {
         }
         let Some(configuration) = self.edited().cloned() else {
             self.fields.clear();
+            self.properties.clear();
             self._fields.clear();
             cx.notify();
             return;
         };
-        let mut fields = vec![
-            Field::Name,
-            Field::Command,
-            Field::Arguments,
-            Field::WorkingDirectory,
-            Field::Environment,
-        ];
-        if configuration.adapter.as_deref() == Some(configurations::JAVA) {
+        let mut fields = match configuration.adapter.as_deref() {
+            Some(configurations::REMOTE_JVM_DEBUG) => vec![Field::Name, Field::Host, Field::Port],
+            Some(configurations::JUNIT) => vec![
+                Field::Name,
+                Field::Command,
+                Field::WorkingDirectory,
+                Field::Environment,
+                Field::VmOptions,
+            ],
+            _ => vec![
+                Field::Name,
+                Field::Command,
+                Field::Arguments,
+                Field::WorkingDirectory,
+                Field::Environment,
+            ],
+        };
+        if configurations::is_java(configuration.adapter.as_deref())
+            || configuration.adapter.as_deref() == Some(configurations::KOTLIN)
+        {
             fields.push(Field::VmOptions);
+        }
+        if configuration.adapter.as_deref() == Some(configurations::SPRING_BOOT) {
+            fields.push(Field::ActiveProfiles);
         }
         if self.templates_mode {
             fields.retain(|field| *field != Field::Name);
@@ -266,6 +293,55 @@ impl ConfigurationsDialog {
                 }
             });
             self._fields.push(subscription);
+        }
+        self.properties.clear();
+        for (name, value) in configurations::override_properties(&configuration) {
+            self.add_property_row(&name, &value, window, cx);
+        }
+        cx.notify();
+    }
+
+    /// A row of Override configuration properties, written back to the configuration as typed.
+    fn add_property_row(
+        &mut self,
+        name: &str,
+        value: &str,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let input = |text: &str, window: &mut Window, cx: &mut Context<Self>| {
+            let text = text.to_owned();
+            cx.new(|cx| {
+                let mut input = InputState::new(window, cx);
+                input.set_value(text, window, cx);
+                input
+            })
+        };
+        let row = (input(name, window, cx), input(value, window, cx));
+        for cell in [&row.0, &row.1] {
+            let subscription = cx.subscribe_in(cell, window, |this, _, event, _, cx| {
+                if let InputEvent::Change = event {
+                    this.write_properties(cx);
+                }
+            });
+            self._fields.push(subscription);
+        }
+        self.properties.push(row);
+    }
+
+    fn write_properties(&mut self, cx: &mut Context<Self>) {
+        let rows: Vec<(String, String)> = self
+            .properties
+            .iter()
+            .map(|(name, value)| {
+                (
+                    name.read(cx).value().to_string(),
+                    value.read(cx).value().to_string(),
+                )
+            })
+            .collect();
+        if let Some(configuration) = self.edited_mut() {
+            configurations::set_override_properties(configuration, &rows);
         }
         cx.notify();
     }
@@ -564,7 +640,12 @@ fn label(configuration: &Configuration, field: Field) -> &'static str {
         (Field::Command, None) => "Script text:",
         (Field::Command, Some("Debugpy")) => "Script:",
         (Field::Command, Some("JavaScript")) => "JavaScript file:",
-        (Field::Command, Some(configurations::JAVA)) => "Main class:",
+        (Field::Command, adapter)
+            if configurations::is_java(adapter) || adapter == Some(configurations::KOTLIN) =>
+        {
+            "Main class:"
+        }
+        (Field::Command, Some(configurations::JUNIT)) => "Class:",
         (Field::Command, Some(_)) => "Executable:",
         (Field::Arguments, None) => "Script options:",
         (Field::Arguments, Some(_)) => "Program arguments:",
@@ -573,6 +654,9 @@ fn label(configuration: &Configuration, field: Field) -> &'static str {
         (Field::AllowMultiple, _) => "Allow multiple instances",
         (Field::BeforeLaunch, _) => "Before launch",
         (Field::VmOptions, _) => "VM options:",
+        (Field::Host, _) => "Host:",
+        (Field::Port, _) => "Port:",
+        (Field::ActiveProfiles, _) => "Active profiles:",
     }
 }
 
@@ -580,6 +664,7 @@ fn placeholder(configuration: &Configuration, field: Field) -> &'static str {
     match (field, configuration.is_task()) {
         (Field::Arguments, false) => "Program arguments",
         (Field::Environment, _) => "Environment variables or .env files",
+        (Field::ActiveProfiles, _) => "Comma-separated list of profiles",
         _ => "",
     }
 }
@@ -878,7 +963,7 @@ impl ConfigurationsDialog {
                     ),
             ),
         };
-        v_flex()
+        let form = v_flex()
             .id("configuration-form")
             .flex_1()
             .min_w_0()
@@ -893,14 +978,46 @@ impl ConfigurationsDialog {
             })
             // the type's own Modify options, over its fields (a runner's hook)
             .children(self.modify_options(&configuration, cx))
+            .children(self.runner_controls(&configuration, cx));
+        let form = match configuration.adapter.as_deref() {
+            Some(configurations::REMOTE_JVM_DEBUG) => form
+                .child(remote_jvm_debug_form(&configuration, &field, cx))
+                .child(self.before_launch(&configuration, cx)),
+            _ => self.launch_form(form, &configuration, &field, cx),
+        };
+        form.into_any_element()
+    }
+
+    /// The fields of a configuration that launches a program.
+    fn launch_form(
+        &self,
+        form: gpui::Stateful<gpui::Div>,
+        configuration: &Configuration,
+        field: &dyn Fn(Field) -> AnyElement,
+        cx: &mut Context<Self>,
+    ) -> gpui::Stateful<gpui::Div> {
+        let tokens = Tokens::get(cx);
+        form
             // IntelliJ's Application: VM options, the main class, then the program's arguments
             .when(
-                configuration.adapter.as_deref() == Some(configurations::JAVA)
-                    && configurations::runner(&configuration, cx)
-                        .is_none_or(|runner| runner.shows(&configuration, Field::VmOptions)),
+                (configurations::is_java(configuration.adapter.as_deref())
+                    || configuration.adapter.as_deref() == Some(configurations::JUNIT))
+                    && configurations::runner(configuration, cx)
+                        .is_none_or(|runner| runner.shows(configuration, Field::VmOptions)),
                 |form| form.child(field(Field::VmOptions)),
             )
             .child(field(Field::Command))
+            // IntelliJ's Kotlin form: the main class, then the Java parameters, VM options first
+            .when(
+                configuration.adapter.as_deref() == Some(configurations::KOTLIN),
+                |form| form.child(field(Field::VmOptions)),
+            )
+            .when(
+                configuration.adapter.as_deref() == Some(configurations::SPRING_BOOT)
+                    && configurations::runner(&configuration, cx)
+                        .is_some_and(|runner| runner.shows(&configuration, Field::ActiveProfiles)),
+                |form| form.child(field(Field::ActiveProfiles)),
+            )
             .child(field(Field::Arguments))
             .child(field(Field::WorkingDirectory))
             .child(field(Field::Environment))
@@ -910,10 +1027,150 @@ impl ConfigurationsDialog {
                     .text_color(tokens.text_secondary)
                     .child("Separate variables with semicolon: VAR=value; VAR1=value1"),
             )
+            .when(
+                configuration
+                    .entry
+                    .contains_key(configurations::OVERRIDE_PROPERTIES),
+                |form| form.child(self.override_properties(cx)),
+            )
             .when(!configuration.is_task(), |form| {
-                form.child(self.before_launch(&configuration, cx))
+                form.child(self.before_launch(configuration, cx))
             })
+    }
+
+    /// Spring Boot's Override configuration properties: IntelliJ's table of names and values
+    /// with its Add and Remove buttons, "No parameters added." while it has none.
+    fn override_properties(&self, cx: &mut Context<Self>) -> AnyElement {
+        let tokens = Tokens::get(cx);
+        let title = "Override configuration properties:";
+        let header = h_flex()
+            .h(px(24.))
+            .px(px(6.))
+            .gap(px(6.))
+            .border_b_1()
+            .border_color(tokens.separator)
+            .text_color(tokens.text_secondary)
+            .child(div().flex_1().child("Name"))
+            .child(div().flex_1().child("Value"));
+        let rows = self
+            .properties
+            .iter()
+            .enumerate()
+            .map(|(ix, (name, value))| {
+                h_flex()
+                    .id(("override-property", ix))
+                    .role(Role::Row)
+                    .px(px(2.))
+                    .py(px(1.))
+                    .gap(px(4.))
+                    .child(
+                        div()
+                            .flex_1()
+                            .child(spork_workbench::TextField::new(name).aria_label("Name")),
+                    )
+                    .child(
+                        div()
+                            .flex_1()
+                            .child(spork_workbench::TextField::new(value).aria_label("Value")),
+                    )
+                    .into_any_element()
+            })
+            .collect::<Vec<_>>();
+        let empty = rows.is_empty();
+        let toolbar = h_flex()
+            .id("override-properties-toolbar")
+            .role(Role::Toolbar)
+            .aria_label("Override configuration properties")
+            .gap(px(2.))
+            .p(px(2.))
+            .border_b_1()
+            .border_color(tokens.separator)
+            .child(
+                ActionButton::new("override-property-add", "general/add")
+                    .tooltip("Add")
+                    .on_click(cx.listener(|this, _, window, cx| {
+                        this.add_property_row("", "", window, cx);
+                        this.write_properties(cx);
+                    })),
+            )
+            .child(
+                ActionButton::new("override-property-remove", "general/remove")
+                    .tooltip("Remove")
+                    .disabled(empty)
+                    .on_click(cx.listener(|this, _, _, cx| {
+                        this.properties.pop();
+                        this.write_properties(cx);
+                    })),
+            );
+        let body = match empty {
+            true => v_flex()
+                .h(px(64.))
+                .items_center()
+                .justify_center()
+                .gap(px(2.))
+                .text_color(tokens.text_secondary)
+                .child(
+                    div()
+                        .id("override-properties-empty")
+                        .role(Role::Label)
+                        .aria_label("No parameters added.")
+                        .child("No parameters added."),
+                )
+                .child(
+                    link("override-properties-add-link", "Add parameter", cx).on_click(
+                        cx.listener(|this, _, window, cx| {
+                            this.add_property_row("", "", window, cx);
+                            this.write_properties(cx);
+                        }),
+                    ),
+                ),
+            false => v_flex().children(rows),
+        };
+        h_flex()
+            .gap(px(8.))
+            .items_start()
+            .child(
+                div()
+                    .w(px(160.))
+                    .flex_none()
+                    .child(spork_workbench::controls::form_label(title)),
+            )
+            .child(
+                v_flex()
+                    .id("override-properties")
+                    .role(Role::Table)
+                    .aria_label(title)
+                    .flex_1()
+                    .min_w_0()
+                    .border_1()
+                    .border_color(tokens.separator)
+                    .child(toolbar)
+                    .child(header)
+                    .child(body),
+            )
             .into_any_element()
+    }
+
+    /// The rows a configuration's runner adds to the form (Application's JRE).
+    fn runner_controls(
+        &self,
+        configuration: &Configuration,
+        cx: &mut Context<Self>,
+    ) -> Vec<AnyElement> {
+        let Some(runner) = configurations::runner(configuration, cx) else {
+            return Vec::new();
+        };
+        let this = cx.entity().downgrade();
+        let edit: configurations::Edit = std::rc::Rc::new(move |change, cx| {
+            this.update(cx, |this, cx| {
+                if let Some(configuration) = this.edited_mut() {
+                    change(configuration);
+                }
+                cx.notify();
+            })
+            .log_err();
+        });
+        runner.controls(configuration, edit, cx)
     }
 
     /// IntelliJ's "Build and run" title with the Modify options link (⌥M) and its popup of the
@@ -1130,6 +1387,66 @@ impl ConfigurationsDialog {
             )
             .into_any_element()
     }
+}
+
+/// IntelliJ's Remote JVM Debug form (`RemoteConfigurable`): the debugger mode, the host and port
+/// to attach to, and the arguments to start the JVM with (JDK 9 or later), to copy.
+// shortcut: Attach to remote JVM over a socket only (java-debug neither listens nor uses shared
+// memory), and the whole project's classpath (one module)
+fn remote_jvm_debug_form(
+    configuration: &Configuration,
+    field: &dyn Fn(Field) -> AnyElement,
+    cx: &App,
+) -> AnyElement {
+    let tokens = Tokens::get(cx);
+    let port = configuration.text(Field::Port);
+    let arguments =
+        format!("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:{port}");
+    v_flex()
+        .gap(px(10.))
+        .child(
+            h_flex()
+                .gap(px(8.))
+                .child(
+                    div()
+                        .w(px(160.))
+                        .flex_none()
+                        .child(spork_workbench::controls::form_label("Debugger mode:")),
+                )
+                .child(
+                    div()
+                        .id("remote-debugger-mode")
+                        .role(Role::ComboBox)
+                        .aria_label("Attach to remote JVM")
+                        .child("Attach to remote JVM"),
+                ),
+        )
+        .child(field(Field::Host))
+        .child(field(Field::Port))
+        .child(spork_workbench::controls::form_label(
+            "Command line arguments for remote JVM:",
+        ))
+        .child(
+            div()
+                .id("remote-jvm-arguments")
+                .role(Role::Label)
+                .aria_label(SharedString::from(arguments.clone()))
+                .px(px(8.))
+                .py(px(4.))
+                .rounded(px(4.))
+                .bg(tokens.island)
+                .font_family("JetBrains Mono")
+                .child(arguments),
+        )
+        .child(
+            div()
+                .id("remote-jvm-arguments-comment")
+                .role(Role::Label)
+                .aria_label("Copy and paste the arguments to the command line when JVM is started")
+                .text_color(tokens.text_secondary)
+                .child("Copy and paste the arguments to the command line when JVM is started"),
+        )
+        .into_any_element()
 }
 
 /// Add New Configuration: the types Spork IDE runs.

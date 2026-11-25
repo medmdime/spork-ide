@@ -21,6 +21,9 @@ mod new_process_modal;
 mod persistence;
 pub(crate) mod session;
 // Spork IDE: for the app's Debug tool window
+pub use session::running::ProgramTerminalStarted;
+pub use session::running::stack_frame_list::FrameSourceResolver;
+pub use session::running::variable_list::FlatScopeAdapters;
 pub use session::{
     DebugSession,
     running::{RunningState, variable_list::VariableList},

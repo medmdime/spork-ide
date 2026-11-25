@@ -1,0 +1,167 @@
+{
+ "id": "java-debug-hotswap",
+ "fixture": "maven",
+ "covers": [
+  "action:Hotswap"
+ ],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "sh": "mkdir -p .zed && printf '%s' '[{\"label\": \"Debuggee\", \"adapter\": \"Java\", \"request\": \"launch\", \"mainClass\": \"com.example.Debuggee\"}]' > .zed/debug.json"
+  },
+  {
+   "expect": {
+    "java.tool": "Maven"
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 600000
+  },
+  {
+   "expect": {
+    "run.configurations.selected": "Debuggee"
+   },
+   "within": 10000
+  },
+  {
+   "do": "open",
+   "path": "src/main/java/com/example/Debuggee.java"
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/Debuggee.java",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "type",
+   "text": "45:1"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "find": {
+    "label": "Debug 'Debuggee'",
+    "role": "AXButton",
+    "enabled": true
+   },
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-d"
+  },
+  {
+   "expect": {
+    "run.debug.status": "Stopped"
+   },
+   "within": 120000
+  },
+  {
+   "expect": {
+    "run.debug.frames.0": "measure:45, Debuggee (com.example)"
+   },
+   "within": 20000
+  },
+  {
+   "do": "action",
+   "name": "java::ReloadChangedClasses"
+  },
+  {
+   "expect": {
+    "notifications.balloons": {
+     "contains": "Loaded classes are up to date. Nothing to reload."
+    }
+   },
+   "within": 60000
+  },
+  {
+   "file": "src/main/java/com/example/Debuggee.java",
+   "text": "package com.example;\n\nimport java.io.BufferedReader;\nimport java.io.IOException;\nimport java.io.InputStreamReader;\nimport java.util.HashMap;\nimport java.util.List;\nimport java.util.Map;\n\n/** The debugger's program: a loop, a field, a record, a thread, a lambda and a caught exception. */\npublic class Debuggee {\n    static int counter;\n\n    record Point(int x, int y) {\n    }\n\n    public static void main(String[] args) throws IOException, InterruptedException {\n        List<String> names = List.of(\"Ada\", \"Grace\", \"Linus\");\n        int total = 0;\n        for (int i = 0; i < names.size(); i++) {\n            total += measure(names.get(i));\n        }\n        Map<String, Integer> lengths = new HashMap<>();\n        names.forEach(name -> lengths.put(name, name.length()));\n        Point point = new Point(1, 2);\n        int sum = total;\n        Thread worker = new Thread(() -> System.out.println(\"worker \" + twice(sum)), \"worker\");\n        worker.start();\n        worker.join();\n        try {\n            Integer.parseInt(\"x\");\n        } catch (NumberFormatException e) {\n            System.out.println(\"not a number\");\n        }\n        if (args.length > 0 && args[0].equals(\"--ask\")) {\n            System.out.print(\"Name? \");\n            String name = new BufferedReader(new InputStreamReader(System.in)).readLine();\n            System.out.println(\"Hello, \" + name + \"!\");\n        }\n        System.out.println(total + \" \" + lengths.size() + \" \" + point);\n    }\n\n    static int measure(String name) {\n        counter += name.length();\n        return name.length() * 10;\n    }\n\n    static int twice(int value) {\n        return value * 2;\n    }\n}\n"
+  },
+  {
+   "find": [
+    {
+     "label": "Reload Changed Classes for Debuggee"
+    },
+    {
+     "label": "Some classes have been changed. Reload changed classes now?"
+    }
+   ],
+   "ordered": true,
+   "within": 60000
+  },
+  {
+   "do": "click",
+   "label": "Reload",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "notifications.balloons": [
+     "2 classes reloaded"
+    ]
+   },
+   "within": 30000
+  },
+  {
+   "expect": {
+    "run.debug.frames": [
+     "measure:44, Debuggee (com.example)",
+     "main:21, Debuggee (com.example)"
+    ]
+   },
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-alt-r"
+  },
+  {
+   "expect": {
+    "run.debug.console": {
+     "contains": "worker 260"
+    }
+   },
+   "within": 30000
+  }
+ ]
+}

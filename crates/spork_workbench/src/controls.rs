@@ -613,6 +613,8 @@ pub struct ComboBox {
     label: SharedString,
     /// What assistive technology names it by: the label before it in a form.
     name: Option<SharedString>,
+    /// Greyed text after the choice, as IntelliJ's renderers add a version or a path.
+    detail: Option<SharedString>,
     selected: bool,
     disabled: bool,
 }
@@ -624,6 +626,7 @@ impl ComboBox {
             style: StyleRefinement::default(),
             label: label.into(),
             name: None,
+            detail: None,
             selected: false,
             disabled: false,
         }
@@ -636,6 +639,11 @@ impl ComboBox {
 
     pub fn aria_label(mut self, name: impl Into<SharedString>) -> Self {
         self.name = Some(name.into());
+        self
+    }
+
+    pub fn detail(mut self, detail: impl Into<SharedString>) -> Self {
+        self.detail = Some(detail.into());
         self
     }
 }
@@ -670,7 +678,28 @@ impl RenderOnce for ComboBox {
             .text_ui()
             .text_color(text)
             .when(!self.disabled, |c| c.cursor_pointer())
-            .child(div().flex_1().min_w_0().truncate().child(self.label))
+            .child(
+                h_flex()
+                    .flex_1()
+                    .min_w_0()
+                    .gap(px(4.))
+                    .child(
+                        div()
+                            .min_w_0()
+                            .truncate()
+                            .when(self.detail.is_some(), |label| label.flex_none())
+                            .child(self.label),
+                    )
+                    .when_some(self.detail, |row, detail| {
+                        row.child(
+                            div()
+                                .min_w_0()
+                                .truncate()
+                                .text_color(tokens.text_secondary)
+                                .child(detail),
+                        )
+                    }),
+            )
             .child(
                 icon("general/chevronDown")
                     .size(px(16.))
@@ -712,7 +741,8 @@ pub fn labeled_combo(
     dropdown(combo, disabled, menu)
 }
 
-fn dropdown(
+/// A [`ComboBox`] built by the caller, opening `menu`'s choices.
+pub fn dropdown(
     combo: ComboBox,
     disabled: bool,
     menu: impl Fn(PopupMenu, &mut Window, &mut Context<PopupMenu>) -> PopupMenu + 'static,
@@ -1367,6 +1397,26 @@ fn without_shortcut(tooltip: &str) -> &str {
         Some((name, _)) if tooltip.ends_with(')') => name,
         _ => tooltip,
     }
+}
+
+/// IntelliJ's progress bar (`DarculaProgressBarUI`): a rounded 4 px stripe, the done part in the
+/// accent over the track; `None` is indeterminate, drawn as a third of it.
+pub fn progress_bar(fraction: Option<f32>, cx: &App) -> Div {
+    let tokens = Tokens::get(cx);
+    let done = fraction.map_or(1. / 3., |fraction| fraction.clamp(0., 1.));
+    div()
+        .w(px(metrics::PROGRESS_BAR_WIDTH))
+        .h(px(metrics::PROGRESS_BAR_HEIGHT))
+        .flex_none()
+        .rounded_full()
+        .bg(tokens.progress_track)
+        .child(
+            div()
+                .h_full()
+                .w(relative(done))
+                .rounded_full()
+                .bg(tokens.accent),
+        )
 }
 
 /// A dialog's title, which assistive technology reads as its heading.

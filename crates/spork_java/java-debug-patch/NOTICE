@@ -1,0 +1,7 @@
+JavaDebugServer.java in this folder comes from Microsoft's java-debug
+(https://github.com/microsoft/java-debug, com.microsoft.java.debug.plugin at tag 0.53.1), licensed under the
+Eclipse Public License 1.0 (LICENSE-EPL-1.0 beside this file), by Microsoft Corporation and others.
+Modified for Spork IDE: its server socket is bound to the loopback interface
+(`new ServerSocket(0, 1, InetAddress.getLoopbackAddress())`) instead of every interface.
+The JavaDebugServer*.class files beside it are compiled from it by build.sh, and replace the official
+classes in java-debug's jar (downloaded from Maven Central) when Spork IDE installs it.

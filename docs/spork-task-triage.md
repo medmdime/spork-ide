@@ -12,6 +12,9 @@ three classes, as of the triage (2026-11-23):
 
 Each line: the task's id, its name, its class (and its tests, when a scenario covers it).
 
+Kotlin got its engine on 2026-11-25 (ROADMAP, phase 10e: the Kotlin language server and its debugger): Kotlin
+Class/File is built; the other Kotlin tasks below still say (c) until they are triaged again.
+
 Built without a task of its own (2026-11-23): every menu and every scrollbar of the IDE is Spork's (its popup menus'
 look, its scrollbar), checked by the `popup-menu-look` and `scrollbar-behaviour` scenarios.
 
@@ -22,8 +25,8 @@ look, its scrollbar), checked by the `popup-menu-look` and `scrollbar-behaviour`
 | [05-navigate.md](../reference/idea/tasks/05-navigate.md) | 174 | 156 | 17 | 1 |
 | [12-build.md](../reference/idea/tasks/12-build.md) | 10 | 7 | 3 | 0 |
 | [13-tools.md](../reference/idea/tasks/13-tools.md) | 46 | 11 | 27 | 8 |
-| [16-other.md](../reference/idea/tasks/16-other.md) | 821 | 368 | 194 | 259 |
-| **All** | 1051 | 542 | 241 | 268 |
+| [16-other.md](../reference/idea/tasks/16-other.md) | 821 | 369 | 194 | 258 |
+| **All** | 1051 | 543 | 241 | 267 |
 
 The main reasons in (b), by how many tasks they hold:
 
@@ -74,7 +77,7 @@ The main reasons in (b), by how many tasks they hold:
 | a per-method exclusion list for parameter hints: Zed's inlay hints have none | 1 |
 | parameter name hints during completion: Zed's inlay hints don't follow the lookup | 1 |
 | Got It tooltips (IntelliJ's feature hints): Spork IDE shows none yet | 1 |
-| a JDK download source: IntelliJ's list is a JetBrains service (a decision: another vendor list) | 1 |
+| a JDK download source: decided, the Foojay Disco API (built in the JDK wave) | 0 |
 | WSL, on Windows only: a decision on Windows support | 1 |
 | a coverage engine: none | 1 |
 | colour scheme editing (Settings › Editor › Color Scheme's options): phase 9b left it | 1 |
@@ -718,7 +721,7 @@ Project tool window's group below).
 - `action:Maven.ResetProfiles` Reset Profiles — (a) · tested: java-maven-menus (pass)
 - `action:Maven.EditRunConfiguration` Edit Run Configuration… — (a)
 - `action:Maven.RemoveRunConfiguration` Remove Run Configuration — (a)
-- `action:AddJdkAction` Add JDK from Disk… — (a) · built (the Java and HTML wave) in the "Project JDK is not defined" banner's Setup SDK popup (java-jdk-banner), not ticked: the system's folder dialog can't be driven in a test
+- `action:AddJdkAction` Add JDK from Disk… — (a) · built (the Java and HTML wave) in the "Project JDK is not defined" banner's Setup SDK popup (java-jdk-banner), and (the JDK wave) as Project Structure's JDK… and Add JDK from disk…; not ticked: no scenario picks a folder yet (`spork_workbench::pick_next` now answers it)
 - `action:Maven.AlwaysShowArtifactId` Always Show ArtifactId — (a) · tested: java-maven-view-options
 - `action:Maven.GroupProjects` Group Modules — (a) · built (the Java and HTML wave), not ticked: a one-module project shows no grouping
 - `action:Gradle.MigrateToDaemonJvmCriteria` Migrate Project to Daemon JVM Criteria — (a)
@@ -756,7 +759,7 @@ Services' Group Services by Type and the run widget popup's All Configurations t
 groups and the rows' submenus, phase 8's leftovers). Left in (a): Services' toolbars, popup and tab actions (Open in
 New Tab, Open Each in New Tab, Open Each Type in New Tab, Open in Separate Tool Window, Show Services Tree, Jump to
 Services, Always Select Active Service, Configure Services Tool Window, Clouds and Run Dashboard), Reload Changed
-Classes. Built (2026-11-24, the Docker agent, `spork_docker` and `spork_run`'s `docker.rs`): Docker in Services, IntelliJ's
+Classes (built 2026-11-25 by the debugger wave). Built (2026-11-24, the Docker agent, `spork_docker` and `spork_run`'s `docker.rs`): Docker in Services, IntelliJ's
 Docker plugin (the paid IDE's: no task of the CE catalogue lists it), its connections, tree, tabs and actions (ROADMAP,
 phase 8's Docker paragraph); tested: docker-services-connections, docker-settings, docker-services-tree,
 docker-services-actions.
@@ -777,7 +780,7 @@ docker-services-actions.
 - `action:ServiceView.ActivateDefaultRemoteServersServiceViewContributor` Clouds (Services) — (a)
 - `action:EditBreakpoint` Edit Breakpoint — (a) · built (version control, run and terminal wave) · tested: debug-exception-breakpoints (pass)
 - `action:QuickEvaluateExpression` Quick Evaluate Expression — (a) · built (version control, run and terminal wave) · tested: debug-quick-evaluate (pass)
-- `action:Hotswap` Reload Changed Classes — (a)
+- `action:Hotswap` Reload Changed Classes — (a) · built (debugger wave) · tested: java-debug-hotswap (pass)
 - `action:ServiceView.ActivateRunDashboardServiceViewContributor` Run Dashboard (Services) — (a)
 - `action:SendEOF` Send EOF — (a) · built (version control, run and terminal wave) · tested: run-send-eof (pass)
 - `action:AllRunConfigurationsToggle` Toggle All Run/Debug Configurations — (a) · built (version control, run and terminal wave) · tested: run-configurations-popup (pass)
@@ -1011,7 +1014,7 @@ Settings item (the Settings dialog opens on a page only from its own crate).
 - `action:FileChooser.GotoDesktop` Desktop Directory — (b) a decision: IntelliJ uses the system's file dialog by default (Advanced Settings › Use native file chooser dialog, `ide.ui.native.file.chooser`, on), as Spork IDE does; its own File Chooser shows only with that setting off
 - `action:FileChooser.ToggleDetection` Detect Project Directories — (b) a decision: IntelliJ uses the system's file dialog by default (Advanced Settings › Use native file chooser dialog, `ide.ui.native.file.chooser`, on), as Spork IDE does; its own File Chooser shows only with that setting off
 - `action:RemoteServers.DisconnectServer` Disconnect — (b) remote servers and deployment (Services' Clouds): no engine
-- `action:DownloadJdkAction` Download JDK… — (b) a JDK download source: IntelliJ's list is a JetBrains service (a decision: another vendor list)
+- `action:DownloadJdkAction` Download JDK… — (a) · tested: java-jdk-download (the JDK wave: IntelliJ's dialog on the Foojay Disco API, in the banner's Setup SDK, Project Structure's Add SDK and SDKs page, and the Application configuration's JRE field)
 - `action:RemoteServers.EditDeploymentConfig` Edit Configuration — (b) remote servers and deployment (Services' Clouds): no engine
 - `action:RemoteServers.EditServerConfig` Edit Configuration — (b) remote servers and deployment (Services' Clouds): no engine
 - `action:EditPropertyValue` Edit Property Value… — (b) Java resource bundles and i18n: no engine (JDT LS has none)
@@ -1126,7 +1129,7 @@ Settings item (the Settings dialog opens on a page only from its own crate).
 - `action:CWMManageLicense` Manage License… — (c) JetBrains licensing and services
 - `action:CodeWithMeBackendReportIssue` Submit an Issue… — (c) JetBrains licensing and services
 - `action:Qodana.NewInspectionKts` Custom Inspection — (c) Qodana, a JetBrains service
-- `action:Kotlin.NewFile` Kotlin Class/File — (c) Kotlin (no engine chosen, left out with notebooks and database tools)
+- `action:Kotlin.NewFile` Kotlin Class/File — (a) · built (the Kotlin wave) · tested: kotlin-new-file (pass)
 - `action:NewKotlinNotebookAction` Kotlin Notebook — (c) notebooks and data tables (module 2)
 - `action:Kotlin.NewScript` Kotlin Script — (c) Kotlin (no engine chosen, left out with notebooks and database tools)
 - `action:DS.DimensionsWidget` Show Table Dimensions — (c) notebooks and data tables (module 2)

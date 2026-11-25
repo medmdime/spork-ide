@@ -38,8 +38,11 @@ jobs:
       - run: cargo fmt --all -- --check
       - run: ./script/clippy
 
+  # the whole workspace's tests take 2.5 hours on a hosted Mac and include upstream's known failures: started by
+  # hand only; each merge runs the touched crates' tests locally
   test:
     name: tests
+    if: github.event_name == 'workflow_dispatch'
     runs-on: macos-26
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

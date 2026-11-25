@@ -1,0 +1,238 @@
+{
+ "id": "spring-boot-actuator",
+ "fixture": "spring-maven",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   },
+   "Spring Boot Properties": {
+    "enable_language_server": true
+   },
+   "Spring Boot YAML": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "run.configurations.names": [
+     "DemoApplication"
+    ],
+    "run.configurations.selected": "DemoApplication"
+   },
+   "within": 60000
+  },
+  {
+   "expect": {
+    "java.spring.classpath": true
+   },
+   "within": 300000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-r"
+  },
+  {
+   "expect": {
+    "run.services.selected": "DemoApplication",
+    "run.services.services.DemoApplication.starting": false
+   },
+   "within": 120000
+  },
+  {
+   "find": [
+    {
+     "label": "Console",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "Actuator",
+     "role": "AXRadioButton"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Actuator",
+   "role": "AXRadioButton"
+  },
+  {
+   "expect": {
+    "java.spring.actuator.DemoApplication.tab": "Beans",
+    "java.spring.actuator.DemoApplication.beans": [
+     "demoApplication",
+     "helloController"
+    ],
+    "java.spring.actuator.DemoApplication.updated": true
+   },
+   "within": 60000
+  },
+  {
+   "find": [
+    {
+     "label": "Beans",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "Health",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "Mappings",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "Environment",
+     "role": "AXRadioButton"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "helloController",
+   "role": "AXRow"
+  },
+  {
+   "find": [
+    {
+     "label": "Bean definition"
+    },
+    {
+     "label": "Injected into"
+    },
+    {
+     "label": "Depends on"
+    }
+   ],
+   "within": 3000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "beans"
+  },
+  {
+   "do": "click",
+   "label": "Health",
+   "role": "AXRadioButton"
+  },
+  {
+   "expect": {
+    "java.spring.actuator.DemoApplication.tab": "Health",
+    "java.spring.actuator.DemoApplication.health.status": "UP"
+   }
+  },
+  {
+   "find": {
+    "label": "Status: UP"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Mappings",
+   "role": "AXRadioButton"
+  },
+  {
+   "expect": {
+    "java.spring.actuator.DemoApplication.mappings": [
+     [
+      "/hello",
+      "helloController",
+      "GET"
+     ]
+    ]
+   }
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "mappings"
+  },
+  {
+   "do": "click",
+   "label": "Environment",
+   "role": "AXRadioButton"
+  },
+  {
+   "expect": {
+    "java.spring.actuator.DemoApplication.profiles": [],
+    "java.spring.actuator.DemoApplication.sources.0": "server.ports"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Refresh",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "java.spring.actuator.DemoApplication.loading": false,
+    "java.spring.actuator.DemoApplication.updated": true,
+    "java.spring.actuator.DemoApplication.error": null
+   },
+   "within": 60000
+  },
+  {
+   "find": {
+    "label": "Updated at 09:05"
+   }
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "environment"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f2"
+  },
+  {
+   "expect": {
+    "run.tabs.0.running": false
+   },
+   "within": 20000
+  }
+ ]
+}

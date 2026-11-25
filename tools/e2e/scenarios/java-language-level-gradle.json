@@ -1,0 +1,195 @@
+{
+ "id": "java-language-level-gradle",
+ "fixture": "gradle",
+ "covers": [],
+ "env": {
+  "SPORK_IDE_DISCO": "$SPORK_E2E_DISCO"
+ },
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Gradle",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "file": "src/main/java/com/example/Shapes.java",
+   "text": "package com.example;\n\n/** A Java 21 feature: a record pattern. */\npublic class Shapes {\n    record Point(int x, int y) {}\n\n    static int sum(Object shape) {\n        if (shape instanceof Point(int x, int y)) {\n            return x + y;\n        }\n        return 0;\n    }\n}\n"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 600000
+  },
+  {
+   "do": "open",
+   "path": "src/main/java/com/example/Shapes.java"
+  },
+  {
+   "expect": {
+    "editor.diagnostics": [
+     "error: The Java feature 'Record Pattern' is only available with source level 21 and above"
+    ]
+   },
+   "within": 60000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-;"
+  },
+  {
+   "find": {
+    "label": "Language level:",
+    "role": "AXPopUpButton",
+    "value": "SDK default"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "SDK:",
+   "role": "AXPopUpButton"
+  },
+  {
+   "find": {
+    "label": "Add SDK",
+    "role": "AXMenuItem"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Add SDK",
+   "role": "AXMenuItem"
+  },
+  {
+   "menu": "action:AddJdkAction",
+   "items": [
+    "Download JDK…",
+    "JDK…"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Download JDK…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Version:",
+    "role": "AXPopUpButton",
+    "value": "27"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Version:",
+   "role": "AXPopUpButton"
+  },
+  {
+   "find": {
+    "label": "21",
+    "role": "AXMenuItem"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "21",
+   "role": "AXMenuItem"
+  },
+  {
+   "do": "click",
+   "label": "Vendor:",
+   "role": "AXPopUpButton"
+  },
+  {
+   "find": "Eclipse Temurin (AdoptOpenJDK HotSpot)",
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Eclipse Temurin (AdoptOpenJDK HotSpot)"
+  },
+  {
+   "find": {
+    "label": "Vendor:",
+    "role": "AXPopUpButton",
+    "value": "Eclipse Temurin (AdoptOpenJDK HotSpot)"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Download",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "java.structure.sdk": "temurin-21"
+   },
+   "within": 600000
+  },
+  {
+   "do": "click",
+   "label": "Name:",
+   "role": "AXTextField"
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "do": "click",
+   "label": "Language level:",
+   "role": "AXPopUpButton"
+  },
+  {
+   "find": "21 - Record patterns, pattern matching for switch",
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "21 - Record patterns, pattern matching for switch"
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "sh": "cat build.gradle",
+   "contains": "sourceCompatibility = JavaVersion.VERSION_21"
+  },
+  {
+   "expect": {
+    "java.jdk_name": "temurin-21",
+    "java.language_level": "21 - Record patterns, pattern matching for switch"
+   },
+   "within": 10000
+  },
+  {
+   "expect": {
+    "editor.diagnostics": []
+   },
+   "within": 400000
+  }
+ ]
+}

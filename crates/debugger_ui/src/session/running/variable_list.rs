@@ -19,7 +19,10 @@ use project::debugger::{
     session::{Session, SessionEvent, Watcher},
 };
 use std::{collections::HashMap, ops::Range, sync::Arc};
-use ui::{ContextMenu, ListItem, ScrollAxes, ScrollableHandle, Tooltip, WithScrollbar, prelude::*};
+use ui::{
+    ContextMenu, ContextMenuEntry, ListItem, ScrollAxes, ScrollableHandle, Tooltip, WithScrollbar,
+    prelude::*,
+};
 use util::{debug_panic, maybe};
 
 static INDENT_STEP_SIZE: Pixels = px(10.0);
@@ -204,8 +207,27 @@ pub struct VariableList {
     _subscriptions: Vec<Subscription>,
 }
 
+/// Spork IDE: the debug adapters whose frames' only scope the variables tree doesn't show as a
+/// node (Java's), by name.
+#[derive(Default)]
+pub struct FlatScopeAdapters(pub collections::HashSet<SharedString>);
+
+impl gpui::Global for FlatScopeAdapters {}
+
 /// Spork IDE: what the app's watches toolbar acts on.
 impl VariableList {
+    /// The rows, `name = value` (a scope by its name), for the app's end-to-end tests.
+    pub fn rows(&self) -> Vec<String> {
+        self.entries
+            .iter()
+            .map(|entry| match &entry.entry {
+                DapEntry::Watcher(watcher) => format!("{} = {}", watcher.expression, watcher.value),
+                DapEntry::Variable(variable) => format!("{} = {}", variable.name, variable.value),
+                DapEntry::Scope(scope) => scope.name.clone(),
+            })
+            .collect()
+    }
+
     /// The selected watch's or variable's expression, and whether it is a watch.
     pub fn selected_value(&self) -> Option<(SharedString, bool)> {
         let selection = self.selection.as_ref()?;
@@ -333,6 +355,16 @@ impl VariableList {
                 )
             })
             .collect::<Vec<_>>();
+        // Spork IDE: a frame's only scope (Java's "Local") isn't a node for the adapters the app
+        // names: its variables are the tree's top level, as IntelliJ lists them
+        let adapter = self.session.read(cx).adapter();
+        let flat = cx
+            .try_global::<FlatScopeAdapters>()
+            .is_some_and(|flat| flat.0.contains(adapter.0.as_ref()));
+        let flat_scope = stack
+            .first()
+            .filter(|_| flat && stack.len() == 1)
+            .map(|(_, _, path, _)| path.clone());
 
         let watches = self.session.read(cx).watchers().clone();
         // Spork IDE: the watches after the scopes and in their order, as IntelliJ lists them
@@ -363,32 +395,50 @@ impl VariableList {
                 DapEntry::Scope(dap) => path = path.with_child(dap.name.clone().into()),
             }
 
+            let is_flat_scope = dap_kind.as_scope().is_some()
+                && flat_scope
+                    .as_ref()
+                    .is_some_and(|scope| scope.leaf_name == path.indices.first().cloned());
+            let under_flat_scope = dap_kind.as_variable().is_some()
+                && flat_scope.as_ref().is_some_and(|scope| {
+                    let first = path.indices.first();
+                    scope.leaf_name.as_ref() == first
+                        && first.is_some_and(|first| {
+                            !self.session.read(cx).watchers().contains_key(first)
+                        })
+                });
             let var_state = self
                 .entry_states
                 .entry(path.clone())
                 .and_modify(|state| {
                     state.parent_reference = container_reference;
                     state.has_children = variables_reference != 0;
+                    if is_flat_scope {
+                        state.is_expanded = true;
+                    }
                 })
                 .or_insert(EntryState {
-                    depth: path.indices.len(),
-                    is_expanded: dap_kind.as_scope().is_some_and(|scope| {
-                        !scope.expensive
-                            && ((scopes_count == 1 && !contains_local_scope)
-                                || scope
-                                    .presentation_hint
-                                    .as_ref()
-                                    .map(|hint| *hint == ScopePresentationHint::Locals)
-                                    .unwrap_or(scope.name.to_lowercase().starts_with("local")))
-                    }),
+                    depth: path.indices.len() - usize::from(under_flat_scope),
+                    is_expanded: is_flat_scope
+                        || dap_kind.as_scope().is_some_and(|scope| {
+                            !scope.expensive
+                                && ((scopes_count == 1 && !contains_local_scope)
+                                    || scope
+                                        .presentation_hint
+                                        .as_ref()
+                                        .map(|hint| *hint == ScopePresentationHint::Locals)
+                                        .unwrap_or(scope.name.to_lowercase().starts_with("local")))
+                        }),
                     parent_reference: container_reference,
                     has_children: variables_reference != 0,
                 });
 
-            entries.push(ListEntry {
-                entry: dap_kind,
-                path: path.clone(),
-            });
+            if !is_flat_scope {
+                entries.push(ListEntry {
+                    entry: dap_kind,
+                    path: path.clone(),
+                });
+            }
 
             if var_state.is_expanded {
                 let children = self
@@ -684,7 +734,7 @@ impl VariableList {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        let (supports_set_variable, supports_data_breakpoints, supports_go_to_memory) =
+        let (supports_set_variable, supports_data_breakpoints, _supports_go_to_memory) =
             self.session.read_with(cx, |session, _| {
                 (
                     session
@@ -730,59 +780,60 @@ impl VariableList {
                 None
             };
             cx.update(|window, cx| {
+                // Spork IDE: IntelliJ's `XDebugger.Variables.Tree.Popup`, in its order; what the
+                // debug adapter protocol can't do greyed
+                let evaluate = cx.build_action("run::EvaluateExpression", None).ok();
                 let context_menu = ContextMenu::build(window, cx, |menu, _, _| {
-                    menu.when_some(entry.as_variable(), |menu, _| {
-                        menu.action("Copy Name", CopyVariableName.boxed_clone())
-                            .action("Copy Value", CopyVariableValue.boxed_clone())
-                            .when(supports_set_variable, |menu| {
-                                menu.action("Edit Value", EditVariable.boxed_clone())
-                            })
-                            .when(supports_go_to_memory, |menu| {
-                                menu.action("Go To Memory", GoToMemory.boxed_clone())
-                            })
-                            .action("Watch Variable", AddWatch.boxed_clone())
-                            .when_some(can_toggle_data_breakpoint, |mut menu, data_info| {
-                                menu = menu.separator();
-                                if let Some(access_types) = data_info.access_types {
-                                    for access in access_types {
-                                        menu = menu.action(
-                                            format!(
-                                                "Toggle {} Data Breakpoint",
-                                                match access {
-                                                    dap::DataBreakpointAccessType::Read => "Read",
-                                                    dap::DataBreakpointAccessType::Write => "Write",
-                                                    dap::DataBreakpointAccessType::ReadWrite =>
-                                                        "Read/Write",
-                                                }
-                                            ),
-                                            crate::ToggleDataBreakpoint {
-                                                access_type: Some(access),
-                                            }
-                                            .boxed_clone(),
-                                        );
-                                    }
-
-                                    menu
-                                } else {
-                                    menu.action(
-                                        "Toggle Data Breakpoint",
-                                        crate::ToggleDataBreakpoint { access_type: None }
-                                            .boxed_clone(),
-                                    )
-                                }
-                            })
+                    let greyed = |label: &'static str| ContextMenuEntry::new(label).disabled(true);
+                    let variable = entry.as_variable().is_some();
+                    let menu = menu
+                        .item(greyed("New Class Level Watch…"))
+                        .item(greyed("Inspect…"))
+                        .item(greyed("Mark Object…"))
+                        .action_disabled_when(
+                            !supports_set_variable,
+                            "Set Value…",
+                            EditVariable.boxed_clone(),
+                        )
+                        .action("Copy Value", CopyVariableValue.boxed_clone())
+                        .item(greyed("Compare Value with Clipboard"))
+                        .action("Copy Name", CopyVariableName.boxed_clone())
+                        .separator();
+                    let menu = match evaluate {
+                        Some(evaluate) => menu.action("Evaluate Expression…", evaluate),
+                        None => menu.item(greyed("Evaluate Expression…")),
+                    };
+                    menu.when(variable, |menu| {
+                        menu.action("Add to Watches", AddWatch.boxed_clone())
                     })
                     .when(entry.as_watcher().is_some(), |menu| {
-                        menu.action("Copy Name", CopyVariableName.boxed_clone())
-                            .action("Copy Value", CopyVariableValue.boxed_clone())
-                            .when(supports_set_variable, |menu| {
-                                menu.action("Edit Value", EditVariable.boxed_clone())
-                            })
-                            .action("Remove Watch", RemoveWatch.boxed_clone())
+                        menu.action("Remove Watch", RemoveWatch.boxed_clone())
                     })
+                    // IntelliJ's for a field: java-debug's watchpoints are on fields
+                    .when_some(can_toggle_data_breakpoint, |menu, _| {
+                        menu.action(
+                            "Toggle Field Watchpoint",
+                            crate::ToggleDataBreakpoint {
+                                access_type: Some(dap::DataBreakpointAccessType::Write),
+                            }
+                            .boxed_clone(),
+                        )
+                    })
+                    .item(greyed("Show Referring Objects…"))
+                    .separator()
+                    .item(greyed("Jump To Source"))
+                    .item(greyed("Jump To Type Source"))
+                    .separator()
+                    .item(greyed("View Text"))
+                    .item(greyed("View as"))
+                    .item(greyed("Filter…"))
+                    .item(greyed("Adjust Range…"))
+                    .separator()
+                    .item(greyed("Show types"))
+                    .item(greyed("Mute Renderers"))
+                    .item(greyed("Customize Data Views…"))
                     .context(focus_handle.clone())
                 });
-
                 _ = this.update(cx, |this, cx| {
                     cx.focus_view(&context_menu, window);
                     let subscription = cx.subscribe_in(

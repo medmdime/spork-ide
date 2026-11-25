@@ -19,11 +19,12 @@ use gpui::{
     Window, div, px,
 };
 use gpui_kit::component::input::{InputEvent, InputState};
-use gpui_kit::component::menu::{DropdownMenu as _, PopupMenuItem};
+use gpui_kit::component::menu::{ContextMenuExt as _, DropdownMenu as _, PopupMenuItem};
 use gpui_kit::component::{Selectable as _, h_flex, v_flex};
 use project::debugger::breakpoint_store::{BreakpointState, SourceBreakpoint};
-use project::debugger::session::{SessionEvent, ThreadStatus};
+use project::debugger::session::{Session, SessionEvent, ThreadId, ThreadStatus};
 use spork_workbench::{ActionButton, Tokens};
+use terminal::Terminal;
 use util::ResultExt as _;
 use workspace::Workspace;
 
@@ -34,6 +35,165 @@ pub(crate) fn init(cx: &mut App) {
         let panel = cx.entity();
         DebugWindow::of(panel, window, cx).into_any_element()
     })));
+    cx.set_global(debugger_ui::ProgramTerminalStarted(Rc::new(
+        program_console,
+    )));
+}
+
+/// The consoles of the programs debugged in terminals, by their terminal, kept while their
+/// program runs: the session's entity and the terminal.
+#[derive(Default)]
+struct ProgramConsoles(HashMap<EntityId, (EntityId, WeakEntity<Terminal>, Subscription, Task<()>)>);
+
+impl Global for ProgramConsoles {}
+
+/// A program debugged in a terminal of its own has IntelliJ's console there: its command line,
+/// "Connected to the target VM, address: '…', transport: 'socket'" when the debugger reaches it
+/// over JDWP, its output and input, the debugger's output (a logging breakpoint's text) as it
+/// comes, then "Disconnected from the target VM…" and "Process finished with exit code N".
+fn program_console(session: &Entity<Session>, terminal: &Entity<Terminal>, cx: &mut App) {
+    let spawned = terminal
+        .read(cx)
+        .task()
+        .map(|task| task.spawned_task.clone());
+    let Some(spawned) = spawned else {
+        return;
+    };
+    let words: Vec<String> = spawned
+        .command
+        .iter()
+        .chain(spawned.args.iter())
+        .map(|word| match word.contains(char::is_whitespace) {
+            true => format!("\"{word}\""),
+            false => word.clone(),
+        })
+        .collect();
+    // `DebugProcessImpl`'s address text, `'host:port', transport: 'socket'`
+    let address = spawned
+        .args
+        .iter()
+        .find_map(|arg| arg.strip_prefix("-agentlib:jdwp="))
+        .and_then(|options| {
+            options
+                .split(',')
+                .find_map(|option| option.strip_prefix("address="))
+        })
+        .map(|address| format!("'{address}', transport: 'socket'"));
+    let mut text = crate::run_panel::system_text(&format!("{}\r\n", words.join(" ")), cx);
+    if let Some(address) = &address {
+        text.extend(crate::run_panel::system_text(
+            &format!("Connected to the target VM, address: {address}\r\n"),
+            cx,
+        ));
+    }
+    terminal.update(cx, |terminal, cx| terminal.write_output(&text, cx));
+    let mut seen = project::debugger::session::OutputToken(0);
+    let output = {
+        let terminal = terminal.downgrade();
+        // the session notifies as output comes
+        cx.observe(session, move |session, cx| {
+            let error = Tokens::get(cx).console_error;
+            let (events, token) = session.read(cx).output(seen);
+            let text: Vec<u8> = events
+                .filter(|event| {
+                    !matches!(event.category, Some(dap::OutputEventCategory::Telemetry))
+                })
+                .flat_map(|event| {
+                    let line = event.output.replace('\n', "\r\n");
+                    match event.category {
+                        Some(dap::OutputEventCategory::Stderr) => {
+                            format!("{}{line}\x1b[0m", crate::run_panel::foreground(error))
+                                .into_bytes()
+                        }
+                        _ => line.into_bytes(),
+                    }
+                })
+                .collect();
+            if token == seen {
+                return;
+            }
+            seen = token;
+            terminal
+                .update(cx, |terminal, cx| terminal.write_output(&text, cx))
+                .ok();
+        })
+    };
+    let ended = terminal.read(cx).wait_for_completed_task(cx);
+    let id = terminal.entity_id();
+    let ending = {
+        let terminal = terminal.downgrade();
+        cx.spawn(async move |cx| {
+            let status = ended.await;
+            cx.update(|cx| {
+                let mut message = String::new();
+                if let Some(address) = &address {
+                    message.push_str(&format!(
+                        "Disconnected from the target VM, address: {address}\r\n"
+                    ));
+                }
+                message.push_str(&format!(
+                    "\r\n{}\r\n",
+                    crate::run_panel::exit_message(status)
+                ));
+                let mut text = crate::run_panel::system_text(&message, cx);
+                // a finished console has no caret, as IntelliJ's
+                text.extend_from_slice(b"\x1b[?25l");
+                terminal
+                    .update(cx, |terminal, cx| terminal.write_output(&text, cx))
+                    .ok();
+                cx.default_global::<ProgramConsoles>().0.remove(&id);
+            });
+        })
+    };
+    let entry = (session.entity_id(), terminal.downgrade(), output, ending);
+    cx.default_global::<ProgramConsoles>().0.insert(id, entry);
+}
+
+/// Writes the debugger's own text (a logging breakpoint's) in the console of a session's program,
+/// before the program goes on; false when the program has no console of its own.
+pub fn write_program_console(session: &Entity<Session>, text: &str, cx: &mut App) -> bool {
+    let terminal = cx.try_global::<ProgramConsoles>().and_then(|consoles| {
+        consoles
+            .0
+            .values()
+            .find(|(id, ..)| *id == session.entity_id())
+            .and_then(|(_, terminal, ..)| terminal.upgrade())
+    });
+    let Some(terminal) = terminal else {
+        return false;
+    };
+    let text = text.replace('\n', "\r\n");
+    terminal.update(cx, |terminal, cx| {
+        terminal.write_output(text.as_bytes(), cx)
+    });
+    true
+}
+
+/// What a debug adapter's language adds to the Debug tool window (Java's comes from
+/// `spork_java`).
+#[derive(Clone, Copy)]
+pub struct AdapterHooks {
+    /// IntelliJ's label of a frame, `hello:9, Greeting (com.example)`.
+    pub frame_label: fn(&dap::StackFrame) -> String,
+    /// Force Step Into: a step into past the stepping filters.
+    pub force_step_into: fn(&Entity<Session>, ThreadId, &mut App),
+}
+
+/// The adapters' hooks, by adapter name.
+#[derive(Default)]
+struct Hooks(HashMap<SharedString, AdapterHooks>);
+
+impl Global for Hooks {}
+
+pub fn register_adapter_hooks(adapter: &'static str, hooks: AdapterHooks, cx: &mut App) {
+    cx.default_global::<Hooks>().0.insert(adapter.into(), hooks);
+}
+
+fn hooks(session: &Session, cx: &App) -> Option<AdapterHooks> {
+    cx.try_global::<Hooks>()?
+        .0
+        .get(session.adapter().0.as_ref())
+        .copied()
 }
 
 pub(crate) fn register(workspace: &mut Workspace) {
@@ -78,6 +238,19 @@ pub(crate) fn register(workspace: &mut Workspace) {
             .on_action(cx.listener(|workspace, _: &run::ForceRunToCursor, _, cx| {
                 force_run_to_cursor(workspace, cx)
             }))
+            .on_action(
+                cx.listener(|workspace, _: &run::ForceStepInto, window, cx| {
+                    let Some(running) = running_state(workspace, cx) else {
+                        return;
+                    };
+                    let session = running.read(cx).session().clone();
+                    let force = hooks(session.read(cx), cx).map(|hooks| hooks.force_step_into);
+                    match (force, running.read(cx).selected_thread_id()) {
+                        (Some(force), Some(thread)) => force(&session, thread, cx),
+                        _ => window.dispatch_action(debugger_ui::StepInto.boxed_clone(), cx),
+                    }
+                }),
+            )
         })
         .when(stopped && step_in_targets, |div| {
             div.on_action(
@@ -231,6 +404,11 @@ fn smart_step_into(workspace: &mut Workspace, window: &mut Window, cx: &mut Cont
 /// The title of Smart Step Into's chooser (`XDebuggerBundle`'s `smart.step.into.popup.title`).
 const SMART_STEP_INTO_TITLE: &str = "Method to Step Into";
 
+/// The debug session the Debug tool window shows.
+pub fn active_debug_session(workspace: &Workspace, cx: &App) -> Option<Entity<Session>> {
+    Some(running_state(workspace, cx)?.read(cx).session().clone())
+}
+
 pub(crate) fn running_state(
     workspace: &Workspace,
     cx: &App,
@@ -240,6 +418,127 @@ pub(crate) fn running_state(
         .read(cx)
         .active_session()?;
     Some(session.read(cx).running_state().clone())
+}
+
+/// The thread chooser's and the frames list's rows.
+struct FrameRows {
+    /// The selected thread, `"main"@1: STOPPED`.
+    thread: String,
+    threads: Vec<String>,
+    thread_ids: Vec<ThreadId>,
+    /// Each row's frame, or the number of library frames it folds.
+    shown: Vec<Result<dap::StackFrame, usize>>,
+    labels: Vec<String>,
+}
+
+fn frame_rows(
+    running: &Entity<debugger_ui::RunningState>,
+    hide_library_frames: bool,
+    cx: &mut App,
+) -> FrameRows {
+    let session = running.read(cx).session().clone();
+    let thread_id = running.read(cx).selected_thread_id();
+    let threads = session.update(cx, |session, cx| session.threads(cx));
+    let status = running.read(cx).thread_status(cx);
+    // `JavaDebuggerBundle`'s `label.thread.node`; the Kotlin server names a thread so itself,
+    // with its state: `"main"@1 in group "main": RUNNING`
+    let thread_label =
+        |(thread, status): &(dap::Thread, ThreadStatus)| match thread.name.starts_with('"') {
+            true => thread.name.clone(),
+            false => format!(
+                "\"{}\"@{}: {}",
+                thread.name,
+                thread.id,
+                status.label().to_uppercase()
+            ),
+        };
+    let thread = thread_id
+        .and_then(|id| threads.iter().find(|(thread, _)| thread.id == id.0))
+        .map(thread_label)
+        .unwrap_or_default();
+    let frames = match (thread_id, status) {
+        (Some(thread_id), Some(ThreadStatus::Stopped)) => session
+            .update(cx, |session, cx| session.stack_frames(thread_id, cx))
+            .unwrap_or_default(),
+        _ => Vec::new(),
+    };
+    let label = hooks(session.read(cx), cx).map(|hooks| hooks.frame_label);
+    let root = session
+        .read(cx)
+        .worktree()
+        .map(|worktree| worktree.read(cx).abs_path());
+    // a library's frame: its source isn't the project's (Java's are `jdt://` classes)
+    let in_project = |frame: &dap::StackFrame| {
+        let path = frame.source.as_ref().and_then(|s| s.path.as_deref());
+        match (path, &root) {
+            (Some(path), Some(root)) => std::path::Path::new(path).starts_with(root),
+            _ => false,
+        }
+    };
+    // IntelliJ folds each run of hidden library frames into one row; the top frame shows
+    let mut shown: Vec<Result<dap::StackFrame, usize>> = Vec::new();
+    for (ix, frame) in frames.into_iter().map(|frame| frame.dap).enumerate() {
+        match (
+            hide_library_frames && ix > 0 && !in_project(&frame),
+            shown.last_mut(),
+        ) {
+            (true, Some(Err(hidden))) => *hidden += 1,
+            (true, _) => shown.push(Err(1)),
+            (false, _) => shown.push(Ok(frame)),
+        }
+    }
+    let labels = shown
+        .iter()
+        .map(|row| match row {
+            Ok(frame) => match label {
+                Some(label) => label(frame),
+                // the Kotlin server's stack trace names
+                None => match jvm_frame(&frame.name) {
+                    Some((method, class, Some(package))) => {
+                        format!("{method}:{}, {class} ({package})", frame.line)
+                    }
+                    Some((method, class, None)) => format!("{method}:{}, {class}", frame.line),
+                    None => {
+                        let file = frame.source.as_ref().and_then(|s| s.name.clone());
+                        let file = file.unwrap_or_default();
+                        format!("{}:{}, {file}", frame.name, frame.line)
+                    }
+                },
+            },
+            // `XDebuggerBundle`'s `label.folded.frames`
+            Err(1) => "1 hidden frame".to_owned(),
+            Err(hidden) => format!("{hidden} hidden frames"),
+        })
+        .collect();
+    FrameRows {
+        thread,
+        thread_ids: threads
+            .iter()
+            .map(|(thread, _)| ThreadId(thread.id))
+            .collect(),
+        threads: threads.iter().map(thread_label).collect(),
+        shown,
+        labels,
+    }
+}
+
+/// The active session's thread, threads and frames as the Debug tool window lists them, for the
+/// end-to-end tests (read from the session, not the window, which macOS may not draw).
+pub fn e2e_frames(workspace: &Entity<Workspace>, cx: &mut App) -> serde_json::Value {
+    let Some(running) = running_state(workspace.read(cx), cx) else {
+        return serde_json::Value::Null;
+    };
+    let hide = workspace
+        .read(cx)
+        .panel::<DebugPanel>(cx)
+        .and_then(|panel| cx.try_global::<Views>()?.0.get(&panel.entity_id()).cloned())
+        .is_none_or(|view| view.read(cx).hide_library_frames);
+    let rows = frame_rows(&running, hide, cx);
+    serde_json::json!({
+        "thread": rows.thread,
+        "threads": rows.threads,
+        "frames": rows.labels,
+    })
 }
 
 /// Each Debug tool window's view, by its panel.
@@ -522,7 +821,7 @@ impl DebugWindow {
                 .item(item(
                     "Force Step Into",
                     stopped,
-                    debugger_ui::StepInto.boxed_clone(),
+                    run::ForceStepInto.boxed_clone(),
                 ))
                 .item(item(
                     "Smart Step Into",
@@ -655,10 +954,21 @@ impl DebugWindow {
                     .child(label)
                     .on_click(cx.listener(move |this, _, window, cx| {
                         this.tab = which;
-                        // the tab hidden may have had the focus: the tool window keeps it, so the
+                        // the program's console takes the input, as IntelliJ's; otherwise the
+                        // tab hidden may have had the focus: the tool window keeps it, so the
                         // debugger's keys still reach the workspace
-                        if let Some(panel) = this.panel.upgrade() {
-                            window.focus(&gpui::Focusable::focus_handle(&panel, cx), cx);
+                        let terminal = this
+                            .running(cx)
+                            .and_then(|running| running.read(cx).program_terminal(cx))
+                            .filter(|_| which == ContentTab::Console);
+                        match (terminal, this.panel.upgrade()) {
+                            (Some(terminal), _) => {
+                                window.focus(&gpui::Focusable::focus_handle(&terminal, cx), cx)
+                            }
+                            (None, Some(panel)) => {
+                                window.focus(&gpui::Focusable::focus_handle(&panel, cx), cx)
+                            }
+                            (None, None) => {}
                         }
                         cx.notify();
                     }))
@@ -684,47 +994,51 @@ impl DebugWindow {
         cx: &mut Context<Self>,
     ) -> AnyElement {
         let tokens = Tokens::get(cx);
-        let session = running.read(cx).session().clone();
-        let thread_id = running.read(cx).selected_thread_id();
-        let threads = session.update(cx, |session, cx| session.threads(cx));
-        let status = running.read(cx).thread_status(cx);
-        let thread = thread_id
-            .and_then(|id| threads.iter().find(|(thread, _)| thread.id == id.0))
-            .map(|(thread, status)| {
-                format!(
-                    "\"{}\"@{}: {}",
-                    thread.name,
-                    thread.id,
-                    status.label().to_uppercase()
-                )
-            })
-            .unwrap_or_default();
-        let frames = match (thread_id, status) {
-            (Some(thread_id), Some(ThreadStatus::Stopped)) => session
-                .update(cx, |session, cx| session.stack_frames(thread_id, cx))
-                .unwrap_or_default(),
-            _ => Vec::new(),
-        };
-        let opened = running.read(cx).opened_stack_frame(cx);
-        let hide = self.hide_library_frames;
-        let rows: Vec<AnyElement> = frames
+        let FrameRows {
+            thread,
+            threads,
+            thread_ids,
+            shown,
+            labels,
+        } = frame_rows(running, self.hide_library_frames, cx);
+        let stack = labels
             .iter()
-            .filter(|frame| !hide || frame.dap.source.as_ref().is_some_and(|s| s.path.is_some()))
-            .map(|frame| {
-                let frame = &frame.dap;
+            .map(|label| format!("{label}\n"))
+            .collect::<String>();
+        let menu = self.frames_menu(running, stack, cx);
+        let opened = running.read(cx).opened_stack_frame(cx);
+        let rows: Vec<AnyElement> = shown
+            .iter()
+            .zip(labels)
+            .enumerate()
+            .map(|(ix, (row, label))| {
+                let Ok(frame) = row else {
+                    return h_flex()
+                        .id(("debug-hidden-frames", ix))
+                        .role(Role::ListItem)
+                        .aria_label(SharedString::from(label.clone()))
+                        .flex_none()
+                        .h(px(24.))
+                        .mx(px(6.))
+                        .px(px(6.))
+                        .rounded(px(4.))
+                        .cursor_pointer()
+                        .text_color(tokens.text_secondary)
+                        .hover(move |row| row.bg(tokens.selection_hover))
+                        .child(div().truncate().child(label))
+                        .on_click(cx.listener(|this, _, _, cx| {
+                            this.hide_library_frames = false;
+                            cx.notify();
+                        }))
+                        .into_any_element();
+                };
                 let id = frame.id;
-                let file = frame
-                    .source
-                    .as_ref()
-                    .and_then(|s| s.name.clone())
-                    .unwrap_or_default();
-                let label = format!("{}:{}, {}", frame.name, frame.line, file);
                 let selected = opened == Some(id);
                 let running = running.downgrade();
                 h_flex()
                     .id(("debug-frame", id as usize))
                     .role(Role::ListItem)
-                    .aria_label(label.clone())
+                    .aria_label(SharedString::from(label.clone()))
                     .aria_selected(selected)
                     .flex_none()
                     .h(px(24.))
@@ -745,6 +1059,7 @@ impl DebugWindow {
                     .into_any_element()
             })
             .collect();
+        let hide = self.hide_library_frames;
         let empty = rows.is_empty();
         v_flex()
             .w(px(280.))
@@ -762,20 +1077,14 @@ impl DebugWindow {
                     .border_color(tokens.separator)
                     .child(
                         div()
-                            .id("debug-thread")
-                            .role(Role::ComboBox)
-                            .aria_label(SharedString::from(thread.clone()))
                             .flex_1()
                             .min_w_0()
-                            .truncate()
-                            .child(thread),
+                            .child(self.thread_chooser(running, thread, threads, thread_ids)),
                     )
                     .child(
+                        // a toggle, as IntelliJ's (`hide.library.frames.tooltip`)
                         ActionButton::new("debug-hide-library-frames", "general/filter")
-                            .tooltip(match hide {
-                                true => "Show All Frames",
-                                false => "Hide Frames from Libraries",
-                            })
+                            .tooltip("Hide Frames from Libraries")
                             .selected(hide)
                             .on_click(cx.listener(|this, _, _, cx| {
                                 this.hide_library_frames = !this.hide_library_frames;
@@ -799,9 +1108,105 @@ impl DebugWindow {
                                 .text_color(tokens.text_secondary)
                                 .child("Frames are not available"),
                         )
-                    }),
+                    })
+                    .context_menu(menu),
             )
             .into_any_element()
+    }
+
+    /// The thread chooser over the frames (IntelliJ's threads combo box): each thread, the one
+    /// picked showing its frames.
+    fn thread_chooser(
+        &self,
+        running: &Entity<debugger_ui::RunningState>,
+        thread: String,
+        threads: Vec<String>,
+        ids: Vec<ThreadId>,
+    ) -> AnyElement {
+        let running = running.downgrade();
+        let empty = threads.is_empty();
+        // named by the thread it shows, as assistive technology reads a combo box
+        let name = thread.clone();
+        spork_workbench::controls::labeled_combo(
+            "debug-thread",
+            name,
+            thread,
+            0.,
+            empty,
+            move |menu, _, _| {
+                threads.iter().zip(&ids).fold(menu, |menu, (label, id)| {
+                    let (running, id) = (running.clone(), *id);
+                    menu.item(
+                        PopupMenuItem::new(label.clone()).on_click(move |_, window, cx| {
+                            running
+                                .update(cx, |running, cx| running.choose_thread(id, window, cx))
+                                .log_err();
+                        }),
+                    )
+                })
+            },
+        )
+    }
+
+    /// The frames' popup (`XDebugger.Frames.Tree.Popup`): Reset Frame, Copy Stack and Hide Frames
+    /// from Libraries; Throw Exception and Force Return (java-debug has neither), Async Stack
+    /// Traces, Customize Threads View…, Add Stepping Filter… and Export Threads… greyed.
+    fn frames_menu(
+        &self,
+        running: &Entity<debugger_ui::RunningState>,
+        stack: String,
+        cx: &mut Context<Self>,
+    ) -> impl Fn(
+        gpui_kit::component::menu::PopupMenu,
+        &mut Window,
+        &mut Context<gpui_kit::component::menu::PopupMenu>,
+    ) -> gpui_kit::component::menu::PopupMenu
+    + 'static {
+        let reset = running.read(cx).thread_status(cx) == Some(ThreadStatus::Stopped)
+            && running
+                .read(cx)
+                .session()
+                .read(cx)
+                .capabilities()
+                .supports_restart_frame
+                .unwrap_or_default();
+        let hide = self.hide_library_frames;
+        let this = cx.entity().downgrade();
+        move |menu, _, _| {
+            let greyed = |label: &'static str| PopupMenuItem::new(label).disabled(true);
+            let stack = stack.clone();
+            let this = this.clone();
+            menu.item(PopupMenuItem::new("Reset Frame").disabled(!reset).on_click(
+                |_, window, cx| window.dispatch_action(run::ResetFrame.boxed_clone(), cx),
+            ))
+            .item(greyed("Throw Exception"))
+            .item(greyed("Force Return"))
+            .separator()
+            .item(
+                PopupMenuItem::new("Copy Stack")
+                    .disabled(stack.is_empty())
+                    .on_click(move |_, _, cx| {
+                        cx.write_to_clipboard(gpui::ClipboardItem::new_string(stack.clone()))
+                    }),
+            )
+            .separator()
+            .item(
+                PopupMenuItem::new("Hide Frames from Libraries")
+                    .checked(hide)
+                    .on_click(move |_, _, cx| {
+                        this.update(cx, |this, cx| {
+                            this.hide_library_frames = !this.hide_library_frames;
+                            cx.notify();
+                        })
+                        .log_err();
+                    }),
+            )
+            .item(greyed("Async Stack Traces"))
+            .separator()
+            .item(greyed("Customize Threads View…"))
+            .item(greyed("Add Stepping Filter…"))
+            .item(greyed("Export Threads…"))
+        }
     }
 
     fn variables(
@@ -1034,7 +1439,10 @@ impl Render for DebugWindow {
                     .role(Role::Group)
                     .aria_label("Console")
                     .size_full()
-                    .child(running.read(cx).console_view())
+                    .child(match running.read(cx).program_terminal(cx) {
+                        Some(terminal) => terminal.into_any_element(),
+                        None => running.read(cx).console_view().into_any_element(),
+                    })
                     .into_any_element(),
             };
             v_flex()
@@ -1064,11 +1472,45 @@ impl Render for DebugWindow {
 }
 
 /// The active debug session, for the end-to-end tests: its thread's status, its watches with their
-/// values and in their order, and whether it skips the breakpoints.
+/// values and in their order, whether it skips the breakpoints, the thread and frames shown, and
+/// the variables tree's rows.
+/// A JVM frame as a stack trace writes it (`at com.example.MainKt.greet(Main.kt:13)`, the
+/// Kotlin language server's names): its method, class and package, which IntelliJ's frames show
+/// as `greet:13, MainKt (com.example)`.
+fn jvm_frame(name: &str) -> Option<(&str, &str, Option<&str>)> {
+    let (qualified, _) = name.strip_prefix("at ")?.split_once('(')?;
+    let (class, method) = qualified.rsplit_once('.')?;
+    Some(match class.rsplit_once('.') {
+        Some((package, class)) => (method, class, Some(package)),
+        None => (method, class, None),
+    })
+}
+
 pub(crate) fn e2e_debug(workspace: &Workspace, cx: &App) -> serde_json::Value {
     let Some(running) = running_state(workspace, cx) else {
         return serde_json::Value::Null;
     };
+    let variables = running.read(cx).variables().read(cx).rows();
+    let console: Vec<String> = match running.read(cx).program_terminal(cx) {
+        // the terminal's own text: its view may not have been drawn
+        Some(view) => view
+            .read(cx)
+            .terminal()
+            .read(cx)
+            .get_content()
+            .lines()
+            .map(|line| line.trim_end().to_owned())
+            .collect(),
+        None => {
+            let session = running.read(cx).session().read(cx);
+            let (events, _) = session.output(project::debugger::session::OutputToken(0));
+            events
+                .flat_map(|event| event.output.lines().map(str::to_owned).collect::<Vec<_>>())
+                .collect()
+        }
+    };
+    let console = console.join("\n").trim_end().to_owned();
+
     let running = running.read(cx);
     let session = running.session().read(cx);
     let watches: serde_json::Map<String, serde_json::Value> = session
@@ -1083,5 +1525,25 @@ pub(crate) fn e2e_debug(workspace: &Workspace, cx: &App) -> serde_json::Value {
         "watch_order": session.watchers().keys().map(|w| w.to_string()).collect::<Vec<_>>(),
         "skipping_breakpoints": session.ignore_breakpoints(),
         "label": session.label().map(|label| label.to_string()),
+        "variables": variables,
+        "console": console,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::jvm_frame;
+
+    #[test]
+    fn reads_a_jvm_frame() {
+        assert_eq!(
+            jvm_frame("at com.example.MainKt.greet(Main.kt:13)"),
+            Some(("greet", "MainKt", Some("com.example")))
+        );
+        assert_eq!(
+            jvm_frame("at MainKt.main(Main.kt:4)"),
+            Some(("main", "MainKt", None))
+        );
+        assert_eq!(jvm_frame("Greeting.hello(String)"), None);
+    }
 }

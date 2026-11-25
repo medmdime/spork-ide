@@ -13,12 +13,18 @@ usage: run.py [--record] [--strict] [--no-build] [scenario id ...]
 macOS may open the window at another size than asked (a window manager, the display layout), and
 a screenshot of another size can't be compared: it is reported, and fails only with --strict.
 
-A scenario: {"id", "fixture": "maven" or "gradle" (fixture-<name>.sh's Java project in place of fixture.sh's;
-its HOME's JDT LS, Maven repository and wrapper, and Gradle caches link to cache/, filled by the
-first run and kept, gitignored), "covers": [catalog ids: reference/idea/tasks, IntelliJ IDEA's catalogue
+A scenario: {"id", "fixture": "maven", "gradle", "java" or a "spring-…" one (fixture-<name>.sh's Java
+project in place of fixture.sh's, "java" a plain folder; "kotlin-gradle", "kotlin-groovy" or "kotlin-maven"
+for fixtures/<name> with fixture-copy.sh; its HOME's JDT LS, Maven repository and wrapper, Gradle caches,
+Kotlin and Spring Boot's language servers link to cache/, filled by the first run and kept, gitignored),
+"covers": [catalog ids: reference/idea/tasks, IntelliJ IDEA's catalogue
 (reference/idea) and the reference app's (spork/docs/reference-app), the reference app's entry deciding where both have one],
-"reference-app": [screenshots under spork/docs/reference-app], "env": {variables set for the IDE, as
-SPORK_IDE_JDKS "" for no JDK, "$E2E" this folder and other variables the harness's}, "settings": {the test HOME's settings over
+"reference-app": [screenshots under spork/docs/reference-app], "prepare": a shell command run in the fixture project
+before the IDE opens it, "env": {variables set for the IDE, as
+SPORK_IDE_JDKS "" for no JDK, SPORK_IDE_DISCO "$SPORK_E2E_DISCO" for the Disco API's recorded answers
+(fixtures/disco, served for the run), "$E2E" this folder and other variables the harness's; the harness
+sets SPORK_IDE_KEEP_JDK_ARCHIVES for every scenario, so a downloaded JDK's archive stays in cache/ for
+the next run}, "settings": {the test HOME's settings over
 SETTINGS below, null leaving one out; "$RUST_ANALYZER" in them is the rust-analyzer of this
 repository's toolchain, for a scenario that needs a language server, "$E2E" this folder (the
 debugger's scenarios run dap_fixture.py, a debug adapter playing the fixture's program)}, "steps": [...]}, each step one of
@@ -26,7 +32,8 @@ debugger's scenarios run dap_fixture.py, a debug adapter playing the fixture's p
   {"wait": ms}
   {"expect": {key: value}}  values in {"do": "state"}'s answer ("of": another command's); a
                          dotted key ("docks.right.open", "windows.1.title") reaches into a
-                         nested answer
+                         nested answer; {"contains": text} as a value, a text holding it or a
+                         list with it
   {"shot": name}         a screenshot of the IDE's window ("window": "smallest" for a dialog)
   {"menu": catalog id}   the menu open last shows the items the catalog's app showed (its
                          "shown"), same texts in the same order, greyed where its were;
@@ -61,6 +68,7 @@ To aim at an element, {"do": "ui"} answers what macOS's accessibility sees of ea
 import contextlib
 import hashlib
 import html
+import http.server
 import json
 import os
 import pathlib
@@ -68,7 +76,9 @@ import shutil
 import socket
 import subprocess
 import sys
+import threading
 import time
+import urllib.parse
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
@@ -79,11 +89,14 @@ OUT = HERE / "out"
 BIN = HERE / ".bin"
 # a share of pixels a screenshot may differ by before it fails: font hinting and the caret
 TOLERANCE = 0.002
-# the Java fixtures' downloads, kept across runs: the data folder's JDT LS, HOME's Maven
-# repository and wrapper (.m2) and Gradle's caches (.gradle)
+# the Java fixtures' downloads, kept across runs: the data folder's JDT LS, Kotlin and Spring Boot
+# language servers, HOME's Maven repository and wrapper (.m2), Gradle's caches (.gradle) and the
+# downloaded JDKs' archives
 CACHE = HERE / "cache"
 CACHED = {"Library/Application Support/Spork IDE/languages/jdtls": "jdtls", ".m2": "m2",
-          ".gradle": "gradle"}
+          ".gradle": "gradle", "Library/Caches/Spork IDE/jdks": "jdk-archives",
+          "Library/Application Support/Spork IDE/languages/Kotlin language server": "kotlin-lsp",
+          "Library/Application Support/Spork IDE/languages/spring-boot": "spring-boot"}
 # the test HOME's settings: the project trusted without asking, nothing sent home or downloaded
 # shortcut: language servers off so a run downloads none, turn them on per scenario once code
 # intelligence gets its scenarios (phase 7)
@@ -94,6 +107,34 @@ SETTINGS = {
     "suggest_extensions": False,
     "theme": "Islands Dark",
 }
+
+
+class Disco(http.server.BaseHTTPRequestHandler):
+    """The Disco API's answers recorded in fixtures/disco (`packages` for this Mac, `ids/<id>`), for
+    Download JDK…: its list stays the same from run to run, the archives are the vendors' own."""
+
+    def do_GET(self) -> None:
+        path = urllib.parse.urlparse(self.path).path.strip("/")
+        file = HERE / "fixtures" / "disco" / (path + ".json")
+        if not file.is_file() or ".." in path:
+            self.send_error(404)
+            return
+        body = file.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, *_) -> None:
+        pass
+
+
+def serve_disco() -> None:
+    """Serves fixtures/disco on a free port for the run; a scenario's env names it "$SPORK_E2E_DISCO"."""
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Disco)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    os.environ["SPORK_E2E_DISCO"] = f"http://127.0.0.1:{server.server_address[1]}"
 
 
 def walk(node: dict):
@@ -293,6 +334,13 @@ def lookup(state: dict, key: str):
     return state
 
 
+def expected(actual, wanted) -> bool:
+    """`actual` is `wanted`, or holds what a {"contains": …} wants (a text or a list's item)."""
+    if isinstance(wanted, dict) and list(wanted) == ["contains"]:
+        return isinstance(actual, (str, list)) and wanted["contains"] in actual
+    return actual == wanted
+
+
 def rust_analyzer() -> str:
     """The rust-analyzer of this repository's toolchain (rust-toolchain.toml lists it)."""
     rustup = shutil.which("rustup") or str(pathlib.Path.home() / ".cargo" / "bin" / "rustup")
@@ -312,10 +360,15 @@ class Ide:
     """The IDE on a fresh copy of the fixture, with a home of its own, reached on its socket."""
 
     def __init__(self, scratch: pathlib.Path, settings: dict, fixture: str | None = None,
-                 extra_env: dict | None = None):
+                 extra_env: dict | None = None, prepare: str | None = None):
         self.project, home = scratch / "fixture", scratch / "home"
         script = HERE / (f"fixture-{fixture}.sh" if fixture else "fixture.sh")
-        subprocess.run([str(script), str(self.project)], check=True)
+        # a fixture without its own script is fixtures/<name> (fixture-copy.sh)
+        command = [str(script), str(self.project)] if script.exists() else \
+            [str(HERE / "fixture-copy.sh"), str(self.project), fixture]
+        subprocess.run(command, check=True)
+        if prepare:
+            subprocess.run(["sh", "-c", prepare], cwd=self.project, check=True)
         for relative, name in CACHED.items() if fixture else ():
             (CACHE / name).mkdir(parents=True, exist_ok=True)
             (home / relative).parent.mkdir(parents=True, exist_ok=True)
@@ -330,7 +383,8 @@ class Ide:
                      for name, folder in (("CARGO_HOME", ".cargo"), ("RUSTUP_HOME", ".rustup"))}
         env = dict(os.environ, **toolchain, HOME=str(home), SPORK_E2E=str(self.socket_path),
                    ZED_EXPERIMENTAL_A11Y="1", ZED_WINDOW_SIZE="1400,900", ZED_WINDOW_POSITION="100,100",
-                   SPORK_E2E_TIME="09:05")  # the Notifications tool window's times, as any hour
+                   SPORK_E2E_TIME="09:05",  # the Notifications tool window's times, as any hour
+                   SPORK_IDE_KEEP_JDK_ARCHIVES="1")  # cache/jdk-archives, kept once unpacked
         # "$E2E" is this folder, and "$PATH" (any variable) the harness's own
         env.update({key: os.path.expandvars(value.replace("$E2E", str(HERE)))
                     for key, value in (extra_env or {}).items()})
@@ -408,7 +462,8 @@ def play(scenario: dict, record: bool, strict: bool, catalog: dict) -> dict:
         if "$RUST_ANALYZER" in json.dumps(settings):
             settings = json.loads(json.dumps(settings).replace("$RUST_ANALYZER", rust_analyzer()))
         settings = json.loads(json.dumps(settings).replace("$E2E", str(HERE)))
-        ide = Ide(pathlib.Path(scratch).resolve(), settings, scenario.get("fixture"), scenario.get("env"))
+        ide = Ide(pathlib.Path(scratch).resolve(), settings, scenario.get("fixture"), scenario.get("env"),
+                  scenario.get("prepare"))
         try:
             steps = json.dumps(scenario["steps"]).replace("$FIXTURE", str(ide.project))
             for step in json.loads(steps.replace("$E2E", str(HERE))):
@@ -422,7 +477,7 @@ def play(scenario: dict, record: bool, strict: bool, catalog: dict) -> dict:
                 elif "expect" in step:
                     wanted = step["expect"]
                     try:
-                        ide.wait_for(lambda s: all(lookup(s, k) == v for k, v in wanted.items()),
+                        ide.wait_for(lambda s: all(expected(lookup(s, k), v) for k, v in wanted.items()),
                                      json.dumps(wanted), seconds=step.get("within", 5000) / 1000,
                                      command=step.get("of"))
                     except RuntimeError as error:
@@ -511,6 +566,7 @@ def main() -> int:
     record, strict, build = "--record" in args, "--strict" in args, "--no-build" not in args
     only = [a for a in args if not a.startswith("--")]
     tools()
+    serve_disco()
     if build:
         subprocess.run(["cargo", "build", "-p", "zed"], cwd=ROOT, check=True)
     scenarios = [json.loads(p.read_text()) for p in sorted((HERE / "scenarios").glob("*.json"))]

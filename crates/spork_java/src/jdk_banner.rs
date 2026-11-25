@@ -1,7 +1,6 @@
 //! IntelliJ's "Project JDK is not defined" banner over a Java file's editor
 //! (`SdkSetupNotificationProvider`, a warning `EditorNotificationPanel`), and its Setup SDK
-//! link's popup: Download JDK… (greyed: no JDK download source yet), Add JDK from Disk…, and the
-//! JDKs found.
+//! link's popup: Download JDK…, Add JDK from Disk…, and the JDKs found.
 
 use editor::Editor;
 use gpui::{
@@ -115,11 +114,13 @@ impl Render for JdkBanner {
                     PopupMenuItem::new("Add JDK from Disk…")
                         .on_click(move |_, window, cx| add_jdk_from_disk(&java, window, cx))
                 };
-                // shortcut: greyed, IntelliJ's JDK list is a JetBrains service; offer one when
-                // a vendor list is decided (the triage's "a JDK download source")
-                let menu = menu
-                    .item(PopupMenuItem::new("Download JDK…").disabled(true))
-                    .item(add);
+                let download = {
+                    let java = java.clone();
+                    PopupMenuItem::new("Download JDK…").on_click(move |_, window, cx| {
+                        crate::jdk_download_dialog::download_for_project(&java, window, cx)
+                    })
+                };
+                let menu = menu.item(download).item(add);
                 found.iter().fold(menu, |menu, found| {
                     let (java, found) = (java.clone(), found.clone());
                     menu.item(
@@ -173,12 +174,15 @@ impl Render for JdkBanner {
 /// Add JDK from Disk…: the system's folder dialog, then the folder made the project's JDK, or
 /// IntelliJ's error when it holds none.
 fn add_jdk_from_disk(java: &Entity<JavaProject>, window: &mut Window, cx: &mut gpui::App) {
-    let picked = cx.prompt_for_paths(gpui::PathPromptOptions {
-        files: false,
-        directories: true,
-        multiple: false,
-        prompt: None,
-    });
+    let picked = spork_workbench::prompt_for_paths(
+        gpui::PathPromptOptions {
+            files: false,
+            directories: true,
+            multiple: false,
+            prompt: None,
+        },
+        cx,
+    );
     let java = java.clone();
     window
         .spawn(cx, async move |cx| {

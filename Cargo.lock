@@ -17462,6 +17462,7 @@ dependencies = [
  "spork_editor",
  "spork_git",
  "spork_java",
+ "spork_kotlin",
  "spork_run",
  "spork_settings",
  "spork_tool_windows",
@@ -17534,15 +17535,21 @@ name = "spork_java"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-compression",
+ "async-fs",
+ "async-tar",
  "async-trait",
+ "async_zip",
  "chrono",
  "collections",
  "dap",
+ "debugger_ui",
  "editor",
  "futures 0.3.34",
  "github_releases",
  "gpui",
  "gpui_kit",
+ "grammars",
  "http_client",
  "language",
  "language_core",
@@ -17553,17 +17560,57 @@ dependencies = [
  "project",
  "project_panel",
  "quick-xml 0.41.0",
+ "regex",
  "serde",
  "serde_json",
+ "sha1",
  "sha2",
+ "smol",
  "spork_code",
  "spork_run",
+ "spork_settings",
  "spork_vcs",
+ "spork_workbench",
+ "sysinfo 0.39.6",
+ "task",
+ "tempfile",
+ "text",
+ "tree-sitter-java",
+ "tree-sitter-properties",
+ "ui",
+ "util",
+ "workspace",
+]
+
+[[package]]
+name = "spork_kotlin"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "collections",
+ "dap",
+ "futures 0.3.34",
+ "github_releases",
+ "gpui",
+ "gpui_kit",
+ "http_client",
+ "language",
+ "language_core",
+ "log",
+ "lsp",
+ "paths",
+ "project",
+ "project_panel",
+ "serde_json",
+ "sha2",
+ "spork_java",
+ "spork_run",
  "spork_workbench",
  "task",
  "tempfile",
- "tree-sitter-java",
- "ui",
+ "tree-sitter",
+ "tree-sitter-kotlin",
  "util",
  "workspace",
 ]
@@ -17712,6 +17759,7 @@ dependencies = [
  "async_zip",
  "cloud_api_types",
  "collections",
+ "db",
  "extension_host",
  "extension_suggest",
  "fs",
@@ -19977,6 +20025,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "tree-sitter-kotlin"
+version = "0.4.0"
+source = "git+https://github.com/fwcd/tree-sitter-kotlin?rev=1852ea17b7f60fb3f9d84e0b1555d56b46b39fb1#1852ea17b7f60fb3f9d84e0b1555d56b46b39fb1"
+dependencies = [
+ "cc",
+ "tree-sitter-language",
+]
+
+[[package]]
 name = "tree-sitter-language"
 version = "0.1.8"
 source = "git+https://github.com/tree-sitter/tree-sitter?rev=cf5d3a63f9fa069fc32b9a73dc28830e427d5ee0#cf5d3a63f9fa069fc32b9a73dc28830e427d5ee0"
@@ -19985,6 +20042,16 @@ source = "git+https://github.com/tree-sitter/tree-sitter?rev=cf5d3a63f9fa069fc32
 name = "tree-sitter-md"
 version = "0.3.2"
 source = "git+https://github.com/zed-industries/tree-sitter-markdown?rev=b596e737286780d7bfa9fcddceaeeb754574b352#b596e737286780d7bfa9fcddceaeeb754574b352"
+dependencies = [
+ "cc",
+ "tree-sitter-language",
+]
+
+[[package]]
+name = "tree-sitter-properties"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0a6c2f38dea68abd782573bb6ec3dbd14175cce2953f693055743925d785ceeb"
 dependencies = [
  "cc",
  "tree-sitter-language",
@@ -23599,6 +23666,7 @@ dependencies = [
  "spork_e2e",
  "spork_editor",
  "spork_java",
+ "spork_kotlin",
  "spork_local_history",
  "spork_navigate",
  "spork_projects",

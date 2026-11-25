@@ -566,6 +566,8 @@ fn main() {
         languages::init(languages.clone(), fs.clone(), node_runtime.clone(), cx);
         // Spork IDE: Java on Eclipse's JDT language server, with Maven and Gradle (phase 10)
         spork_java::init(languages.clone(), cx);
+        // Spork IDE: Kotlin on its language server, run by Gradle or Maven (phase 10)
+        spork_kotlin::init(languages.clone(), cx);
         let user_store = cx.new(|cx| UserStore::new(client.clone(), cx));
         let workspace_store = cx.new(|cx| WorkspaceStore::new(client.clone(), cx));
 

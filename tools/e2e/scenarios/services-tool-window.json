@@ -148,7 +148,8 @@
   {
    "expect": {
     "run.services.types": [
-     "Shell Script"
+     "Shell Script",
+     "Spring Boot"
     ],
     "run.services.services.hello.status": "Not Started",
     "run.services.services.sleepy.status": "Not Started"

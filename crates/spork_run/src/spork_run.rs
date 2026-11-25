@@ -30,7 +30,14 @@ use serde_json::{Value, json};
 use util::ResultExt as _;
 use workspace::Workspace;
 
+pub use attach::jdwp_address;
+pub use breakpoints::register_exception_filters;
 pub use configurations::Configuration;
+pub use configurations_dialog::follow_ide_theme;
+pub use debug_window::{
+    AdapterHooks, active_debug_session, e2e_frames, register_adapter_hooks, write_program_console,
+};
+pub use docker::Confirm;
 pub use run_widget::RunWidget;
 
 pub mod run {
@@ -63,6 +70,8 @@ pub mod run {
             SmartStepInto,
             /// Steps over, the breakpoints skipped until the program stops again.
             ForceStepOver,
+            /// Steps into, past the stepping filters (IntelliJ's libraries, constructors…).
+            ForceStepInto,
             /// Runs to the caret's line, the breakpoints skipped until the program stops again.
             ForceRunToCursor,
             /// Runs the selected frame again from its first line.

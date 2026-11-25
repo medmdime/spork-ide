@@ -721,6 +721,14 @@ pub struct Session {
     node_runtime: Option<NodeRuntime>,
     http_client: Option<Arc<dyn HttpClient>>,
     companion_port: Option<u16>,
+    // Spork IDE: the stops so far, so a step's or continue's response that comes after the next
+    // stop (an adapter that stops again at once, as the Kotlin server's) leaves that stop alone
+    stops: usize,
+    // Spork IDE: the frame the watches were last evaluated in, and how often an `invalidated`
+    // event had them evaluated again since the last stop or watch added
+    watch_frame: Option<u64>,
+    watch_refreshes: usize,
+    invalidations: usize,
 }
 
 trait CacheableCommand: Any + Send + Sync {
@@ -896,6 +904,10 @@ impl Session {
                 node_runtime,
                 http_client,
                 companion_port: None,
+                stops: 0,
+                watch_frame: None,
+                watch_refreshes: 0,
+                invalidations: 0,
             }
         })
     }
@@ -1272,7 +1284,11 @@ impl Session {
     }
 
     pub(super) fn request_initialize(&mut self, cx: &mut Context<Self>) -> Task<Result<()>> {
-        let adapter_id = self.adapter().to_string();
+        // Spork IDE: an adapter may answer to another id than its name
+        let adapter_id = dap::DapRegistry::global(cx)
+            .adapter(self.adapter().as_ref())
+            .and_then(|adapter| adapter.dap_adapter_id())
+            .unwrap_or_else(|| self.adapter().to_string());
         let request = Initialize { adapter_id };
 
         let SessionState::Running(running) = &self.state else {
@@ -1466,6 +1482,9 @@ impl Session {
     }
 
     fn handle_stopped_event(&mut self, event: StoppedEvent, cx: &mut Context<Self>) {
+        self.stops += 1;
+        self.watch_refreshes = 0;
+        self.watch_frame = None;
         self.push_to_history();
 
         self.state.stopped();
@@ -1646,7 +1665,19 @@ impl Session {
             Events::ProgressEnd(_) => {}
             Events::ProgressStart(_) => {}
             Events::ProgressUpdate(_) => {}
-            Events::Invalidated(_) => {}
+            // Spork IDE: the Kotlin server answers a slow watch "Collecting data…" and says once
+            // its values are ready; the watches are evaluated again, three times per stop or
+            // watch added at most
+            Events::Invalidated(_) => {
+                self.invalidations += 1;
+                if let Some(frame_id) = self.watch_frame
+                    && !self.watchers.is_empty()
+                    && self.watch_refreshes < 3
+                {
+                    self.watch_refreshes += 1;
+                    self.refresh_watchers(frame_id, cx);
+                }
+            }
             Events::Other(event) => {
                 if event.event == "launchBrowserInCompanion" {
                     let Some(request) = serde_json::from_value(event.body).ok() else {
@@ -2131,9 +2162,11 @@ impl Session {
 
     fn on_step_response<T: LocalDapCommand + PartialEq + Eq + Hash>(
         thread_id: ThreadId,
+        stops: usize,
     ) -> impl FnOnce(&mut Self, Result<T::Response>, &mut Context<Self>) -> Option<T::Response> + 'static
     {
         move |this, response, cx| match response.log_err() {
+            Some(response) if this.stops != stops => Some(response),
             Some(response) => {
                 this.breakpoint_store.update(cx, |store, cx| {
                     store.remove_active_position(Some(this.session_id()), cx)
@@ -2150,6 +2183,7 @@ impl Session {
 
     fn on_continue_response(
         thread_id: ThreadId,
+        stops: usize,
     ) -> impl FnOnce(
         &mut Self,
         Result<dap::ContinueResponse>,
@@ -2157,6 +2191,7 @@ impl Session {
     ) -> Option<dap::ContinueResponse>
     + 'static {
         move |this, response, cx| match response.log_err() {
+            Some(response) if this.stops != stops => Some(response),
             Some(response) => {
                 if response.all_threads_continued.unwrap_or(true) {
                     this.active_snapshot.thread_states.continue_all_threads();
@@ -2352,7 +2387,7 @@ impl Session {
                     single_thread,
                 },
             },
-            Self::on_continue_response(thread_id),
+            Self::on_continue_response(thread_id, self.stops),
             cx,
         )
         .detach();
@@ -2395,7 +2430,7 @@ impl Session {
         self.active_snapshot.thread_states.process_step(thread_id);
         self.request(
             command,
-            Self::on_step_response::<NextCommand>(thread_id),
+            Self::on_step_response::<NextCommand>(thread_id, self.stops),
             cx,
         )
         .detach();
@@ -2428,7 +2463,7 @@ impl Session {
         self.active_snapshot.thread_states.process_step(thread_id);
         self.request(
             command,
-            Self::on_step_response::<StepInCommand>(thread_id),
+            Self::on_step_response::<StepInCommand>(thread_id, self.stops),
             cx,
         )
         .detach();
@@ -2461,7 +2496,7 @@ impl Session {
         self.active_snapshot.thread_states.process_step(thread_id);
         self.request(
             command,
-            Self::on_step_response::<StepInCommand>(thread_id),
+            Self::on_step_response::<StepInCommand>(thread_id, self.stops),
             cx,
         )
         .detach();
@@ -2493,7 +2528,7 @@ impl Session {
         self.active_snapshot.thread_states.process_step(thread_id);
         self.request(
             command,
-            Self::on_step_response::<StepOutCommand>(thread_id),
+            Self::on_step_response::<StepOutCommand>(thread_id, self.stops),
             cx,
         )
         .detach();
@@ -2526,7 +2561,7 @@ impl Session {
 
         self.request(
             command,
-            Self::on_step_response::<StepBackCommand>(thread_id),
+            Self::on_step_response::<StepBackCommand>(thread_id, self.stops),
             cx,
         )
         .detach();
@@ -2699,6 +2734,20 @@ impl Session {
         frame_id: u64,
         cx: &mut Context<Self>,
     ) -> Task<Result<()>> {
+        self.watch_frame = Some(frame_id);
+        self.watch_refreshes = 0;
+        self.evaluate_watcher(expression, frame_id, cx)
+    }
+
+    /// Spork IDE: a watch evaluated, and again when an `invalidated` event came while it was
+    /// (the adapter's value wasn't ready, and the event may come before its answer).
+    fn evaluate_watcher(
+        &mut self,
+        expression: SharedString,
+        frame_id: u64,
+        cx: &mut Context<Self>,
+    ) -> Task<Result<()>> {
+        let invalidations = self.invalidations;
         let request = self.state.request_dap(EvaluateCommand {
             expression: expression.to_string(),
             context: Some(EvaluateArgumentsContext::Watch),
@@ -2710,6 +2759,16 @@ impl Session {
             let response = request.await?;
 
             this.update(cx, |session, cx| {
+                // again in the same frame: a stop since then has its own evaluations
+                if session.invalidations != invalidations
+                    && session.watch_refreshes < 3
+                    && session.watch_frame == Some(frame_id)
+                {
+                    session.watch_refreshes += 1;
+                    session
+                        .evaluate_watcher(expression.clone(), frame_id, cx)
+                        .detach();
+                }
                 session.watchers.insert(
                     expression.clone(),
                     Watcher {
@@ -2851,9 +2910,13 @@ impl Session {
     }
 
     pub fn refresh_watchers(&mut self, frame_id: u64, cx: &mut Context<Self>) {
+        // Spork IDE: the frame an `invalidated` event evaluates them in again
+        self.watch_frame = Some(frame_id);
         let watches = self.watchers.clone();
         for (_, watch) in watches.into_iter() {
-            self.add_watcher(watch.expression, frame_id, cx).detach();
+            // Spork IDE: evaluating a watch again doesn't count as a new watch
+            self.evaluate_watcher(watch.expression, frame_id, cx)
+                .detach();
         }
     }
 

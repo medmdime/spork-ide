@@ -82,6 +82,10 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
             MenuItem::action("Close All Projects", spork_projects::CloseAllProjects),
             MenuItem::action("Close Other Projects", spork_projects::CloseOtherProjects),
             MenuItem::separator(),
+            MenuItem::action(
+                "Project Structure…",
+                spork_java::project_structure::ShowProjectStructureSettings,
+            ),
             MenuItem::action("Remote Development…", zed_actions::OpenRemote::default()),
             MenuItem::separator(),
             MenuItem::action("Plugins…", zed_actions::Extensions::default()),
@@ -458,8 +462,7 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
                 MenuItem::action("Step Over", debugger_ui::StepOver),
                 MenuItem::action("Force Step Over", run::ForceStepOver),
                 MenuItem::action("Step Into", debugger_ui::StepInto),
-                // the debug adapters have no stepping filters for Step Into to skip
-                MenuItem::action("Force Step Into", debugger_ui::StepInto),
+                MenuItem::action("Force Step Into", run::ForceStepInto),
                 MenuItem::action("Smart Step Into", run::SmartStepInto),
                 MenuItem::action("Step Out", debugger_ui::StepOut),
                 MenuItem::action("Run to Cursor", editor::actions::RunToCursor),

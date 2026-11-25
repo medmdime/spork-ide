@@ -30,6 +30,7 @@ serde_json.workspace = true
 settings.workspace = true
 smol.workspace = true
 spork.workspace = true
+db.workspace = true
 spork_docker.workspace = true
 spork_local_history.workspace = true
 spork_vcs.workspace = true

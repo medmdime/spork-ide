@@ -1,0 +1,212 @@
+{
+ "id": "java-kotlin-compiler",
+ "fixture": "gradle",
+ "covers": [],
+ "steps": [
+  {
+   "file": "build.gradle",
+   "text": "plugins {\n    id 'org.jetbrains.kotlin.jvm' version '2.1.0'\n    id 'application'\n}\n\nrepositories {\n    mavenCentral()\n}\n\nkotlin {\n    compilerOptions {\n        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17\n    }\n}\n\napplication {\n    mainClass = 'com.example.Main'\n}\n"
+  },
+  {
+   "expect": {
+    "java.tool": "Gradle"
+   },
+   "within": 20000
+  },
+  {
+   "do": "open",
+   "path": "README.md"
+  },
+  {
+   "do": "action",
+   "name": "zed::OpenSettings"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "Search settings",
+   "role": "AXTextField",
+   "within": 8000
+  },
+  {
+   "do": "keys",
+   "keys": "k o t l i n",
+   "window": "Settings – fixture"
+  },
+  {
+   "find": [
+    {
+     "label": "Build, Execution, Deployment",
+     "role": "AXRow",
+     "in": "Settings categories"
+    },
+    {
+     "label": "Compiler",
+     "role": "AXRow",
+     "in": "Settings categories"
+    },
+    {
+     "label": "Kotlin Compiler",
+     "role": "AXRow",
+     "in": "Settings categories"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Kotlin Compiler",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Build, Execution, Deployment/Compiler/Kotlin Compiler",
+    "settings.external.Build, Execution, Deployment/Compiler/Kotlin Compiler": {
+     "version": "2.1.0",
+     "language_version": "2.1",
+     "api_version": "2.1",
+     "jvm_target": "17"
+    }
+   },
+   "within": 5000
+  },
+  {
+   "find": [
+    {
+     "label": "Report compiler warnings",
+     "role": "AXCheckBox"
+    },
+    {
+     "label": "Kotlin compiler version",
+     "value": "2.1.0"
+    },
+    {
+     "label": "Language version",
+     "role": "AXPopUpButton",
+     "value": "2.1"
+    },
+    {
+     "label": "API version",
+     "role": "AXPopUpButton",
+     "value": "2.1"
+    },
+    {
+     "label": "Additional command line parameters:"
+    },
+    {
+     "label": "Keep compiler process alive between invocations",
+     "role": "AXCheckBox"
+    },
+    "Kotlin to JVM",
+    {
+     "label": "Target JVM version",
+     "role": "AXPopUpButton",
+     "value": "17"
+    },
+    "Kotlin to JavaScript",
+    {
+     "label": "Generate source maps",
+     "role": "AXCheckBox"
+    },
+    {
+     "label": "Module kind:",
+     "role": "AXPopUpButton",
+     "value": "Plain (put to global scope)"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Search settings",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a backspace",
+   "window": "Settings – fixture"
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "page",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Language version",
+   "role": "AXPopUpButton"
+  },
+  {
+   "menu": "settings:Build, Execution, Deployment › Compiler › Kotlin Compiler",
+   "items": [
+    "1.9",
+    "2.0",
+    "2.1",
+    "2.2",
+    "2.3"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "2.2",
+   "role": "AXMenuItem"
+  },
+  {
+   "do": "click",
+   "label": "Target JVM version",
+   "role": "AXPopUpButton"
+  },
+  {
+   "find": {
+    "label": "21",
+    "role": "AXMenuItem"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "21",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "settings.apply": true,
+    "settings.modified": [
+     "Build, Execution, Deployment/Compiler/Kotlin Compiler"
+    ]
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "sh": "cat build.gradle",
+   "contains": "jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21"
+  },
+  {
+   "sh": "cat build.gradle",
+   "contains": "languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_2)"
+  },
+  {
+   "sh": "grep -c 'KOTLIN_2_2' build.gradle",
+   "is": "1"
+  }
+ ]
+}

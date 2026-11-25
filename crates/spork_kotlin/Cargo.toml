@@ -1,0 +1,45 @@
+[package]
+name = "spork_kotlin"
+version = "0.1.0"
+edition.workspace = true
+publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
+
+[lib]
+path = "src/spork_kotlin.rs"
+doctest = false
+
+[dependencies]
+anyhow.workspace = true
+async-trait.workspace = true
+collections.workspace = true
+dap.workspace = true
+futures.workspace = true
+github_releases.workspace = true
+gpui.workspace = true
+gpui_kit.workspace = true
+http_client.workspace = true
+language.workspace = true
+language_core.workspace = true
+log.workspace = true
+lsp.workspace = true
+paths.workspace = true
+project.workspace = true
+project_panel.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+spork_java.workspace = true
+spork_run.workspace = true
+spork_workbench.workspace = true
+task.workspace = true
+tree-sitter-kotlin.workspace = true
+util.workspace = true
+workspace.workspace = true
+
+[dev-dependencies]
+language = { workspace = true, features = ["test-support"] }
+tempfile.workspace = true
+tree-sitter.workspace = true

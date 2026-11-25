@@ -18,18 +18,6 @@
    "within": 20000
   },
   {
-   "find": {
-    "label": "Load Maven Project",
-    "role": "AXLink"
-   },
-   "within": 20000
-  },
-  {
-   "do": "click",
-   "label": "Load Maven Project",
-   "role": "AXLink"
-  },
-  {
    "expect": {
     "java.linked": true,
     "java.server.running": true
@@ -74,9 +62,13 @@
     "Application",
     "GDB",
     "Go Build",
+    "JUnit",
+    "Kotlin",
     "Native Application",
     "Node.js",
-    "Python"
+    "Python",
+    "Remote JVM Debug",
+    "Spring Boot"
    ]
   },
   {

@@ -22,32 +22,18 @@
    "name": "workspace::ToggleLeftDock"
   },
   {
-   "find": {
-    "label": "Load Maven Project",
-    "role": "AXLink"
-   },
-   "within": 20000
-  },
-  {
-   "wait": 500
-  },
-  {
-   "do": "activate"
-  },
-  {
-   "shot": "build-scripts-found"
-  },
-  {
-   "do": "click",
-   "label": "Load Maven Project",
-   "role": "AXLink"
-  },
-  {
    "expect": {
     "java.linked": true,
     "java.server.running": true
    },
    "within": 300000
+  },
+  {
+   "find": {
+    "label": "Load Maven Project",
+    "role": "AXLink"
+   },
+   "absent": true
   },
   {
    "expect": {

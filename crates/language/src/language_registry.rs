@@ -111,10 +111,16 @@ struct LanguageRegistryState {
     theme: Option<Arc<Theme>>,
     version: usize,
     reload_count: usize,
+    // Spork IDE: languages whose `file_types` apply to some files only
+    file_types_conditions: HashMap<LanguageName, FileTypesCondition>,
 
     #[cfg(any(test, feature = "test-support"))]
     fake_server_entries: HashMap<LanguageServerName, FakeLanguageServerEntry>,
 }
+
+/// Spork IDE: whether a language's `file_types` apply to a file (Spring Boot's configuration
+/// files are Spring Boot's in a Spring Boot project only).
+pub type FileTypesCondition = Arc<dyn Fn(&Arc<dyn File>, &App) -> bool + Send + Sync>;
 
 #[cfg(any(test, feature = "test-support"))]
 pub struct FakeLanguageServerEntry {
@@ -185,6 +191,7 @@ impl LanguageRegistry {
                 theme: Default::default(),
                 version: 0,
                 reload_count: 0,
+                file_types_conditions: HashMap::default(),
 
                 #[cfg(any(test, feature = "test-support"))]
                 fake_server_entries: Default::default(),
@@ -715,12 +722,34 @@ impl LanguageRegistry {
             .filter_map(Option::as_deref)
             .chain(normalized_paths.iter().filter_map(Option::as_deref))
             .collect::<SmallVec<[_; 4]>>();
-        self.language_for_file_internal(
+        let found = self.language_for_file_internal(
             Some(filename),
             &paths,
             content,
             Some(&user_file_types.file_types),
-        )
+        );
+        // Spork IDE: a language whose file types don't apply to the file leaves it to the others
+        let rejected = found.and_then(|id| {
+            let state = self.state.read();
+            let name = state.available_languages.get_language(id)?.name.clone();
+            let condition = state.file_types_conditions.get(&name)?.clone();
+            drop(state);
+            (!condition(file, cx)).then_some(name)
+        });
+        let Some(rejected) = rejected else {
+            return found;
+        };
+        let mut file_types = user_file_types.file_types.clone();
+        file_types.remove(rejected.as_ref());
+        self.language_for_file_internal(Some(filename), &paths, content, Some(&file_types))
+    }
+
+    /// Spork IDE: makes `language`'s `file_types` apply only to the files `condition` accepts.
+    pub fn set_file_types_condition(&self, language: LanguageName, condition: FileTypesCondition) {
+        self.state
+            .write()
+            .file_types_conditions
+            .insert(language, condition);
     }
 
     pub fn language_for_file_path(self: &Arc<Self>, path: &Path) -> Option<LanguageId> {

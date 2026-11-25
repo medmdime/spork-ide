@@ -1,0 +1,204 @@
+{
+ "id": "kotlin-maven-run-configuration",
+ "fixture": "kotlin-maven",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Kotlin": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "kotlin.detected": true
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "kotlin.server.running": true
+   },
+   "within": 600000
+  },
+  {
+   "expect": {
+    "kotlin.server.busy": false
+   },
+   "within": 300000
+  },
+  {
+   "do": "action",
+   "name": "run::EditConfigurations"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Run/Debug Configurations"
+   },
+   "within": 8000
+  },
+  {
+   "find": {
+    "label": "Add New Configuration",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Add New Configuration",
+   "role": "AXButton"
+  },
+  {
+   "menu": "Add New Configuration",
+   "items": [
+    "Add New Configuration (disabled)",
+    "Shell Script",
+    "Application",
+    "GDB",
+    "Go Build",
+    "JUnit",
+    "Kotlin",
+    "Native Application",
+    "Node.js",
+    "Python",
+    "Remote JVM Debug",
+    "Spring Boot"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Kotlin",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "Unnamed",
+     "role": "AXRow",
+     "selected": true
+    },
+    {
+     "label": "Name:",
+     "role": "AXTextField",
+     "value": "Unnamed"
+    },
+    {
+     "label": "Main class:",
+     "role": "AXTextField"
+    },
+    {
+     "label": "VM options:",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Program arguments:",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Working directory:",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Environment variables:",
+     "role": "AXTextField"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "missing": [
+    {
+     "label": "Modify options",
+     "role": "AXLink"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Name:",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "do": "type",
+   "text": "MainKt",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "do": "click",
+   "label": "Main class:",
+   "role": "AXTextField"
+  },
+  {
+   "do": "type",
+   "text": "com.example.MainKt",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "do": "click",
+   "label": "Program arguments:",
+   "role": "AXTextField"
+  },
+  {
+   "do": "type",
+   "text": "unused",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "find": {
+    "label": "Run",
+    "role": "AXButton",
+    "enabled": true
+   }
+  },
+  {
+   "shot": "dialog",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Run",
+   "role": "AXButton",
+   "nth": 1
+  },
+  {
+   "expect": {
+    "windows.1": null
+   },
+   "within": 5000
+  },
+  {
+   "sh": "cat .zed/debug.json",
+   "contains": "\"adapter\": \"Kotlin\"",
+   "within": 8000
+  },
+  {
+   "sh": "cat .zed/debug.json",
+   "contains": "\"mainClass\": \"com.example.MainKt\""
+  },
+  {
+   "expect": {
+    "run.configurations.names": [
+     "MainKt"
+    ],
+    "run.configurations.selected": "MainKt"
+   },
+   "within": 8000
+  },
+  {
+   "expect": {
+    "run.tabs.0.title": "MainKt",
+    "run.tabs.0.running": false,
+    "run.tabs.0.output": "Hello, world!\nHello, Kotlin!\n\nProcess finished with exit code 0"
+   },
+   "within": 180000
+  }
+ ]
+}

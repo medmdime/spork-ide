@@ -21,7 +21,7 @@ mkdir -p "$dist" "$stage"
 case "$(uname -s)" in
   Darwin)
     platform=macos-$(uname -m | sed 's/aarch64/arm64/')
-    spork/scripts/package-macos.sh
+    SPORK_VERSION=${tag#v} spork/scripts/package-macos.sh
     ditto -c -k --norsrc --noextattr --keepParent target/Spork.app "$dist/Spork-$tag-$platform.zip"
 
     # Spork IDE.app as cargo-bundle makes it from crates/zed/Cargo.toml's bundle-stable metadata

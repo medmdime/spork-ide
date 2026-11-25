@@ -1,0 +1,74 @@
+{
+ "id": "java-build-scripts-found",
+ "fixture": "maven",
+ "prepare": "printf \"plugins {\\n    id 'java'\\n}\\n\" > build.gradle",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "find": [
+    {
+     "label": "Load Maven Project",
+     "role": "AXLink"
+    },
+    {
+     "label": "Load Gradle Project",
+     "role": "AXLink"
+    }
+   ],
+   "within": 20000
+  },
+  {
+   "expect": {
+    "java.linked": false
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "shot": "build-scripts-found"
+  },
+  {
+   "do": "click",
+   "label": "Load Maven Project",
+   "role": "AXLink"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.tool": "Maven",
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "find": {
+    "label": "Load Gradle Project",
+    "role": "AXLink"
+   },
+   "absent": true,
+   "within": 5000
+  }
+ ]
+}

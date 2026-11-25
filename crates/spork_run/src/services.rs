@@ -144,6 +144,12 @@ pub struct ServicesPanel {
     /// Docker's connections and what they hold.
     docker: Entity<Docker>,
     focus: FocusHandle,
+    /// Draws the tree again shortly while a service starts, until its type says it started.
+    poll: Option<gpui::Task<()>>,
+    /// Each started run's console text when its type said it started, by its console.
+    started: std::cell::RefCell<collections::HashMap<gpui::EntityId, String>>,
+    /// The configurations showing their type's view (the Actuator) rather than the console.
+    showing_content: BTreeSet<SharedString>,
     _subscriptions: Vec<Subscription>,
 }
 
@@ -180,6 +186,35 @@ impl ServicesPanel {
             generation: 0,
             expand: true,
             focus: cx.focus_handle(),
+            poll: None,
+            showing_content: BTreeSet::new(),
+            started: Default::default(),
+        }
+    }
+
+    /// What a running configuration's type tells of it (starting, its link), from its console.
+    fn service_state(
+        &self,
+        workspace: &Workspace,
+        configuration: &Configuration,
+        cx: &App,
+    ) -> Option<crate::configurations::ServiceState> {
+        let runner = crate::configurations::runner(configuration, cx)?;
+        let (console, running, id) = console_of(workspace, &configuration.name(), cx)?;
+        if !running {
+            return None;
+        }
+        let state = runner.service(configuration, &console)?;
+        // a started run stays started once Clear All empties its console: its type reads the
+        // console it started with
+        let mut started = self.started.borrow_mut();
+        match (state.starting, started.get(&id)) {
+            (false, _) => {
+                started.insert(id, console);
+                Some(state)
+            }
+            (true, Some(console)) => runner.service(configuration, console),
+            (true, None) => Some(state),
         }
     }
 
@@ -262,6 +297,35 @@ impl ServicesPanel {
                 .update(cx, |session, cx| session.shutdown(cx))
                 .detach();
         }
+    }
+
+    /// Edit Default Path (`SpringBootApplicationUrlPathEditAction`): IntelliJ's "Configure Default
+    /// Path" dialog over the path the configuration's link opens.
+    fn edit_default_path(&self, name: &SharedString, cx: &mut App) {
+        let configurations = self.configurations.clone();
+        let name = name.clone();
+        let path = configurations
+            .read(cx)
+            .list
+            .iter()
+            .find(|configuration| configuration.name() == name)
+            .and_then(|configuration| configuration.entry.get(crate::configurations::URL_PATH))
+            .and_then(Value::as_str)
+            .unwrap_or_default()
+            .to_owned();
+        crate::docker::open_dialog(DEFAULT_PATH_TITLE, 420., 150., cx, move |window, cx| {
+            let input = cx.new(|cx| {
+                let mut input = gpui_kit::component::input::InputState::new(window, cx);
+                input.set_value(path, window, cx);
+                input
+            });
+            input.update(cx, |input, cx| input.focus(window, cx));
+            DefaultPathDialog {
+                configurations,
+                name,
+                input,
+            }
+        });
     }
 
     /// Add Service ▸ Run Configuration…: IntelliJ's "Add Configuration" chooser of the types.
@@ -465,8 +529,30 @@ impl ServicesPanel {
                 let docker = self.docker.downgrade();
                 let (picked, menu_name) = (name.clone(), name.clone());
                 let running = *status == Status::Running;
-                TreeItem::new(name)
-                    .colored_icon(icon)
+                let default_path = crate::configurations::runner(configuration, cx)
+                    .is_some_and(|runner| runner.has_default_path());
+                let state = self
+                    .workspace
+                    .upgrade()
+                    .and_then(|workspace| self.service_state(workspace.read(cx), configuration, cx))
+                    .unwrap_or_default();
+                // IntelliJ animates a starting application's node
+                let icon = match state.starting {
+                    true => "process/step_4",
+                    false => icon,
+                };
+                let item = match state.link {
+                    Some((text, url)) => {
+                        let id = SharedString::from(format!("services-link-{name}"));
+                        TreeItem::new(name).after_label(move |_, cx| {
+                            let url = url.clone();
+                            spork_workbench::controls::link(id.clone(), text.clone(), cx)
+                                .on_click(move |_, _, cx| cx.open_url(&url))
+                        })
+                    }
+                    None => TreeItem::new(name),
+                };
+                item.colored_icon(icon)
                     .active(selected)
                     .on_click(move |_, _, cx| {
                         docker
@@ -487,16 +573,25 @@ impl ServicesPanel {
                                     this.update(cx, |this, cx| match act {
                                         0 => this.launch(&name, false, window, cx),
                                         1 => this.launch(&name, true, window, cx),
-                                        _ => this.stop(&name, cx),
+                                        2 => this.stop(&name, cx),
+                                        _ => this.edit_default_path(&name, cx),
                                     })
                                     .log_err();
                                 },
                             )
                         };
-                        popup
+                        let popup = popup
                             .item(item(format!("Run '{menu_name}'"), true, 0))
                             .item(item(format!("Debug '{menu_name}'"), true, 1))
-                            .item(item("Stop".into(), running, 2))
+                            .item(item("Stop".into(), running, 2));
+                        match default_path {
+                            true => {
+                                popup
+                                    .separator()
+                                    .item(item("Edit Default Path".into(), true, 3))
+                            }
+                            false => popup,
+                        }
                     })
             });
             let group = TreeItem::new(title)
@@ -541,7 +636,7 @@ impl ServicesPanel {
     }
 
     /// The selected configuration's console, with its toolbar on the left.
-    fn details(&self, cx: &mut Context<Self>) -> AnyElement {
+    fn details(&mut self, window: &mut Window, cx: &mut Context<Self>) -> AnyElement {
         let tokens = Tokens::get(cx);
         if self.docker.read(cx).has_selection() {
             return div()
@@ -581,11 +676,75 @@ impl ServicesPanel {
             Some(Console::Run(run)) => Some(run.terminal.clone()),
             _ => None,
         };
-        let content: AnyElement = match console {
-            Some(Console::Run(run)) => AnyView::from(run.view).into_any_element(),
-            Some(Console::Debug(session)) => session.read(cx).console_view().into_any_element(),
-            None => centered("No content available"),
+        // the type's own view beside the console, as IntelliJ's Actuator tab
+        let configuration = self
+            .configurations
+            .read(cx)
+            .list
+            .iter()
+            .find(|configuration| configuration.name() == name)
+            .cloned();
+        let extra = configuration.as_ref().and_then(|configuration| {
+            crate::configurations::runner(configuration, cx)?.content(
+                configuration,
+                &workspace,
+                window,
+                cx,
+            )
+        });
+        let showing_extra = extra.is_some() && self.showing_content.contains(&name);
+        let content: AnyElement = match (console, &extra) {
+            (_, Some((_, view))) if showing_extra => view.clone().into_any_element(),
+            (Some(Console::Run(run)), _) => AnyView::from(run.view).into_any_element(),
+            (Some(Console::Debug(session)), _) => {
+                session.read(cx).console_view().into_any_element()
+            }
+            (None, _) => centered("No content available"),
         };
+        let tabs = extra.map(|(title, _)| {
+            let tab = |id: &'static str, label: SharedString, on: bool, cx: &mut Context<Self>| {
+                let show = !id.ends_with("console");
+                let name = name.clone();
+                div()
+                    .id(id)
+                    .role(Role::Tab)
+                    .aria_label(label.clone())
+                    .aria_selected(on)
+                    .h(px(28.))
+                    .px(px(10.))
+                    .flex()
+                    .items_center()
+                    .rounded(px(6.))
+                    .cursor_pointer()
+                    .when(on, |tab| tab.bg(tokens.tab_selected))
+                    .when(!on, |tab| tab.hover(move |tab| tab.bg(tokens.hover)))
+                    .child(label)
+                    .on_click(cx.listener(move |this, _, _, cx| {
+                        match show {
+                            true => this.showing_content.insert(name.clone()),
+                            false => this.showing_content.remove(&name),
+                        };
+                        cx.notify();
+                    }))
+            };
+            h_flex()
+                .id("services-content-tabs")
+                .role(Role::TabList)
+                .aria_label("Service Content")
+                .flex_none()
+                .px(px(6.))
+                .py(px(2.))
+                .gap(px(2.))
+                .border_b_1()
+                .border_color(tokens.separator)
+                .child(tab(
+                    "services-content-console",
+                    "Console".into(),
+                    !showing_extra,
+                    cx,
+                ))
+                .child(tab("services-content-extra", title, showing_extra, cx))
+        });
         let (rerun, debug, stop) = (
             cx.entity().downgrade(),
             cx.entity().downgrade(),
@@ -678,21 +837,23 @@ impl ServicesPanel {
                     ),
             )
             .child(
-                div()
-                    .id("services-console")
-                    .role(Role::Group)
-                    .aria_label("Console")
-                    .flex_1()
-                    .min_w_0()
-                    .h_full()
-                    .child(content),
+                v_flex().flex_1().min_w_0().h_full().children(tabs).child(
+                    div()
+                        .id("services-console")
+                        .role(Role::Group)
+                        .aria_label("Console")
+                        .flex_1()
+                        .min_h_0()
+                        .min_w_0()
+                        .child(content),
+                ),
             )
             .into_any_element()
     }
 }
 
 impl Render for ServicesPanel {
-    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let tokens = Tokens::get(cx);
         let services = match self.workspace.upgrade() {
             Some(workspace) => self.services(workspace.read(cx), cx),
@@ -713,10 +874,32 @@ impl Render for ServicesPanel {
             cx,
         )
         .into_any_element();
+        // shortcut: polls the consoles of starting services; follow their output once a console
+        // tells its listeners of new lines
+        let starting = self.workspace.upgrade().is_some_and(|workspace| {
+            services.iter().any(|(configuration, status)| {
+                *status == Status::Running
+                    && self
+                        .service_state(workspace.read(cx), configuration, cx)
+                        .is_some_and(|state| state.starting)
+            })
+        });
+        if starting && self.poll.is_none() {
+            self.poll = Some(cx.spawn(async move |this, cx| {
+                cx.background_executor()
+                    .timer(std::time::Duration::from_millis(500))
+                    .await;
+                this.update(cx, |this, cx| {
+                    this.poll = None;
+                    cx.notify();
+                })
+                .ok();
+            }));
+        }
         let empty = services.is_empty() && self.docker.read(cx).is_empty();
         let toolbar = self.toolbar(empty, cx);
         let tree = self.tree(&services, cx);
-        let details = self.details(cx);
+        let details = self.details(window, cx);
         spork_vcs::spork_look(cx).size_full().child(
             v_flex()
                 .size_full()
@@ -754,6 +937,72 @@ impl Render for ServicesPanel {
                         .child(details),
                 ),
         )
+    }
+}
+
+const DEFAULT_PATH_TITLE: &str = "Configure Default Path";
+
+/// IntelliJ's "Configure Default Path" dialog: "Default Path:" over the path a configuration's
+/// Services link opens; OK keeps it in the configuration.
+struct DefaultPathDialog {
+    configurations: Entity<ProjectConfigurations>,
+    name: SharedString,
+    input: Entity<gpui_kit::component::input::InputState>,
+}
+
+impl DefaultPathDialog {
+    fn ok(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let path = self.input.read(cx).value().trim().to_owned();
+        let name = self.name.clone();
+        self.configurations.update(cx, |configurations, cx| {
+            let mut list = configurations.list.clone();
+            if let Some(configuration) = list.iter_mut().find(|c| c.name() == name) {
+                match path.is_empty() {
+                    true => configuration.entry.remove(crate::configurations::URL_PATH),
+                    false => configuration
+                        .entry
+                        .insert(crate::configurations::URL_PATH.into(), path.into()),
+                };
+            }
+            configurations.save(list, cx).detach_and_log_err(cx);
+        });
+        window.remove_window();
+    }
+}
+
+impl Render for DefaultPathDialog {
+    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let label = "Default Path:";
+        let body = h_flex()
+            .gap(px(8.))
+            .child(spork_workbench::controls::form_label(label))
+            .child(
+                div()
+                    .flex_1()
+                    .child(spork_workbench::TextField::new(&self.input).aria_label(label)),
+            )
+            .into_any_element();
+        let buttons = h_flex()
+            .gap(px(8.))
+            .child(
+                spork_workbench::Button::new("default-path-cancel", "Cancel")
+                    .on_click(|_, window, _| window.remove_window()),
+            )
+            .child(
+                spork_workbench::Button::new("default-path-ok", "OK")
+                    .primary(true)
+                    .on_click(cx.listener(|this, _, window, cx| this.ok(window, cx))),
+            )
+            .into_any_element();
+        div()
+            .size_full()
+            .on_action(cx.listener(|this, _: &menu::Confirm, window, cx| this.ok(window, cx)))
+            .child(crate::docker::dialog_frame(
+                DEFAULT_PATH_TITLE,
+                body,
+                buttons,
+                cx,
+            ))
     }
 }
 
@@ -879,9 +1128,14 @@ fn types_key(project: &Entity<Project>, cx: &App) -> Option<String> {
     Some(format!("spork_services_types_{}", root.display()))
 }
 
+/// The types Services shows before any is added, as IntelliJ's run dashboard's default types.
+fn default_types() -> BTreeSet<SharedString> {
+    BTreeSet::from([SharedString::from(crate::configurations::SPRING_BOOT)])
+}
+
 fn read_types(project: &Entity<Project>, cx: &App) -> BTreeSet<SharedString> {
     let Some(key) = types_key(project, cx) else {
-        return BTreeSet::new();
+        return default_types();
     };
     db::kvp::KeyValueStore::global(cx)
         .read_kvp(&key)
@@ -889,7 +1143,69 @@ fn read_types(project: &Entity<Project>, cx: &App) -> BTreeSet<SharedString> {
         .flatten()
         .and_then(|value| serde_json::from_str::<Vec<String>>(&value).log_err())
         .map(|types| types.into_iter().map(SharedString::from).collect())
-        .unwrap_or_default()
+        .unwrap_or_else(default_types)
+}
+
+/// Runs or debugs the configuration `name`, as its Run and Debug buttons do.
+pub fn launch_configuration(
+    workspace: &mut Workspace,
+    name: &str,
+    debug: bool,
+    window: &mut Window,
+    cx: &mut Context<Workspace>,
+) {
+    let configuration = ProjectConfigurations::of(workspace, cx).and_then(|configurations| {
+        configurations
+            .read(cx)
+            .list
+            .iter()
+            .find(|configuration| configuration.name().as_ref() == name)
+            .cloned()
+    });
+    if let Some(configuration) = configuration {
+        crate::run_widget::launch(Some(&configuration), debug, workspace, window, cx);
+    }
+}
+
+/// The console text of the configuration `name`'s latest run or debug session, and whether it
+/// still runs.
+pub fn console_text(workspace: &Workspace, name: &str, cx: &App) -> Option<(String, bool)> {
+    console_of(workspace, name, cx).map(|(text, running, _)| (text, running))
+}
+
+/// The console text, whether it runs, and the console's entity.
+fn console_of(
+    workspace: &Workspace,
+    name: &str,
+    cx: &App,
+) -> Option<(String, bool, gpui::EntityId)> {
+    let session = debug_session_of(workspace, name, cx);
+    match (run_panel::run_of(workspace, name, cx), session) {
+        (_, Some(running)) if !running.read(cx).session().read(cx).is_terminated() => {
+            let id = running.entity_id();
+            // the program's own terminal when it runs in one (Java's), the debugger's output
+            if let Some(terminal) = running.read(cx).program_terminal(cx) {
+                return Some((
+                    terminal.read(cx).terminal().read(cx).get_content(),
+                    true,
+                    id,
+                ));
+            }
+            let session = running.read(cx).session().read(cx);
+            let (events, _) = session.output(project::debugger::session::OutputToken(0));
+            Some((
+                events.map(|event| event.output.as_str()).collect(),
+                true,
+                id,
+            ))
+        }
+        (Some(run), _) => Some((
+            run.terminal.read(cx).get_content(),
+            run.running,
+            run.terminal.entity_id(),
+        )),
+        _ => None,
+    }
 }
 
 fn write_types(project: &Entity<Project>, types: &BTreeSet<SharedString>, cx: &mut App) {
@@ -1098,9 +1414,15 @@ pub(crate) fn e2e_services(workspace: &Workspace, cx: &App) -> Value {
         .services(workspace, cx)
         .into_iter()
         .map(|(configuration, status)| {
+            let state = panel.service_state(workspace, &configuration, cx);
             (
                 configuration.name().to_string(),
-                json!({"type": configuration.type_name().as_ref(), "status": status.title()}),
+                json!({
+                    "type": configuration.type_name().as_ref(),
+                    "status": status.title(),
+                    "starting": state.as_ref().map(|state| state.starting),
+                    "link": state.and_then(|state| state.link).map(|(text, url)| json!([text.as_ref(), url])),
+                }),
             )
         })
         .collect();

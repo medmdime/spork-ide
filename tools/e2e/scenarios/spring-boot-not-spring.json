@@ -1,0 +1,69 @@
+{
+ "id": "spring-boot-not-spring",
+ "fixture": "maven",
+ "covers": [],
+ "prepare": "mkdir -p src/main/resources && printf 'server.port=8080\\n' > src/main/resources/application.properties && printf 'server:\\n  port: 8080\\n' > src/main/resources/application.yml",
+ "settings": {
+  "languages": {
+   "Spring Boot Properties": {
+    "enable_language_server": true
+   },
+   "Spring Boot YAML": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.spring": null
+   },
+   "within": 20000
+  },
+  {
+   "do": "open",
+   "path": "src/main/resources/application.properties"
+  },
+  {
+   "expect": {
+    "active": "src/main/resources/application.properties"
+   },
+   "within": 5000
+  },
+  {
+   "wait": 10000
+  },
+  {
+   "find": {
+    "label": "Failed to run spring-boot. Click to show error."
+   },
+   "absent": true
+  },
+  {
+   "expect": {
+    "editor.language": "Properties"
+   }
+  },
+  {
+   "do": "open",
+   "path": "src/main/resources/application.yml"
+  },
+  {
+   "expect": {
+    "active": "src/main/resources/application.yml",
+    "editor.language": "YAML"
+   },
+   "within": 5000
+  },
+  {
+   "wait": 3000
+  },
+  {
+   "find": {
+    "label": "Failed to run spring-boot. Click to show error."
+   },
+   "absent": true
+  }
+ ]
+}

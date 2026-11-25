@@ -1233,7 +1233,23 @@ impl LocalDapCommand for StackTraceCommand {
         &self,
         message: <Self::DapRequest as dap::requests::Request>::Response,
     ) -> Result<Self::Response> {
-        Ok(message.stack_frames)
+        let mut frames = message.stack_frames;
+        // Spork IDE: the Kotlin language server's adapter names a frame's source by a `file://`
+        // URI where the protocol asks for a path (Kotlin/kotlin-lsp#285)
+        for frame in &mut frames {
+            if let Some(path) = frame
+                .source
+                .as_mut()
+                .and_then(|source| source.path.as_mut())
+                && path.starts_with("file://")
+                && let Some(file) = url::Url::parse(path)
+                    .ok()
+                    .and_then(|url| url.to_file_path().ok())
+            {
+                *path = file.to_string_lossy().into_owned();
+            }
+        }
+        Ok(frames)
     }
 }
 

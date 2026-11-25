@@ -1,0 +1,107 @@
+{
+ "id": "java-application-jre",
+ "fixture": "maven",
+ "covers": [],
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "do": "action",
+   "name": "run::EditConfigurations"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Run/Debug Configurations"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "find": {
+    "label": "Add New Configuration",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Add New Configuration",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Application",
+    "role": "AXMenuItem"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Application",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "JRE:",
+    "role": "AXPopUpButton",
+    "value": "Default"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "JRE:",
+   "role": "AXPopUpButton"
+  },
+  {
+   "menu": "Run/Debug Configurations",
+   "items": [
+    "Default",
+    "zulu-17 Azul Zulu 17.0.20.1 - aarch64",
+    "Download JDK…",
+    "Select alternative JRE…"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "zulu-17 Azul Zulu 17.0.20.1 - aarch64",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "JRE:",
+    "role": "AXPopUpButton",
+    "value": "zulu-17"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Main class:",
+   "role": "AXTextField"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "jre",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "sh": "cat .zed/debug.json",
+   "contains": "\"javaExec\": \"/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home/bin/java\""
+  }
+ ]
+}

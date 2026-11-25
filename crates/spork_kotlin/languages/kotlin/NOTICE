@@ -1,0 +1,6 @@
+The query files in this folder (*.scm but runnables.scm) and config.toml come from Zed's Kotlin
+extension (https://github.com/zed-extensions/kotlin, languages/kotlin at v0.3.5, 768549d5),
+licensed under the MIT License (LICENSE-MIT beside this file), by Evren Sen and its contributors;
+highlights.scm is based on nvim-treesitter's Kotlin highlights (Apache License 2.0).
+Modified for Spork IDE: config.toml sets tab_size and the debugger; runnables.scm is Spork IDE's own (the `main`
+entry points, the extension's test queries left out).

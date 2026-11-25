@@ -688,6 +688,20 @@ pub(crate) const TERMINAL: &[Row] = &[
     ),
 ];
 
+/// Languages & Frameworks › Spring (`spring`): its Spring Boot section's Project Import, the one
+/// option Spork IDE backs.
+pub(crate) const SPRING: &[Row] = &[
+    Row::Title("Spring Boot"),
+    Row::Title("Project Import"),
+    help(
+        check(
+            "Create run configuration automatically",
+            crate::SPRING_BOOT_RUN_CONFIGURATIONS,
+        ),
+        "On (re-)import add Spring Boot run configuration if none exists yet",
+    ),
+];
+
 pub(crate) const ADVANCED: &[Row] = &[
     Row::Title("IDE"),
     unit(

@@ -17,18 +17,6 @@
    "within": 20000
   },
   {
-   "find": {
-    "label": "Load Gradle Project",
-    "role": "AXLink"
-   },
-   "within": 20000
-  },
-  {
-   "do": "click",
-   "label": "Load Gradle Project",
-   "role": "AXLink"
-  },
-  {
    "do": "action",
    "name": "gradle_tool_window::ToggleFocus"
   },

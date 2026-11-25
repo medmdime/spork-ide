@@ -1,0 +1,88 @@
+{
+ "id": "kotlin-gradle-import",
+ "fixture": "kotlin-gradle",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Kotlin": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Gradle",
+    "kotlin.detected": true
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "kotlin.server.running": true
+   },
+   "within": 600000
+  },
+  {
+   "expect": {
+    "kotlin.server.busy": false
+   },
+   "within": 300000
+  },
+  {
+   "do": "open",
+   "path": "src/main/kotlin/com/example/Main.kt"
+  },
+  {
+   "expect": {
+    "active": "src/main/kotlin/com/example/Main.kt",
+    "editor.language": "Kotlin",
+    "editor.diagnostics": []
+   },
+   "within": 60000
+  },
+  {
+   "file": "src/main/kotlin/com/example/Main.kt",
+   "text": "package com.example\n\n/** Prints the greetings. */\nfun main() {\n    val count: Int = \"one\"\n    val names = listOf(\"world\", \"Kotlin\")\n    names.forEach { name ->\n        val line = greet(name)\n        println(line)\n    }\n}\n\nfun greet(name: String): String {\n    val greeting = Greeting(name)\n    return greeting.text()\n}\n"
+  },
+  {
+   "expect": {
+    "editor.diagnostics": [
+     "error: Initializer type mismatch: expected 'Int', actual 'String'."
+    ]
+   },
+   "within": 60000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "type",
+   "text": "15:21"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-space"
+  },
+  {
+   "expect": {
+    "editor.completions": {
+     "contains": "text String!"
+    }
+   },
+   "within": 30000
+  }
+ ]
+}

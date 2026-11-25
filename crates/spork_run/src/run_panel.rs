@@ -173,7 +173,7 @@ impl TerminalProvider for Consoles {
 }
 
 /// Text in IntelliJ's console system output colour (the command line, the exit message).
-fn system_text(text: &str, cx: &App) -> Vec<u8> {
+pub(crate) fn system_text(text: &str, cx: &App) -> Vec<u8> {
     format!(
         "{}{text}\x1b[0m",
         foreground(Tokens::get(cx).console_system)
@@ -182,7 +182,7 @@ fn system_text(text: &str, cx: &App) -> Vec<u8> {
 }
 
 /// The escape sequence that writes in `color`.
-fn foreground(color: gpui::Hsla) -> String {
+pub(crate) fn foreground(color: gpui::Hsla) -> String {
     let color = color.to_rgb();
     let [r, g, b] = [color.r, color.g, color.b].map(|c| (c * 255.).round() as u8);
     format!("\x1b[38;2;{r};{g};{b}m")
@@ -212,7 +212,7 @@ fn stderr_in_color(spawn: &mut SpawnInTerminal, is_windows: bool, color: gpui::H
 }
 
 /// IntelliJ's message for how the process ended (`ProcessTerminatedListener`).
-fn exit_message(status: Option<ExitStatus>) -> String {
+pub(crate) fn exit_message(status: Option<ExitStatus>) -> String {
     #[cfg(unix)]
     let signal = status.and_then(|status| std::os::unix::process::ExitStatusExt::signal(&status));
     #[cfg(not(unix))]
@@ -782,7 +782,7 @@ pub(crate) fn show_run(
 }
 
 /// The lines a console shows, each with the colour its text starts in, and where they are.
-fn shown_lines(terminal: &Terminal) -> Vec<(String, Option<terminal::Rgb>)> {
+pub(crate) fn shown_lines(terminal: &Terminal) -> Vec<(String, Option<terminal::Rgb>)> {
     let content = terminal.last_content();
     let mut lines: Vec<(String, Option<terminal::Rgb>)> =
         vec![(String::new(), None); content.screen_lines];

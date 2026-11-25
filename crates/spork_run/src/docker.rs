@@ -2574,12 +2574,14 @@ impl Render for Docker {
     }
 }
 
-/// IntelliJ's yes/no confirmation over the IDE window: Delete's "Confirm Deletion", Clean Up's.
-struct Confirm {
-    title: &'static str,
-    message: &'static str,
-    yes: &'static str,
-    on_yes: Option<Box<dyn FnOnce(&mut App)>>,
+/// IntelliJ's yes/no question over the IDE window (`Messages.showYesNoDialog`): Docker's Delete
+/// "Confirm Deletion" and Clean Up, the debugger's "Breakpoint Condition Error".
+pub struct Confirm {
+    title: SharedString,
+    message: SharedString,
+    yes: SharedString,
+    no: SharedString,
+    on_answer: Option<Box<dyn FnOnce(bool, &mut App)>>,
     focus: FocusHandle,
 }
 
@@ -2593,10 +2595,31 @@ impl Confirm {
         window: &mut Window,
         cx: &mut App,
     ) {
+        Self::ask(
+            workspace,
+            [title, message, yes, "Cancel"].map(SharedString::from),
+            move |yes, cx| {
+                if yes {
+                    on_yes(cx)
+                }
+            },
+            window,
+            cx,
+        );
+    }
+
+    /// Asks `[title, message, yes, no]`; `on_answer` takes whether the answer is yes (⎋ is no).
+    pub fn ask(
+        workspace: &WeakEntity<Workspace>,
+        [title, message, yes, no]: [SharedString; 4],
+        on_answer: impl FnOnce(bool, &mut App) + 'static,
+        window: &mut Window,
+        cx: &mut App,
+    ) {
         let Some(workspace) = workspace.upgrade() else {
             return;
         };
-        let on_yes: Box<dyn FnOnce(&mut App)> = Box::new(on_yes);
+        let on_answer: Box<dyn FnOnce(bool, &mut App)> = Box::new(on_answer);
         // a click in Services' details runs inside the Docker view's update: the modal opens after
         window.defer(cx, move |window, cx| {
             workspace.update(cx, |workspace, cx| {
@@ -2607,7 +2630,8 @@ impl Confirm {
                         title,
                         message,
                         yes,
-                        on_yes: Some(on_yes),
+                        no,
+                        on_answer: Some(on_answer),
                         focus,
                     }
                 })
@@ -2616,8 +2640,8 @@ impl Confirm {
     }
 
     fn answer(&mut self, yes: bool, cx: &mut Context<Self>) {
-        if yes && let Some(on_yes) = self.on_yes.take() {
-            on_yes(cx);
+        if let Some(on_answer) = self.on_answer.take() {
+            on_answer(yes, cx);
         }
         cx.emit(DismissEvent);
     }
@@ -2639,13 +2663,13 @@ impl Render for Confirm {
             popup::surface(cx)
                 .id("docker-confirm")
                 .role(Role::Dialog)
-                .aria_label(self.title)
+                .aria_label(self.title.clone())
                 .w(px(400.))
                 .track_focus(&self.focus)
                 .key_context("DockerConfirm menu")
                 .on_action(cx.listener(|this, _: &menu::Confirm, _, cx| this.answer(true, cx)))
                 .on_action(cx.listener(|this, _: &menu::Cancel, _, cx| this.answer(false, cx)))
-                .child(popup::title(self.title, cx))
+                .child(popup::title(self.title.clone(), cx))
                 .child(
                     v_flex()
                         .px(px(16.))
@@ -2655,20 +2679,20 @@ impl Render for Confirm {
                             div()
                                 .id("docker-confirm-message")
                                 .role(Role::Label)
-                                .aria_label(self.message)
-                                .child(self.message),
+                                .aria_label(self.message.clone())
+                                .child(self.message.clone()),
                         )
                         .child(
                             h_flex()
                                 .justify_end()
                                 .gap(px(8.))
                                 .child(
-                                    Button::new("docker-confirm-no", "Cancel").on_click(
+                                    Button::new("docker-confirm-no", self.no.clone()).on_click(
                                         cx.listener(|this, _, _, cx| this.answer(false, cx)),
                                     ),
                                 )
                                 .child(
-                                    Button::new("docker-confirm-yes", self.yes)
+                                    Button::new("docker-confirm-yes", self.yes.clone())
                                         .primary(true)
                                         .on_click(
                                             cx.listener(|this, _, _, cx| this.answer(true, cx)),
@@ -2681,7 +2705,7 @@ impl Render for Confirm {
 }
 
 /// A dialog window of its own with a form and OK and Cancel, as IntelliJ's `DialogWrapper`.
-fn open_dialog<V: Render + 'static>(
+pub(crate) fn open_dialog<V: Render + 'static>(
     title: &'static str,
     width: f32,
     height: f32,
@@ -2712,7 +2736,7 @@ fn open_dialog<V: Render + 'static>(
     });
 }
 
-fn dialog_frame(
+pub(crate) fn dialog_frame(
     title: &'static str,
     body: AnyElement,
     buttons: AnyElement,

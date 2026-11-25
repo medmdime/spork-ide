@@ -33,7 +33,7 @@ use project::debugger::breakpoint_store::{
 };
 use project::debugger::dap_store::{PersistedAdapterOptions, PersistedExceptionBreakpoint};
 use serde_json::{Value, json};
-use spork_workbench::controls::{check_box, labeled_check, link};
+use spork_workbench::controls::{check_box, disabled_check, labeled_check, link};
 use spork_workbench::{ActionButton, Tokens};
 use workspace::{ModalView, Workspace};
 
@@ -220,8 +220,36 @@ fn short_name(path: &Path, row: u32) -> String {
 }
 
 /// The text a log message without one of its own says: IntelliJ's "Breakpoint hit" message.
+/// (Java's debugger writes IntelliJ's own, `Breakpoint reached at com.example.Main.main(Main.java:5)`.)
 fn hit_message(path: &Path, row: u32) -> String {
-    format!("Breakpoint reached at {}", short_name(path, row))
+    format!("{HIT} {}", short_name(path, row))
+}
+
+const HIT: &str = "Breakpoint reached at";
+
+/// A breakpoint's log message (the debug adapter protocol's, whose `{expression}`s are
+/// evaluated): whether it says the "Breakpoint hit" message, and the expression it evaluates
+/// and logs (IntelliJ's "Evaluate and log").
+fn log_parts(message: &str) -> (bool, Option<String>) {
+    let hit = message.lines().any(|line| line.starts_with(HIT));
+    let expression = message
+        .lines()
+        .find_map(|line| Some(line.strip_prefix('{')?.strip_suffix('}')?.to_owned()));
+    (hit, expression)
+}
+
+/// The log message of the "Breakpoint hit" message and an expression to log; with neither, the
+/// "Breakpoint hit" message, so a breakpoint that logs says something.
+fn log_message(path: &Path, row: u32, hit: bool, expression: Option<&str>) -> Arc<str> {
+    let expression = expression.filter(|expression| !expression.trim().is_empty());
+    let mut lines = Vec::new();
+    if hit || expression.is_none() {
+        lines.push(hit_message(path, row));
+    }
+    if let Some(expression) = expression {
+        lines.push(format!("{{{}}}", expression.trim()));
+    }
+    lines.join("\n").into()
 }
 
 /// Edit Breakpoint: the popup of the caret line's breakpoint, under that line; false when the
@@ -528,6 +556,50 @@ struct ExceptionFilters(BTreeMap<SharedString, Vec<ExceptionBreakpointsFilter>>)
 
 impl Global for ExceptionFilters {}
 
+/// The adapters whose exception filters are IntelliJ's "Any exception" breakpoint: its caught and
+/// uncaught filters, by the adapter.
+#[derive(Default)]
+struct AnyException(BTreeMap<SharedString, (String, String)>);
+
+impl Global for AnyException {}
+
+/// An adapter's exception filters, listed before its first session; with `any` (its caught and
+/// uncaught filters), as IntelliJ's "Any exception" breakpoint with its Caught exception and
+/// Uncaught exception notifications.
+pub fn register_exception_filters(
+    adapter: &'static str,
+    filters: Vec<ExceptionBreakpointsFilter>,
+    any: Option<(&str, &str)>,
+    cx: &mut App,
+) {
+    cx.default_global::<ExceptionFilters>()
+        .0
+        .insert(adapter.into(), filters);
+    if let Some((caught, uncaught)) = any {
+        cx.default_global::<AnyException>()
+            .0
+            .insert(adapter.into(), (caught.into(), uncaught.into()));
+    }
+}
+
+/// The selection of an adapter's "Any exception" row.
+const ANY_EXCEPTION: &str = "any exception";
+
+/// Turns an adapter's filters on or off, each that isn't already.
+fn set_exception_filters(
+    project: &Entity<Project>,
+    adapter: &SharedString,
+    filters: &[(String, bool)],
+    on: bool,
+    cx: &mut App,
+) {
+    for (filter, enabled) in filters {
+        if *enabled != on {
+            toggle_exception_filter(project, adapter, filter, cx);
+        }
+    }
+}
+
 /// An adapter's exception filters as the dialog lists them: (filter, enabled), from its sessions'
 /// when one runs, from the options its next sessions take otherwise.
 fn exception_filters(
@@ -747,7 +819,10 @@ impl BreakpointsDialog {
         let (condition, log, pass_count) = match current {
             Some(breakpoint) => (
                 text(breakpoint.condition),
-                text(breakpoint.message),
+                breakpoint
+                    .message
+                    .and_then(|message| log_parts(&message).1)
+                    .unwrap_or_default(),
                 text(breakpoint.hit_condition),
             ),
             None => Default::default(),
@@ -788,11 +863,38 @@ impl BreakpointsDialog {
         edit(&self.store(cx), &path, row, cx, |breakpoint| match text {
             Text::Condition if current.condition.is_some() => breakpoint.condition = value,
             Text::PassCount if current.hit_condition.is_some() => breakpoint.hit_condition = value,
-            Text::Log if current.message.is_some() => {
-                breakpoint.message = value.or_else(|| Some(hit_message(&path, row).into()))
+            Text::Log => {
+                if let Some((hit, Some(_))) = current.message.as_deref().map(log_parts) {
+                    breakpoint.message = Some(log_message(&path, row, hit, value.as_deref()));
+                }
             }
             _ => {}
         });
+    }
+
+    /// "Breakpoint hit" message and "Evaluate and log": each adds its part to the log message or
+    /// takes it out.
+    fn check_log(&mut self, hit: Option<bool>, evaluate: Option<bool>, cx: &mut Context<Self>) {
+        let Some((path, row)) = self.selected.clone() else {
+            return;
+        };
+        let typed = self.log.read(cx).value().trim().to_owned();
+        edit(&self.store(cx), &path, row, cx, |breakpoint| {
+            let (was_hit, expression) = match &breakpoint.message {
+                Some(message) => log_parts(message),
+                None => (false, None),
+            };
+            let hit = hit.unwrap_or(was_hit);
+            let expression = match evaluate {
+                Some(true) => Some(typed.clone()),
+                Some(false) => None,
+                None => expression,
+            };
+            let logs = hit || expression.as_deref().is_some_and(|e| !e.is_empty());
+            breakpoint.message = (logs || evaluate == Some(true))
+                .then(|| log_message(&path, row, hit, expression.as_deref()));
+        });
+        cx.notify();
     }
 
     /// A checkbox of the properties: on, its text box's text applies; off, it doesn't.
@@ -804,11 +906,7 @@ impl BreakpointsDialog {
             let value = field.read(cx).value().trim().to_owned();
             (!value.is_empty()).then(|| Arc::<str>::from(value))
         };
-        let (condition, log, pass_count) = (
-            read(&self.condition, cx),
-            read(&self.log, cx),
-            read(&self.pass_count, cx),
-        );
+        let (condition, pass_count) = (read(&self.condition, cx), read(&self.pass_count, cx));
         // shortcut: a breakpoint that logs doesn't suspend (the debug adapter protocol's log
         // points), so Suspend and the log options exclude each other
         edit(&self.store(cx), &path, row, cx, |breakpoint| match text {
@@ -818,10 +916,8 @@ impl BreakpointsDialog {
             Text::PassCount => {
                 breakpoint.hit_condition = on.then(|| pass_count.unwrap_or_else(|| "1".into()))
             }
-            Text::Log => {
-                breakpoint.message =
-                    on.then(|| log.unwrap_or_else(|| hit_message(&path, row).into()))
-            }
+            // a breakpoint that doesn't suspend says it was hit, as IntelliJ's
+            Text::Log => breakpoint.message = on.then(|| log_message(&path, row, true, None)),
         });
         cx.notify();
     }
@@ -936,6 +1032,9 @@ impl BreakpointsDialog {
         let mut exception_groups: Vec<AnyElement> = Vec::new();
         for (group_ix, (adapter, filters)) in exceptions.iter().enumerate() {
             let title = SharedString::from(format!("{adapter} Exception Breakpoints"));
+            let any = cx
+                .try_global::<AnyException>()
+                .and_then(|any| any.0.get(adapter).cloned());
             let all_on = match filters.iter().filter(|(_, on)| *on).count() {
                 0 => Some(false),
                 n if n == filters.len() => Some(true),
@@ -971,22 +1070,82 @@ impl BreakpointsDialog {
                             })
                             .on_click(move |_, _, cx| {
                                 let on = all_on != Some(true);
-                                for (filter, enabled) in &group_filters {
-                                    if *enabled != on {
-                                        toggle_exception_filter(
-                                            &project,
-                                            &group_adapter,
-                                            filter,
-                                            cx,
-                                        );
-                                    }
-                                }
+                                set_exception_filters(
+                                    &project,
+                                    &group_adapter,
+                                    &group_filters,
+                                    on,
+                                    cx,
+                                );
                             }),
                     )
                     .child(spork_workbench::image("breakpoints/breakpoint", cx).size(px(16.)))
                     .child(title)
                     .into_any_element(),
             );
+            // IntelliJ's "Any exception" (`breakpoint.any.exception.display.name`): on while one
+            // of its notifications is
+            if any.is_some() {
+                let on = all_on != Some(false);
+                let id = (adapter.clone(), ANY_EXCEPTION.to_owned());
+                let selected = self.selected_exception.as_ref() == Some(&id);
+                let (project, check_adapter) = (self.project.clone(), adapter.clone());
+                let filters: Vec<(String, bool)> = filters
+                    .iter()
+                    .map(|(filter, on)| (filter.filter.clone(), *on))
+                    .collect();
+                exception_groups.push(
+                    h_flex()
+                        .id(SharedString::from(format!("exception-{adapter}-any")))
+                        .role(Role::TreeItem)
+                        .aria_label("Any exception")
+                        .aria_selected(selected)
+                        .h(px(24.))
+                        .mx(px(6.))
+                        .pl(px(26.))
+                        .pr(px(6.))
+                        .gap(px(4.))
+                        .rounded(px(4.))
+                        .cursor_pointer()
+                        .when(selected, |row| row.bg(tokens.selection))
+                        .when(!selected, |row| {
+                            row.hover(move |row| row.bg(tokens.selection_hover))
+                        })
+                        .child(
+                            check_box(
+                                SharedString::from(format!("exception-check-{adapter}-any")),
+                                Some(on),
+                                cx,
+                            )
+                            .role(Role::CheckBox)
+                            .aria_label("Any exception")
+                            .aria_toggled(on.into())
+                            .on_click(move |_, _, cx| {
+                                cx.stop_propagation();
+                                set_exception_filters(&project, &check_adapter, &filters, !on, cx);
+                            }),
+                        )
+                        // IntelliJ's exception breakpoint icon (`Db_exception_breakpoint`)
+                        .child(
+                            spork_workbench::image(
+                                match on {
+                                    true => "breakpoints/breakpointException",
+                                    false => "breakpoints/breakpointExceptionDisabled",
+                                },
+                                cx,
+                            )
+                            .size(px(14.)),
+                        )
+                        .child("Any exception")
+                        .on_click(cx.listener(move |this, _, _, cx| {
+                            this.selected = None;
+                            this.selected_exception = Some(id.clone());
+                            cx.notify();
+                        }))
+                        .into_any_element(),
+                );
+                continue;
+            }
             for (filter, on) in filters {
                 let id = (adapter.clone(), filter.filter.clone());
                 let selected = self.selected_exception.as_ref() == Some(&id);
@@ -1067,6 +1226,77 @@ impl BreakpointsDialog {
             .into_any_element()
     }
 
+    /// "Any exception"'s properties (IntelliJ's exception breakpoint panel): Enabled and its
+    /// Notifications, Caught exception and Uncaught exception, each one of the adapter's filters.
+    /// A breakpoint that is off shows both notifications, as IntelliJ's new one has them.
+    // shortcut: Enabled is its notifications' being on, so turning it off forgets which were;
+    // keep the breakpoint's own state once the dialog persists its own breakpoints
+    fn any_exception_details(
+        &self,
+        exceptions: &[(SharedString, Vec<(ExceptionBreakpointsFilter, bool)>)],
+        adapter: SharedString,
+        cx: &mut Context<Self>,
+    ) -> Option<AnyElement> {
+        let (caught, uncaught) = cx.try_global::<AnyException>()?.0.get(&adapter)?.clone();
+        let filters: Vec<(String, bool)> = exceptions
+            .iter()
+            .find(|(name, _)| name == &adapter)?
+            .1
+            .iter()
+            .map(|(filter, on)| (filter.filter.clone(), *on))
+            .collect();
+        let on = |id: &str| filters.iter().any(|(filter, on)| filter == id && *on);
+        let enabled = on(&caught) || on(&uncaught);
+        let notification = |label: &'static str, filter: String, cx: &mut Context<Self>| {
+            let id = SharedString::from(format!("details-{filter}"));
+            if !enabled {
+                return disabled_check(id, label, true, cx).into_any_element();
+            }
+            let (project, adapter, checked) = (self.project.clone(), adapter.clone(), on(&filter));
+            labeled_check(id, label, checked, cx)
+                .on_click(move |_, _, cx| toggle_exception_filter(&project, &adapter, &filter, cx))
+                .into_any_element()
+        };
+        let toggle_enabled = {
+            let (project, adapter, filters) =
+                (self.project.clone(), adapter.clone(), filters.clone());
+            move |_: &gpui::ClickEvent, _: &mut Window, cx: &mut App| {
+                set_exception_filters(&project, &adapter, &filters, !enabled, cx)
+            }
+        };
+        Some(
+            v_flex()
+                .id("breakpoint-details")
+                .role(Role::Group)
+                .aria_label("Properties")
+                .flex_1()
+                .min_w_0()
+                .p(px(16.))
+                .gap(px(10.))
+                .child(
+                    div()
+                        .id("breakpoint-title")
+                        .role(Role::Heading)
+                        .aria_label("Any exception")
+                        .font_weight(gpui::FontWeight::BOLD)
+                        .child("Any exception"),
+                )
+                .child(
+                    labeled_check("details-enabled", "Enabled", enabled, cx)
+                        .on_click(toggle_enabled),
+                )
+                .child(div().pt(px(6.)).child("Notifications"))
+                .child(
+                    v_flex()
+                        .pl(px(20.))
+                        .gap(px(6.))
+                        .child(notification("Caught exception", caught, cx))
+                        .child(notification("Uncaught exception", uncaught, cx)),
+                )
+                .into_any_element(),
+        )
+    }
+
     /// An exception filter's properties: its title and Enabled.
     fn exception_details(
         &self,
@@ -1074,6 +1304,9 @@ impl BreakpointsDialog {
         cx: &mut Context<Self>,
     ) -> Option<AnyElement> {
         let (adapter, id) = self.selected_exception.clone()?;
+        if id == ANY_EXCEPTION {
+            return self.any_exception_details(exceptions, adapter, cx);
+        }
         let (filter, on) = exceptions
             .iter()
             .find(|(name, _)| name == &adapter)?
@@ -1137,7 +1370,13 @@ impl BreakpointsDialog {
         };
         let suspends = current.message.is_none();
         let has_condition = current.condition.is_some();
-        let logs = current.message.is_some();
+        let (hit, evaluates) = match &current.message {
+            Some(message) => {
+                let (hit, expression) = log_parts(message);
+                (hit, expression.is_some())
+            }
+            None => (false, false),
+        };
         let counts = current.hit_condition.is_some();
         v_flex()
             .id("breakpoint-details")
@@ -1177,16 +1416,15 @@ impl BreakpointsDialog {
                     spork_workbench::TextField::new(&self.condition).aria_label("Condition"),
                 ),
             )
-            .child(
-                h_flex().gap(px(12.)).child("Log:").child(
-                    labeled_check("details-log", "\"Breakpoint hit\" message", logs, cx).on_click(
-                        cx.listener(move |this, _, _, cx| this.check(Text::Log, !logs, cx)),
-                    ),
+            .child(h_flex().gap(px(12.)).child("Log:").child(
+                labeled_check("details-log", "\"Breakpoint hit\" message", hit, cx).on_click(
+                    cx.listener(move |this, _, _, cx| this.check_log(Some(!hit), None, cx)),
                 ),
-            )
+            ))
             .child(
-                labeled_check("details-evaluate-log", "Evaluate and log:", logs, cx)
-                    .on_click(cx.listener(move |this, _, _, cx| this.check(Text::Log, !logs, cx))),
+                labeled_check("details-evaluate-log", "Evaluate and log:", evaluates, cx).on_click(
+                    cx.listener(move |this, _, _, cx| this.check_log(None, Some(!evaluates), cx)),
+                ),
             )
             .child(
                 div().pl(px(20.)).child(
@@ -1351,7 +1589,22 @@ pub(crate) fn e2e_exceptions(workspace: &Workspace, cx: &App) -> Value {
 mod tests {
     use std::path::Path;
 
-    use super::short_name;
+    use super::{log_message, log_parts, short_name};
+
+    #[test]
+    fn a_log_message_says_the_hit_and_logs_an_expression() {
+        let path = Path::new("/p/src/Main.java");
+        let both = log_message(path, 4, true, Some("name.length()"));
+        assert_eq!(&*both, "Breakpoint reached at Main.java:5\n{name.length()}");
+        assert_eq!(log_parts(&both), (true, Some("name.length()".into())));
+        let expression = log_message(path, 4, false, Some("x"));
+        assert_eq!(log_parts(&expression), (false, Some("x".into())));
+        // with nothing to log, the "Breakpoint hit" message
+        assert_eq!(
+            log_parts(&log_message(path, 4, false, Some(" "))),
+            (true, None)
+        );
+    }
 
     #[test]
     fn a_breakpoint_is_named_by_its_file_and_line() {

@@ -208,6 +208,7 @@ members = [
     "crates/spork_graph",
     "crates/spork_hosting",
     "crates/spork_java",
+    "crates/spork_kotlin",
     "crates/spork_local_history",
     "crates/spork_patch",
     "crates/spork_projects",
@@ -500,6 +501,7 @@ spork_git = { path = "crates/spork_git" }
 spork_graph = { path = "crates/spork_graph" }
 spork_hosting = { path = "crates/spork_hosting" }
 spork_java = { path = "crates/spork_java" }
+spork_kotlin = { path = "crates/spork_kotlin" }
 spork_local_history = { path = "crates/spork_local_history" }
 spork_patch = { path = "crates/spork_patch" }
 spork_projects = { path = "crates/spork_projects" }
@@ -939,6 +941,7 @@ serde_path_to_error = "0.1.17"
 serde_urlencoded = "0.7"
 serde_yaml = { package = "serde_yaml_ng", version = "0.10" }
 serde_yaml_ng = "0.10"
+sha1 = "0.10"
 sha2 = "0.10"
 shellexpand = "3.1"
 shlex = "2.0"
@@ -995,8 +998,10 @@ tree-sitter-heex = { git = "https://github.com/zed-industries/tree-sitter-heex",
 tree-sitter-html = "0.23"
 tree-sitter-jsdoc = "0.23"
 tree-sitter-java = "0.23"
+tree-sitter-kotlin = { git = "https://github.com/fwcd/tree-sitter-kotlin", rev = "1852ea17b7f60fb3f9d84e0b1555d56b46b39fb1" }
 tree-sitter-json = "0.24"
 tree-sitter-md = { git = "https://github.com/zed-industries/tree-sitter-markdown", rev = "b596e737286780d7bfa9fcddceaeeb754574b352" } # fork of 9a23c1a with serialize() buffer-overflow fix; https://github.com/tree-sitter-grammars/tree-sitter-markdown/issues/243
+tree-sitter-properties = "0.3"
 tree-sitter-python = "0.25"
 tree-sitter-regex = "0.24"
 tree-sitter-ruby = "0.23"

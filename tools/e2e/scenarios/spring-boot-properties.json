@@ -1,0 +1,258 @@
+{
+ "id": "spring-boot-properties",
+ "fixture": "spring-maven",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   },
+   "Spring Boot Properties": {
+    "enable_language_server": true
+   },
+   "Spring Boot YAML": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "sh": "mkdir -p src/main/resources/META-INF"
+  },
+  {
+   "file": "src/main/java/com/example/demo/DemoProperties.java",
+   "text": "package com.example.demo;\n\nimport org.springframework.boot.context.properties.ConfigurationProperties;\n\n@ConfigurationProperties(\"demo\")\npublic class DemoProperties {\n\n    /** The greeting's text. */\n    private String greeting = \"Hello\";\n\n    public String getGreeting() {\n        return greeting;\n    }\n\n    public void setGreeting(String greeting) {\n        this.greeting = greeting;\n    }\n}\n"
+  },
+  {
+   "file": "src/main/resources/META-INF/additional-spring-configuration-metadata.json",
+   "text": "{\n  \"properties\": [\n    {\n      \"name\": \"demo.greeting\",\n      \"type\": \"java.lang.String\",\n      \"sourceType\": \"com.example.demo.DemoProperties\",\n      \"description\": \"The greeting's text.\",\n      \"defaultValue\": \"Hello\"\n    }\n  ]\n}\n"
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "run.configurations.names": [
+     "DemoApplication"
+    ],
+    "run.configurations.selected": "DemoApplication"
+   },
+   "within": 60000
+  },
+  {
+   "expect": {
+    "java.spring.classpath": true
+   },
+   "within": 300000
+  },
+  {
+   "file": "src/main/resources/application.properties",
+   "text": "spring.application.name=demo\nserver.port=18081\ndemo.greeting=Hi\nserver.prot=8080\nmanagement.server.port=abc\nserver.port=18082\n"
+  },
+  {
+   "do": "open",
+   "path": "src/main/resources/application.properties"
+  },
+  {
+   "expect": {
+    "active": "src/main/resources/application.properties",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ],
+    "editor.language": "Spring Boot Properties"
+   },
+   "within": 5000
+  },
+  {
+   "expect": {
+    "editor.diagnostics": [
+     "warning: Duplicate configuration key 'server.port'",
+     "warning: Cannot resolve configuration property 'server.prot'",
+     "warning: Cannot convert 'abc' to int",
+     "warning: Duplicate configuration key 'server.port'"
+    ]
+   },
+   "within": 30000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home right right right"
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "do": "keys",
+   "keys": "f1"
+  },
+  {
+   "find": {
+    "label": "More",
+    "in": "Documentation"
+   },
+   "within": 20000
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "documentation"
+  },
+  {
+   "do": "click",
+   "label": "More",
+   "in": "Documentation"
+  },
+  {
+   "do": "click",
+   "label": "Open in Documentation Tool Window",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "documentation.shown": "spring",
+    "documentation.text": "**spring.application.name**  \n[java.lang.String](null)  \n\nApplication name. Typically used with logging to help identify the application."
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "open",
+   "path": "src/main/resources/application.properties"
+  },
+  {
+   "expect": {
+    "active": "src/main/resources/application.properties",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down down right"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-b"
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/demo/DemoProperties.java"
+   },
+   "within": 20000
+  },
+  {
+   "do": "action",
+   "name": "workspace::CloseAllDocks"
+  },
+  {
+   "do": "open",
+   "path": "src/main/resources/application.properties"
+  },
+  {
+   "expect": {
+    "active": "src/main/resources/application.properties",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-end"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "do": "type",
+   "text": "spring.main.ban"
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-space"
+  },
+  {
+   "expect": {
+    "editor.completions": [
+     "spring.main.banner-mode org.springframework.boot.Banner$Mode[OFF, CONSOLE, LOG]",
+     "spring.main.allow-bean-definition-overriding boolean",
+     "spring.main.web-application-type org.springframework.boot.WebApplicationType[NONE, SERVLET, REACTIVE]",
+     "spring.main.show-banner boolean"
+    ]
+   },
+   "within": 20000
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "completion"
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "file": "src/main/resources/application-dev.yml",
+   "text": "server:\n  port: abc\nspring:\n  application:\n    nam: demo\n"
+  },
+  {
+   "do": "open",
+   "path": "src/main/resources/application-dev.yml"
+  },
+  {
+   "expect": {
+    "active": "src/main/resources/application-dev.yml",
+    "editor.language": "Spring Boot YAML"
+   },
+   "within": 5000
+  },
+  {
+   "expect": {
+    "editor.diagnostics": [
+     "warning: Cannot convert 'abc' to int",
+     "warning: Cannot resolve configuration property 'spring.application.nam'"
+    ]
+   },
+   "within": 30000
+  }
+ ]
+}

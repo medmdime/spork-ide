@@ -1,0 +1,106 @@
+{
+ "id": "java-language-level-fix",
+ "fixture": "maven",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "file": "src/main/java/com/example/Shapes.java",
+   "text": "package com.example;\n\n/** A Java 21 feature: a record pattern. */\npublic class Shapes {\n    record Point(int x, int y) {}\n\n    static int sum(Object shape) {\n        if (shape instanceof Point(int x, int y)) {\n            return x + y;\n        }\n        return 0;\n    }\n}\n"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 300000
+  },
+  {
+   "do": "open",
+   "path": "src/main/java/com/example/Shapes.java"
+  },
+  {
+   "expect": {
+    "editor.diagnostics": [
+     "error: The Java feature 'Record Pattern' is only available with source level 21 and above"
+    ]
+   },
+   "within": 60000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "type",
+   "text": "8:32"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "keys",
+   "keys": "alt-enter"
+  },
+  {
+   "find": {
+    "label": "Set language level to 21 - Record patterns, pattern matching for switch"
+   },
+   "within": 10000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "shot": "fix"
+  },
+  {
+   "do": "click",
+   "label": "Set language level to 21 - Record patterns, pattern matching for switch"
+  },
+  {
+   "sh": "grep -c '<maven.compiler.release>21</maven.compiler.release>' pom.xml",
+   "is": "1",
+   "within": 10000
+  },
+  {
+   "expect": {
+    "java.language_level": "21 - Record patterns, pattern matching for switch"
+   },
+   "within": 10000
+  }
+ ]
+}

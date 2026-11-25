@@ -2252,6 +2252,9 @@
     ],
     "Markdown": [".rules", ".cursorrules", ".windsurfrules", ".clinerules"],
     "Env": [".env.*"],
+    // Spork IDE: Spring Boot's configuration files, which the Spring Boot language server serves
+    "Spring Boot Properties": ["application*.properties", "bootstrap*.properties"],
+    "Spring Boot YAML": ["application*.yml", "application*.yaml", "bootstrap*.yml", "bootstrap*.yaml"],
   },
   // Settings for which version of Node.js and NPM to use when installing
   // language servers and Copilot.

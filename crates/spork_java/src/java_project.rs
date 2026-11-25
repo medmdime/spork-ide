@@ -1,7 +1,8 @@
 //! A workspace's Java project: the build tool its folder uses (Maven's `pom.xml`, Gradle's build
 //! scripts), the JDK found, the build tool's model for its tool window, and the import: IntelliJ's
-//! "build scripts found" notification, whose Load starts JDT LS, which imports the project
-//! through m2e or Buildship (its progress in the status bar).
+//! auto-link of a single build tool's project, or its "build scripts found" notifications when
+//! both are there, starting JDT LS, which imports the project through m2e or Buildship (its
+//! progress in the status bar).
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -51,18 +52,26 @@ impl Tool {
 
     /// The build tool of the project at `root`: Maven's when it has a `pom.xml`.
     pub fn detect(root: &Path) -> Option<Tool> {
-        if root.join("pom.xml").is_file() {
-            return Some(Tool::Maven);
-        }
-        [
+        Self::detect_all(root).first().copied()
+    }
+
+    /// Each build tool whose build scripts are at `root`, Maven's first.
+    pub fn detect_all(root: &Path) -> Vec<Tool> {
+        let gradle = [
             "build.gradle",
             "build.gradle.kts",
             "settings.gradle",
             "settings.gradle.kts",
         ]
         .iter()
-        .any(|file| root.join(file).is_file())
-        .then_some(Tool::Gradle)
+        .any(|file| root.join(file).is_file());
+        [
+            (root.join("pom.xml").is_file(), Tool::Maven),
+            (gradle, Tool::Gradle),
+        ]
+        .into_iter()
+        .filter_map(|(found, tool)| found.then_some(tool))
+        .collect()
     }
 }
 
@@ -136,7 +145,7 @@ impl Global for FolderRoles {}
 
 /// The Java project of each workspace, by the workspace's entity.
 #[derive(Default)]
-struct Projects(HashMap<EntityId, Entity<JavaProject>>);
+pub(crate) struct Projects(pub(crate) HashMap<EntityId, Entity<JavaProject>>);
 
 impl Global for Projects {}
 
@@ -165,6 +174,8 @@ pub struct JavaProject {
     pub profiles: Vec<(String, bool)>,
     /// What a Download Sources/Documentation run fetches, while it runs.
     pub downloading: Option<Download>,
+    /// The build tools whose scripts are in the project's folder, Maven's first.
+    found: Vec<Tool>,
     announced: bool,
     /// A Java file opened with the language servers, which keeps JDT LS running for the project.
     language_server: Option<(Entity<Buffer>, OpenLspBufferHandle)>,
@@ -178,6 +189,8 @@ pub struct JavaProject {
     /// External Libraries' worktree, held: a project keeps an invisible worktree only while
     /// something holds it.
     libraries_worktree: Option<Entity<project::Worktree>>,
+    /// Spring Boot's state, for a Spring Boot project.
+    pub(crate) spring: crate::spring_boot::SpringBoot,
 }
 
 pub(crate) fn register(
@@ -210,7 +223,16 @@ pub(crate) fn register(
     })
     .detach();
     crate::build_view::register(workspace);
+    crate::project_structure::register(workspace);
     crate::jdk_banner::register(workspace, window, cx);
+    // after the app's own items: the right side draws its last item first, as IntelliJ shows a
+    // background task before the widgets, and an idle one then moves none of them
+    cx.defer_in(window, |workspace, window, cx| {
+        let downloads = cx.new(crate::jdk_download::DownloadStatus::new);
+        workspace.status_bar().update(cx, |status_bar, cx| {
+            status_bar.add_right_item(downloads, window, cx)
+        });
+    });
 }
 
 impl JavaProject {
@@ -241,6 +263,7 @@ impl JavaProject {
             triggers: Vec::new(),
             profiles: Vec::new(),
             downloading: None,
+            found: Vec::new(),
             announced: false,
             language_server: None,
             _subscriptions: vec![subscription],
@@ -251,6 +274,7 @@ impl JavaProject {
             sync_task: Task::ready(()),
             libraries_task: Task::ready(()),
             libraries_worktree: None,
+            spring: Default::default(),
         };
         this.refresh(cx);
         this
@@ -278,12 +302,18 @@ impl JavaProject {
             .cloned()
     }
 
-    /// The project's name, as IntelliJ names a project: its folder's.
+    /// The project's name, as IntelliJ names a project: its folder's, unless Project Structure
+    /// renamed it.
     pub fn name(&self) -> String {
-        self.root
-            .as_ref()
-            .and_then(|root| root.file_name())
-            .map(|name| name.to_string_lossy().into_owned())
+        let Some(root) = &self.root else {
+            return String::new();
+        };
+        crate::project_settings::ProjectSettings::load(root)
+            .name
+            .or_else(|| {
+                root.file_name()
+                    .map(|name| name.to_string_lossy().into_owned())
+            })
             .unwrap_or_default()
     }
 
@@ -301,11 +331,11 @@ impl JavaProject {
         self.refresh = cx.spawn(async move |this, cx| {
             let read = cx
                 .background_spawn(async move {
-                    let tool = Tool::detect(&root);
+                    let tools = Tool::detect_all(&root);
                     // shortcut: the IDE's own environment, where JDT LS gets the project's shell
                     // one; they differ only when the shell alone sets JAVA_HOME
-                    let jdk = jdk::for_project(&root, &jdk::process_env());
-                    let pom = (tool == Some(Tool::Maven)).then(|| {
+                    let jdk = jdk::for_module(&root, &jdk::process_env());
+                    let pom = tools.contains(&Tool::Maven).then(|| {
                         std::fs::read_to_string(root.join("pom.xml"))
                             .context("reading pom.xml")
                             .and_then(|text| Pom::parse(&text))
@@ -314,14 +344,19 @@ impl JavaProject {
                         .ok()
                         .and_then(|text| serde_json::from_str(&text).log_err())
                         .unwrap_or_default();
-                    (root, tool, jdk, pom, triggers)
+                    (root, tools, jdk, pom, triggers)
                 })
                 .await;
-            let (root, tool, jdk, pom, triggers) = read;
+            let (root, tools, jdk, pom, triggers) = read;
             this.update(cx, |this, cx| {
                 this.root = Some(root);
                 this.triggers = triggers;
-                this.tool = tool;
+                // the tool a project with both was loaded with stays its tool
+                this.tool = this
+                    .tool
+                    .filter(|tool| this.linked && tools.contains(tool))
+                    .or(tools.first().copied());
+                this.found = tools;
                 this.jdk = jdk;
                 match pom {
                     Some(Ok(pom)) => {
@@ -346,8 +381,13 @@ impl JavaProject {
     pub fn set_jdk(&mut self, jdk: Jdk, cx: &mut Context<Self>) {
         if let Some(root) = &self.root {
             jdk::choose(root, &jdk).log_err();
+            // the module's own JDK stays the one it builds on
+            self.jdk = jdk::for_module(root, &jdk::process_env());
         }
-        self.jdk = Some(jdk);
+        if self.jdk.is_none() {
+            self.jdk = Some(jdk);
+        }
+        self.restart_language_server(cx);
         if let Some(workspace) = self.workspace.upgrade() {
             workspace.update(cx, |workspace, cx| {
                 workspace.dismiss_notification(&NotificationId::unique::<NoJdk>(), cx)
@@ -358,11 +398,12 @@ impl JavaProject {
         cx.notify();
     }
 
-    /// IntelliJ's notification for a project it found build scripts in: "Load Maven Project"
-    /// links it; a project imported before is loaded again without asking, as IntelliJ syncs a
-    /// linked project when it opens.
+    /// IntelliJ's auto-link (`UnlinkedProjectStartupActivity`): a project opened with a single
+    /// build tool's scripts is linked and loaded without asking; with both Maven's and Gradle's,
+    /// each has its "build scripts found" notification, whose Load links the project with it. A
+    /// project imported before is loaded again, as IntelliJ syncs a linked project when it opens.
     fn announce(&mut self, cx: &mut Context<Self>) {
-        let (Some(tool), Some(root)) = (self.tool, self.root.clone()) else {
+        let (Some(_), Some(root)) = (self.tool, self.root.clone()) else {
             return;
         };
         if self.announced {
@@ -388,27 +429,35 @@ impl JavaProject {
             });
             return;
         }
-        if jdtls::project_data(&root, "workspaces").exists() {
+        if self.found.len() == 1 || jdtls::project_data(&root, "workspaces").exists() {
             self.load(cx);
             return;
         }
         let this = cx.entity().downgrade();
-        let title = format!("{} '{}' build scripts found", tool.name(), self.name());
+        let name = self.name();
         workspace.update(cx, |workspace, cx| {
-            workspace.show_notification(NotificationId::unique::<BuildScriptsFound>(), cx, |cx| {
-                cx.new(|cx| {
-                    let load = this.clone();
-                    // IntelliJ's balloon has the title alone, its help behind a "?"
-                    MessageNotification::new(title.clone(), cx)
-                        .primary_message(format!("Load {} Project", tool.name()))
-                        .primary_on_click(move |_, cx| {
-                            load.update(cx, |this, cx| this.load(cx)).ok();
-                            cx.emit(gpui::DismissEvent);
-                        })
-                        .secondary_message("Skip")
-                        .secondary_on_click(|_, cx| cx.emit(gpui::DismissEvent))
-                })
-            });
+            for tool in self.found.clone() {
+                let title = format!("{} '{name}' build scripts found", tool.name());
+                let id = NotificationId::composite::<BuildScriptsFound>(tool.name());
+                let this = this.clone();
+                workspace.show_notification(id, cx, |cx| {
+                    cx.new(|cx| {
+                        // IntelliJ's balloon has the title alone, its help behind a "?"
+                        MessageNotification::new(title, cx)
+                            .primary_message(format!("Load {} Project", tool.name()))
+                            .primary_on_click(move |_, cx| {
+                                this.update(cx, |this, cx| {
+                                    this.tool = Some(tool);
+                                    this.load(cx);
+                                })
+                                .ok();
+                                cx.emit(gpui::DismissEvent);
+                            })
+                            .secondary_message("Skip")
+                            .secondary_on_click(|_, cx| cx.emit(gpui::DismissEvent))
+                    })
+                });
+            }
         });
     }
 
@@ -422,7 +471,10 @@ impl JavaProject {
         }
         if let Some(workspace) = self.workspace.upgrade() {
             workspace.update(cx, |workspace, cx| {
-                workspace.dismiss_notification(&NotificationId::unique::<BuildScriptsFound>(), cx)
+                for tool in [Tool::Maven, Tool::Gradle] {
+                    let id = NotificationId::composite::<BuildScriptsFound>(tool.name());
+                    workspace.dismiss_notification(&id, cx)
+                }
             });
         }
         if self.tool == Some(Tool::Gradle) {
@@ -468,6 +520,7 @@ impl JavaProject {
                     this.update(cx, |this, cx| {
                         this.language_server = Some((buffer, handle));
                         this.show_libraries(cx);
+                        crate::spring_boot::imported(this, cx);
                         cx.notify();
                     })
                     .ok();
@@ -476,6 +529,31 @@ impl JavaProject {
             }
         });
         cx.notify();
+    }
+
+    /// Restarts the project's JDT LS on the JDK and settings the project has now, when it runs.
+    pub fn restart_language_server(&mut self, cx: &mut Context<Self>) {
+        let buffers: Vec<Entity<Buffer>> = self
+            .project
+            .read(cx)
+            .opened_buffers(cx)
+            .into_iter()
+            .filter(|buffer| {
+                buffer
+                    .read(cx)
+                    .language()
+                    .is_some_and(|language| language.name().as_ref() == "Java")
+            })
+            .collect();
+        if buffers.is_empty() || self.language_server(cx).is_none() {
+            return;
+        }
+        let only = collections::HashSet::from_iter([lsp::LanguageServerSelector::Name(
+            jdtls::SERVER_NAME,
+        )]);
+        self.project.update(cx, |project, cx| {
+            project.restart_language_servers_for_buffers(buffers, only, cx)
+        });
     }
 
     /// The project's JDT LS, once it runs.
@@ -547,6 +625,7 @@ impl JavaProject {
             .notify::<ProjectConfigurationUpdate>(lsp::TextDocumentIdentifier { uri })
             .log_err();
         self.show_libraries(cx);
+        crate::spring_boot::imported(self, cx);
     }
 
     /// External Libraries: once JDT LS has imported the project, its JDK and the jars of its
@@ -942,7 +1021,7 @@ impl JavaProject {
     }
 
     /// The test classpath (the main and test dependencies) of the module that holds `file`.
-    fn test_classpath(&self, file: &Path, cx: &App) -> Task<Result<Vec<String>>> {
+    pub(crate) fn test_classpath(&self, file: &Path, cx: &App) -> Task<Result<Vec<String>>> {
         self.classpath_of_scope(file, "test", cx)
     }
 
@@ -1006,14 +1085,16 @@ pub(crate) struct JavaFolderRoles(
 );
 
 /// A root's folder in a project, its file icon, and whether packages are under it.
-const ROOTS: [(&str, &str, bool); 4] = [
+const ROOTS: [(&str, &str, bool); 6] = [
     ("src/main/java", "icons/file_icons/source_root.svg", true),
+    ("src/main/kotlin", "icons/file_icons/source_root.svg", true),
     (
         "src/main/resources",
         "icons/file_icons/resources_root.svg",
         false,
     ),
     ("src/test/java", "icons/file_icons/test_root.svg", true),
+    ("src/test/kotlin", "icons/file_icons/test_root.svg", true),
     (
         "src/test/resources",
         "icons/file_icons/test_resources_root.svg",
@@ -1048,6 +1129,36 @@ impl JavaFolderRoles {
         })
     }
 
+    /// The Spring Boot configuration file icon of `application*.properties|yml|yaml` and
+    /// `bootstrap*…` in a linked Spring Boot project's resource roots.
+    fn spring_boot_file_icon(&self, abs_path: &Path) -> Option<&'static str> {
+        let ((_, packages), _) = self.root_of(abs_path.parent()?)?;
+        let name = abs_path.file_name()?.to_str()?;
+        let (stem, extension) = name.rsplit_once('.')?;
+        if packages
+            || !["application", "bootstrap"]
+                .iter()
+                .any(|n| stem.starts_with(n))
+        {
+            return None;
+        }
+        let project = self
+            .0
+            .read()
+            .ok()?
+            .iter()
+            .find(|project| abs_path.starts_with(project))?
+            .clone();
+        if !crate::spring_boot::is_project(&project) {
+            return None;
+        }
+        match extension {
+            "properties" => Some("icons/file_icons/spring_boot_properties.svg"),
+            "yml" | "yaml" => Some("icons/file_icons/spring_boot_yaml.svg"),
+            _ => None,
+        }
+    }
+
     /// The source root with packages (`src/main/java`, `src/test/java`) `abs_path` is or is in.
     fn source_root_of(&self, abs_path: &Path) -> Option<PathBuf> {
         let roots = self.0.read().ok()?;
@@ -1075,6 +1186,10 @@ impl JavaFolderRoles {
 impl project_panel::FolderRoles for JavaFolderRoles {
     fn icon(&self, abs_path: &Path) -> Option<gpui::SharedString> {
         if let Some((_, icon)) = self.library_row(abs_path) {
+            return Some(icon.into());
+        }
+        // Spork IDE: Spring Boot's configuration files in a linked project's resources
+        if let Some(icon) = self.spring_boot_file_icon(abs_path) {
             return Some(icon.into());
         }
         match self.root_of(abs_path)? {
@@ -1213,9 +1328,21 @@ impl lsp::notification::Notification for ProjectConfigurationUpdate {
 
 #[cfg(test)]
 mod tests {
-    use super::JavaFolderRoles;
+    use super::{JavaFolderRoles, Tool};
     use project_panel::FolderRoles as _;
     use std::path::Path;
+
+    #[test]
+    fn finds_each_build_tool_at_the_root() -> std::io::Result<()> {
+        let root = tempfile::tempdir()?;
+        assert!(Tool::detect_all(root.path()).is_empty());
+        std::fs::write(root.path().join("build.gradle.kts"), "")?;
+        assert_eq!(Tool::detect_all(root.path()), [Tool::Gradle]);
+        std::fs::write(root.path().join("pom.xml"), "")?;
+        assert_eq!(Tool::detect_all(root.path()), [Tool::Maven, Tool::Gradle]);
+        assert_eq!(Tool::detect(root.path()), Some(Tool::Maven));
+        Ok(())
+    }
 
     #[test]
     fn a_linked_projects_roots_and_packages_have_their_roles() {

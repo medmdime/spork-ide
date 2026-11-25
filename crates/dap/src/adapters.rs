@@ -354,6 +354,12 @@ pub trait DebugAdapter: 'static + Send + Sync {
         None
     }
 
+    /// Spork IDE: the `adapterID` its `initialize` request sends, when the adapter answers to
+    /// another id than its name (the Kotlin language server's `intellij_jvm`).
+    fn dap_adapter_id(&self) -> Option<String> {
+        None
+    }
+
     /// Extracts the kind (attach/launch) of debug configuration from the given JSON config.
     /// This method should only return error when the kind cannot be determined for a given configuration;
     /// in particular, it *should not* validate whether the request as a whole is valid, because that's best left to the debug adapter itself to decide.

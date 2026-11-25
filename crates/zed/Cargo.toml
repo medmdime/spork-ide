@@ -198,6 +198,7 @@ spork_e2e.workspace = true
 spork_docker.workspace = true
 spork_editor.workspace = true
 spork_java.workspace = true
+spork_kotlin.workspace = true
 spork_navigate.workspace = true
 spork_tool_windows.workspace = true
 spork_local_history.workspace = true

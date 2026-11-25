@@ -57,7 +57,7 @@ trademark.
 | 8 | Tests | An end-to-end scenario for every functionality. |
 | 9 | A second reference app | IntelliJ IDEA Community Edition 2025.2.5 (installed), catalogued the way the reference app was. The reference app is built from a newer platform (263), so where the two differ the reference app decides. |
 | 10 | Public GitHub fork | Later, when the user says. Releases (2026-11-25): each wave's tag is published on a public release mirror, [medmdime/spork-ide](https://github.com/medmdime/spork-ide), one commit per release without the third-party catalogues (`script/publish-mirror`), its downloads built by `.github/workflows/release.yml`. |
-| 11 | Java, Kotlin, Maven and Gradle (366 tasks) | In scope, the Eclipse way under IntelliJ's interface: Eclipse's engines (the JDT language server, with m2e for Maven and Buildship for Gradle) behind IntelliJ's tool windows, dialogs and actions (phase 10). Eclipse has no maintained Kotlin engine: Kotlin's is chosen when phase 10 gets there. |
+| 11 | Java, Kotlin, Maven and Gradle (366 tasks) | In scope, the Eclipse way under IntelliJ's interface: Eclipse's engines (the JDT language server, with m2e for Maven and Buildship for Gradle) behind IntelliJ's tool windows, dialogs and actions (phase 10). Eclipse has no maintained Kotlin engine: Kotlin's is JetBrains' Kotlin language server, downloaded onto the user's machine, with its own debugger (2026-11-25, phase 10e). |
 | 12 | Zed's extension registry | Kept for now: the Plugins page lists and downloads extensions from `api.zed.dev/extensions`, and the app checks it for updates at startup, the one Zed service Spork IDE still calls. A registry of our own may come later. |
 | 13 | Darcula and IntelliJ Light | Keep the names, as IntelliJ has them. |
 | 14 | How much of Zed to keep | Zed's engines only, "the nice to have": the debugger, the language servers, the editor core, the plugin system, remote development over SSH (the remote server) and the other hard functionality. Zed's UI is replaced by the components Spork and Spork IDE share (Spork is the reference for every surface it has; one implementation each, the same scrolling) and deleted where replaced. Our own engines come in a later step. The reference app is IntelliJ IDEA 2026.3 (the paid edition) besides the 2025.2.5 CE catalogue. |
@@ -449,6 +449,41 @@ containers, Docker run configurations and Dockerfile and Compose file support, t
 Dashboard's editing, the Files tab's editing, downloads and uploads, the Docker plugin's own icons (generic platform
 icons stand in).
 
+**The debugger wave, Java (2026-11-25).** Done (`spork_java`'s `debugger.rs`, `spork_run`, hooks in `debugger_ui`;
+`research/jvm-debugger.md` is the gap report it follows): Java's debugger behaves as IntelliJ's on java-debug (the
+Application, Spring Boot, JUnit and Remote JVM Debug configurations; Kotlin has its own server's debugger), every
+feature tested on the real java-debug (the `java-debug-*` scenarios on the fixtures' `Debuggee`, Maven's and
+Gradle's), not on `dap_fixture.py`. Zed's debugger reaches java-debug through a proxy of the debug adapter protocol on
+the loopback that gives it IntelliJ's behaviour where the protocol leaves java-debug free: Suspend: All (a stop pauses
+the other threads, Resume Program resumes them all, Pause Program suspends the VM, a step runs the other threads),
+logging breakpoints that keep their condition, with IntelliJ's "Breakpoint reached at
+com.example.Debuggee.measure(Debuggee.java:44)" and "Evaluate and log" as an expression, "Breakpoint Condition
+Error"'s question at each stop where a condition fails, threads, frames and values in IntelliJ's form (`"main"@1`,
+`hello:9, Greeting (com.example)`, `{ArrayList@23}  size = 3`, a frame's single "Local" scope flattened). IntelliJ's
+stepping filters (Step Into skips `java.*` and the others, synthetic methods); Force Step Into (⌥⇧F7) without them;
+library and JDK frames hidden by default, each run folded into "N hidden frames", opened read-only from JDT LS's
+class file contents (attached or decompiled source); the program in a terminal of its own as the Console tab, with its
+input, its command line, "Connected to the target VM…", the debugger's own output, "Disconnected from the target VM…"
+and "Process finished with exit code N"; Java Exception Breakpoints' "Any exception" with its Caught and Uncaught
+notifications in the Breakpoints dialog before any session; HotSwap: IntelliJ's "Reload Changed Classes for …"
+question after JDT LS builds changed classes during a session, Reload Changed Classes (Find Action), "N classes
+reloaded", "Loaded classes are up to date. Nothing to reload." and "HotSwap failed"; Remote JVM Debug, a configuration
+type (Debugger mode, Host, Port, the JVM's command line arguments to copy) attaching java-debug to a JVM's JDWP agent,
+Stop detaching; Attach to Process listing the JVMs whose agent listens, as `com.example.Main (5005)` under Java, their
+session named `localhost:5005`; the JUnit configuration type (JUnit 4's runner on the test classpath, run and
+debugged); the thread chooser, the frames' popup (Reset Frame, Copy Stack, Hide Frames from Libraries) and the
+variables' popup in IntelliJ's items (Set Value…, Copy Value, Copy Name, Evaluate Expression…, Add to Watches, Toggle
+Field Watchpoint, Zed's write data breakpoint, untested on Java), each item java-debug can't serve greyed; Java's
+inline values (a `debugger.scm`). Left (P0/P1 of
+the report): Suspend: Thread per breakpoint and log + suspend together (Zed's breakpoint store has no such property),
+the exit code after Stop (java-debug 0.53.1's `vm.exit(0)`), method breakpoints and IntelliJ's field watchpoints in
+the Breakpoints dialog (the store has no breakpoint kinds), the floating "Code changed:" HotSwap toolbar, inline
+values after the line's end (Zed's editor draws them after each name), thread groups and states, Smart Step Into in
+place and on lambdas, Run to Cursor on a line number, temporary and dependent breakpoints, lambda breakpoints, the
+Debugger settings pages, Debug for Maven goals and Gradle tasks, "Attach debugger" in a console, JUnit 5 and TestNG and
+IntelliJ's test tree. java-debug listens on every network interface without authentication (its `ServerSocket(0,
+1)`): only a patched java-debug can bind it to the loopback, a decision for the user.
+
 ### Phase 9: settings
 
 The Settings dialog over Zed's settings (one store), Keymap, Plugins, Appearance; every page from the extended
@@ -564,6 +599,101 @@ Recompile in the Build menu; Unlink, Ignore, Tasks Activation, Composite Build C
 Gradle's menus; Show Gradle Daemons, Migrate Project to Daemon JVM Criteria, Generate Javadoc…, JShell Console…,
 Maven's Execute Before Run/Debug…, Assign Shortcut… and Run Configurations node; HTML's closing tags and tag rename
 (the HTML language server's), Surround with Tag in a floating code toolbar.
+
+**Phase 10d, the JDK wave (2026-11-25).** Done (`spork_java`): Download JDK… as IntelliJ's dialog (Version, Vendor
+with the version's vendors by name and the others' nearest release under Other Versions, Location in IntelliJ's
+folder, `~/Library/Java/JavaVirtualMachines/<vendor>-<version>` on macOS and `~/.jdks` elsewhere, the archive's size,
+IntelliJ's checks) on the Foojay Disco API, each archive's checksum verified (the Disco API's, its checksum file's,
+Corretto's and SapMachine's own) before it is unpacked, the archive deleted once unpacked (the end-to-end tests keep
+theirs, `SPORK_IDE_KEEP_JDK_ARCHIVES`), as a background task in the status bar that its × cancels;
+offered in the banner's Setup SDK (now enabled), Project Structure's Add SDK ▸ Download JDK… and SDKs page, and the
+Application configuration's JRE field; `jdk_download::download_jdk` is the same install without the dialog. The SDK
+table (`jdk.table.json`) and IntelliJ's names for JDKs (`zulu-17`, from the `release` file's vendor). File › Project
+Structure… (⌘;): Project (Name, SDK with Edit, Language level with IntelliJ's full list and descriptions, Compiler
+output), Modules (the module's Language level on Sources, Module SDK on Dependencies), Platform Settings › SDKs (add,
+remove, rename, the JDK home path). The project's JDK (or its module's) runs JDT LS, which gets every JDK as
+`java.configuration.runtimes`, the Application configurations and the Maven and Gradle runs (`JAVA_HOME`, Gradle's
+JVM); `jdk::for_project` is the project JDK for the other engines. A Maven or Gradle project's language level is
+written to its build file as it sets one (`maven.compiler.release`, `source`/`target`, the compiler plugin's
+configuration; the Gradle toolchain or `sourceCompatibility`; IntelliJ's compiler plugin configuration or a `java`
+block when it sets none), then synced; a plain folder's goes to JDT LS's compiler options; JDT LS's "only available
+with source level N" error gets IntelliJ's "Set language level to N - …" quick fix. Settings › Build, Execution,
+Deployment › Compiler › Kotlin Compiler with IntelliJ's fields, a Kotlin build's language version, API version, JVM
+target and Kotlin version written to its build file (`compilerOptions`, `kotlin.compiler.*` or the Kotlin plugin's
+configuration). Left: Project Structure's Libraries, Facets, Artifacts, Global Libraries and Problems, a module's
+Paths tab and content roots, several modules, an SDK's Classpath, Sourcepath, Annotations and Documentation Paths;
+"SDK default" for a build file leaves its level as written, a preview level writes no `--enable-preview`, the
+LTS levels aren't bold; Early-Access and JavaFX JDKs, IntelliJ's own runtime, JDK update notifications; the quick
+fix sits after the intentions in the popup; the Kotlin Compiler's other options are kept for the project but not
+written to the build.
+
+**Phase 10e, Kotlin (2026-11-25).** Kotlin's engine is JetBrains' Kotlin language server (`Kotlin/kotlin-lsp`,
+IntelliJ's own Kotlin analysis and JVM debugger run headless, the "Kotlin language server" in the UI): under
+JetBrains' licence, so never bundled; Spork IDE downloads its newest release from JetBrains onto the user's machine
+(`languages/Kotlin language server`, checked against its SHA-256, the older builds removed) and, as each build expires
+about a month after its release, sets an expired one aside with a balloon and fetches the newest; it runs without its
+statistics (`env -u INTELLIJ_DATA_SHARING …`, `--data-sharing=none`). Done (`crates/spork_kotlin`, hooks in
+`spork_java`, `spork_run`, `project` and `dap`): Kotlin's language (fwcd's tree-sitter-kotlin, Zed's Kotlin
+extension's queries); Kotlin detected in the Load flow (a build that declares it, or `.kt` files) and the server
+started on Load for Gradle (Kotlin DSL and Groovy) and Maven, Kotlin-only and mixed with Java, its import and indexing
+in the status bar; diagnostics, completion (Java's members from Kotlin too) and the LSP menus phase 7 builds;
+`src/main/kotlin` and `src/test/kotlin` as source and test roots; the gutter's run icon on `main` (top level, an
+`object`'s or a companion's) run by the project's tool, IntelliJ's "Build and run using: Gradle" (a `MainKt.main()`
+`JavaExec` task an init script adds) or Maven (`compile`, then `java` on the runtime classpath through the exec
+plugin), its popup's Debug through a debug locator (not yet checked end to end); the Kotlin run configuration (Main
+class, VM options, Program arguments, Working directory, Environment variables) in the Run/Debug Configurations
+dialog, run in the Run tool window and debugged in the Debug tool window by the server's debug adapter: breakpoints in
+top-level functions, inlined lambdas, classes and the Java classes of a mixed project, stepping, Kotlin expressions in
+watches and evaluation, frames as IntelliJ writes them (`greet:13, MainKt (com.example)`), Stop; New ▸ Kotlin
+Class/File (IntelliJ's popup, kinds, templates and name checks). Left: the form's "Use classpath of module:", "JRE:"
+and "Shorten command line:" and the Gradle module of a configuration (the root project's is used), test gutters and
+runs, Kotlin function breakpoints, property watchpoints and lambda variants, coroutine stacks as frames and the
+Coroutines view, Refactor ▸ Extract/Introduce's Kotlin items, Convert Java to Kotlin, the Kotlin Generate items,
+"Kotlin is not configured", the `build.gradle.kts` task gutter, Kotlin Bytecode, scratch files and scripts, Languages
+& Frameworks › Kotlin; a project without Kotlin files isn't analysed until one is opened.
+
+**Spring Boot, the Spring wave (2026-11-25).** IntelliJ IDEA 2026.3's Spring Boot (its paid edition's plugin) on Spring
+Tools' Spring Boot language server (EPL-1.0, the `vscode-spring-boot` 2.4.1 vsix from Open VSX, SHA-256 checked,
+downloaded once a Spring Boot project opens), bridged to JDT LS as VS Code runs it (its bundles in JDT LS, its `sts/*`
+requests answered by JDT LS's commands, JDT LS's classpath callbacks run by it). Done (`crates/spork_java`'s
+`spring_boot.rs`, `spring_boot_ls.rs`, `actuator.rs`; hooks in `spork_run` and `spork_settings`):
+a Spring Boot project found when it opens (its build file names Spring Boot), both servers run on a JDK 21 or newer (Temurin's,
+through `jdk_download::download_jdk` into the data folder's `jdks`, when the machine has none, never offered as a
+project's JDK; the project still builds and runs on its own);
+on each import a **Spring Boot** run configuration for each application without one (a class annotated
+`@SpringBootApplication` or `@EnableAutoConfiguration` whose `main` starts Spring), named after its class and selected,
+unless Settings › Languages & Frameworks › Spring › Spring Boot › Project Import › "Create run configuration
+automatically" is off; the Spring Boot type (Add New Configuration, its form with the Spring group of Modify options:
+Active profiles, Enable debug output, Hide banner, Disable launch optimization, Disable JMX endpoints, Override
+configuration properties as IntelliJ's table; IntelliJ's VM options, ANSI colours, the JMX endpoints, a
+`spork.boot.process` marker; its checks), Run and Debug through java-debug, the gutter's run on a Spring Boot `main`
+making (and selecting) its Spring Boot configuration; Services shows Spring Boot configurations by default under
+"Spring Boot", a starting application's node until `Started … in` and then its port's link (`:8080/`), Edit Default
+Path ("Configure Default Path"); the Actuator tab beside the console in Services (Beans with Bean definition, Injected
+into and Depends on, Health, Mappings, Environment, Refresh, "Updated at", the library filters; "Spring Boot Actuator
+is not enabled." with its link adding the starter and "Restart application", "Mapping endpoint is not enabled."),
+read as IntelliJ reads it, attaching to the application's JVM and calling its endpoint MBeans over JMX;
+`application*.properties` and `application*.yml` as languages of their own (Properties on tree-sitter-properties)
+with the Spring Boot configuration file icon, completion, quick documentation, validation in IntelliJ's messages
+and go to declaration from the Spring LS. Left: Update Running Application and the On 'Update' action / On frame
+deactivation policies, New Project › Spring Boot (Initializr), the request-mapping, bean and autowiring gutters, the
+Endpoints and Beans tool windows, go to declaration into a library's class (`jdt://` sources), JMX authentication and
+the Scheduled debugger, Show/Hide Values, the Actuator tab in the Run and Debug tool windows (it is in Services, where
+Spring Boot runs show), the YAML and Properties names IntelliJ shows for the two languages.
+
+**The debugger wave (2026-11-25).** IntelliJ's auto-link: a project opened with one build tool's scripts (Maven's
+or Gradle's) is linked and loaded without a notification; with both, each has its "build scripts found" notification
+with Load and Skip (`java-build-scripts-found`). Java's debugger as IntelliJ's: phase 8's debugger wave paragraph.
+
+**The fixes before alpha.2 (2026-11-25).** java-debug's DAP server listens on the loopback interface only (its
+`JavaDebugServer` patched from source in `crates/spork_java/java-debug-patch`, put into the official jar at install,
+`PATCHES.md`); the Spring Boot language server's configuration file problems are warnings, as IntelliJ's two
+inspections report them; `application*.properties` and `.yml` are Spring Boot's languages in a Spring Boot project only,
+plain Properties and YAML with no Spring server elsewhere (`spring-boot-not-spring`); the Spring servers' JDK is
+downloaded into the data folder's `jdks`, never offered as a project's JDK; a downloaded JDK's archive is deleted once
+unpacked; `spring-boot-actuator-states` finds the Actuator tab before clicking it (a window's first accessibility
+lookup comes back empty). Left: the JDWP socket java-debug listens on while it launches a program to debug is on
+every interface until the program connects, a few seconds (Eclipse JDI's `SocketTransportService`, in JDT LS).
 
 ### Next (the user's plan, 2026-11-23)
 

@@ -62,6 +62,18 @@ const KINDS: [Kind; 6] = [
     },
 ];
 
+/// Another language's items of New in a source root (`spork_kotlin`'s Kotlin Class/File), after
+/// Java Class.
+static MORE_NEW_ITEMS: std::sync::OnceLock<fn(&Path, &Path) -> Vec<NewItem>> =
+    std::sync::OnceLock::new();
+
+/// Adds a language's items to New in a source root: `items(source_root, folder)`.
+pub fn add_new_items(items: fn(&Path, &Path) -> Vec<NewItem>) {
+    if MORE_NEW_ITEMS.set(items).is_err() {
+        log::error!("a language's New items were added twice");
+    }
+}
+
 /// What New offers in a folder of a source root: Java Class; package-info.java in a package
 /// that has none, module-info.java in a source root that has none.
 pub(crate) fn new_items(source_root: &Path, folder: &Path) -> Vec<NewItem> {
@@ -75,6 +87,9 @@ pub(crate) fn new_items(source_root: &Path, folder: &Path) -> Vec<NewItem> {
         },
         after: false,
     }];
+    if let Some(more) = MORE_NEW_ITEMS.get() {
+        items.extend(more(source_root, folder));
+    }
     let package = package_of(source_root, folder);
     let file = |name: &'static str, text: String| {
         let path = folder.join(name);
@@ -215,7 +230,7 @@ fn class_file(source_root: &Path, folder: &Path, name: &str, kind: &Kind) -> (Pa
 }
 
 /// Writes a new file (its folders too) and opens it in the editor.
-fn create_and_open(path: PathBuf, text: String, window: &mut Window, cx: &mut App) {
+pub fn create_and_open(path: PathBuf, text: String, window: &mut Window, cx: &mut App) {
     let Some(workspace) = Workspace::for_window(window, cx) else {
         return;
     };

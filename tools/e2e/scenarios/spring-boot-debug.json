@@ -1,0 +1,149 @@
+{
+ "id": "spring-boot-debug",
+ "fixture": "spring-maven",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   },
+   "Spring Boot Properties": {
+    "enable_language_server": true
+   },
+   "Spring Boot YAML": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "run.configurations.names": [
+     "DemoApplication"
+    ],
+    "run.configurations.selected": "DemoApplication"
+   },
+   "within": 60000
+  },
+  {
+   "expect": {
+    "java.spring.classpath": true
+   },
+   "within": 300000
+  },
+  {
+   "do": "open",
+   "path": "src/main/java/com/example/demo/HelloController.java"
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/demo/HelloController.java",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "wait": 800
+  },
+  {
+   "do": "type",
+   "text": "13:9"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "expect": {
+    "run.breakpoints.0.at": "HelloController.java:13"
+   }
+  },
+  {
+   "find": {
+    "label": "Debug 'DemoApplication'",
+    "role": "AXButton",
+    "enabled": true
+   },
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-d"
+  },
+  {
+   "expect": {
+    "run.services.services.DemoApplication.status": "Running",
+    "run.services.services.DemoApplication.starting": false,
+    "run.services.services.DemoApplication.link": [
+     ":18081/",
+     "http://localhost:18081/"
+    ]
+   },
+   "within": 120000
+  },
+  {
+   "sh": "(curl -s -m 120 http://localhost:18081/hello > ../curl.out 2>&1 &)"
+  },
+  {
+   "expect": {
+    "run.debug.status": "Stopped",
+    "run.debug.label": "DemoApplication"
+   },
+   "within": 60000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-alt-r"
+  },
+  {
+   "sh": "cat ../curl.out",
+   "is": "Hello, world!",
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f2"
+  },
+  {
+   "expect": {
+    "run.debug.terminated": true
+   },
+   "within": 20000
+  }
+ ]
+}

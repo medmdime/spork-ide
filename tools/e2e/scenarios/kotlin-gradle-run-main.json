@@ -1,0 +1,82 @@
+{
+ "id": "kotlin-gradle-run-main",
+ "fixture": "kotlin-gradle",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Kotlin": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Gradle",
+    "kotlin.detected": true
+   },
+   "within": 20000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "kotlin.server.running": true
+   },
+   "within": 600000
+  },
+  {
+   "expect": {
+    "kotlin.server.busy": false
+   },
+   "within": 300000
+  },
+  {
+   "do": "open",
+   "path": "src/main/kotlin/com/example/Main.kt"
+  },
+  {
+   "expect": {
+    "active": "src/main/kotlin/com/example/Main.kt",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "expect": {
+    "kotlin.server.busy": false
+   },
+   "within": 60000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "shot": "gutter"
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-r"
+  },
+  {
+   "expect": {
+    "run.tabs.0.title": "MainKt",
+    "run.tabs.0.running": false,
+    "run.tabs.0.output": {
+     "contains": "> Task :MainKt.main()\nHello, world!\nHello, Kotlin!\n"
+    },
+    "run.tabs.0.last_line": "Process finished with exit code 0"
+   },
+   "within": 180000
+  }
+ ]
+}

@@ -1,0 +1,105 @@
+{
+ "id": "kotlin-groovy-run-main",
+ "fixture": "kotlin-groovy",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Kotlin": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Gradle",
+    "kotlin.detected": true
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "kotlin.server.running": true
+   },
+   "within": 600000
+  },
+  {
+   "expect": {
+    "kotlin.server.busy": false
+   },
+   "within": 300000
+  },
+  {
+   "do": "open",
+   "path": "src/main/kotlin/com/example/Main.kt"
+  },
+  {
+   "expect": {
+    "active": "src/main/kotlin/com/example/Main.kt",
+    "editor.language": "Kotlin",
+    "editor.diagnostics": []
+   },
+   "within": 60000
+  },
+  {
+   "file": "src/main/kotlin/com/example/Greeting.kt",
+   "text": "package com.example\n\n/** A greeting for someone. */\nclass Greeting(private val name: String) {\n    fun text(): String {\n        return \"Hello, $name!\"\n    }\n}\n\nfun shout(name: String) = Greeting(name).txt()\n"
+  },
+  {
+   "do": "open",
+   "path": "src/main/kotlin/com/example/Greeting.kt"
+  },
+  {
+   "expect": {
+    "active": "src/main/kotlin/com/example/Greeting.kt",
+    "editor.diagnostics": {
+     "contains": "error: Unresolved reference 'txt' on receiver of type 'Greeting'."
+    }
+   },
+   "within": 60000
+  },
+  {
+   "file": "src/main/kotlin/com/example/Greeting.kt",
+   "text": "package com.example\n\n/** A greeting for someone. */\nclass Greeting(private val name: String) {\n    fun text(): String {\n        return \"Hello, $name!\"\n    }\n}\n"
+  },
+  {
+   "expect": {
+    "editor.diagnostics": []
+   },
+   "within": 60000
+  },
+  {
+   "do": "open",
+   "path": "src/main/kotlin/com/example/Main.kt"
+  },
+  {
+   "expect": {
+    "active": "src/main/kotlin/com/example/Main.kt",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-r"
+  },
+  {
+   "expect": {
+    "run.tabs.0.title": "MainKt",
+    "run.tabs.0.running": false,
+    "run.tabs.0.output": {
+     "contains": "> Task :MainKt.main()\nHello, world!\nHello, Kotlin!\n"
+    },
+    "run.tabs.0.last_line": "Process finished with exit code 0"
+   },
+   "within": 180000
+  }
+ ]
+}

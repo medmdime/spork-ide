@@ -389,6 +389,25 @@ impl Editor {
             .into_any_element()
     }
 
+    // Spork IDE: another crate's code actions beside the language servers' (spork_java's "Set
+    // language level"), as upstream once had
+    pub fn add_code_action_provider(
+        &mut self,
+        provider: Rc<dyn CodeActionProvider>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if self
+            .code_action_providers
+            .iter()
+            .any(|existing| existing.id() == provider.id())
+        {
+            return;
+        }
+        self.code_action_providers.push(provider);
+        self.refresh_code_actions_for_selection(window, cx);
+    }
+
     pub(super) fn refresh_code_actions_for_selection(
         &mut self,
         window: &mut Window,

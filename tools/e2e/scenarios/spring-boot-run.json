@@ -1,0 +1,232 @@
+{
+ "id": "spring-boot-run",
+ "fixture": "spring-maven",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   },
+   "Spring Boot Properties": {
+    "enable_language_server": true
+   },
+   "Spring Boot YAML": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "run.configurations.names": [
+     "DemoApplication"
+    ],
+    "run.configurations.selected": "DemoApplication"
+   },
+   "within": 60000
+  },
+  {
+   "expect": {
+    "java.spring.classpath": true
+   },
+   "within": 300000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-r"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "Services",
+    "run.services.selected": "DemoApplication",
+    "run.services.services.DemoApplication.status": "Running"
+   },
+   "within": 60000
+  },
+  {
+   "expect": {
+    "run.services.services.DemoApplication.starting": false,
+    "run.services.services.DemoApplication.link": [
+     ":18081/",
+     "http://localhost:18081/"
+    ]
+   },
+   "within": 120000
+  },
+  {
+   "find": [
+    {
+     "label": "Spring Boot",
+     "in": "Services"
+    },
+    {
+     "label": "DemoApplication",
+     "in": "Services"
+    },
+    {
+     "label": ":18081/",
+     "role": "AXLink"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "expect": {
+    "run.tabs.0.title": "DemoApplication",
+    "run.tabs.0.running": true
+   }
+  },
+  {
+   "sh": "curl -s -m 10 http://localhost:18081/hello",
+   "is": "Hello, world!"
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "click",
+   "label": "Clear All",
+   "role": "AXButton",
+   "in": "ServiceViewItemToolbar"
+  },
+  {
+   "do": "click",
+   "label": "Console",
+   "role": "AXRadioButton"
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "services"
+  },
+  {
+   "do": "click",
+   "label": "DemoApplication",
+   "in": "Services",
+   "button": "right"
+  },
+  {
+   "menu": "RunDashboardPopup",
+   "items": [
+    "Run 'DemoApplication'",
+    "Debug 'DemoApplication'",
+    "Stop",
+    "Edit Default Path"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Edit Default Path",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Configure Default Path"
+   },
+   "within": 5000
+  },
+  {
+   "find": [
+    {
+     "label": "Default Path:",
+     "role": "AXTextField"
+    },
+    {
+     "label": "OK",
+     "role": "AXButton"
+    }
+   ]
+  },
+  {
+   "do": "type",
+   "text": "hello",
+   "window": "Configure Default Path"
+  },
+  {
+   "do": "activate",
+   "window": "Configure Default Path"
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "default-path",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "windows.1": null
+   },
+   "within": 5000
+  },
+  {
+   "sh": "cat .zed/debug.json",
+   "contains": "\"urlPath\": \"hello\"",
+   "within": 8000
+  },
+  {
+   "expect": {
+    "run.services.services.DemoApplication.link": [
+     ":18081/hello",
+     "http://localhost:18081/hello"
+    ]
+   },
+   "within": 10000
+  },
+  {
+   "find": {
+    "label": ":18081/hello",
+    "role": "AXLink"
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f2"
+  },
+  {
+   "expect": {
+    "run.tabs.0.running": false
+   },
+   "within": 20000
+  }
+ ]
+}

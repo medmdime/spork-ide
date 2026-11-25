@@ -69,28 +69,126 @@ const JAVA_DEBUG: &str = "com.microsoft.java.debug.plugin-0.53.1.jar";
 const JAVA_DEBUG_URL: &str = "https://repo.maven.apache.org/maven2/com/microsoft/java/com.microsoft.java.debug.plugin/0.53.1/com.microsoft.java.debug.plugin-0.53.1.jar";
 const JAVA_DEBUG_SHA256: &str = "4f4778d452a6a0665536f43ce4e32403a24be6593336b80dc85a322912859e24";
 
+/// java-debug as installed: the official jar patched ([`patch_java_debug`]). Its own name, so an
+/// unpatched jar installed before is replaced, and JDT LS swaps the bundle at its new location.
+const JAVA_DEBUG_PATCHED: &str = "com.microsoft.java.debug.plugin-0.53.1-spork.jar";
+
+/// java-debug's `JavaDebugServer` built from `java-debug-patch/` (its source, EPL-1.0, and
+/// `build.sh`): the official one listens on every interface, unauthenticated, for JDT LS's whole
+/// life, so anyone on the network could send DAP `launch` with their own `javaExec`; this one
+/// listens on the loopback interface only.
+const JAVA_DEBUG_PATCH: [(&str, &[u8]); 3] = [
+    (
+        "com/microsoft/java/debug/plugin/internal/JavaDebugServer.class",
+        include_bytes!("../java-debug-patch/JavaDebugServer.class"),
+    ),
+    (
+        "com/microsoft/java/debug/plugin/internal/JavaDebugServer$1.class",
+        include_bytes!("../java-debug-patch/JavaDebugServer$1.class"),
+    ),
+    (
+        "com/microsoft/java/debug/plugin/internal/JavaDebugServer$2.class",
+        include_bytes!("../java-debug-patch/JavaDebugServer$2.class"),
+    ),
+];
+
 /// Where java-debug is kept, beside the server's releases.
 pub fn java_debug_jar(container: &Path) -> PathBuf {
-    container.join("java-debug").join(JAVA_DEBUG)
+    container.join("java-debug").join(JAVA_DEBUG_PATCHED)
 }
 
-/// java-debug, downloaded the first time JDT LS starts.
+/// java-debug, downloaded the first time JDT LS starts, checked, then patched.
 async fn fetch_java_debug(delegate: &Arc<dyn LspAdapterDelegate>) -> Option<PathBuf> {
     let container = delegate.language_server_download_dir(&SERVER_NAME).await?;
     let jar = java_debug_jar(&container);
     if !jar.is_file() {
+        let folder = container.join("java-debug");
         download_server_raw_binary(
             delegate.background_executor(),
             delegate.http_client(),
             JAVA_DEBUG_URL,
             Some(JAVA_DEBUG_SHA256),
-            &container.join("java-debug"),
+            &folder,
             JAVA_DEBUG,
         )
         .await
         .log_err()?;
+        install_java_debug(&folder.join(JAVA_DEBUG), &jar)
+            .await
+            .log_err()?;
     }
     Some(jar)
+}
+
+/// Patches the downloaded `official` jar into `jar`, then removes the official one.
+async fn install_java_debug(official: &Path, jar: &Path) -> Result<()> {
+    let patched = patch_java_debug(smol::fs::read(official).await?).await?;
+    // written aside then moved in: a half-written jar would pass for an installed one
+    let part = jar.with_extension("jar.part");
+    smol::fs::write(&part, patched).await?;
+    smol::fs::rename(&part, jar).await?;
+    smol::fs::remove_file(official).await?;
+    Ok(())
+}
+
+/// The jar with [`JAVA_DEBUG_PATCH`]'s classes in place of its own and its signature files
+/// (`META-INF/*.SF`, `.RSA`, `.DSA`, `.EC`) left out, so the JDK no longer checks its entries
+/// against the manifest's digests. The manifest keeps them: without signature files they are
+/// inert, and JDT LS's Equinox verifies no bundle (neither `osgi.signedcontent.support` nor
+/// `osgi.support.signature.verify` is set).
+async fn patch_java_debug(official: Vec<u8>) -> Result<Vec<u8>> {
+    use async_zip::ZipEntryBuilder;
+    use async_zip::base::{read::mem::ZipFileReader, write::ZipFileWriter};
+
+    let reader = ZipFileReader::new(official)
+        .await
+        .context("reading java-debug's jar")?;
+    let mut writer = ZipFileWriter::new(Vec::new());
+    let mut replaced = 0;
+    for (ix, entry) in reader.file().entries().iter().enumerate() {
+        let name = entry
+            .filename()
+            .as_str()
+            .context("reading a name in java-debug's jar")?;
+        let signature = name.starts_with("META-INF/")
+            && [".SF", ".RSA", ".DSA", ".EC"]
+                .iter()
+                .any(|extension| name.ends_with(extension));
+        if signature {
+            continue;
+        }
+        let data = match JAVA_DEBUG_PATCH
+            .iter()
+            .find(|(patched, _)| *patched == name)
+        {
+            Some((_, class)) => {
+                replaced += 1;
+                class.to_vec()
+            }
+            None => {
+                let mut data = Vec::new();
+                reader
+                    .reader_with_entry(ix)
+                    .await?
+                    .read_to_end_checked(&mut data)
+                    .await
+                    .with_context(|| format!("reading {name} in java-debug's jar"))?;
+                data
+            }
+        };
+        writer
+            .write_entry_whole(
+                ZipEntryBuilder::new(name.to_owned().into(), entry.compression())
+                    .last_modification_date(*entry.last_modification_date()),
+                &data,
+            )
+            .await?;
+    }
+    anyhow::ensure!(
+        replaced == JAVA_DEBUG_PATCH.len(),
+        "java-debug's jar lacks the classes Spork IDE patches"
+    );
+    Ok(writer.close().await?)
 }
 
 /// IntelliJ's notice when no JDK can run Java (`project.sdk.not.defined`).
@@ -106,8 +204,33 @@ pub struct JdtlsVersion {
 
 async fn find_jdk(delegate: &Arc<dyn LspAdapterDelegate>) -> Option<Jdk> {
     let env = delegate.shell_env().await;
-    let jdk = jdk::for_project(delegate.worktree_root_path(), &env)?;
-    (jdk.major >= 17).then_some(jdk)
+    server_jdk(delegate.worktree_root_path(), &env)
+}
+
+/// The JDK JDT LS runs on: the project's when it can (17 or newer), else the newest that can; a
+/// project on an older JDK still builds on its own through `java.configuration.runtimes`.
+fn server_jdk(root: &Path, env: &HashMap<String, String>) -> Option<Jdk> {
+    jdk::for_module(root, env)
+        .filter(|jdk| jdk.major >= 17)
+        .or_else(|| jdk::find(env).into_iter().find(|jdk| jdk.major >= 17))
+}
+
+/// The JDK the server runs on: [`find_jdk`]'s, or for a Spring Boot project, whose bundles need
+/// Java 21, one of 21 or newer ([`crate::spring_boot_ls::runtime_jdk`]); the project still builds
+/// on its own through `java.configuration.runtimes`.
+// Spork IDE: Spring Boot
+async fn engine_jdk(delegate: &Arc<dyn LspAdapterDelegate>) -> Option<Jdk> {
+    let jdk = find_jdk(delegate).await?;
+    if jdk.major >= crate::spring_boot_ls::JAVA_NEEDED
+        || !crate::spring_boot::is_project(delegate.worktree_root_path())
+    {
+        return Some(jdk);
+    }
+    let env = delegate.shell_env().await;
+    crate::spring_boot_ls::runtime_jdk(&env, delegate.http_client())
+        .await
+        .log_err()
+        .or(Some(jdk))
 }
 
 fn install_dir(container: &Path, version: &str) -> PathBuf {
@@ -271,7 +394,7 @@ impl LspInstaller for JdtlsAdapter {
         _: Option<Toolchain>,
         _: &AsyncApp,
     ) -> Option<LanguageServerBinary> {
-        let jdk = find_jdk(delegate).await?;
+        let jdk = engine_jdk(delegate).await?;
         let container = delegate.language_server_download_dir(&SERVER_NAME).await?;
         let (_, install) = installed_for(&container, jdk.major)?;
         command(&install, &jdk, delegate.worktree_root_path()).ok()
@@ -283,7 +406,7 @@ impl LspInstaller for JdtlsAdapter {
         _: bool,
         _: &mut AsyncApp,
     ) -> Result<JdtlsVersion> {
-        let jdk = find_jdk(delegate).await.context(NO_JDK)?;
+        let jdk = engine_jdk(delegate).await.context(NO_JDK)?;
         let version = match release_for(jdk.major).context(NO_JDK)? {
             Some(pinned) => pinned.to_owned(),
             None => newest_release(&delegate.http_client()).await?,
@@ -341,16 +464,73 @@ impl LspInstaller for JdtlsAdapter {
         delegate: &dyn LspAdapterDelegate,
     ) -> Option<LanguageServerBinary> {
         let env = delegate.shell_env().await;
-        let jdk =
-            jdk::for_project(delegate.worktree_root_path(), &env).filter(|jdk| jdk.major >= 17)?;
+        let root = delegate.worktree_root_path();
+        let jdk = server_jdk(root, &env)?;
+        // Spork IDE: Spring Boot's servers' JDK, when one is there
+        let jdk = match jdk.major < crate::spring_boot_ls::JAVA_NEEDED
+            && crate::spring_boot::is_project(root)
+        {
+            true => crate::spring_boot_ls::installed_runtime_jdk(&env).unwrap_or(jdk),
+            false => jdk,
+        };
         let (_, install) = installed_for(&container_dir, jdk.major)?;
         command(&install, &jdk, delegate.worktree_root_path()).ok()
     }
 }
 
+/// JDT LS's name of a release's execution environment: `JavaSE-1.8`, `JavaSE-21`.
+fn execution_environment(major: u32) -> String {
+    format!("JavaSE-{}", jdk::feature_text(major))
+}
+
+/// The JDKs JDT LS builds on (`java.configuration.runtimes`), one per execution environment, the
+/// project's the default: what its Maven and Gradle imports bind each project's release to.
+fn runtimes(project: Option<&Jdk>, found: &[Jdk]) -> Value {
+    let mut seen = collections::HashSet::default();
+    project
+        .into_iter()
+        .chain(found)
+        .filter(|jdk| seen.insert(jdk.major))
+        .map(|jdk| {
+            json!({
+                "name": execution_environment(jdk.major),
+                "path": jdk.home,
+                "default": Some(jdk) == project,
+            })
+        })
+        .collect()
+}
+
+/// A plain folder's settings: its language level as the compiler options JDT LS reads
+/// (`java.settings.url`), and its compiler output.
+fn folder_settings(root: &Path) -> Value {
+    if crate::java_project::Tool::detect(root).is_some() {
+        return json!({});
+    }
+    let settings = crate::project_settings::ProjectSettings::load(root);
+    let output = settings
+        .compiler_output_or_default(root)
+        .strip_prefix(root)
+        .map(|output| output.to_string_lossy().into_owned())
+        .ok();
+    let url = crate::project_settings::language_level(root, None).and_then(|level| {
+        let file = project_data(root, "compiler").with_extension("prefs");
+        let folder = file.parent()?;
+        std::fs::create_dir_all(folder).log_err()?;
+        std::fs::write(&file, crate::project_settings::compiler_preferences(level)).log_err()?;
+        Some(file)
+    });
+    json!({
+        "java": {
+            "settings": {"url": url},
+            "project": {"outputPath": output},
+        }
+    })
+}
+
 /// JDT LS's settings (vscode-java's names) as Spork IDE runs it, the user's `lsp.jdtls.settings`
 /// over them.
-fn java_settings(jdk: Option<&Jdk>) -> Value {
+fn java_settings(jdk: Option<&Jdk>, project: Option<&Jdk>, found: &[Jdk]) -> Value {
     json!({
         "java": {
             "import": {
@@ -361,7 +541,10 @@ fn java_settings(jdk: Option<&Jdk>) -> Value {
                     "java": {"home": jdk.map(|jdk| jdk.home.to_string_lossy().into_owned())},
                 },
             },
-            "configuration": {"updateBuildConfiguration": "automatic"},
+            "configuration": {
+                "updateBuildConfiguration": "automatic",
+                "runtimes": runtimes(project, found),
+            },
             // IntelliJ's generated code: equals() and hashCode() on java.util.Objects,
             // toString() as `Person{name=…, age=…}`
             "codeGeneration": {
@@ -389,7 +572,19 @@ impl LspAdapter for JdtlsAdapter {
         let settings = self
             .workspace_configuration(delegate, None, None, cx)
             .await?;
-        let bundles: Vec<PathBuf> = fetch_java_debug(delegate).await.into_iter().collect();
+        let mut bundles: Vec<PathBuf> = fetch_java_debug(delegate).await.into_iter().collect();
+        // Spork IDE: Spring Boot's bundles, the Spring Boot language server's side in JDT LS
+        if crate::spring_boot::is_project(delegate.worktree_root_path())
+            && engine_jdk(delegate)
+                .await
+                .is_some_and(|jdk| jdk.major >= crate::spring_boot_ls::JAVA_NEEDED)
+            && let Some(install) =
+                crate::spring_boot_ls::fetch(delegate.http_client(), delegate.background_executor())
+                    .await
+                    .log_err()
+        {
+            bundles.extend(crate::spring_boot_ls::bundles(&install));
+        }
         Ok(Some(json!({
             "bundles": bundles,
             "settings": settings,
@@ -409,7 +604,14 @@ impl LspAdapter for JdtlsAdapter {
         cx: &mut AsyncApp,
     ) -> Result<Value> {
         let jdk = find_jdk(delegate).await;
-        let mut settings = java_settings(jdk.as_ref());
+        let env = delegate.shell_env().await;
+        let root = delegate.worktree_root_path();
+        let mut settings = java_settings(
+            jdk.as_ref(),
+            jdk::for_module(root, &env).as_ref(),
+            &jdk::find(&env),
+        );
+        merge_json_value_into(folder_settings(root), &mut settings);
         let user = cx.update(|cx| {
             language_server_settings(delegate.as_ref(), &SERVER_NAME, cx)
                 .and_then(|settings| settings.settings.clone())
@@ -427,7 +629,111 @@ impl LspAdapter for JdtlsAdapter {
 
 #[cfg(test)]
 mod tests {
-    use super::{installed_for, java_needed, release_for};
+    use super::{
+        JAVA_DEBUG_PATCH, installed_for, java_needed, patch_java_debug, release_for, runtimes,
+    };
+
+    #[test]
+    fn java_debug_is_patched_to_listen_on_the_loopback_interface_unsigned() {
+        use async_zip::base::{read::mem::ZipFileReader, write::ZipFileWriter};
+        use async_zip::{Compression, ZipEntryBuilder};
+
+        let server = JAVA_DEBUG_PATCH[0].0;
+        smol::block_on(async {
+            let mut writer = ZipFileWriter::new(Vec::new());
+            for (name, data) in [
+                ("META-INF/MANIFEST.MF", "Manifest-Version: 1.0\n".as_bytes()),
+                ("META-INF/MSFTSIG.SF", b"signature"),
+                ("META-INF/MSFTSIG.RSA", b"certificate"),
+                ("plugin.xml", b"<plugin/>"),
+                (JAVA_DEBUG_PATCH[0].0, b"official"),
+                (JAVA_DEBUG_PATCH[1].0, b"official"),
+                (JAVA_DEBUG_PATCH[2].0, b"official"),
+            ] {
+                writer
+                    .write_entry_whole(
+                        ZipEntryBuilder::new(name.into(), Compression::Deflate),
+                        data,
+                    )
+                    .await
+                    .expect("an entry");
+            }
+            let official = writer.close().await.expect("a jar");
+
+            let patched = patch_java_debug(official).await.expect("patched");
+            let reader = ZipFileReader::new(patched).await.expect("a jar");
+            let mut entries = Vec::new();
+            for (ix, entry) in reader.file().entries().iter().enumerate() {
+                let mut data = Vec::new();
+                reader
+                    .reader_with_entry(ix)
+                    .await
+                    .expect("an entry")
+                    .read_to_end_checked(&mut data)
+                    .await
+                    .expect("its data");
+                entries.push((entry.filename().as_str().expect("a name").to_owned(), data));
+            }
+            let names: Vec<&str> = entries.iter().map(|(name, _)| name.as_str()).collect();
+            assert_eq!(
+                names,
+                [
+                    "META-INF/MANIFEST.MF",
+                    "plugin.xml",
+                    JAVA_DEBUG_PATCH[0].0,
+                    JAVA_DEBUG_PATCH[1].0,
+                    JAVA_DEBUG_PATCH[2].0,
+                ]
+            );
+            assert_eq!(entries[1].1, b"<plugin/>");
+            for (ix, (_, class)) in JAVA_DEBUG_PATCH.iter().enumerate() {
+                assert_eq!(entries[ix + 2].1, *class);
+            }
+
+            let mut writer = ZipFileWriter::new(Vec::new());
+            writer
+                .write_entry_whole(
+                    ZipEntryBuilder::new(server.into(), Compression::Stored),
+                    b"x",
+                )
+                .await
+                .expect("an entry");
+            let incomplete = writer.close().await.expect("a jar");
+            assert!(patch_java_debug(incomplete).await.is_err());
+        });
+        let calls = |name: &str| {
+            JAVA_DEBUG_PATCH[0]
+                .1
+                .windows(name.len())
+                .any(|bytes| bytes == name.as_bytes())
+        };
+        assert!(calls("getLoopbackAddress"));
+    }
+
+    #[test]
+    fn every_jdk_is_a_runtime_once_the_projects_the_default() {
+        let jdk = |major: u32, home: &str| crate::jdk::Jdk {
+            home: home.into(),
+            version: major.to_string(),
+            major,
+            variant: None,
+            arch: None,
+        };
+        let project = jdk(21, "/jdks/21");
+        let found = [
+            jdk(25, "/jdks/25"),
+            jdk(21, "/jdks/other-21"),
+            jdk(8, "/jdks/8"),
+        ];
+        assert_eq!(
+            runtimes(Some(&project), &found),
+            serde_json::json!([
+                {"name": "JavaSE-21", "path": "/jdks/21", "default": true},
+                {"name": "JavaSE-25", "path": "/jdks/25", "default": false},
+                {"name": "JavaSE-1.8", "path": "/jdks/8", "default": false},
+            ])
+        );
+    }
 
     #[test]
     fn the_release_follows_the_jdk() {

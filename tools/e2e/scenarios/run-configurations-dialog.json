@@ -156,9 +156,13 @@
     "Application",
     "GDB",
     "Go Build",
+    "JUnit",
+    "Kotlin",
     "Native Application",
     "Node.js",
-    "Python"
+    "Python",
+    "Remote JVM Debug",
+    "Spring Boot"
    ]
   },
   {

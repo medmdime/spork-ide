@@ -2,23 +2,36 @@
 //! the Java language (tree-sitter's grammar, Zed's Java extension's queries) on Eclipse's JDT
 //! language server, which imports Maven projects through m2e and Gradle ones through Buildship.
 
+mod actuator;
 mod application;
+pub mod build_files;
 mod build_tool_window;
 mod build_view;
+mod debugger;
 mod generate;
 pub mod gradle_model;
 mod java_project;
 pub mod jdk;
 mod jdk_banner;
+pub mod jdk_download;
+mod jdk_download_dialog;
 pub mod jdtls;
+mod kotlin_compiler;
+mod language_level_fix;
 mod libraries;
 mod new_class;
 pub mod pom;
+pub mod project_settings;
+pub mod project_structure;
+pub mod sdks;
+pub mod spring_boot;
+pub mod spring_boot_ls;
 
 pub use build_tool_window::{gradle_tool_window, maven_tool_window};
 pub use build_view::{build, build_panel};
 pub use generate::java;
 pub use java_project::{JavaProject, Tool};
+pub use new_class::{add_new_items, create_and_open};
 
 use std::sync::Arc;
 
@@ -32,7 +45,11 @@ use workspace::Workspace;
 const CONFIG: &str = include_str!("../languages/java/config.toml");
 
 /// The Java queries, by their file names (`highlights.scm`…).
-const QUERIES: [(&str, &str); 8] = [
+const QUERIES: [(&str, &str); 9] = [
+    (
+        "debugger.scm",
+        include_str!("../languages/java/debugger.scm"),
+    ),
     (
         "highlights.scm",
         include_str!("../languages/java/highlights.scm"),
@@ -79,7 +96,11 @@ fn queries() -> LanguageQueries {
 /// configuration, and each workspace's Java project with its build tool's tool window.
 pub fn init(languages: Arc<LanguageRegistry>, cx: &mut App) {
     application::init(cx);
+    debugger::init(cx);
+    spring_boot::init(cx);
     generate::init(cx);
+    kotlin_compiler::init(cx);
+    language_level_fix::init(cx);
     let roles = Arc::new(java_project::JavaFolderRoles::default());
     project_panel::set_folder_roles(roles.clone(), cx);
     cx.set_global(java_project::FolderRoles(roles));
@@ -95,8 +116,12 @@ pub fn init(languages: Arc<LanguageRegistry>, cx: &mut App) {
             return;
         }
     };
-    languages.register_native_grammars([("java", tree_sitter_java::LANGUAGE)]);
+    languages.register_native_grammars([
+        ("java", tree_sitter_java::LANGUAGE),
+        ("properties", tree_sitter_properties::LANGUAGE),
+    ]);
     languages.register_lsp_adapter(config.name.clone(), Arc::new(jdtls::JdtlsAdapter));
+    register_configuration_languages(&languages);
     languages.register_language(
         config.name.clone(),
         config.grammar.clone(),
@@ -137,6 +162,13 @@ pub fn e2e_state(workspace: &Workspace, cx: &App) -> Value {
     });
     json!({
         "jdk": java.jdk.as_ref().map(|jdk| jdk.version.clone()),
+        "jdk_name": java.jdk.as_ref().map(jdk::Jdk::name),
+        "language_level": java
+            .root
+            .as_deref()
+            .and_then(|root| project_settings::language_level(root, java.tool))
+            .map(project_settings::LanguageLevel::text),
+        "structure": project_structure::e2e_state(cx),
         "tool": java.tool.map(Tool::name),
         "linked": java.linked,
         "offline": java.offline,
@@ -147,7 +179,80 @@ pub fn e2e_state(workspace: &Workspace, cx: &App) -> Value {
         "server": server,
         "selected": java.tool.and_then(|tool| build_tool_window::e2e_selected(workspace, tool, cx)),
         "build": build_view::e2e_state(workspace, cx),
+        "spring": spring_boot::e2e_state(java, cx),
+        "downloads": jdk_download::e2e_state(cx),
     })
+}
+
+/// Properties (tree-sitter-properties, MIT, with its highlights query), and Spring Boot's
+/// configuration files: `application*.properties` and `application*.yml` (the default
+/// `file_types`) as languages of their own in a Spring Boot project, which only the Spring Boot
+/// language server serves, as IntelliJ's Spring Boot plugin takes them over from Properties and
+/// YAML; elsewhere they stay Properties and YAML.
+fn register_configuration_languages(languages: &Arc<LanguageRegistry>) {
+    let in_spring_boot_project: language::FileTypesCondition = Arc::new(|file, cx| {
+        project::File::from_dyn(Some(file))
+            .is_some_and(|file| spring_boot::is_project(&file.worktree.read(cx).abs_path()))
+    });
+    for language in [spring_boot_ls::PROPERTIES, spring_boot_ls::YAML] {
+        languages.set_file_types_condition(language.into(), in_spring_boot_project.clone());
+    }
+    let properties = |name: &'static str, suffixes: Vec<gpui::SharedString>| LanguageConfig {
+        name: name.into(),
+        grammar: Some("properties".into()),
+        matcher: Arc::new(language::LanguageMatcher {
+            path_suffixes: suffixes,
+            ..Default::default()
+        }),
+        line_comments: vec!["# ".into()],
+        ..Default::default()
+    };
+    let yaml = {
+        let mut config = grammars::load_config("yaml");
+        config.name = spring_boot_ls::YAML.into();
+        config.matcher = Arc::default();
+        config
+    };
+    let configs = [
+        (properties("Properties", vec!["properties".into()]), false),
+        (properties(spring_boot_ls::PROPERTIES, Vec::new()), false),
+        (yaml, true),
+    ];
+    for (config, is_yaml) in configs {
+        if config.name.as_ref() != "Properties" {
+            languages.register_lsp_adapter(
+                config.name.clone(),
+                Arc::new(spring_boot_ls::SpringBootLsAdapter),
+            );
+        }
+        languages.register_language(
+            config.name.clone(),
+            config.grammar.clone(),
+            config.matcher.clone(),
+            config.hidden,
+            None,
+            Arc::new(move || {
+                let config = config.clone();
+                async move {
+                    let queries = match is_yaml {
+                        true => grammars::load_queries("yaml"),
+                        false => LanguageQueries::from_files([QueryFileContents::new(
+                            QueryFile::Highlights,
+                            std::borrow::Cow::Borrowed(tree_sitter_properties::HIGHLIGHTS_QUERY),
+                        )]),
+                    };
+                    Ok(LoadedLanguage {
+                        config,
+                        queries,
+                        context_provider: None,
+                        toolchain_provider: None,
+                        manifest_name: None,
+                    })
+                }
+                .boxed()
+            }),
+        );
+    }
 }
 
 #[cfg(test)]

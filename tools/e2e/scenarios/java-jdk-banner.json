@@ -42,7 +42,7 @@
   {
    "menu": "action:AddJdkAction",
    "items": [
-    "Download JDK… (disabled)",
+    "Download JDK…",
     "Add JDK from Disk…"
    ],
    "within": 3000

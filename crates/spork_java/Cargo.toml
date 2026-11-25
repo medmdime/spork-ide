@@ -14,15 +14,21 @@ doctest = false
 
 [dependencies]
 anyhow.workspace = true
+async-compression.workspace = true
+async-fs.workspace = true
+async-tar.workspace = true
 async-trait.workspace = true
+async_zip.workspace = true
 chrono.workspace = true
 collections.workspace = true
 dap.workspace = true
+debugger_ui.workspace = true
 editor.workspace = true
 futures.workspace = true
 github_releases.workspace = true
 gpui.workspace = true
 gpui_kit.workspace = true
+grammars.workspace = true
 http_client.workspace = true
 language.workspace = true
 language_core.workspace = true
@@ -33,19 +39,27 @@ paths.workspace = true
 project.workspace = true
 project_panel.workspace = true
 quick-xml.workspace = true
+regex.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+sha1.workspace = true
 sha2.workspace = true
+smol.workspace = true
 spork_code.workspace = true
 spork_run.workspace = true
+spork_settings.workspace = true
 spork_vcs.workspace = true
 spork_workbench.workspace = true
+sysinfo.workspace = true
 task.workspace = true
+tempfile.workspace = true
+text.workspace = true
 tree-sitter-java.workspace = true
+tree-sitter-properties.workspace = true
 ui.workspace = true
 util.workspace = true
 workspace.workspace = true
 
 [dev-dependencies]
+http_client = { workspace = true, features = ["test-support"] }
 language = { workspace = true, features = ["test-support"] }
-tempfile.workspace = true

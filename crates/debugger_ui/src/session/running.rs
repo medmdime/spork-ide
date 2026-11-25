@@ -1384,11 +1384,18 @@ impl RunningState {
 
         let workspace = self.workspace.clone();
         let weak_project = project.downgrade();
+        let session = self.session.clone();
 
         let terminal_task =
             project.update(cx, |project, cx| project.create_terminal_task(kind, cx));
         let terminal_task = cx.spawn_in(window, async move |_, cx| {
             let terminal = terminal_task.await?;
+            // Spork IDE: the app writes IntelliJ's console texts around the program's
+            cx.update(|_, cx| {
+                if let Some(started) = cx.try_global::<ProgramTerminalStarted>() {
+                    (started.0.clone())(&session, &terminal, cx);
+                }
+            })?;
 
             let terminal_view = cx.new_window_entity(|window, cx| {
                 TerminalView::new(terminal.clone(), workspace, None, weak_project, window, cx)
@@ -2067,6 +2074,15 @@ impl RunningState {
     }
 }
 
+/// Spork IDE: the app's hook when a debugged program starts in a terminal of its own
+/// (`runInTerminal`), with its session.
+#[derive(Clone)]
+pub struct ProgramTerminalStarted(
+    pub std::rc::Rc<dyn Fn(&Entity<Session>, &Entity<terminal::Terminal>, &mut App)>,
+);
+
+impl gpui::Global for ProgramTerminalStarted {}
+
 /// Spork IDE: what the app's Debug tool window (IntelliJ's layout) draws and does.
 impl RunningState {
     pub fn variables_view(&self) -> AnyView {
@@ -2075,6 +2091,12 @@ impl RunningState {
 
     pub fn console_view(&self) -> AnyView {
         self.console.clone().into()
+    }
+
+    /// The terminal the debugged program runs in, when the adapter asked for one
+    /// (`runInTerminal`): the program's console with its input.
+    pub fn program_terminal(&self, cx: &App) -> Option<Entity<TerminalView>> {
+        self.debug_terminal.read(cx).terminal.clone()
     }
 
     pub fn opened_stack_frame(&self, cx: &App) -> Option<dap::StackFrameId> {
@@ -2092,6 +2114,17 @@ impl RunningState {
                 list.go_to_stack_frame(stack_frame_id, window, cx)
             })
             .detach_and_log_err(cx);
+    }
+
+    /// The thread chooser's pick: its frames show.
+    pub fn choose_thread(
+        &mut self,
+        thread_id: ThreadId,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        self.select_thread(thread_id, window, cx);
+        cx.notify();
     }
 
     pub fn show_execution_point(&self, window: &mut Window, cx: &mut Context<Self>) {

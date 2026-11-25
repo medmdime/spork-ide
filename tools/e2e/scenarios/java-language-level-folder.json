@@ -1,0 +1,83 @@
+{
+ "id": "java-language-level-folder",
+ "fixture": "java",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "java.tool": null,
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "file": "Shapes.java",
+   "text": "/** A Java 21 feature: a record pattern. */\npublic class Shapes {\n    record Point(int x, int y) {}\n\n    static int sum(Object shape) {\n        if (shape instanceof Point(int x, int y)) {\n            return x + y;\n        }\n        return 0;\n    }\n}\n"
+  },
+  {
+   "do": "open",
+   "path": "Shapes.java"
+  },
+  {
+   "expect": {
+    "editor.diagnostics": [
+     "error: The Java feature 'Record Pattern' is only available with source level 21 and above"
+    ]
+   },
+   "within": 300000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-;"
+  },
+  {
+   "find": {
+    "label": "Language level:",
+    "role": "AXPopUpButton",
+    "value": "SDK default"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Language level:",
+   "role": "AXPopUpButton"
+  },
+  {
+   "find": "21 - Record patterns, pattern matching for switch",
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "21 - Record patterns, pattern matching for switch"
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "java.language_level": "21 - Record patterns, pattern matching for switch"
+   },
+   "within": 10000
+  },
+  {
+   "expect": {
+    "editor.diagnostics": []
+   },
+   "within": 240000
+  }
+ ]
+}

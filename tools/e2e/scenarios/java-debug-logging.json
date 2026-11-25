@@ -1,0 +1,278 @@
+{
+ "id": "java-debug-logging",
+ "fixture": "maven",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "sh": "mkdir -p .zed && printf '%s' '[{\"label\": \"Debuggee\", \"adapter\": \"Java\", \"request\": \"launch\", \"mainClass\": \"com.example.Debuggee\"}]' > .zed/debug.json"
+  },
+  {
+   "expect": {
+    "java.tool": "Maven"
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 600000
+  },
+  {
+   "expect": {
+    "run.configurations.selected": "Debuggee"
+   },
+   "within": 10000
+  },
+  {
+   "do": "open",
+   "path": "src/main/java/com/example/Debuggee.java"
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/Debuggee.java",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "type",
+   "text": "44:1",
+   "window": "Breakpoints"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "expect": {
+    "run.breakpoints.0.at": "Debuggee.java:44"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-f8"
+  },
+  {
+   "find": {
+    "label": "Breakpoint",
+    "role": "AXWindow"
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-f8"
+  },
+  {
+   "find": {
+    "label": "Breakpoints Toolbar",
+    "role": "AXToolbar"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Debuggee.java:44",
+   "role": "AXCheckBox"
+  },
+  {
+   "do": "click",
+   "label": "Debuggee.java:44",
+   "role": "AXCheckBox"
+  },
+  {
+   "do": "click",
+   "label": "Suspend",
+   "role": "AXCheckBox"
+  },
+  {
+   "expect": {
+    "run.breakpoints.0.log": "Breakpoint reached at Debuggee.java:44"
+   }
+  },
+  {
+   "find": {
+    "label": "\"Breakpoint hit\" message",
+    "role": "AXCheckBox",
+    "value": "1"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Evaluate and log",
+   "role": "AXTextField"
+  },
+  {
+   "do": "type",
+   "text": "name.length()",
+   "window": "Breakpoints"
+  },
+  {
+   "do": "click",
+   "label": "Evaluate and log:",
+   "role": "AXCheckBox"
+  },
+  {
+   "do": "click",
+   "label": "\"Breakpoint hit\" message",
+   "role": "AXCheckBox"
+  },
+  {
+   "expect": {
+    "run.breakpoints.0.log": "{name.length()}"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Done",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Debug 'Debuggee'",
+    "role": "AXButton",
+    "enabled": true
+   },
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-d"
+  },
+  {
+   "expect": {
+    "run.debug.console": {
+     "contains": "\n3\n5\n5\nworker 26"
+    }
+   },
+   "within": 60000
+  },
+  {
+   "expect": {
+    "run.debug.console": {
+     "contains": "Process finished with exit code 0"
+    }
+   },
+   "within": 20000
+  },
+  {
+   "do": "open",
+   "path": "src/main/java/com/example/Debuggee.java"
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/Debuggee.java",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-f8"
+  },
+  {
+   "find": {
+    "label": "Breakpoint",
+    "role": "AXWindow"
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-f8"
+  },
+  {
+   "find": {
+    "label": "Breakpoints Toolbar",
+    "role": "AXToolbar"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Debuggee.java:44",
+   "role": "AXCheckBox"
+  },
+  {
+   "do": "click",
+   "label": "Debuggee.java:44",
+   "role": "AXCheckBox"
+  },
+  {
+   "do": "click",
+   "label": "Condition",
+   "role": "AXTextField"
+  },
+  {
+   "do": "type",
+   "text": "name.startsWith(\"G\")",
+   "window": "Breakpoints"
+  },
+  {
+   "do": "click",
+   "label": "Condition:",
+   "role": "AXCheckBox"
+  },
+  {
+   "do": "click",
+   "label": "\"Breakpoint hit\" message",
+   "role": "AXCheckBox"
+  },
+  {
+   "expect": {
+    "run.breakpoints.0.log": "Breakpoint reached at Debuggee.java:44\n{name.length()}",
+    "run.breakpoints.0.condition": "name.startsWith(\"G\")"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Done",
+   "role": "AXButton"
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-d"
+  },
+  {
+   "expect": {
+    "run.debug.console": {
+     "contains": "\nBreakpoint reached at com.example.Debuggee.measure(Debuggee.java:44)\n5\nworker 26"
+    }
+   },
+   "within": 60000
+  }
+ ]
+}

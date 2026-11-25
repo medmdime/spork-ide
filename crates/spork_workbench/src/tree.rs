@@ -68,6 +68,8 @@ pub struct TreeItem {
     menu: Option<Menu>,
     suffix: Option<Suffix>,
     hint: Option<SharedString>,
+    /// An element right after the label: a link, as IntelliJ's Services node's port.
+    after_label: Option<Suffix>,
     children: Vec<TreeItem>,
 }
 
@@ -85,6 +87,7 @@ impl TreeItem {
             menu: None,
             suffix: None,
             hint: None,
+            after_label: None,
             children: Vec::new(),
         }
     }
@@ -150,6 +153,18 @@ impl TreeItem {
     /// (`SimpleTextAttributes.GRAYED_ATTRIBUTES`): a Maven plugin's coordinates, a scope.
     pub fn hint(mut self, hint: impl Into<SharedString>) -> Self {
         self.hint = Some(hint.into());
+        self
+    }
+
+    /// An element right after the label, as IntelliJ's run dashboard adds a link
+    /// (`RunDashboardCustomizationBuilder.addLink`: a Spring Boot application's `:8080/`).
+    pub fn after_label<E: IntoElement>(
+        mut self,
+        build: impl Fn(&mut Window, &mut App) -> E + 'static,
+    ) -> Self {
+        self.after_label = Some(Rc::new(move |window, cx| {
+            build(window, cx).into_any_element()
+        }));
         self
     }
 
@@ -221,15 +236,23 @@ impl TreeItem {
                 None => div().w(px(16.)).flex_none().into_any_element(),
             })
             .children(row_icon)
-            .child(match self.hint {
-                None => div()
+            .child(match (self.hint, self.after_label) {
+                (None, Some(after)) => h_flex()
+                    .flex_1()
+                    .min_w_0()
+                    .pl_0p5()
+                    .gap_1()
+                    .child(div().flex_none().child(self.label))
+                    .child(div().min_w_0().truncate().child(after(window, cx)))
+                    .into_any_element(),
+                (None, None) => div()
                     .flex_1()
                     .min_w_0()
                     .pl_0p5()
                     .truncate()
                     .child(self.label)
                     .into_any_element(),
-                Some(hint) => h_flex()
+                (Some(hint), _) => h_flex()
                     .flex_1()
                     .min_w_0()
                     .pl_0p5()

@@ -84,7 +84,7 @@
       // IntelliJ's run keys, over the default keymap's editing ones
       "f7": "debugger::StepInto", // the default's breakpoint and diagnostics keys otherwise
       "shift-f7": "run::SmartStepInto",
-      "alt-shift-f7": "debugger::StepInto",
+      "alt-shift-f7": "run::ForceStepInto",
       "f8": "debugger::StepOver",
       "shift-f8": "debugger::StepOut",
       "alt-shift-f8": "run::ForceStepOver",
@@ -677,6 +677,13 @@
       "ctrl-shift-c": "spork_editor::ToggleCodeSpan",
       "ctrl-shift-u": "spork_editor::CreateLink",
       "ctrl-u": "spork_editor::InsertImage", // over Go to Super Method
+    },
+  },
+  {
+    // IntelliJ's Project Structure… (spork_java), over the editor's own key
+    "context": "Workspace || Editor",
+    "bindings": {
+      "ctrl-alt-shift-s": "java::ShowProjectStructureSettings",
     },
   },
 ]

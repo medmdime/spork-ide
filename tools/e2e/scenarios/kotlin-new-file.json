@@ -1,0 +1,354 @@
+{
+ "id": "kotlin-new-file",
+ "fixture": "kotlin-groovy",
+ "covers": [
+  "action:Kotlin.NewFile"
+ ],
+ "settings": {
+  "languages": {
+   "Kotlin": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Gradle",
+    "kotlin.detected": true
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "kotlin.server.running": true
+   },
+   "within": 600000
+  },
+  {
+   "expect": {
+    "kotlin.server.busy": false
+   },
+   "within": 300000
+  },
+  {
+   "find": {
+    "label": "src",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "src",
+   "role": "AXRow",
+   "in": "Project Panel"
+  },
+  {
+   "find": {
+    "label": "main",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "main",
+   "role": "AXRow",
+   "in": "Project Panel"
+  },
+  {
+   "find": {
+    "label": "kotlin",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "kotlin",
+   "role": "AXRow",
+   "in": "Project Panel"
+  },
+  {
+   "find": {
+    "label": "com.example",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "com.example",
+   "role": "AXRow",
+   "in": "Project Panel"
+  },
+  {
+   "find": [
+    {
+     "label": "src",
+     "role": "AXRow",
+     "in": "Project Panel"
+    },
+    {
+     "label": "main",
+     "role": "AXRow",
+     "in": "Project Panel"
+    },
+    {
+     "label": "kotlin",
+     "role": "AXRow",
+     "in": "Project Panel"
+    },
+    {
+     "label": "com.example",
+     "role": "AXRow",
+     "in": "Project Panel"
+    },
+    {
+     "label": "Greeting.kt",
+     "role": "AXRow",
+     "in": "Project Panel"
+    },
+    {
+     "label": "Main.kt",
+     "role": "AXRow",
+     "in": "Project Panel"
+    },
+    {
+     "label": "test",
+     "role": "AXRow",
+     "in": "Project Panel"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "find": {
+    "label": "Main.kt",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Main.kt",
+   "role": "AXRow",
+   "in": "Project Panel",
+   "button": "right"
+  },
+  {
+   "find": "New",
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "New",
+   "hover": true
+  },
+  {
+   "wait": 600
+  },
+  {
+   "find": [
+    "Java Class",
+    "Kotlin Class/File",
+    "File",
+    "Scratch File",
+    "Directory"
+   ],
+   "ordered": true,
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Kotlin Class/File"
+  },
+  {
+   "find": [
+    "New Kotlin Class/File",
+    {
+     "label": "Name",
+     "role": "AXTextField"
+    },
+    "Class",
+    "File",
+    "Interface",
+    "Data class",
+    "Enum class",
+    "Annotation",
+    "Kotlin script",
+    "Object"
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "find": {
+    "label": "Class",
+    "selected": true
+   }
+  },
+  {
+   "do": "type",
+   "text": "Shape"
+  },
+  {
+   "do": "keys",
+   "keys": "down down"
+  },
+  {
+   "find": {
+    "label": "Interface",
+    "selected": true
+   }
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   }
+  },
+  {
+   "find": [
+    "New Kotlin Class/File",
+    {
+     "label": "Interface",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "shot": "new-kotlin-file"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "sh": "cat src/main/kotlin/com/example/Shape.kt",
+   "is": "package com.example\n\ninterface Shape {\n}",
+   "within": 5000
+  },
+  {
+   "expect": {
+    "active": "src/main/kotlin/com/example/Shape.kt"
+   },
+   "within": 5000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "docks.left.open": true
+   },
+   "within": 5000
+  },
+  {
+   "find": {
+    "label": "Shape.kt",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 10000
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "do": "click",
+   "label": "Shape.kt",
+   "role": "AXRow",
+   "in": "Project Panel",
+   "button": "right"
+  },
+  {
+   "find": "New",
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "New",
+   "hover": true
+  },
+  {
+   "wait": 600
+  },
+  {
+   "do": "click",
+   "label": "Kotlin Class/File"
+  },
+  {
+   "find": "New Kotlin Class/File",
+   "within": 5000
+  },
+  {
+   "do": "type",
+   "text": "__"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "find": "Name can't consist only of underscores",
+   "within": 3000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a"
+  },
+  {
+   "do": "type",
+   "text": "model.Point"
+  },
+  {
+   "do": "keys",
+   "keys": "down down down"
+  },
+  {
+   "find": {
+    "label": "Data class",
+    "selected": true
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "sh": "cat src/main/kotlin/com/example/model/Point.kt",
+   "is": "package com.example.model\n\ndata class Point()",
+   "within": 5000
+  },
+  {
+   "expect": {
+    "active": "src/main/kotlin/com/example/model/Point.kt"
+   },
+   "within": 5000
+  }
+ ]
+}
