@@ -55,6 +55,7 @@
 //! `opacity` (0 hidden, 1 shown), the content's `offset` and its `thumbs`, each with its `axis`,
 //! its `width` and its `bounds`. The IDE's test channel answers both alike.
 
+#[cfg(unix)]
 use std::io::{BufRead as _, BufReader, Write as _};
 #[cfg(unix)]
 use std::os::unix::net::{UnixListener, UnixStream};
@@ -63,6 +64,7 @@ use gpui_kit::component::Root;
 use gpui_kit::*;
 use serde_json::{Value, json};
 
+#[cfg(unix)]
 use crate::util::ResultExt as _;
 use crate::workspace::Workspace;
 
@@ -473,7 +475,9 @@ fn run(command: &Value, cx: &mut App) -> Value {
         "balloons" => window
             .update(cx, |_, window, cx| crate::notices::e2e_state(window, cx))
             .unwrap_or_else(|e| json!({"error": e.to_string()})),
+        #[cfg(target_os = "macos")]
         "scroll" => scroll(command, window, cx),
+        #[cfg(target_os = "macos")]
         "scrollbar" => match accessibility::locate(command) {
             Ok((_, (x, y))) => match gpui_kit::base::painted_scrollbar_at(point(px(x), px(y))) {
                 Some(painted) => {
@@ -850,6 +854,7 @@ fn draw_windows(cx: &mut App) {
 
 /// `{"do": "scroll", "label": "Branches Tree", "by": [0, -40]}`: a scroll over the element of that
 /// label (found as `click` finds it), of `by` points as a trackpad's or `lines` as a mouse wheel's.
+#[cfg(target_os = "macos")]
 fn scroll(command: &Value, window: AnyWindowHandle, cx: &mut App) -> Value {
     let at = match accessibility::locate(command) {
         Ok((_, at)) => at,
