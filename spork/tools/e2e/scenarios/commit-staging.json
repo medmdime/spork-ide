@@ -1,0 +1,421 @@
+{
+ "id": "commit-staging",
+ "covers": [
+  "context-menu:Git.Stage.Configure",
+  "action:Git.Stage.Enable",
+  "action:Git.Stage.Disable",
+  "toolbar:Git.Stage.Toolbar",
+  "context-menu:Git.Stage.Ui.Settings",
+  "context-menu:Git.Stage.Tree.Menu",
+  "action:Git.Stage.Add",
+  "action:Git.Stage.Reset",
+  "action:Git.Stage.Add.Tracked",
+  "action:Git.Stage.Add.No.Content",
+  "action:Git.Stage.Stash.Files",
+  "action:Git.Stage.ToggleCommitAll",
+  "action:Git.Stash.Silently"
+ ],
+ "reference-app": [
+  "screenshots/menus/git-stage-configure.png",
+  "screenshots/menus/git-stage-tree-menu.png"
+ ],
+ "steps": [
+  {
+   "sh": "echo more >> main.rs"
+  },
+  {
+   "do": "action",
+   "name": "spork::ToggleCommit"
+  },
+  {
+   "expect": {
+    "left": "[Commit, Project]"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Options",
+     "role": "AXButton"
+    }
+   ],
+   "within": 6000
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "Options",
+   "role": "AXButton"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "menu": "context-menu:Git.Stage.Configure",
+   "part": true
+  },
+  {
+   "do": "click",
+   "label": "Staging Area",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "Unstaged",
+     "role": "AXRow"
+    },
+    {
+     "label": "Untracked",
+     "role": "AXRow"
+    }
+   ]
+  },
+  {
+   "toolbar": "Git.Stage.Toolbar",
+   "items": [
+    "Show Diff (disabled)",
+    "Refresh",
+    "Stage All Tracked",
+    "Stash Silently",
+    "View Options ▸"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "View Options"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "menu": "context-menu:Git.Stage.Ui.Settings",
+   "items": [
+    "Group By ▸",
+    "Ignored Files"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "README.md",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "menu": "context-menu:Git.Stage.Tree.Menu",
+   "items": [
+    "Stage",
+    "Stash Files",
+    "Rollback",
+    "Delete…",
+    "Show Diff",
+    "Jump to Source",
+    "Create Patch…",
+    "Copy as Patch to Clipboard",
+    "Show History"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Stage",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "Staged",
+     "role": "AXRow"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "sh": "git diff --cached --name-only | grep -qx README.md"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "README.md",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "find": [
+    {
+     "label": "Unstage",
+     "role": "AXMenuItem"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Unstage",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "Staged",
+     "role": "AXRow"
+    }
+   ],
+   "absent": true,
+   "within": 5000
+  },
+  {
+   "sh": "test -z \"$(git diff --cached --name-only)\""
+  },
+  {
+   "do": "click",
+   "label": "Stage All Tracked",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "Staged",
+     "role": "AXRow"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "sh": "git diff --cached --name-only | grep -qx README.md && git diff --cached --name-only | grep -qx main.rs && git reset -q"
+  },
+  {
+   "find": [
+    {
+     "label": "Staged",
+     "role": "AXRow"
+    }
+   ],
+   "absent": true,
+   "within": 5000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "main.rs",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "find": [
+    {
+     "label": "Stash Files",
+     "role": "AXMenuItem"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Stash Files",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "main.rs",
+     "role": "AXRow"
+    }
+   ],
+   "absent": true,
+   "within": 5000
+  },
+  {
+   "sh": "git stash list | grep -q . && git diff --quiet HEAD -- main.rs && ! git diff --quiet HEAD -- README.md"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "Untracked"
+  },
+  {
+   "find": [
+    {
+     "label": "notes.txt",
+     "role": "AXRow"
+    }
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "notes.txt",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "find": [
+    {
+     "label": "Stage Without Content",
+     "role": "AXMenuItem"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Stage Without Content",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "Untracked",
+     "role": "AXRow"
+    }
+   ],
+   "absent": true,
+   "within": 5000
+  },
+  {
+   "sh": "git diff --name-only | grep -qx notes.txt && git rm -q --cached notes.txt"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "Options",
+   "role": "AXButton"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "find": [
+    {
+     "label": "Commit All when Nothing Is Staged",
+     "role": "AXMenuItem"
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-m"
+  },
+  {
+   "find": [
+    {
+     "label": "Commit Message History",
+     "role": "AXTextField"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "docs: a second line",
+   "role": "AXStaticText"
+  },
+  {
+   "find": [
+    {
+     "role": "AXTextArea",
+     "value": "docs: a second line"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Commit",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXRow"
+    }
+   ],
+   "absent": true,
+   "within": 8000
+  },
+  {
+   "sh": "test \"$(git log -1 --format=%s)\" = 'docs: a second line' && git diff --quiet HEAD -- README.md"
+  },
+  {
+   "sh": "echo again >> README.md"
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXRow"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Stash Silently",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXRow"
+    }
+   ],
+   "absent": true,
+   "within": 5000
+  },
+  {
+   "sh": "test \"$(git stash list | wc -l | tr -d ' ')\" = 2 && git diff --quiet HEAD"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "Options",
+   "role": "AXButton"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "Changelists",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "Unversioned Files",
+     "role": "AXRow"
+    }
+   ],
+   "within": 5000
+  }
+ ]
+}

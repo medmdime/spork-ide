@@ -1,0 +1,173 @@
+{
+ "id": "navigate-next-occurrence",
+ "covers": [
+  "action:NextOccurence",
+  "action:PreviousOccurence"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-f"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "FindInFiles",
+     "Input"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "g r e e t i n g"
+  },
+  {
+   "find": {
+    "label": "2 matches in 1 file",
+    "role": "AXStaticText"
+   },
+   "within": 8000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-enter"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "Find"
+   }
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-cmd-down"
+  },
+  {
+   "find": {
+    "label": "Occurrence 2 of 2",
+    "in": "Navigation Bar"
+   }
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 4, column 20",
+    "role": "AXButton"
+   }
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-cmd-down"
+  },
+  {
+   "find": {
+    "label": "Occurrence 2 of 2",
+    "in": "Navigation Bar"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 4, column 20",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-cmd-up"
+  },
+  {
+   "find": {
+    "label": "Occurrence 1 of 2",
+    "in": "Navigation Bar"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 1, column 5",
+    "role": "AXButton"
+   }
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-cmd-up"
+  },
+  {
+   "find": {
+    "label": "Occurrence 1 of 2",
+    "in": "Navigation Bar"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 1, column 5",
+    "role": "AXButton"
+   }
+  },
+  {
+   "menu": "Navigate",
+   "path": [
+    "Navigate"
+   ],
+   "items": [
+    "Previous Occurrence",
+    "Next Occurrence"
+   ],
+   "part": true
+  }
+ ]
+}

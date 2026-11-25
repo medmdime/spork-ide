@@ -1,0 +1,113 @@
+{
+ "id": "welcome-screen",
+ "covers": [
+  "action:CloseProject"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "action",
+   "name": "workspace::CloseProject"
+  },
+  {
+   "expect": {
+    "roots": [],
+    "windows.0.title": "Welcome to Spork IDE"
+   },
+   "within": 10000
+  },
+  {
+   "find": [
+    "Projects",
+    "Customize",
+    "Plugins",
+    "Learn",
+    "New Project",
+    "Open",
+    "Clone Repository",
+    {
+     "label": "fixture",
+     "role": "AXButton"
+    }
+   ],
+   "ordered": true,
+   "within": 10000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "projects"
+  },
+  {
+   "do": "click",
+   "label": "Customize"
+  },
+  {
+   "find": [
+    "Appearance",
+    "Theme:",
+    "Sync with OS",
+    "Accessibility",
+    "IDE font:",
+    "Keymap",
+    "Configure…",
+    "All settings…"
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "customize"
+  },
+  {
+   "do": "click",
+   "label": "Learn"
+  },
+  {
+   "find": [
+    "Help and Resources",
+    "Keymap Reference"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Projects"
+  },
+  {
+   "do": "type",
+   "text": "nothing"
+  },
+  {
+   "find": {
+    "label": "fixture",
+    "role": "AXButton"
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a backspace"
+  },
+  {
+   "do": "click",
+   "label": "fixture",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "roots": [
+     "$FIXTURE"
+    ]
+   },
+   "within": 15000
+  },
+  {
+   "find": "Welcome to Spork IDE",
+   "absent": true,
+   "within": 5000
+  }
+ ]
+}

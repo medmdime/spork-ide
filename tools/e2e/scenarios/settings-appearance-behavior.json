@@ -1,0 +1,151 @@
+{
+ "id": "settings-appearance-behavior",
+ "covers": [],
+ "reference-app": [
+  "screenshots/settings/appearance-behavior-appearance.jpg",
+  "screenshots/settings/appearance-behavior-system-settings.jpg"
+ ],
+ "steps": [
+  {
+   "do": "keys",
+   "keys": "cmd-,"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture",
+    "settings.page": "Appearance & Behavior/Appearance"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "toolbar": "Settings page",
+   "items": [
+    "Theme",
+    "Sync with OS",
+    "Preferred Theme (disabled)",
+    "Use custom font:",
+    "Font (disabled)",
+    "Always show full path in window header",
+    "Use project colors in main toolbar",
+    "Display icons in menu items",
+    "Show indent guides",
+    "Use smaller indents",
+    "Widescreen tool window layout"
+   ],
+   "within": 8000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "appearance",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Widescreen tool window layout",
+   "role": "AXCheckBox"
+  },
+  {
+   "expect": {
+    "settings.apply": true,
+    "settings.modified": [
+     "Appearance & Behavior/Appearance"
+    ]
+   }
+  },
+  {
+   "do": "click",
+   "label": "System Settings",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Appearance & Behavior/System Settings"
+   }
+  },
+  {
+   "toolbar": "Settings page",
+   "items": [
+    "Confirm before exiting the IDE",
+    "Reopen projects on startup",
+    "Save files if the IDE is idle for",
+    "Save files when switching to a different application or a built-in terminal"
+   ]
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "system-settings",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings": null
+   }
+  },
+  {
+   "expect": {
+    "value": "contained"
+   },
+   "of": {
+    "do": "setting",
+    "path": "/bottom_dock_layout"
+   },
+   "within": 8000
+  },
+  {
+   "sh": "cat ../home/.config/spork-ide/settings.json",
+   "contains": "\"bottom_dock_layout\": \"contained\""
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-,"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture",
+    "settings.page": "Appearance & Behavior/System Settings"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "Confirm before exiting the IDE",
+   "role": "AXCheckBox",
+   "within": 8000
+  },
+  {
+   "expect": {
+    "settings.apply": true
+   }
+  },
+  {
+   "do": "click",
+   "label": "Cancel",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings": null
+   }
+  },
+  {
+   "sh": "cat ../home/.config/spork-ide/settings.json",
+   "lacks": "confirm_quit"
+  }
+ ]
+}

@@ -1,0 +1,313 @@
+{
+ "id": "navigate-select-in",
+ "covers": [
+  "action:SelectIn"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "file": "src/greeting.rs",
+   "text": "pub fn hello(name: &str) -> String {\n    format!(\"Hello, {name}!\")\n}\n\npub fn bye() {}\n"
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-f12"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   }
+  },
+  {
+   "wait": 800
+  },
+  {
+   "do": "keys",
+   "keys": "alt-f1"
+  },
+  {
+   "find": [
+    {
+     "label": "Select In",
+     "role": "AXMenu"
+    },
+    {
+     "label": "Project View",
+     "role": "AXMenuItem",
+     "in": "Select In"
+    },
+    {
+     "label": "Bookmarks",
+     "role": "AXMenuItem",
+     "enabled": false,
+     "in": "Select In"
+    },
+    {
+     "label": "File Structure",
+     "role": "AXMenuItem",
+     "in": "Select In"
+    },
+    {
+     "label": "Navigation Bar",
+     "role": "AXMenuItem",
+     "in": "Select In"
+    },
+    {
+     "label": "Commit",
+     "role": "AXMenuItem",
+     "in": "Select In"
+    },
+    {
+     "label": "Reveal in Finder",
+     "role": "AXMenuItem",
+     "in": "Select In"
+    },
+    {
+     "label": "Terminal",
+     "role": "AXMenuItem",
+     "in": "Select In"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "select-in"
+  },
+  {
+   "do": "keys",
+   "keys": "1"
+  },
+  {
+   "expect": {
+    "docks.left.open": true,
+    "docks.left.panel": "Project Panel",
+    "focused": [
+     "Workspace",
+     "Dock",
+     "ProjectPanel"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "greeting.rs",
+    "role": "AXRow",
+    "selected": true,
+    "in": "Project Panel"
+   }
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-f1"
+  },
+  {
+   "find": {
+    "label": "File Structure",
+    "role": "AXMenuItem",
+    "in": "Select In"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "3"
+  },
+  {
+   "expect": {
+    "docks.left.open": true,
+    "docks.left.panel": "Outline Panel"
+   }
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-f1"
+  },
+  {
+   "find": {
+    "label": "Commit",
+    "role": "AXMenuItem",
+    "in": "Select In"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "5"
+  },
+  {
+   "expect": {
+    "docks.left.open": true,
+    "docks.left.panel": "Commit"
+   }
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "f3"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "keys",
+   "keys": "alt-f1"
+  },
+  {
+   "find": {
+    "label": "Bookmarks",
+    "role": "AXMenuItem",
+    "enabled": true,
+    "in": "Select In"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "2"
+  },
+  {
+   "expect": {
+    "docks.left.open": true,
+    "docks.left.panel": "Bookmarks"
+   }
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-f1"
+  },
+  {
+   "find": {
+    "label": "Navigation Bar",
+    "role": "AXMenuItem",
+    "in": "Select In"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "4"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "StatusBar",
+     "NavigationBar"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-f1"
+  },
+  {
+   "find": {
+    "label": "Terminal",
+    "role": "AXMenuItem",
+    "in": "Select In"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "7"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "TerminalPanel"
+   }
+  },
+  {
+   "menu": "Navigate",
+   "path": [
+    "Navigate"
+   ],
+   "items": [
+    "Select In…",
+    "Jump to Navigation Bar"
+   ],
+   "part": true
+  }
+ ]
+}

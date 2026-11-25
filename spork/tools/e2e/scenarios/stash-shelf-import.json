@@ -1,0 +1,63 @@
+{
+ "id": "stash-shelf-import",
+ "covers": [
+  "action:ShelvedChanges.ImportPatches",
+  "action:Frontend.ChangesView.Shelf.ImportFromPatches"
+ ],
+ "note": "Import Patches… with the file picker answered by the test ({\"do\": \"pick\"}): each patch picked becomes a shelved changelist named after its file.",
+ "reference-app": [],
+ "steps": [
+  {
+   "sh": "mkdir -p src .idea/shelf/Fix_readme && echo 'fn a() {}' > src/a.rs && git add -N src/a.rs && printf '/shelf/\\n' > .idea/.gitignore && git diff README.md src/a.rs > .idea/shelf/Fix_readme/shelved.patch && printf '<changelist name=\"Fix_readme\" date=\"1767261600000\" recycled=\"false\" deleted=\"false\">\\n  <option name=\"DESCRIPTION\" value=\"Fix readme\" />\\n</changelist>\\n' > .idea/shelf/Fix_readme.xml && git diff README.md > ../readme.patch && git checkout -- README.md && git rm -q --cached src/a.rs && rm -rf src"
+  },
+  {
+   "do": "action",
+   "name": "spork::ShowShelf"
+  },
+  {
+   "find": [
+    {
+     "role": "AXRow",
+     "label": "Fix readme"
+    }
+   ]
+  },
+  {
+   "do": "pick",
+   "paths": [
+    "../readme.patch"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Fix readme",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "find": [
+    {
+     "role": "AXMenuItem",
+     "label": "Import Patches…"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Import Patches…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "role": "AXRow",
+     "label": "readme"
+    }
+   ]
+  },
+  {
+   "sh": "grep -c 'value=\"readme\"' .idea/shelf/readme.xml && cmp .idea/shelf/readme/shelved.patch ../readme.patch && git status --porcelain README.md",
+   "is": "1"
+  }
+ ]
+}

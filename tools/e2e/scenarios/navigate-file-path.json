@@ -1,0 +1,92 @@
+{
+ "id": "navigate-file-path",
+ "covers": [
+  "action:ShowFilePath"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-cmd-f12"
+  },
+  {
+   "find": [
+    {
+     "label": "Reveal in Finder",
+     "role": "AXMenu"
+    },
+    {
+     "label": "greeting.rs",
+     "role": "AXMenuItem",
+     "selected": true,
+     "in": "Reveal in Finder"
+    },
+    {
+     "label": "src",
+     "role": "AXMenuItem",
+     "in": "Reveal in Finder"
+    },
+    {
+     "label": "fixture",
+     "role": "AXMenuItem",
+     "in": "Reveal in Finder"
+    },
+    {
+     "label": "/",
+     "role": "AXMenuItem",
+     "in": "Reveal in Finder"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": {
+    "label": "Reveal in Finder",
+    "role": "AXMenu"
+   },
+   "absent": true
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "menu": "Navigate",
+   "path": [
+    "Navigate"
+   ],
+   "items": [
+    "File Structure",
+    "File Path"
+   ],
+   "part": true
+  }
+ ]
+}

@@ -1,0 +1,393 @@
+{
+ "id": "settings-dialog",
+ "covers": [
+  "action:ShowSettings"
+ ],
+ "reference-app": [
+  "screenshots/settings/appearance-behavior-appearance.jpg",
+  "screenshots/settings/editor-general-appearance.jpg"
+ ],
+ "steps": [
+  {
+   "do": "keys",
+   "keys": "cmd-,"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture",
+    "settings.page": "Appearance & Behavior/Appearance",
+    "settings.apply": false
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "find": [
+    {
+     "label": "Appearance & Behavior",
+     "role": "AXRow",
+     "in": "Settings categories"
+    },
+    {
+     "label": "Appearance",
+     "role": "AXRow",
+     "in": "Settings categories"
+    },
+    {
+     "label": "Accessibility",
+     "role": "AXRow",
+     "in": "Settings categories"
+    },
+    {
+     "label": "System Settings",
+     "role": "AXRow",
+     "in": "Settings categories"
+    },
+    {
+     "label": "Keymap",
+     "role": "AXRow",
+     "in": "Settings categories"
+    },
+    {
+     "label": "Editor",
+     "role": "AXRow",
+     "in": "Settings categories"
+    },
+    {
+     "label": "Plugins",
+     "role": "AXRow",
+     "in": "Settings categories"
+    },
+    {
+     "label": "Version Control",
+     "role": "AXRow",
+     "in": "Settings categories"
+    },
+    {
+     "label": "Build, Execution, Deployment",
+     "role": "AXRow",
+     "in": "Settings categories"
+    },
+    {
+     "label": "Languages & Frameworks",
+     "role": "AXRow",
+     "in": "Settings categories"
+    },
+    {
+     "label": "Tools",
+     "role": "AXRow",
+     "in": "Settings categories"
+    },
+    {
+     "label": "Advanced Settings",
+     "role": "AXRow",
+     "in": "Settings categories"
+    },
+    {
+     "label": "Help",
+     "role": "AXButton"
+    },
+    {
+     "label": "Cancel",
+     "role": "AXButton"
+    },
+    {
+     "label": "Apply",
+     "role": "AXButton",
+     "enabled": false
+    },
+    {
+     "label": "OK",
+     "role": "AXButton"
+    }
+   ],
+   "ordered": true,
+   "within": 8000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "appearance",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Show indent guides",
+   "role": "AXCheckBox"
+  },
+  {
+   "expect": {
+    "settings.apply": true,
+    "settings.modified": [
+     "Appearance & Behavior/Appearance"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Apply",
+    "role": "AXButton",
+    "enabled": true
+   }
+  },
+  {
+   "do": "click",
+   "label": "Show indent guides",
+   "role": "AXCheckBox"
+  },
+  {
+   "expect": {
+    "settings.apply": false,
+    "settings.modified": []
+   }
+  },
+  {
+   "do": "click",
+   "label": "Show indent guides",
+   "role": "AXCheckBox"
+  },
+  {
+   "expect": {
+    "settings.apply": true
+   }
+  },
+  {
+   "do": "click",
+   "label": "Cancel",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings": null
+   }
+  },
+  {
+   "sh": "cat ../home/.config/spork-ide/settings.json",
+   "lacks": "indent_guides"
+  },
+  {
+   "expect": {
+    "value": "never"
+   },
+   "of": {
+    "do": "setting",
+    "path": "/project_panel/indent_guides/show"
+   }
+  },
+  {
+   "do": "click",
+   "label": "IDE and Project Settings",
+   "role": "AXButton"
+  },
+  {
+   "do": "click",
+   "label": "Settings…",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture",
+    "settings.page": "Appearance & Behavior/Appearance",
+    "settings.apply": false
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "Show indent guides",
+   "role": "AXCheckBox",
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings": null
+   }
+  },
+  {
+   "sh": "cat ../home/.config/spork-ide/settings.json",
+   "contains": "\"show\":\"always\""
+  },
+  {
+   "expect": {
+    "value": "always"
+   },
+   "of": {
+    "do": "setting",
+    "path": "/project_panel/indent_guides/show"
+   }
+  },
+  {
+   "do": "action",
+   "name": "zed::OpenSettings"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "Search settings",
+   "role": "AXTextField",
+   "within": 8000
+  },
+  {
+   "do": "keys",
+   "keys": "l i n e space n u m",
+   "window": "Settings – fixture"
+  },
+  {
+   "expect": {
+    "settings.search": "line num"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Editor",
+     "role": "AXRow",
+     "in": "Settings categories"
+    },
+    {
+     "label": "General",
+     "role": "AXRow",
+     "in": "Settings categories"
+    },
+    {
+     "label": "Appearance",
+     "role": "AXRow",
+     "in": "Settings categories"
+    }
+   ],
+   "ordered": true,
+   "missing": [
+    {
+     "label": "Keymap",
+     "role": "AXRow"
+    },
+    {
+     "label": "Plugins",
+     "role": "AXRow"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Appearance",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Editor/General/Appearance"
+   }
+  },
+  {
+   "find": {
+    "label": "Show line numbers:",
+    "role": "AXCheckBox"
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "search",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Search settings",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a z z q",
+   "window": "Settings – fixture"
+  },
+  {
+   "find": {
+    "text": "Nothing to show"
+   },
+   "missing": [
+    {
+     "label": "Editor",
+     "role": "AXRow"
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape",
+   "window": "Settings – fixture"
+  },
+  {
+   "expect": {
+    "settings.search": ""
+   }
+  },
+  {
+   "find": {
+    "label": "Keymap",
+    "role": "AXRow",
+    "in": "Settings categories"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Keymap",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Keymap"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Back",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings.page": "Editor/General/Appearance"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Forward",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings.page": "Keymap"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "escape",
+   "window": "Settings – fixture"
+  },
+  {
+   "expect": {
+    "settings": null
+   }
+  }
+ ]
+}

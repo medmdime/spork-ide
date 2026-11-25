@@ -1,0 +1,162 @@
+{
+ "id": "frame-editor-tabs-menu",
+ "covers": [
+  "action:ReopenClosedTab",
+  "action:ConfigureEditorTabs"
+ ],
+ "steps": [
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "do": "open",
+   "path": "README.md"
+  },
+  {
+   "expect": {
+    "active": "README.md"
+   }
+  },
+  {
+   "find": {
+    "label": "More Actions",
+    "role": "AXCheckBox"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "More Actions",
+   "role": "AXCheckBox"
+  },
+  {
+   "menu": "popup:EditorTabsEntryPoint",
+   "items": [
+    "Recent Files",
+    "Recent Locations",
+    "Go to File…",
+    "Close All Tabs",
+    "Close Unmodified Tabs",
+    "Reopen Closed Tab",
+    "Configure Editor Tabs…"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Configure Editor Tabs…",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "settings.page": "Editor/General/Editor Tabs"
+   },
+   "within": 5000
+  },
+  {
+   "find": {
+    "label": "Cancel",
+    "role": "AXButton"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Cancel",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings": null
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-w"
+  },
+  {
+   "expect": {
+    "items": [
+     "src/main.rs"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "More Actions",
+    "role": "AXCheckBox"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "More Actions",
+   "role": "AXCheckBox"
+  },
+  {
+   "menu": "popup:EditorTabsEntryPoint",
+   "items": [
+    "Recent Files",
+    "Recent Locations",
+    "Go to File…",
+    "Close All Tabs",
+    "Close Unmodified Tabs",
+    "Reopen Closed Tab",
+    "Configure Editor Tabs…"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Reopen Closed Tab",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "active": "README.md"
+   }
+  },
+  {
+   "find": {
+    "label": "More Actions",
+    "role": "AXCheckBox"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "More Actions",
+   "role": "AXCheckBox"
+  },
+  {
+   "menu": "popup:EditorTabsEntryPoint",
+   "items": [
+    "Recent Files",
+    "Recent Locations",
+    "Go to File…",
+    "Close All Tabs",
+    "Close Unmodified Tabs",
+    "Reopen Closed Tab",
+    "Configure Editor Tabs…"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Close All Tabs",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "items": []
+   }
+  }
+ ]
+}

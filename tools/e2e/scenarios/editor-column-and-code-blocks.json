@@ -1,0 +1,214 @@
+{
+ "id": "editor-column-and-code-blocks",
+ "covers": [
+  "action:EditorToggleColumnMode",
+  "action:EditorCodeBlockStart",
+  "action:EditorCodeBlockEnd",
+  "action:EditorCodeBlockStartWithSelection",
+  "action:EditorCodeBlockEndWithSelection"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "file": "src/blocks.rs",
+   "text": "fn main() {\n    if true {\n        let x = 1;\n    }\n}\n"
+  },
+  {
+   "do": "open",
+   "path": "src/blocks.rs"
+  },
+  {
+   "expect": {
+    "active": "src/blocks.rs",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down down right right right right right right right right"
+  },
+  {
+   "find": {
+    "label": "Line 3, column 9",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-cmd-["
+  },
+  {
+   "find": {
+    "label": "Line 2, column 14",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-cmd-["
+  },
+  {
+   "find": {
+    "label": "Line 1, column 12",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-cmd-]"
+  },
+  {
+   "find": {
+    "label": "Line 5, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "right"
+  },
+  {
+   "find": {
+    "label": "Line 5, column 2",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-cmd-["
+  },
+  {
+   "find": {
+    "label": "Line 1, column 11",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-cmd-]"
+  },
+  {
+   "find": {
+    "label": "Line 5, column 2",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down down right right right right right right right right"
+  },
+  {
+   "find": {
+    "label": "Line 3, column 9",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-cmd-]"
+  },
+  {
+   "find": {
+    "label": "Line 4, column 5",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down down right right right right right right right right alt-cmd-}"
+  },
+  {
+   "do": "type",
+   "text": "Y"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/blocks.rs",
+   "is": "fn main() {|    if true {|        Y}|}|"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down end alt-cmd-{"
+  },
+  {
+   "do": "type",
+   "text": "Z"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/blocks.rs",
+   "is": "fn main() {Z|        Y}|}|"
+  },
+  {
+   "file": "src/columns.txt",
+   "text": "abc\ndef\nghi\njkl\n"
+  },
+  {
+   "do": "open",
+   "path": "src/columns.txt"
+  },
+  {
+   "expect": {
+    "active": "src/columns.txt"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home right shift-cmd-8"
+  },
+  {
+   "do": "keys",
+   "keys": "shift-down shift-down shift-down shift-up shift-right"
+  },
+  {
+   "do": "type",
+   "text": "X"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/columns.txt",
+   "is": "aXc|dXf|gXi|jkl|"
+  },
+  {
+   "do": "keys",
+   "keys": "escape cmd-home shift-cmd-8 shift-down"
+  },
+  {
+   "do": "type",
+   "text": "Q"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/columns.txt",
+   "is": "QdXf|gXi|jkl|"
+  }
+ ]
+}

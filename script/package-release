@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+# Packages this OS's downloads of Spork and Spork IDE for the release <tag> into target/dist, from the release
+# binaries `cargo build --release -p spork -p zed -p cli` left in target/release (.github/workflows/release.yml):
+#   macOS    Spork-<tag>-macos-arm64.zip       Spork.app (spork/scripts/package-macos.sh)
+#            Spork-IDE-<tag>-macos-arm64.zip   Spork IDE.app: zed and its cli
+#   Linux    Spork-<tag>-linux-x64.tar.gz      bin/, share/: a .desktop entry and the icon
+#            Spork-IDE-<tag>-linux-x64.tar.gz  bin/spork-ide (the cli), libexec/zed-editor, share/
+#   Windows  Spork-<tag>-windows-x64.zip       Spork/spork.exe
+#            Spork-IDE-<tag>-windows-x64.zip   Spork IDE/Spork IDE.exe and bin/spork-ide.exe (the cli)
+# shortcut: unsigned (macOS ad hoc), no installers; signing needs certificates (Spork's P7).
+set -euo pipefail
+cd "$(dirname "$0")/.."
+tag=${1:?usage: script/package-release <tag>}
+bin=target/release
+dist=target/dist
+stage=target/package
+rm -rf "$stage"
+mkdir -p "$dist" "$stage"
+
+case "$(uname -s)" in
+  Darwin)
+    platform=macos-$(uname -m | sed 's/aarch64/arm64/')
+    spork/scripts/package-macos.sh
+    ditto -c -k --norsrc --noextattr --keepParent target/Spork.app "$dist/Spork-$tag-$platform.zip"
+
+    # Spork IDE.app as cargo-bundle makes it from crates/zed/Cargo.toml's bundle-stable metadata
+    eval "$(python3 - <<'PY'
+import shlex, tomllib
+meta = tomllib.load(open("crates/zed/Cargo.toml", "rb"))["package"]["metadata"]["bundle-stable"]
+for key in ("name", "identifier", "osx_minimum_system_version"):
+    print(f"{key}={shlex.quote(meta[key])}")
+print(f"scheme={shlex.quote(meta['osx_url_schemes'][0])}")
+PY
+)"
+    app="$stage/$name.app"
+    mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
+    cp "$bin/zed" "$bin/cli" "$app/Contents/MacOS/"
+    # DocumentTypes.plist names Document.icns as the documents' icon
+    cp crates/zed/resources/Document.icns "$app/Contents/Resources/"
+    set_dir="$stage/app-icon.iconset"
+    mkdir -p "$set_dir"
+    for size in 16 32 128 256 512; do
+      sips -z "$size" "$size" crates/zed/resources/app-icon.png --out "$set_dir/icon_${size}x${size}.png" > /dev/null
+      sips -z $((size * 2)) $((size * 2)) crates/zed/resources/app-icon@2x.png \
+        --out "$set_dir/icon_${size}x${size}@2x.png" > /dev/null
+    done
+    iconutil -c icns "$set_dir" -o "$app/Contents/Resources/app-icon.icns"
+    version=${tag#v}
+    {
+      cat <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleName</key><string>$name</string>
+  <key>CFBundleDisplayName</key><string>$name</string>
+  <key>CFBundleIdentifier</key><string>$identifier</string>
+  <key>CFBundleExecutable</key><string>zed</string>
+  <key>CFBundlePackageType</key><string>APPL</string>
+  <key>CFBundleIconFile</key><string>app-icon</string>
+  <key>LSApplicationCategoryType</key><string>public.app-category.developer-tools</string>
+  <key>CFBundleShortVersionString</key><string>${version%%-*}</string>
+  <key>CFBundleVersion</key><string>$version</string>
+  <key>LSMinimumSystemVersion</key><string>$osx_minimum_system_version</string>
+  <key>NSHighResolutionCapable</key><true/>
+  <key>CFBundleURLTypes</key>
+  <array><dict>
+    <key>CFBundleURLName</key><string>$name</string>
+    <key>CFBundleURLSchemes</key><array><string>$scheme</string></array>
+  </dict></array>
+PLIST
+      cat crates/zed/resources/info/*.plist
+      printf '</dict>\n</plist>\n'
+    } > "$app/Contents/Info.plist"
+    plutil -lint "$app/Contents/Info.plist" > /dev/null
+    codesign --force --sign - "$app/Contents/MacOS/cli"
+    codesign --force --sign - "$app"
+    ditto -c -k --norsrc --noextattr --keepParent "$app" "$dist/Spork-IDE-$tag-$platform.zip"
+    ;;
+
+  Linux)
+    platform=linux-$(uname -m | sed 's/x86_64/x64/')
+    spork=$stage/Spork-$tag-$platform
+    mkdir -p "$spork/bin" "$spork/share/applications" "$spork/share/icons/hicolor/512x512/apps"
+    cp "$bin/spork" "$spork/bin/"
+    cp crates/spork/icon/spork.png "$spork/share/icons/hicolor/512x512/apps/"
+    cat > "$spork/share/applications/spork.desktop" <<DESKTOP
+[Desktop Entry]
+Type=Application
+Name=Spork
+Comment=Git client
+Exec=spork %F
+Icon=spork
+Terminal=false
+Categories=Development;RevisionControl;
+DESKTOP
+    tar -C "$stage" -czf "$dist/Spork-$tag-$platform.tar.gz" "Spork-$tag-$platform"
+
+    # Zed's Linux layout (script/bundle-linux): the cli finds the app at ../libexec/zed-editor
+    ide=$stage/Spork-IDE-$tag-$platform
+    mkdir -p "$ide/bin" "$ide/libexec" "$ide/share/applications"
+    cp "$bin/cli" "$ide/bin/spork-ide"
+    cp "$bin/zed" "$ide/libexec/zed-editor"
+    for size in 512 1024; do
+      mkdir -p "$ide/share/icons/hicolor/${size}x${size}/apps"
+    done
+    cp crates/zed/resources/app-icon.png "$ide/share/icons/hicolor/512x512/apps/spork-ide.png"
+    cp crates/zed/resources/app-icon@2x.png "$ide/share/icons/hicolor/1024x1024/apps/spork-ide.png"
+    APP_NAME="Spork IDE" APP_CLI=spork-ide APP_ICON=spork-ide APP_ARGS=%U DO_STARTUP_NOTIFY=true \
+      envsubst < crates/zed/resources/zed.desktop.in > "$ide/share/applications/spork-ide.desktop"
+    tar -C "$stage" -czf "$dist/Spork-IDE-$tag-$platform.tar.gz" "Spork-IDE-$tag-$platform"
+    ;;
+
+  MINGW* | MSYS* | CYGWIN*)
+    platform=windows-x64
+    mkdir -p "$stage/Spork" "$stage/Spork IDE/bin"
+    cp "$bin/spork.exe" "$stage/Spork/"
+    # the cli finds the app at "../Spork IDE.exe" (crates/cli)
+    cp "$bin/zed.exe" "$stage/Spork IDE/Spork IDE.exe"
+    cp "$bin/cli.exe" "$stage/Spork IDE/bin/spork-ide.exe"
+    (cd "$stage" && 7z a -tzip -bd "../../$dist/Spork-$tag-$platform.zip" Spork > /dev/null)
+    (cd "$stage" && 7z a -tzip -bd "../../$dist/Spork-IDE-$tag-$platform.zip" "Spork IDE" > /dev/null)
+    ;;
+
+  *)
+    echo "package-release: unsupported OS $(uname -s)" >&2
+    exit 1
+    ;;
+esac
+rm -rf "$stage"
+ls -l "$dist"

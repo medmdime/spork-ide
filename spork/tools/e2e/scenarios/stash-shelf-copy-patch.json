@@ -1,0 +1,100 @@
+{
+ "id": "stash-shelf-copy-patch",
+ "covers": [
+  "action:Frontend.ChangesView.Shelf.CreatePatchFromChanges.Clipboard"
+ ],
+ "note": "Copy as Patch to Clipboard of a shelved changelist, as the reference app's: the patch goes to the clipboard (and 'Patch copied to clipboard' shows, which the accessibility tree doesn't hold); Git ▸ Patch ▸ Apply Patch from Clipboard… is then enabled, and greyed again once the clipboard holds no patch. The run uses Spork's test clipboard ({\"do\": \"clipboard\"}), not the user's.",
+ "reference-app": [],
+ "steps": [
+  {
+   "sh": "mkdir -p .idea/shelf/Fix_readme && printf '/shelf/\\n' > .idea/.gitignore"
+  },
+  {
+   "file": ".idea/shelf/Fix_readme/shelved.patch",
+   "text": "diff --git a/README.md b/README.md\n--- a/README.md\n+++ b/README.md\n@@ -1,2 +1,3 @@\n # Fixture\n two\n+changed\n"
+  },
+  {
+   "file": ".idea/shelf/Fix_readme.xml",
+   "text": "<changelist name=\"Fix_readme\" date=\"1767261600000\" recycled=\"false\" deleted=\"false\">\n  <option name=\"DESCRIPTION\" value=\"Fix readme\" />\n</changelist>\n"
+  },
+  {
+   "menu": "context-menu:Patch.MainMenu",
+   "path": [
+    "Git",
+    "Patch"
+   ]
+  },
+  {
+   "do": "action",
+   "name": "spork::ShowShelf"
+  },
+  {
+   "find": [
+    {
+     "role": "AXRow",
+     "label": "Fix readme"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Fix readme",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "find": [
+    {
+     "role": "AXMenuItem",
+     "label": "Copy as Patch to Clipboard"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Copy as Patch to Clipboard",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "text": "diff --git a/README.md b/README.md\n--- a/README.md\n+++ b/README.md\n@@ -1,2 +1,3 @@\n # Fixture\n two\n+changed\n"
+   },
+   "of": {
+    "do": "clipboard"
+   }
+  },
+  {
+   "menu": "context-menu:Patch.MainMenu",
+   "items": [
+    "Create Patch from Local Changes…",
+    "Apply Patch from Clipboard…"
+   ],
+   "path": [
+    "Git",
+    "Patch"
+   ]
+  },
+  {
+   "sh": "git checkout -- README.md"
+  },
+  {
+   "do": "action",
+   "name": "spork::ApplyPatchFromClipboard"
+  },
+  {
+   "sh": "git diff README.md",
+   "contains": "+changed"
+  },
+  {
+   "do": "clipboard",
+   "text": "just some text"
+  },
+  {
+   "menu": "context-menu:Patch.MainMenu",
+   "path": [
+    "Git",
+    "Patch"
+   ]
+  }
+ ]
+}

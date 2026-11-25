@@ -1,0 +1,182 @@
+{
+ "id": "code-reformat",
+ "covers": [
+  "action:ReformatCode",
+  "action:ShowReformatFileDialog",
+  "dialog:ShowReformatFileDialog",
+  "action:CommentByLineComment",
+  "action:MoveStatementDown",
+  "action:MoveStatementUp"
+ ],
+ "reference-app": [],
+ "settings": {
+  "enable_language_server": true,
+  "lsp": {
+   "rust-analyzer": {
+    "binary": {
+     "path": "$RUST_ANALYZER"
+    },
+    "initialization_options": {
+     "checkOnSave": false,
+     "cargo": {
+      "buildScripts": {
+       "enable": false
+      }
+     },
+     "procMacro": {
+      "enable": false
+     }
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "file": "src/main.rs",
+   "text": "mod greeting;\n\nfn main() {\n    let first = greeting::hello(\"world\");\n    let second = greeting::hello(\"you\");\nprintln!(\"{first}   {second}\") ;\n}\n"
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "expect": {
+    "code.ready": true
+   },
+   "within": 120000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-alt-l"
+  },
+  {
+   "sh": "cat src/main.rs",
+   "contains": "    println!(\"{first}   {second}\");\n}",
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down down down"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-down"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "sh": "cat src/main.rs",
+   "contains": "    let second = greeting::hello(\"you\");\n    let first = greeting::hello(\"world\");",
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-up"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "sh": "cat src/main.rs",
+   "contains": "    let first = greeting::hello(\"world\");\n    let second = greeting::hello(\"you\");",
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-/"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "sh": "cat src/main.rs",
+   "contains": "    // let first = greeting::hello(\"world\");",
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-alt-shift-l"
+  },
+  {
+   "find": {
+    "label": "Reformat File: main.rs",
+    "role": "Heading"
+   },
+   "within": 10000
+  },
+  {
+   "find": [
+    {
+     "label": "Only changes uncommitted to VCS",
+     "role": "AXRadioButton",
+     "enabled": false
+    },
+    {
+     "label": "Selected text",
+     "role": "AXRadioButton",
+     "enabled": false
+    },
+    {
+     "label": "Whole file",
+     "role": "AXRadioButton",
+     "value": "1"
+    },
+    {
+     "label": "Optimize imports",
+     "role": "AXCheckBox",
+     "enabled": false
+    },
+    {
+     "label": "Rearrange code",
+     "role": "AXCheckBox",
+     "enabled": false
+    },
+    {
+     "label": "Code cleanup",
+     "role": "AXCheckBox",
+     "enabled": false
+    },
+    {
+     "label": "Do not keep line breaks",
+     "role": "AXCheckBox",
+     "enabled": false
+    }
+   ]
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "reformat-file"
+  },
+  {
+   "do": "click",
+   "label": "Run",
+   "role": "AXButton",
+   "in": "Reformat File"
+  },
+  {
+   "find": {
+    "label": "Reformat File: main.rs",
+    "role": "Heading"
+   },
+   "absent": true
+  }
+ ]
+}

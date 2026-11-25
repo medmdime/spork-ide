@@ -1,0 +1,143 @@
+{
+ "id": "git-menu-clone",
+ "covers": [
+  "action:Git.Clone",
+  "dialog:Git.Clone",
+  "action:Vcs.VcsClone",
+  "dialog:Vcs.VcsClone"
+ ],
+ "reference-app": [
+  "screenshots/dialogs/git-clone.jpg",
+  "screenshots/dialogs/vcs-vcsclone.jpg"
+ ],
+ "steps": [
+  {
+   "do": "action",
+   "name": "spork::GetFromVersionControl"
+  },
+  {
+   "find": [
+    {
+     "text": "Clone Repository"
+    },
+    {
+     "text": "Repository URL"
+    },
+    {
+     "text": "URL:"
+    },
+    {
+     "text": "Clone into:"
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": [],
+   "missing": [
+    {
+     "text": "Repository URL"
+    }
+   ]
+  },
+  {
+   "do": "action",
+   "name": "spork::CloneRepository"
+  },
+  {
+   "find": [
+    {
+     "text": "Clone Repository"
+    },
+    {
+     "text": "Repository URL"
+    },
+    {
+     "text": "GitHub"
+    },
+    {
+     "text": "GitHub Enterprise"
+    },
+    {
+     "text": "GitLab"
+    },
+    {
+     "text": "Version control:"
+    },
+    {
+     "text": "Git"
+    },
+    {
+     "text": "More via plugins…"
+    },
+    {
+     "text": "URL:"
+    },
+    {
+     "text": "Clone into:"
+    },
+    {
+     "text": "Shallow clone with a history truncated to"
+    },
+    {
+     "text": "Cancel"
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "text": "Clone",
+     "enabled": false,
+     "role": "AXButton"
+    }
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "open"
+  },
+  {
+   "do": "click",
+   "role": "AXTextField",
+   "nth": 2
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": ". . / . . / r e p o . o r i g i n"
+  },
+  {
+   "find": [
+    {
+     "text": "Clone",
+     "enabled": true,
+     "role": "AXButton"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Clone",
+   "role": "AXButton"
+  },
+  {
+   "git": [
+    "-C",
+    "../home/SporkProjects/repo.origin",
+    "log",
+    "-1",
+    "--format=%s",
+    "origin/main"
+   ],
+   "is": "Merge branch 'feature/login'"
+  }
+ ]
+}

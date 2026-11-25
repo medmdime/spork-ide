@@ -1,0 +1,85 @@
+{
+ "id": "commit-compare-revision",
+ "covers": [
+  "action:Compare.Selected"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "action",
+   "name": "spork::ToggleCommit"
+  },
+  {
+   "expect": {
+    "left": "[Commit, Project]"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXCheckBox"
+    }
+   ],
+   "within": 6000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "README.md",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "find": [
+    {
+     "label": "Compare with Revision…",
+     "role": "AXMenuItem"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Compare with Revision…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "File Revisions",
+     "role": "AXTextField"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "s t a r t"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "find": [
+    {
+     "label": "File Revisions",
+     "role": "AXTextField"
+    }
+   ],
+   "absent": true
+  },
+  {
+   "expect": {
+    "view": "Changes"
+   }
+  }
+ ]
+}

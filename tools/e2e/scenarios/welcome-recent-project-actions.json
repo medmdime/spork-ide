@@ -1,0 +1,59 @@
+{
+ "id": "welcome-recent-project-actions",
+ "covers": [
+  "action:WelcomeScreen.RemoveSelected"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "action",
+   "name": "workspace::CloseProject"
+  },
+  {
+   "find": {
+    "label": "fixture",
+    "role": "AXButton"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "More Actions",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    "Open Selected",
+    "Reveal in Finder",
+    "Copy Path",
+    "Remove from Recent Projects…"
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "Remove from Recent Projects…"
+  },
+  {
+   "find": [
+    "Remove Recent Project",
+    "Remove 'fixture' from recent projects list?"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Remove",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "fixture",
+    "role": "AXButton"
+   },
+   "absent": true
+  },
+  {
+   "find": "Welcome to Spork IDE"
+  }
+ ]
+}

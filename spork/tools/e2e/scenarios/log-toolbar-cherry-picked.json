@@ -1,0 +1,110 @@
+{
+ "id": "log-toolbar-cherry-picked",
+ "covers": [
+  "context-menu:Git.Log.Toolbar",
+  "toolbar:Git.Log.Toolbar",
+  "action:Git.Log.HighlightCherryPickedCommits"
+ ],
+ "reference-app": [
+  "screenshots/menus/git-log-toolbar.png",
+  "screenshots/menus/vcs-log-presentationsettings.png"
+ ],
+ "steps": [
+  {
+   "expect": {
+    "view": "History",
+    "commits": 7,
+    "log.not_cherry_picked": false
+   }
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "View Options",
+   "in": "VCS Log Toolbar"
+  },
+  {
+   "menu": "context-menu:Git.Log.Toolbar",
+   "items": [
+    "Not Cherry-Picked Commits"
+   ],
+   "part": true
+  },
+  {
+   "menu": "toolbar:Git.Log.Toolbar",
+   "items": [
+    "Not Cherry-Picked Commits"
+   ],
+   "part": true
+  },
+  {
+   "do": "click",
+   "label": "Not Cherry-Picked Commits",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    "feature/login",
+    "fix/typo",
+    "release/2026.1",
+    "origin/fix/typo",
+    "origin/main"
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "fix/typo",
+   "role": "AXGroup"
+  },
+  {
+   "expect": {
+    "log.not_cherry_picked": true,
+    "log.not_picked": 1
+   },
+   "within": 8000
+  },
+  {
+   "find": {
+    "label": "origin/main",
+    "role": "AXGroup"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "View Options",
+   "in": "VCS Log Toolbar"
+  },
+  {
+   "menu": "context-menu:Git.Log.Toolbar",
+   "items": [
+    "Not Cherry-Picked Commits"
+   ],
+   "part": true,
+   "checked": [
+    "Compact References View",
+    "My Commits",
+    "Merge Commits",
+    "Current Branch",
+    "Not Cherry-Picked Commits"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Not Cherry-Picked Commits",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "log.not_cherry_picked": false,
+    "log.not_picked": null
+   }
+  }
+ ]
+}

@@ -1,0 +1,622 @@
+{
+ "id": "docker-services-actions",
+ "covers": [],
+ "reference-app": [],
+ "env": {
+  "PATH": "$E2E/fake_docker:$PATH"
+ },
+ "steps": [
+  {
+   "sh": "(nohup python3 \"$E2E/docker_engine.py\" ../home/.docker/run/docker.sock ../docker-calls.log 600 > /dev/null 2>&1 &) && for i in $(seq 50); do [ -S ../home/.docker/run/docker.sock ] && break; sleep 0.1; done && [ -S ../home/.docker/run/docker.sock ]"
+  },
+  {
+   "do": "open",
+   "path": "README.md"
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-8"
+  },
+  {
+   "expect": {
+    "run.services.docker.servers.Docker.status": "Disconnected"
+   }
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "find": {
+    "label": "Docker",
+    "role": "AXRow"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Docker",
+   "role": "AXRow",
+   "count": 2
+  },
+  {
+   "expect": {
+    "run.services.docker.servers.Docker.status": "Connected",
+    "run.services.docker.compose_cli": true
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Containers",
+   "role": "AXRow",
+   "count": 2
+  },
+  {
+   "do": "click",
+   "label": "nginx-demo",
+   "role": "AXRow",
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Stop Container",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "run.services.docker.servers.Docker.containers.0.state": "exited"
+   },
+   "within": 5000
+  },
+  {
+   "sh": "cat ../docker-calls.log",
+   "contains": "POST /v1.45/containers/c0ffee0001aa0000000000000000000000000000000000000000000000000001/stop"
+  },
+  {
+   "toolbar": "ServiceViewItemToolbar",
+   "items": [
+    "Start Container",
+    "Delete Container"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Start Container",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "run.services.docker.servers.Docker.containers.0.state": "running"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Pause Container",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "run.services.docker.servers.Docker.containers.0.state": "paused"
+   },
+   "within": 5000
+  },
+  {
+   "toolbar": "ServiceViewItemToolbar",
+   "items": [
+    "Unpause Container",
+    "Stop Container",
+    "Delete Container"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Unpause Container",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "run.services.docker.servers.Docker.containers.0.state": "running"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Restart Container",
+   "role": "AXButton"
+  },
+  {
+   "sh": "cat ../docker-calls.log",
+   "contains": "POST /v1.45/containers/c0ffee0001aa0000000000000000000000000000000000000000000000000001/restart"
+  },
+  {
+   "do": "click",
+   "label": "nginx-demo",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "do": "click",
+   "label": "Copy Container ID",
+   "role": "AXMenuItem"
+  },
+  {
+   "sh": "pbpaste",
+   "is": "c0ffee0001aa0000000000000000000000000000000000000000000000000001"
+  },
+  {
+   "do": "click",
+   "label": "nginx-demo",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "do": "click",
+   "label": "Attach",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "run.services.docker.tab": "Attached Console",
+    "run.services.docker.text": "nginx-demo: attached output"
+   },
+   "within": 5000
+  },
+  {
+   "sh": "cat ../docker-calls.log",
+   "contains": "POST /v1.45/containers/c0ffee0001aa0000000000000000000000000000000000000000000000000001/attach?stream=1&logs=1&stdout=1&stderr=1"
+  },
+  {
+   "do": "click",
+   "label": "nginx-demo",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "do": "click",
+   "label": "Create Terminal",
+   "role": "AXMenuItem",
+   "hover": true
+  },
+  {
+   "menu": "Docker.RemoteServers.CreateTerminal",
+   "items": [
+    "As Container User",
+    "As Root User"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "As Container User",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "run.services.docker.tab": "Terminal",
+    "run.services.docker.text": "/ $"
+   },
+   "within": 10000
+  },
+  {
+   "do": "type",
+   "text": "whoami"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "run.services.docker.text": "/ $ whoami\nnginx\n/ $"
+   },
+   "within": 5000
+  },
+  {
+   "sh": "cat ../docker-calls.log",
+   "contains": "POST /v1.45/containers/c0ffee0001aa0000000000000000000000000000000000000000000000000001/exec"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "terminal"
+  },
+  {
+   "do": "click",
+   "label": "redis-cache",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "do": "click",
+   "label": "Delete Container",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "Confirm Deletion"
+    },
+    {
+     "label": "Delete 1 container?"
+    },
+    {
+     "label": "Cancel",
+     "role": "AXButton"
+    },
+    {
+     "label": "Delete",
+     "role": "AXButton"
+    }
+   ],
+   "ordered": true,
+   "within": 3000
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "confirm-deletion"
+  },
+  {
+   "do": "click",
+   "label": "Delete",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "run.services.docker.servers.Docker.containers": [
+     {
+      "name": "nginx-demo",
+      "state": "running"
+     }
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "sh": "cat ../docker-calls.log",
+   "contains": "DELETE /v1.45/containers/c0ffee0002bb0000000000000000000000000000000000000000000000000002?force=true"
+  },
+  {
+   "do": "click",
+   "label": "Containers",
+   "role": "AXRow",
+   "count": 2
+  },
+  {
+   "do": "click",
+   "label": "Docker",
+   "role": "AXRow"
+  },
+  {
+   "do": "click",
+   "label": "Pull Image…",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "run.services.docker.selected": "Group(\"Docker\", Images)"
+   }
+  },
+  {
+   "find": {
+    "label": "Image to pull",
+    "role": "AXTextField"
+   },
+   "within": 3000
+  },
+  {
+   "do": "type",
+   "text": "busybox"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "run.services.docker.text": "busybox:latest\nlatest: Pulling from library/busybox\na1b2c3d4e5f6: Pull complete\nDigest: sha256:9999999999999999999999999999999999999999999999999999999999999999\nStatus: Downloaded newer image for busybox:latest",
+    "run.services.docker.servers.Docker.images": [
+     "5555eeee0000",
+     "busybox:latest",
+     "nginx:latest",
+     "postgres:16",
+     "redis:7",
+     "shop-api:latest"
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "sh": "cat ../docker-calls.log",
+   "contains": "POST /v1.45/images/create?fromImage=busybox&tag=latest"
+  },
+  {
+   "do": "click",
+   "label": "Images",
+   "role": "AXRow",
+   "count": 2
+  },
+  {
+   "do": "click",
+   "label": "busybox:latest",
+   "role": "AXRow",
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Delete Image",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Delete 1 image?"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Delete",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "run.services.docker.servers.Docker.images": [
+     "5555eeee0000",
+     "nginx:latest",
+     "postgres:16",
+     "redis:7",
+     "shop-api:latest"
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "nginx:latest",
+   "role": "AXRow"
+  },
+  {
+   "do": "click",
+   "label": "Delete Image",
+   "role": "AXButton"
+  },
+  {
+   "do": "click",
+   "label": "Delete",
+   "role": "AXButton",
+   "within": 3000
+  },
+  {
+   "expect": {
+    "run.services.docker.last_error": "conflict: unable to delete sha256:1111aaaa0000000000000000000000000000000000000000000000000000000a (image is being used by a container)"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Create Container",
+   "role": "AXButton",
+   "in": "ServiceViewItemToolbar"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Create Container"
+   },
+   "within": 5000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "find": [
+    {
+     "label": "Image ID or name",
+     "role": "AXTextField",
+     "value": "nginx:latest"
+    },
+    {
+     "label": "Container name",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Bind ports",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Environment variables",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Command",
+     "role": "AXTextField"
+    }
+   ],
+   "ordered": true,
+   "within": 3000
+  },
+  {
+   "do": "type",
+   "text": "web-2",
+   "window": "Create Container"
+  },
+  {
+   "do": "click",
+   "label": "Bind ports",
+   "role": "AXTextField"
+  },
+  {
+   "do": "type",
+   "text": "8081:80",
+   "window": "Create Container"
+  },
+  {
+   "do": "click",
+   "label": "Environment variables",
+   "role": "AXTextField"
+  },
+  {
+   "do": "type",
+   "text": "MODE=test",
+   "window": "Create Container"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "create-container",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Run",
+   "role": "AXButton",
+   "in": "Create Container"
+  },
+  {
+   "expect": {
+    "run.services.docker.servers.Docker.containers": [
+     {
+      "name": "nginx-demo",
+      "state": "running"
+     },
+     {
+      "name": "web-2",
+      "state": "running"
+     }
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "sh": "cat ../docker-calls.log",
+   "contains": "POST /v1.45/containers/create?name=web-2 {\"Image\":\"nginx:latest\",\"Env\":[\"MODE=test\"],\"ExposedPorts\":{\"80/tcp\":{}},\"HostConfig\":{\"PortBindings\":{\"80/tcp\":[{\"HostPort\":\"8081\"}]}}}"
+  },
+  {
+   "do": "click",
+   "label": "Images",
+   "role": "AXRow",
+   "count": 2
+  },
+  {
+   "do": "click",
+   "label": "Volumes",
+   "role": "AXRow"
+  },
+  {
+   "do": "click",
+   "label": "Clean Up",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "Clean Up"
+    },
+    {
+     "label": "Remove all unused volumes?"
+    }
+   ],
+   "ordered": true,
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Yes",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "run.services.docker.servers.Docker.volumes": [
+     "shop_db-data",
+     "web-data"
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Docker",
+   "role": "AXRow"
+  },
+  {
+   "do": "click",
+   "label": "Clean Up",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Remove all stopped containers, unused volumes, networks, dangling images, and all build caches?"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Yes",
+   "role": "AXButton"
+  },
+  {
+   "sh": "cat ../docker-calls.log",
+   "contains": "POST /v1.45/build/prune"
+  },
+  {
+   "sh": "cat ../docker-calls.log",
+   "contains": "POST /v1.45/images/prune\n"
+  },
+  {
+   "do": "click",
+   "label": "shop",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "menu": "Docker.RemoteServersViewPopup",
+   "items": [
+    "Start All",
+    "Stop",
+    "Down"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Start All",
+   "role": "AXMenuItem"
+  },
+  {
+   "sh": "cat ../home/.docker/run/docker-cli.log",
+   "contains": "/work/shop/compose.yaml up --detach"
+  },
+  {
+   "do": "click",
+   "label": "shop",
+   "role": "AXRow"
+  },
+  {
+   "do": "click",
+   "label": "Stop",
+   "role": "AXButton"
+  },
+  {
+   "sh": "cat ../home/.docker/run/docker-cli.log",
+   "contains": "/work/shop/compose.yaml stop"
+  },
+  {
+   "do": "click",
+   "label": "Down",
+   "role": "AXButton"
+  },
+  {
+   "sh": "cat ../home/.docker/run/docker-cli.log",
+   "contains": "/work/shop/compose.yaml down"
+  },
+  {
+   "sh": "cat ../home/.docker/run/docker-cli.log",
+   "contains": "/home/.docker/run/docker.sock docker compose --project-name shop --project-directory /work/shop --file /work/shop/compose.yaml up --detach"
+  }
+ ]
+}

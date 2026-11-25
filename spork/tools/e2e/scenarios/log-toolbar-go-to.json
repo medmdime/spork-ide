@@ -1,0 +1,112 @@
+{
+ "id": "log-toolbar-go-to",
+ "covers": [
+  "action:Vcs.Log.GoToRef"
+ ],
+ "reference-app": [
+  "screenshots/menus/vcs-log-toolbar-rightcorner.png"
+ ],
+ "steps": [
+  {
+   "expect": {
+    "commits": 7,
+    "selected": null
+   }
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "Go To Hash/Branch/Tag",
+   "in": "VCS Log Toolbar"
+  },
+  {
+   "find": {
+    "label": "Enter hash or branch/tag name:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "v 1 . 0 enter"
+  },
+  {
+   "expect": {
+    "selected": 1
+   }
+  },
+  {
+   "find": {
+    "label": "Enter hash or branch/tag name:",
+    "role": "AXTextField"
+   },
+   "absent": true
+  },
+  {
+   "wait": 800
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f"
+  },
+  {
+   "find": {
+    "label": "Enter hash or branch/tag name:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "f i x /"
+  },
+  {
+   "find": {
+    "label": "fix/typo",
+    "in": "Go To Hash/Branch/Tag"
+   }
+  },
+  {
+   "shot": "popup"
+  },
+  {
+   "do": "click",
+   "label": "fix/typo",
+   "in": "Go To Hash/Branch/Tag"
+  },
+  {
+   "expect": {
+    "selected": 0
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f"
+  },
+  {
+   "find": {
+    "label": "Enter hash or branch/tag name:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "1 c f 6 d 4 4 enter"
+  },
+  {
+   "expect": {
+    "selected": 2,
+    "view": "History"
+   }
+  }
+ ]
+}

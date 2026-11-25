@@ -1,0 +1,397 @@
+{
+ "id": "run-breakpoints",
+ "covers": [
+  "action:ToggleLineBreakpoint",
+  "action:ToggleBreakpointEnabled",
+  "action:ViewBreakpoints",
+  "action:XDebugger.MuteBreakpoints"
+ ],
+ "reference-app": [],
+ "settings": {
+  "dap": {
+   "CodeLLDB": {
+    "binary": "/usr/bin/python3",
+    "args": [
+     "$E2E/dap_fixture.py"
+    ]
+   }
+  },
+  "languages": {
+   "JSON": {
+    "prettier": {
+     "allowed": false
+    }
+   },
+   "JSONC": {
+    "prettier": {
+     "allowed": false
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "sh": "mkdir -p .zed && printf '[{\"label\": \"debug fixture\", \"adapter\": \"CodeLLDB\", \"request\": \"launch\", \"program\": \"$FIXTURE/target/debug/fixture\", \"cwd\": \"$FIXTURE\"}]' > .zed/debug.json"
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "expect": {
+    "run.breakpoints.0.at": "greeting.rs:2",
+    "run.breakpoints.0.enabled": true
+   }
+  },
+  {
+   "find": {
+    "label": "Line breakpoint",
+    "role": "AXImage"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Line breakpoint",
+   "role": "AXImage",
+   "button": "right"
+  },
+  {
+   "find": [
+    {
+     "label": "Breakpoint",
+     "role": "AXWindow"
+    },
+    {
+     "label": "Enabled",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "Suspend",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "Condition",
+     "role": "AXTextField"
+    },
+    {
+     "label": "More (⇧⌘F8)",
+     "role": "AXLink"
+    },
+    {
+     "label": "Done",
+     "role": "AXButton"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "popup"
+  },
+  {
+   "do": "click",
+   "label": "Enabled",
+   "role": "AXCheckBox"
+  },
+  {
+   "expect": {
+    "run.breakpoints.0.enabled": false
+   }
+  },
+  {
+   "find": {
+    "label": "Disabled breakpoint",
+    "role": "AXImage"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Enabled",
+   "role": "AXCheckBox"
+  },
+  {
+   "do": "click",
+   "label": "Condition",
+   "role": "AXTextField"
+  },
+  {
+   "do": "type",
+   "text": "name == world"
+  },
+  {
+   "do": "click",
+   "label": "Done",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Breakpoint",
+    "role": "AXWindow"
+   },
+   "absent": true
+  },
+  {
+   "expect": {
+    "run.breakpoints.0.enabled": true,
+    "run.breakpoints.0.condition": "name == world"
+   }
+  },
+  {
+   "find": {
+    "label": "Conditional breakpoint",
+    "role": "AXImage"
+   }
+  },
+  {
+   "do": "action",
+   "name": "run::ToggleBreakpointEnabled"
+  },
+  {
+   "expect": {
+    "run.breakpoints.0.enabled": false
+   }
+  },
+  {
+   "do": "action",
+   "name": "run::ToggleBreakpointEnabled"
+  },
+  {
+   "expect": {
+    "run.breakpoints.0.enabled": true
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-f8"
+  },
+  {
+   "find": {
+    "label": "Breakpoint",
+    "role": "AXWindow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-f8"
+  },
+  {
+   "find": [
+    {
+     "label": "Breakpoints Toolbar",
+     "role": "AXToolbar"
+    },
+    {
+     "label": "Add",
+     "role": "AXButton",
+     "enabled": false
+    },
+    {
+     "label": "Remove",
+     "role": "AXButton"
+    },
+    {
+     "label": "Line Breakpoints",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "greeting.rs:2",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "greeting.rs:2, Line breakpoint"
+    },
+    {
+     "label": "Enabled",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "Suspend",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "Condition:",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "\"Breakpoint hit\" message",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "Evaluate and log:",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "Pass count:",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "Done",
+     "role": "AXButton"
+    }
+   ],
+   "ordered": true,
+   "within": 8000
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "dialog",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "greeting.rs:2",
+   "role": "AXCheckBox"
+  },
+  {
+   "expect": {
+    "run.breakpoints.0.enabled": false
+   }
+  },
+  {
+   "do": "click",
+   "label": "greeting.rs:2",
+   "role": "AXCheckBox"
+  },
+  {
+   "do": "click",
+   "label": "Evaluate and log:",
+   "role": "AXCheckBox"
+  },
+  {
+   "expect": {
+    "run.breakpoints.0.log": "Breakpoint reached at greeting.rs:2"
+   }
+  },
+  {
+   "find": {
+    "label": "Suspend",
+    "role": "AXCheckBox",
+    "value": "0"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Suspend",
+   "role": "AXCheckBox"
+  },
+  {
+   "expect": {
+    "run.breakpoints.0.log": null
+   }
+  },
+  {
+   "do": "click",
+   "label": "Done",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Breakpoints Toolbar",
+    "role": "AXToolbar"
+   },
+   "absent": true
+  },
+  {
+   "do": "action",
+   "name": "run::MuteBreakpoints"
+  },
+  {
+   "expect": {
+    "run.muted": true
+   }
+  },
+  {
+   "find": {
+    "label": "Muted breakpoint",
+    "role": "AXImage"
+   }
+  },
+  {
+   "do": "action",
+   "name": "run::MuteBreakpoints"
+  },
+  {
+   "expect": {
+    "run.muted": false
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "expect": {
+    "run.breakpoints": []
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-f8"
+  },
+  {
+   "find": {
+    "label": "Breakpoints Toolbar",
+    "role": "AXToolbar"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Done",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Breakpoints Toolbar",
+    "role": "AXToolbar"
+   },
+   "absent": true
+  },
+  {
+   "menu": "Toggle Breakpoint",
+   "path": [
+    "Run",
+    "Toggle Breakpoint"
+   ],
+   "items": [
+    "Line Breakpoint",
+    "Toggle Breakpoint Enabled"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  }
+ ]
+}

@@ -1,0 +1,246 @@
+{
+ "id": "log-panes-branches",
+ "covers": [
+  "action:Git.Log.Branches.Change.Branch.Filter",
+  "action:Git.Log.Branches.Change.Branch.Filter.On.Selection",
+  "action:Git.Log.Branches.Navigate.Log.To.Branch.On.Selection",
+  "action:Git.Log.Branches.Navigate.Log.To.Selected.Branch",
+  "action:Git.Rename.Local.Branch"
+ ],
+ "reference-app": [
+  "screenshots/menus/git-log-branches-settings.png"
+ ],
+ "steps": [
+  {
+   "expect": {
+    "commits": 7,
+    "selected": null
+   }
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "find": {
+    "label": "Navigate Log to Selected Branch Head",
+    "role": "AXButton",
+    "enabled": false
+   }
+  },
+  {
+   "do": "click",
+   "label": "main",
+   "role": "AXRow",
+   "in": "Git Branches"
+  },
+  {
+   "expect": {
+    "log.branch_pick": "main",
+    "selected": null,
+    "log.branch_filter": []
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-f1"
+  },
+  {
+   "expect": {
+    "selected": 1
+   }
+  },
+  {
+   "do": "click",
+   "label": "login",
+   "role": "AXRow",
+   "in": "Git Branches"
+  },
+  {
+   "do": "click",
+   "label": "Navigate Log to Selected Branch Head",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "selected": 3
+   }
+  },
+  {
+   "do": "click",
+   "label": "typo",
+   "role": "AXRow",
+   "in": "Git Branches"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "log.branch_filter": [
+     "fix/typo"
+    ]
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "login",
+   "role": "AXRow",
+   "in": "Git Branches",
+   "count": 2
+  },
+  {
+   "expect": {
+    "log.branch_filter": [
+     "feature/login"
+    ],
+    "commits": 4
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Branches Pane Settings",
+   "role": "AXButton"
+  },
+  {
+   "menu": "context-menu:Git.Log.Branches.Settings",
+   "items": [
+    "Update Branch Filter",
+    "Navigate Log to Branch Head",
+    "Group by Directory",
+    "Show Tags"
+   ],
+   "checked": [
+    "Group by Directory",
+    "Show Tags"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Update Branch Filter",
+   "role": "AXMenuItem"
+  },
+  {
+   "do": "click",
+   "label": "HEAD (Current Branch)",
+   "role": "AXRow",
+   "in": "Git Branches"
+  },
+  {
+   "expect": {
+    "log.branch_filter": [
+     "HEAD"
+    ],
+    "commits": 6
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Branches Pane Settings",
+   "role": "AXButton"
+  },
+  {
+   "menu": "context-menu:Git.Log.Branches.Settings",
+   "items": [
+    "Update Branch Filter",
+    "Navigate Log to Branch Head",
+    "Group by Directory",
+    "Show Tags"
+   ],
+   "checked": [
+    "Update Branch Filter",
+    "Group by Directory",
+    "Show Tags"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Navigate Log to Branch Head",
+   "role": "AXMenuItem"
+  },
+  {
+   "do": "click",
+   "label": "login",
+   "role": "AXRow",
+   "in": "Git Branches"
+  },
+  {
+   "expect": {
+    "log.branch_pick": "feature/login",
+    "log.branch_filter": [
+     "HEAD"
+    ],
+    "selected": 2
+   }
+  },
+  {
+   "do": "click",
+   "label": "Branches Pane Settings",
+   "role": "AXButton"
+  },
+  {
+   "menu": "context-menu:Git.Log.Branches.Settings",
+   "items": [
+    "Update Branch Filter",
+    "Navigate Log to Branch Head",
+    "Group by Directory",
+    "Show Tags"
+   ],
+   "checked": [
+    "Navigate Log to Branch Head",
+    "Group by Directory",
+    "Show Tags"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "click",
+   "label": "login",
+   "role": "AXRow",
+   "in": "Git Branches"
+  },
+  {
+   "do": "keys",
+   "keys": "f2"
+  },
+  {
+   "find": {
+    "role": "AXTextField",
+    "value": "feature/login"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": {
+    "role": "AXTextField",
+    "value": "feature/login"
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "shift-f6"
+  },
+  {
+   "find": {
+    "role": "AXTextField",
+    "value": "feature/login"
+   }
+  },
+  {
+   "shot": "rename"
+  }
+ ]
+}

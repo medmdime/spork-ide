@@ -1,0 +1,153 @@
+{
+ "id": "code-refactor",
+ "covers": [
+  "action:Refactorings.QuickListPopupAction",
+  "dialog:Refactorings.QuickListPopupAction",
+  "action:IntroduceVariable",
+  "action:ExtractMethod",
+  "action:Inline"
+ ],
+ "reference-app": [],
+ "settings": {
+  "enable_language_server": true,
+  "lsp": {
+   "rust-analyzer": {
+    "binary": {
+     "path": "$RUST_ANALYZER"
+    },
+    "initialization_options": {
+     "checkOnSave": false,
+     "cargo": {
+      "buildScripts": {
+       "enable": false
+      }
+     },
+     "procMacro": {
+      "enable": false
+     }
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "file": "src/main.rs",
+   "text": "mod greeting;\n\nfn main() {\n    println!(\"{}\", greeting::hello(\"world\"));\n    println!(\"done\");\n}\n"
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "expect": {
+    "code.ready": true
+   },
+   "within": 120000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "down down down right right right right right right right right right right right right right right right right right right right"
+  },
+  {
+   "do": "keys",
+   "keys": "shift-right shift-right shift-right shift-right shift-right shift-right shift-right shift-right shift-right shift-right shift-right shift-right shift-right shift-right shift-right shift-right shift-right shift-right shift-right shift-right shift-right shift-right shift-right shift-right"
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-t"
+  },
+  {
+   "find": {
+    "label": "Refactor This",
+    "role": "AXMenu"
+   },
+   "within": 20000
+  },
+  {
+   "find": [
+    {
+     "label": "Rename…",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Extract into variable",
+     "role": "AXMenuItem"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "refactor-this"
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-alt-v"
+  },
+  {
+   "sh": "cat src/main.rs",
+   "contains": "let hello = greeting::hello(\"world\");",
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down down down down shift-down"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-alt-m"
+  },
+  {
+   "sh": "cat src/main.rs",
+   "contains": "fn fun_name(",
+   "within": 20000
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home right right right right right right right right"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-alt-n"
+  },
+  {
+   "sh": "cat src/main.rs",
+   "lacks": "greeting::hello",
+   "within": 20000
+  },
+  {
+   "sh": "cat src/main.rs",
+   "contains": "format!(\"Hello, {name}!\")"
+  }
+ ]
+}

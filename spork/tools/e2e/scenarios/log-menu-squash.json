@@ -1,0 +1,130 @@
+{
+ "id": "log-menu-squash",
+ "covers": [
+  "action:Git.Squash.Commits"
+ ],
+ "reference-app": [
+  "screenshots/menus/vcs-log-contextmenu.png"
+ ],
+ "steps": [
+  {
+   "sh": "printf 'a\\n' > a.txt && git add a.txt && GIT_AUTHOR_DATE=2026-01-09T10:00:00Z GIT_COMMITTER_DATE=2026-01-09T10:00:00Z git commit -q -m one"
+  },
+  {
+   "sh": "printf 'b\\n' > b.txt && git add b.txt && GIT_AUTHOR_DATE=2026-01-10T10:00:00Z GIT_COMMITTER_DATE=2026-01-10T10:00:00Z git commit -q -m two"
+  },
+  {
+   "expect": {
+    "commits": 9
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "two",
+   "role": "AXRow"
+  },
+  {
+   "do": "click",
+   "label": "one",
+   "role": "AXRow",
+   "modifiers": [
+    "cmd"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "one",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "menu": "context-menu:Vcs.Log.ContextMenu",
+   "items": [
+    "Show Repository at Revision",
+    "Compare Versions",
+    "Compare with Local"
+   ],
+   "part": true
+  },
+  {
+   "menu": "context-menu:Vcs.Log.ContextMenu",
+   "items": [
+    "Squash Into…",
+    "Drop Commits",
+    "Squash Commits…",
+    "Interactively Rebase from Here…"
+   ],
+   "part": true
+  },
+  {
+   "do": "click",
+   "label": "Compare Versions",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Changes Between 5bdfc9dc and 7bcafd2d",
+    "role": "AXGroup"
+   },
+   "within": 8000
+  },
+  {
+   "shot": "compare"
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": {
+    "label": "Changes Between 5bdfc9dc and 7bcafd2d",
+    "role": "AXGroup"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "one",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "do": "click",
+   "label": "Squash Commits…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Squashed Commit Message",
+    "role": "AXGroup"
+   }
+  },
+  {
+   "shot": "squash"
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "sh": "git log -1 --format=%B",
+   "is": "one\n\ntwo"
+  },
+  {
+   "sh": "git log -2 --format=%s",
+   "is": "one\nMerge branch 'feature/login'"
+  },
+  {
+   "sh": "git show --name-only --format= HEAD",
+   "is": "a.txt\nb.txt"
+  }
+ ]
+}

@@ -1,0 +1,102 @@
+{
+ "id": "vcs-askpass",
+ "covers": [],
+ "steps": [
+  {
+   "sh": "git clone -q --bare . ../remote.git && (nohup python3 \"$E2E/git_http.py\" .. ../port 180 > /dev/null 2>&1 &) && for i in $(seq 50); do [ -s ../port ] && break; sleep 0.1; done && git remote add origin \"http://127.0.0.1:$(cat ../port)/remote.git\" && git config credential.helper ''"
+  },
+  {
+   "find": [
+    {
+     "label": "Git",
+     "role": "AXCheckBox",
+     "in": "Left stripe"
+    },
+    {
+     "label": "Commit",
+     "role": "AXCheckBox",
+     "in": "Left stripe"
+    }
+   ],
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "spork::Fetch"
+  },
+  {
+   "find": [
+    {
+     "label": "Cancel",
+     "role": "AXButton"
+    },
+    {
+     "label": "Continue",
+     "role": "AXButton"
+    },
+    {
+     "role": "AXTextField"
+    }
+   ],
+   "within": 15000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "role": "AXTextField",
+   "nth": 0
+  },
+  {
+   "do": "keys",
+   "keys": "a d a"
+  },
+  {
+   "do": "click",
+   "label": "Continue",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "Cancel",
+     "role": "AXButton"
+    },
+    {
+     "label": "Continue",
+     "role": "AXButton"
+    },
+    {
+     "role": "AXTextField"
+    }
+   ],
+   "within": 15000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "role": "AXTextField",
+   "nth": 0
+  },
+  {
+   "do": "keys",
+   "keys": "s 3 c r e t"
+  },
+  {
+   "do": "click",
+   "label": "Continue",
+   "role": "AXButton"
+  },
+  {
+   "sh": "git rev-parse -q --verify refs/remotes/origin/main > /dev/null && echo fetched || echo not yet",
+   "is": "fetched",
+   "within": 20000
+  },
+  {
+   "sh": "kill $(lsof -t -i tcp:$(cat ../port) -s tcp:listen) 2>/dev/null; true"
+  }
+ ]
+}

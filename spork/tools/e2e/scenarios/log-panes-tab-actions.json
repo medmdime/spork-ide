@@ -1,0 +1,57 @@
+{
+ "id": "log-panes-tab-actions",
+ "covers": [
+  "context-menu:Vcs.Log.ToolWindow.TabActions.DropDown",
+  "action:Vcs.Log.ShowSettingsAction"
+ ],
+ "reference-app": [
+  "screenshots/menus/vcs-log-toolwindow-tabactions-dropdown.png"
+ ],
+ "steps": [
+  {
+   "expect": {
+    "view": "History",
+    "commits": 7
+   }
+  },
+  {
+   "do": "action",
+   "name": "spork::ActivityLog"
+  },
+  {
+   "expect": {
+    "console": true
+   }
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "Tab Actions"
+  },
+  {
+   "menu": "context-menu:Vcs.Log.ToolWindow.TabActions.DropDown"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "Settings",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "settings": "Version Control/Log"
+   },
+   "within": 8000
+  }
+ ]
+}

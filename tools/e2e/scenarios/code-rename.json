@@ -1,0 +1,133 @@
+{
+ "id": "code-rename",
+ "covers": [
+  "action:RenameElement"
+ ],
+ "reference-app": [],
+ "settings": {
+  "enable_language_server": true,
+  "lsp": {
+   "rust-analyzer": {
+    "binary": {
+     "path": "$RUST_ANALYZER"
+    },
+    "initialization_options": {
+     "checkOnSave": false,
+     "cargo": {
+      "buildScripts": {
+       "enable": false
+      }
+     },
+     "procMacro": {
+      "enable": false
+     }
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "expect": {
+    "code.ready": true
+   },
+   "within": 120000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "right right right right right right right right"
+  },
+  {
+   "do": "keys",
+   "keys": "shift-f6"
+  },
+  {
+   "expect": {
+    "code.renaming": "hello"
+   },
+   "within": 30000
+  },
+  {
+   "find": {
+    "label": "Press ⇧F6 to show dialog with more options",
+    "role": "AXStaticText"
+   }
+  },
+  {
+   "do": "type",
+   "text": "greet"
+  },
+  {
+   "expect": {
+    "code.renaming": "greet"
+   }
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "inplace"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "code.renaming": null
+   }
+  },
+  {
+   "sh": "cat src/main.rs",
+   "contains": "greeting::greet(\"world\")",
+   "within": 20000
+  },
+  {
+   "sh": "cat src/greeting.rs",
+   "contains": "pub fn greet(name"
+  },
+  {
+   "do": "keys",
+   "keys": "shift-f6"
+  },
+  {
+   "expect": {
+    "code.renaming": "greet"
+   },
+   "within": 30000
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "expect": {
+    "code.renaming": null
+   }
+  },
+  {
+   "sh": "cat src/greeting.rs",
+   "contains": "pub fn greet(name"
+  }
+ ]
+}

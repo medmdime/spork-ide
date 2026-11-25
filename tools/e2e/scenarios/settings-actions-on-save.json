@@ -1,0 +1,112 @@
+{
+ "id": "settings-actions-on-save",
+ "covers": [],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "keys",
+   "keys": "cmd-,"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture",
+    "settings.page": "Appearance & Behavior/Appearance"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "Tools",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "do": "click",
+   "label": "Actions on Save",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Tools/Actions on Save"
+   },
+   "within": 8000
+  },
+  {
+   "toolbar": "Settings page",
+   "items": [
+    "Reformat code",
+    "Configure autosave options…"
+   ],
+   "within": 8000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "actions-on-save",
+   "window": "smallest"
+  },
+  {
+   "expect": {
+    "value": "off"
+   },
+   "of": {
+    "do": "setting",
+    "path": "/format_on_save"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Reformat code",
+   "role": "AXCheckBox"
+  },
+  {
+   "expect": {
+    "settings.apply": true,
+    "settings.modified": [
+     "Tools/Actions on Save"
+    ]
+   }
+  },
+  {
+   "do": "click",
+   "label": "Apply",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "value": "on"
+   },
+   "of": {
+    "do": "setting",
+    "path": "/format_on_save"
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Configure autosave options…"
+  },
+  {
+   "expect": {
+    "settings.page": "Appearance & Behavior/System Settings"
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings": null
+   },
+   "within": 8000
+  }
+ ]
+}

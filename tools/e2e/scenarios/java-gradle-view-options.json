@@ -1,0 +1,319 @@
+{
+ "id": "java-gradle-view-options",
+ "fixture": "gradle",
+ "covers": [
+  "action:ExternalSystem.GroupTasks",
+  "action:ExternalSystem.AfterSync"
+ ],
+ "steps": [
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "java.tool": "Gradle"
+   },
+   "within": 20000
+  },
+  {
+   "find": {
+    "label": "Load Gradle Project",
+    "role": "AXLink"
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "Load Gradle Project",
+   "role": "AXLink"
+  },
+  {
+   "do": "action",
+   "name": "gradle_tool_window::ToggleFocus"
+  },
+  {
+   "find": [
+    {
+     "label": "fixture",
+     "role": "AXRow"
+    },
+    {
+     "label": "Tasks",
+     "role": "AXRow"
+    },
+    {
+     "label": "Dependencies",
+     "role": "AXRow"
+    }
+   ],
+   "ordered": true,
+   "within": 600000
+  },
+  {
+   "do": "click",
+   "label": "Options",
+   "in": "Gradle"
+  },
+  {
+   "menu": "action:ExternalSystem.GroupModules",
+   "items": [
+    "Group Modules",
+    "Group Tasks",
+    "Display Tasks Inherited from Sub-Projects",
+    "Show Ignored"
+   ],
+   "part": true,
+   "checked": [
+    "Group Modules",
+    "Group Tasks",
+    "Display Tasks Inherited from Sub-Projects",
+    "Show Ignored",
+    "Right"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Group Tasks",
+   "role": "AXMenuItem"
+  },
+  {
+   "do": "click",
+   "label": "Expand All",
+   "role": "AXButton",
+   "in": "Gradle Toolbar"
+  },
+  {
+   "find": [
+    {
+     "label": "Tasks",
+     "role": "AXRow"
+    },
+    {
+     "label": "assemble",
+     "role": "AXRow"
+    },
+    {
+     "label": "build",
+     "role": "AXRow"
+    },
+    {
+     "label": "buildEnvironment",
+     "role": "AXRow"
+    },
+    {
+     "label": "check",
+     "role": "AXRow"
+    },
+    {
+     "label": "classes",
+     "role": "AXRow"
+    },
+    {
+     "label": "clean",
+     "role": "AXRow"
+    },
+    {
+     "label": "jar",
+     "role": "AXRow"
+    },
+    {
+     "label": "run",
+     "role": "AXRow"
+    },
+    {
+     "label": "test",
+     "role": "AXRow"
+    },
+    {
+     "label": "Dependencies",
+     "role": "AXRow"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "missing": [
+    {
+     "label": "application",
+     "role": "AXRow"
+    },
+    {
+     "label": "verification",
+     "role": "AXRow"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "jar",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "menu": "context-menu:ExternalSystemView.TaskMenu",
+   "items": [
+    "Run 'fixture [jar]'",
+    "Execute Before Sync",
+    "Execute After Sync",
+    "Execute Before Build",
+    "Execute After Build",
+    "Execute Before Rebuild",
+    "Execute After Rebuild",
+    "Assign Shortcut… (disabled)"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "click",
+   "label": "jar",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "do": "click",
+   "label": "Execute After Sync",
+   "role": "AXMenuItem",
+   "within": 3000
+  },
+  {
+   "expect": {
+    "java.triggers": [
+     "After Sync jar"
+    ]
+   }
+  },
+  {
+   "find": {
+    "text": "(After Sync)"
+   }
+  },
+  {
+   "do": "click",
+   "label": "fixture",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "menu": "context-menu:ExternalSystemView.ProjectMenu",
+   "items": [
+    "Open Gradle Config",
+    "Sync Gradle Project",
+    "Unlink Gradle Project (disabled)",
+    "Ignore Gradle Project (disabled)",
+    "Tasks Activation (disabled)",
+    "Composite Build Configuration (disabled)",
+    "Refresh Gradle Dependencies",
+    "Analyze Dependencies… (disabled)"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Sync Gradle Project",
+   "role": "AXMenuItem"
+  },
+  {
+   "sh": "test -f build/libs/fixture.jar && echo yes",
+   "is": "yes",
+   "within": 300000
+  },
+  {
+   "do": "click",
+   "label": "fixture",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "do": "click",
+   "label": "Open Gradle Config",
+   "role": "AXMenuItem",
+   "within": 3000
+  },
+  {
+   "expect": {
+    "active": "build.gradle"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Collapse All",
+   "role": "AXButton",
+   "in": "Gradle Toolbar"
+  },
+  {
+   "find": {
+    "label": "fixture",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "fixture",
+   "role": "AXRow",
+   "count": 2
+  },
+  {
+   "find": {
+    "label": "Dependencies",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Dependencies",
+   "role": "AXRow",
+   "count": 2
+  },
+  {
+   "find": {
+    "label": "testCompileClasspath",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "testCompileClasspath",
+   "role": "AXRow",
+   "count": 2
+  },
+  {
+   "find": {
+    "label": "junit:junit:4.13.2",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "junit:junit:4.13.2",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "menu": "context-menu:Gradle.View.DependencyMenu",
+   "items": [
+    "Analyze Dependencies… (disabled)"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "view-options"
+  }
+ ]
+}

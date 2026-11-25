@@ -1,0 +1,89 @@
+{
+ "id": "editor-open-file",
+ "covers": [],
+ "reference-app": [],
+ "steps": [
+  {
+   "find": {
+    "label": "src",
+    "role": "AXRow",
+    "in": "Project Panel"
+   }
+  },
+  {
+   "do": "click",
+   "label": "src",
+   "role": "AXRow",
+   "in": "Project Panel"
+  },
+  {
+   "find": {
+    "label": "main.rs",
+    "role": "AXRow",
+    "in": "Project Panel"
+   }
+  },
+  {
+   "do": "click",
+   "label": "main.rs",
+   "role": "AXRow",
+   "in": "Project Panel"
+  },
+  {
+   "expect": {
+    "items": [
+     "src/main.rs"
+    ],
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "main.rs",
+     "role": "AXRadioButton",
+     "value": "1",
+     "in": "Editor"
+    },
+    {
+     "label": "main.rs",
+     "role": "AXRow",
+     "selected": true,
+     "in": "Project Panel"
+    }
+   ]
+  },
+  {
+   "shot": "main-rs-open"
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "expect": {
+    "items": [
+     "src/main.rs",
+     "src/greeting.rs"
+    ],
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "main.rs",
+     "role": "AXRadioButton",
+     "value": "0",
+     "in": "Editor"
+    },
+    {
+     "label": "greeting.rs",
+     "role": "AXRadioButton",
+     "value": "1",
+     "in": "Editor"
+    }
+   ]
+  }
+ ]
+}

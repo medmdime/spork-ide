@@ -1,0 +1,162 @@
+{
+ "id": "commit-rollback",
+ "covers": [
+  "dialog:ChangesView.Revert",
+  "action:ChangesView.Revert"
+ ],
+ "reference-app": [
+  "screenshots/dialogs/changesview-revert.png"
+ ],
+ "steps": [
+  {
+   "sh": "echo more >> main.rs"
+  },
+  {
+   "do": "action",
+   "name": "spork::ToggleCommit"
+  },
+  {
+   "expect": {
+    "left": "[Commit, Project]"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "main.rs",
+     "role": "AXCheckBox"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Rollback…",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "Rollback Changes",
+     "role": "AXGroup"
+    },
+    {
+     "label": "Show Diff",
+     "role": "AXButton",
+     "enabled": false
+    },
+    {
+     "label": "Expand All",
+     "role": "AXButton"
+    },
+    {
+     "label": "Delete local copies of added files",
+     "role": "AXCheckBox",
+     "enabled": false
+    },
+    {
+     "label": "Close",
+     "role": "AXButton"
+    },
+    {
+     "label": "Rollback",
+     "role": "AXButton",
+     "enabled": false
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Close",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "Rollback Changes",
+     "role": "AXGroup"
+    }
+   ],
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "README.md"
+  },
+  {
+   "do": "click",
+   "label": "Rollback…",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "Rollback Changes",
+     "role": "AXGroup"
+    },
+    {
+     "label": "Rollback",
+     "role": "AXButton",
+     "enabled": true
+    }
+   ]
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "click",
+   "label": "Rollback",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXCheckBox"
+    }
+   ],
+   "absent": true,
+   "within": 5000
+  },
+  {
+   "sh": "git diff --quiet HEAD -- README.md && ! git diff --quiet HEAD -- main.rs"
+  },
+  {
+   "do": "click",
+   "label": "main.rs"
+  },
+  {
+   "do": "keys",
+   "keys": "alt-cmd-z"
+  },
+  {
+   "find": [
+    {
+     "label": "Rollback Changes",
+     "role": "AXGroup"
+    }
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "Rollback",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "main.rs",
+     "role": "AXCheckBox"
+    }
+   ],
+   "absent": true,
+   "within": 5000
+  },
+  {
+   "sh": "git diff --quiet HEAD"
+  }
+ ]
+}

@@ -1,0 +1,263 @@
+{
+ "id": "status-bar-widgets",
+ "covers": [
+  "action:StatusBarWidgets.Toggle.Position",
+  "action:StatusBarWidgets.Toggle.LineSeparator",
+  "action:StatusBarWidgets.Toggle.Encoding",
+  "action:StatusBarWidgets.Toggle.CodeStyleStatusBarWidget",
+  "action:StatusBarWidgets.Toggle.ReadOnlyAttribute",
+  "action:StatusBarWidgets.Toggle.LanguageServiceStatusBarWidget"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Line 1, column 1",
+     "role": "AXButton"
+    },
+    {
+     "label": "4 spaces",
+     "role": "AXButton"
+    },
+    {
+     "label": "Make file read-only"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Line 1, column 1",
+   "role": "AXButton",
+   "button": "right"
+  },
+  {
+   "menu": "action:StatusBarWidgets.Toggle.Position",
+   "items": [
+    "Line:Column Number",
+    "Language Services",
+    "Line Separator",
+    "File Encoding",
+    "Indentation",
+    "Read-Only Attribute",
+    "Hide 'Line:Column Number'"
+   ],
+   "checked": [
+    "Line:Column Number",
+    "Language Services",
+    "Line Separator",
+    "File Encoding",
+    "Indentation",
+    "Read-Only Attribute"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Indentation",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "4 spaces",
+    "role": "AXButton"
+   },
+   "absent": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Line 1, column 1",
+   "role": "AXButton",
+   "button": "right"
+  },
+  {
+   "do": "click",
+   "label": "Read-Only Attribute",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Make file read-only"
+   },
+   "absent": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Line 1, column 1",
+   "role": "AXButton",
+   "button": "right"
+  },
+  {
+   "do": "click",
+   "label": "Line Separator",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "value": false
+   },
+   "of": {
+    "do": "setting",
+    "path": "/status_bar/line_endings_button"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Line 1, column 1",
+   "role": "AXButton",
+   "button": "right"
+  },
+  {
+   "do": "click",
+   "label": "File Encoding",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "value": "disabled"
+   },
+   "of": {
+    "do": "setting",
+    "path": "/status_bar/active_encoding_button"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Line 1, column 1",
+   "role": "AXButton",
+   "button": "right"
+  },
+  {
+   "do": "click",
+   "label": "Language Services",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "value": false
+   },
+   "of": {
+    "do": "setting",
+    "path": "/global_lsp_settings/button"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Line 1, column 1",
+   "role": "AXButton",
+   "button": "right"
+  },
+  {
+   "menu": "action:StatusBarWidgets.Toggle.Position",
+   "items": [
+    "Line:Column Number",
+    "Language Services",
+    "Line Separator",
+    "File Encoding",
+    "Indentation",
+    "Read-Only Attribute",
+    "Hide 'Line:Column Number'"
+   ],
+   "checked": [
+    "Line:Column Number"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Indentation",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "4 spaces",
+    "role": "AXButton"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Line 1, column 1",
+   "role": "AXButton",
+   "button": "right"
+  },
+  {
+   "do": "click",
+   "label": "Read-Only Attribute",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Make file read-only"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Line 1, column 1",
+   "role": "AXButton",
+   "button": "right"
+  },
+  {
+   "do": "click",
+   "label": "Hide 'Line:Column Number'",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Line 1, column 1",
+    "role": "AXButton"
+   },
+   "absent": true,
+   "within": 5000
+  },
+  {
+   "expect": {
+    "value": false
+   },
+   "of": {
+    "do": "setting",
+    "path": "/status_bar/cursor_position_button"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "4 spaces",
+   "role": "AXButton",
+   "button": "right"
+  },
+  {
+   "do": "click",
+   "label": "Line:Column Number",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Line 1, column 1",
+    "role": "AXButton"
+   },
+   "within": 5000
+  }
+ ]
+}

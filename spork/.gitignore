@@ -1,0 +1,5 @@
+/target
+.DS_Store
+# analysis material extracted from proprietary apps: never commit (docs/20-open-source.md §3)
+/inventory/
+/traces/

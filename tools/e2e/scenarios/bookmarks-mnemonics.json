@@ -1,0 +1,496 @@
+{
+ "id": "bookmarks-mnemonics",
+ "covers": [
+  "action:GotoBookmark0",
+  "action:GotoBookmark2",
+  "action:GotoBookmark3",
+  "action:GotoBookmark4",
+  "action:GotoBookmark5",
+  "action:GotoBookmark6",
+  "action:GotoBookmark7",
+  "action:GotoBookmark8",
+  "action:GotoBookmark9",
+  "action:ToggleBookmark0",
+  "action:ToggleBookmark2",
+  "action:ToggleBookmark3",
+  "action:ToggleBookmark4",
+  "action:ToggleBookmark5",
+  "action:ToggleBookmark6",
+  "action:ToggleBookmark7",
+  "action:ToggleBookmark8",
+  "action:ToggleBookmark9"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "file": "notes.txt",
+   "text": "line 1\nline 2\nline 3\nline 4\nline 5\nline 6\nline 7\nline 8\nline 9\nline 10\nline 11\nline 12\n"
+  },
+  {
+   "do": "open",
+   "path": "notes.txt"
+  },
+  {
+   "expect": {
+    "active": "notes.txt"
+   }
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "2 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 2, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-shift-0"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "4 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 4, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-shift-2"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "5 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 5, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-shift-3"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "6 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 6, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-shift-4"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "7 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 7, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-shift-5"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "8 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 8, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-shift-6"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "9 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 9, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-shift-7"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "1 0 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 10, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-shift-8"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "1 1 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 11, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-shift-9"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-9"
+  },
+  {
+   "find": {
+    "label": "Line 11, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-8"
+  },
+  {
+   "find": {
+    "label": "Line 10, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-7"
+  },
+  {
+   "find": {
+    "label": "Line 9, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-6"
+  },
+  {
+   "find": {
+    "label": "Line 8, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-5"
+  },
+  {
+   "find": {
+    "label": "Line 7, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-4"
+  },
+  {
+   "find": {
+    "label": "Line 6, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-3"
+  },
+  {
+   "find": {
+    "label": "Line 5, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-2"
+  },
+  {
+   "find": {
+    "label": "Line 4, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-0"
+  },
+  {
+   "find": {
+    "label": "Line 2, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-5"
+  },
+  {
+   "find": {
+    "label": "Line 7, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-shift-5"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "up up"
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-5"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "find": {
+    "label": "Line 5, column 1",
+    "role": "AXButton"
+   }
+  }
+ ]
+}

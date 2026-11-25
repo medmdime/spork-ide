@@ -1,0 +1,272 @@
+{
+ "id": "stash-shelf-combined",
+ "covers": [
+  "context-menu:Vcs.Shelf.Operations.ContextMenu",
+  "context-menu:Vcs.Shelf.ChangesBrowser.ContextMenu",
+  "action:Vcs.Shelf.Apply",
+  "action:Vcs.Shelf.Pop",
+  "action:Vcs.Shelf.Drop",
+  "action:Vcs.Shelf.UnshelveChanges",
+  "action:Vcs.Shelf.UnshelveChangesAndRemove",
+  "context-menu:Vcs.SavedPatches.ChangesBrowser.Toolbar"
+ ],
+ "note": "Settings › Version Control › Git › Combine stashes and shelves in one tab: the Stash tab becomes Stashes and Shelves, shelved changelists listed under Shelves with the reference app's shelf operations. Restore is greyed: the tab lists no applied or deleted changelist.",
+ "reference-app": [],
+ "steps": [
+  {
+   "sh": "printf 'git.combineStashShelf=true\\n' >> '../home/Library/Application Support/Spork/settings.conf'"
+  },
+  {
+   "sh": "mkdir -p src .idea/shelf/Fix_readme && echo 'fn a() {}' > src/a.rs && git add -N src/a.rs && printf '/shelf/\\n' > .idea/.gitignore && git diff README.md src/a.rs > .idea/shelf/Fix_readme/shelved.patch && printf '<changelist name=\"Fix_readme\" date=\"1767261600000\" recycled=\"false\" deleted=\"false\">\\n  <option name=\"DESCRIPTION\" value=\"Fix readme\" />\\n</changelist>\\n' > .idea/shelf/Fix_readme.xml && git checkout -- README.md && git rm -q --cached src/a.rs && rm -rf src"
+  },
+  {
+   "sh": "echo wip >> main.rs && git stash push -q -m 'wip main' main.rs"
+  },
+  {
+   "do": "action",
+   "name": "spork::ShowShelf"
+  },
+  {
+   "find": [
+    {"role": "AXRadioButton", "label": "Stashes and Shelves", "value": "1"},
+    {"role": "AXRow", "label": "Stashes"},
+    {"role": "AXRow", "label": "wip main"},
+    {"role": "AXRow", "label": "Shelves"},
+    {"role": "AXRow", "label": "Fix readme"}
+   ]
+  },
+  {
+   "toolbar": "Saved Patches Changes Toolbar",
+   "items": ["Preview Diff"]
+  },
+  {
+   "missing": [
+    {"role": "AXRadioButton", "label": "Shelf"},
+    {"role": "AXRadioButton", "label": "Stash"}
+   ]
+  },
+  {
+   "do": "click",
+   "label": "wip main",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "menu": "context-menu:Vcs.SavedPatches.ContextMenu",
+   "items": [
+    "Pop",
+    "Apply",
+    "Unstash…",
+    "Drop",
+    "Clear",
+    "Show Diff",
+    "Show Diff in a New Tab or Window",
+    "Compare with Local"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "missing": [{"role": "AXMenuItem", "label": "Unstash…"}]
+  },
+  {
+   "find": [{"role": "AXRow", "label": "Fix readme"}]
+  },
+  {
+   "do": "click",
+   "label": "Fix readme",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "menu": "context-menu:Vcs.SavedPatches.ContextMenu",
+   "items": [
+    "Apply",
+    "Pop",
+    "Unshelve…",
+    "Delete",
+    "Restore (disabled)",
+    "Import Patches…",
+    "Show Diff",
+    "Show Diff in a New Tab or Window",
+    "Compare with Local"
+   ]
+  },
+  {
+   "menu": "context-menu:Vcs.Shelf.Operations.ContextMenu",
+   "part": true,
+   "items": [
+    "Apply",
+    "Pop",
+    "Unshelve…",
+    "Delete",
+    "Restore (disabled)",
+    "Import Patches…"
+   ]
+  },
+  {
+   "find": [{"role": "AXMenuItem", "label": "Apply"}]
+  },
+  {
+   "do": "click",
+   "label": "Apply",
+   "role": "AXMenuItem"
+  },
+  {
+   "sh": "git status --porcelain README.md src",
+   "is": "M README.md\n?? src/"
+  },
+  {
+   "sh": "grep -c 'recycled=\"false\"' .idea/shelf/Fix_readme.xml",
+   "is": "1"
+  },
+  {
+   "sh": "git checkout -- README.md && rm -rf src"
+  },
+  {
+   "find": [{"role": "AXRow", "label": "Fix readme"}]
+  },
+  {
+   "do": "click",
+   "label": "Fix readme",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "find": [{"role": "AXMenuItem", "label": "Pop"}]
+  },
+  {
+   "do": "click",
+   "label": "Pop",
+   "role": "AXMenuItem"
+  },
+  {
+   "sh": "git status --porcelain README.md src",
+   "is": "M README.md\n?? src/"
+  },
+  {
+   "sh": "grep -c 'recycled=\"true\"' .idea/shelf/Fix_readme.xml",
+   "is": "1"
+  },
+  {
+   "missing": [{"role": "AXRow", "label": "Fix readme"}]
+  },
+  {
+   "sh": "git checkout -- README.md && rm -rf src && sed -i '' 's/recycled=\"true\"/recycled=\"false\"/' .idea/shelf/Fix_readme.xml"
+  },
+  {
+   "do": "action",
+   "name": "spork::RefreshStashes"
+  },
+  {
+   "find": [{"role": "AXRow", "label": "Fix readme"}]
+  },
+  {
+   "do": "click",
+   "label": "Fix readme",
+   "role": "AXRow"
+  },
+  {
+   "find": [{"role": "AXRow", "label": "a.rs"}]
+  },
+  {
+   "do": "click",
+   "label": "a.rs",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "menu": "context-menu:Vcs.SavedPatches.ChangesBrowser.ContextMenu",
+   "items": [
+    "Compare with Local",
+    "Unshelve",
+    "Unshelve and Remove"
+   ]
+  },
+  {
+   "menu": "context-menu:Vcs.Shelf.ChangesBrowser.ContextMenu",
+   "part": true,
+   "items": [
+    "Unshelve",
+    "Unshelve and Remove"
+   ]
+  },
+  {
+   "find": [{"role": "AXMenuItem", "label": "Unshelve"}]
+  },
+  {
+   "do": "click",
+   "label": "Unshelve",
+   "role": "AXMenuItem"
+  },
+  {
+   "sh": "git status --porcelain README.md src",
+   "is": "?? src/"
+  },
+  {
+   "sh": "grep -c 'diff --git a/src/a.rs' .idea/shelf/Fix_readme/shelved.patch",
+   "is": "1"
+  },
+  {
+   "sh": "rm -rf src"
+  },
+  {
+   "find": [{"role": "AXRow", "label": "a.rs"}]
+  },
+  {
+   "do": "click",
+   "label": "a.rs",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "find": [{"role": "AXMenuItem", "label": "Unshelve and Remove"}]
+  },
+  {
+   "do": "click",
+   "label": "Unshelve and Remove",
+   "role": "AXMenuItem"
+  },
+  {
+   "sh": "git status --porcelain README.md src",
+   "is": "?? src/"
+  },
+  {
+   "sh": "grep -c 'diff --git a/src/a.rs' .idea/shelf/Fix_readme/shelved.patch",
+   "is": "0"
+  },
+  {
+   "missing": [{"role": "AXRow", "label": "a.rs"}]
+  },
+  {
+   "find": [{"role": "AXRow", "label": "README.md"}]
+  },
+  {
+   "do": "click",
+   "label": "Fix readme",
+   "role": "AXRow"
+  },
+  {
+   "do": "keys",
+   "keys": "delete"
+  },
+  {
+   "sh": "grep -c 'deleted=\"true\"' .idea/shelf/Fix_readme.xml",
+   "is": "1"
+  },
+  {
+   "missing": [{"role": "AXRow", "label": "Fix readme"}]
+  },
+  {
+   "find": [{"role": "AXRow", "label": "wip main"}]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "combined-tab"
+  }
+ ]
+}

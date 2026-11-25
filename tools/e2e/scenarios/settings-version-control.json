@@ -1,0 +1,355 @@
+{
+ "id": "settings-version-control",
+ "covers": [
+  "settings:Version Control › Commit"
+ ],
+ "reference-app": [
+  "screenshots/settings/version-control-commit.jpg"
+ ],
+ "steps": [
+  {
+   "do": "keys",
+   "keys": "cmd-,"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture",
+    "settings.page": "Appearance & Behavior/Appearance"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "Version Control",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Version Control"
+   },
+   "within": 8000
+  },
+  {
+   "toolbar": "Settings page",
+   "items": [
+    "Changelists",
+    "Commit",
+    "Confirmation",
+    "Directory Mappings",
+    "File Status Colors",
+    "Log",
+    "Shelf",
+    "Git",
+    "GitHub",
+    "GitLab"
+   ],
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Commit",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Version Control/Commit"
+   }
+  },
+  {
+   "toolbar": "Settings page",
+   "items": [
+    "Clear initial commit message",
+    "Blank line between subject and body",
+    "Limit body line",
+    "Limit subject line"
+   ]
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "commit",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Clear initial commit message",
+   "role": "AXCheckBox"
+  },
+  {
+   "expect": {
+    "settings.apply": true,
+    "settings.modified": [
+     "Version Control/Commit"
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Apply",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings.apply": false,
+    "settings.modified": []
+   },
+   "within": 8000
+  },
+  {
+   "sh": "cat ../home/.config/spork-ide/spork/settings.conf",
+   "contains": "commit.clearInitialMessage=false"
+  },
+  {
+   "do": "click",
+   "label": "Changelists",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Version Control/Changelists"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Create changelists automatically",
+     "role": "AXCheckBox"
+    },
+    {
+     "label": "Allow putting changes within one file into different changelists",
+     "role": "AXCheckBox"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Confirmation",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Version Control/Confirmation"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Ask for confirmation to drop commits",
+     "role": "AXCheckBox"
+    },
+    {
+     "label": "Highlight modified lines in the gutter",
+     "role": "AXCheckBox"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Directory Mappings",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Version Control/Directory Mappings"
+   }
+  },
+  {
+   "find": {
+    "label": "Enable automatic mapping detection",
+    "role": "AXCheckBox"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Log",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Version Control/Log"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Show tag names in the table",
+     "role": "AXCheckBox"
+    },
+    {
+     "label": "Show the diff preview panel",
+     "role": "AXCheckBox"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Shelf",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Version Control/Shelf"
+   }
+  },
+  {
+   "find": {
+    "label": "Remove successfully applied files from the shelf",
+    "role": "AXCheckBox"
+   }
+  },
+  {
+   "do": "click",
+   "label": "GitHub",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Version Control/GitHub"
+   }
+  },
+  {
+   "find": {
+    "label": "Clone git repositories using ssh",
+    "role": "AXCheckBox"
+   }
+  },
+  {
+   "do": "click",
+   "label": "GitLab",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Version Control/GitLab"
+   }
+  },
+  {
+   "find": {
+    "label": "Clone using SSH",
+    "role": "AXCheckBox"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Commit",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "do": "click",
+   "label": "Clear initial commit message",
+   "role": "AXCheckBox"
+  },
+  {
+   "expect": {
+    "settings.modified": [
+     "Version Control/Commit"
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Log",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Version Control/Log",
+    "settings.modified": [
+     "Version Control/Commit"
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Cancel",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings": null
+   }
+  },
+  {
+   "sh": "cat ../home/.config/spork-ide/spork/settings.conf",
+   "contains": "commit.clearInitialMessage=false"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-,"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "Search settings",
+   "role": "AXTextField",
+   "within": 8000
+  },
+  {
+   "do": "keys",
+   "keys": "t a g space n a m e s",
+   "window": "Settings – fixture"
+  },
+  {
+   "find": [
+    {
+     "label": "Version Control",
+     "role": "AXRow",
+     "in": "Settings categories"
+    },
+    {
+     "label": "Log",
+     "role": "AXRow",
+     "in": "Settings categories"
+    }
+   ],
+   "missing": [
+    {
+     "label": "Commit",
+     "role": "AXRow",
+     "in": "Settings categories"
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape",
+   "window": "Settings – fixture"
+  },
+  {
+   "do": "keys",
+   "keys": "escape",
+   "window": "Settings – fixture"
+  },
+  {
+   "expect": {
+    "settings": null
+   }
+  }
+ ]
+}

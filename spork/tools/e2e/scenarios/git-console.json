@@ -1,0 +1,27 @@
+{
+ "id": "git-console",
+ "covers": [
+  "action:ActivateVersionControlToolWindow",
+  "tool-window:Version Control"
+ ],
+ "reference-app": [
+  "screenshots/toolwindows/version-control.jpg"
+ ],
+ "steps": [
+  {
+   "do": "action",
+   "name": "spork::ActivityLog"
+  },
+  {
+   "expect": {
+    "console": true
+   }
+  },
+  {
+   "wait": 800
+  },
+  {
+   "shot": "open"
+  }
+ ]
+}

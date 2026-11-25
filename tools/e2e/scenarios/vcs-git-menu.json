@@ -1,0 +1,127 @@
+{
+ "id": "vcs-git-menu",
+ "covers": [
+  "menu:VcsGroups",
+  "context-menu:Git.MainMenu",
+  "context-menu:Git.MainMenu.LocalChanges",
+  "action:Vcs.Show.Log"
+ ],
+ "reference-app": [
+  "screenshots/menus/git-mainmenu.png"
+ ],
+ "steps": [
+  {
+   "find": [
+    {
+     "label": "Git",
+     "role": "AXCheckBox",
+     "in": "Left stripe"
+    },
+    {
+     "label": "Commit",
+     "role": "AXCheckBox",
+     "in": "Left stripe"
+    }
+   ],
+   "within": 10000
+  },
+  {
+   "menu": "context-menu:Git.MainMenu",
+   "path": [
+    "Git"
+   ]
+  },
+  {
+   "menu": "menu:VcsGroups",
+   "path": [
+    "Git"
+   ],
+   "items": [
+    "Commit…",
+    "Push…",
+    "Update Project...",
+    "Pull…",
+    "Fetch",
+    "Merge…",
+    "Rebase…",
+    "Branches…",
+    "New Branch…",
+    "New Tag…",
+    "Reset HEAD…",
+    "New Worktree…",
+    "Worktrees…",
+    "Show Git Log",
+    "Patch ▸",
+    "Uncommitted Changes ▸",
+    "Current File ▸",
+    "GitLab ▸",
+    "GitHub ▸",
+    "Manage Remotes…",
+    "Clone…",
+    "VCS Operations Popup…"
+   ]
+  },
+  {
+   "menu": "context-menu:Git.MainMenu.LocalChanges",
+   "path": [
+    "Git",
+    "Uncommitted Changes"
+   ]
+  },
+  {
+   "expect": {
+    "docks.bottom.open": false
+   }
+  },
+  {
+   "do": "action",
+   "name": "spork::ShowHistory"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "Git"
+   }
+  },
+  {
+   "find": {
+    "label": "feat: greet the world",
+    "role": "AXRow"
+   },
+   "within": 8000
+  },
+  {
+   "do": "action",
+   "name": "spork::NewBranch"
+  },
+  {
+   "find": [
+    {
+     "label": "Branch Name:",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Create",
+     "role": "AXButton"
+    }
+   ]
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "new-branch"
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": {
+    "label": "Branch Name:",
+    "role": "AXTextField"
+   },
+   "absent": true
+  }
+ ]
+}

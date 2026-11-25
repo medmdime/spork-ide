@@ -1,0 +1,136 @@
+{
+ "id": "log-panes-affected",
+ "covers": [
+  "action:Vcs.Log.ShowOnlyAffectedChanges"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "expect": {
+    "view": "History",
+    "commits": 7
+   }
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "Show More Filters"
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "click",
+   "label": "Paths",
+   "role": "AXMenuItem"
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "click",
+   "label": "Select…",
+   "role": "AXMenuItem"
+  },
+  {
+   "wait": 600
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "A folder or file, e.g. src/ or README.md"
+  },
+  {
+   "do": "keys",
+   "keys": "m a i n . r s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "Filter",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "log.paths": "main.rs",
+    "selected": 5
+   },
+   "within": 8000
+  },
+  {
+   "do": "action",
+   "name": "spork::SelectNextCommit"
+  },
+  {
+   "expect": {
+    "selected": 6
+   }
+  },
+  {
+   "wait": 800
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "README.md",
+   "role": "AXRow"
+  },
+  {
+   "toolbar": "VCS Log Changes Browser Toolbar",
+   "items": [
+    "Revert Selected Changes",
+    "History Up to Here",
+    "Show Only Affected Changes",
+    "View Options ▸"
+   ],
+   "id": "toolbar:Vcs.Log.ChangesBrowser.Toolbar"
+  },
+  {
+   "do": "click",
+   "label": "Show Only Affected Changes",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "log.only_affected": true
+   }
+  },
+  {
+   "find": {
+    "label": "README.md",
+    "role": "AXRow"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Show Only Affected Changes",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "log.only_affected": false
+   }
+  },
+  {
+   "find": {
+    "label": "README.md",
+    "role": "AXRow"
+   }
+  }
+ ]
+}

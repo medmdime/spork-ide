@@ -1,0 +1,141 @@
+{
+ "id": "java-project-view",
+ "fixture": "maven",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "find": {
+    "label": "Load Maven Project",
+    "role": "AXLink"
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "Load Maven Project",
+   "role": "AXLink"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 300000
+  },
+  {
+   "sh": "test -d target/classes && echo yes",
+   "is": "yes",
+   "within": 60000
+  },
+  {
+   "do": "click",
+   "label": "src",
+   "role": "AXRow"
+  },
+  {
+   "find": [
+    {
+     "label": "main",
+     "role": "AXRow"
+    },
+    {
+     "label": "test",
+     "role": "AXRow"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "find": {
+    "label": "main",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "main",
+   "role": "AXRow"
+  },
+  {
+   "find": {
+    "label": "java",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "java",
+   "role": "AXRow"
+  },
+  {
+   "find": {
+    "label": "com.example",
+    "role": "AXRow"
+   }
+  },
+  {
+   "find": {
+    "label": "com.example",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "com.example",
+   "role": "AXRow"
+  },
+  {
+   "find": [
+    {
+     "label": "src",
+     "role": "AXRow"
+    },
+    {
+     "label": "main",
+     "role": "AXRow"
+    },
+    {
+     "label": "java",
+     "role": "AXRow"
+    },
+    {
+     "label": "com.example",
+     "role": "AXRow"
+    },
+    {
+     "label": "Greeting.java",
+     "role": "AXRow"
+    },
+    {
+     "label": "Main.java",
+     "role": "AXRow"
+    },
+    {
+     "label": "test",
+     "role": "AXRow"
+    }
+   ],
+   "ordered": true
+  }
+ ]
+}

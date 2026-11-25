@@ -1,0 +1,99 @@
+{
+ "id": "welcome-new-and-clone",
+ "covers": [
+  "action:WelcomeScreen.CreateNewProject",
+  "action:Vcs.VcsClone"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "action",
+   "name": "workspace::CloseProject"
+  },
+  {
+   "find": "New Project",
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "New Project",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    "Name:",
+    "Location:",
+    "Create Git repository",
+    "Cancel",
+    "Create"
+   ],
+   "ordered": true
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a backspace"
+  },
+  {
+   "do": "type",
+   "text": "demo"
+  },
+  {
+   "do": "click",
+   "label": "Create Git repository"
+  },
+  {
+   "do": "click",
+   "label": "Create",
+   "role": "AXButton"
+  },
+  {
+   "sh": "test -d ../home/SporkIdeProjects/demo/.git && echo ok",
+   "is": "ok",
+   "within": 10000
+  },
+  {
+   "find": {
+    "label": "demo",
+    "role": "AXButton",
+    "in": "Title bar"
+   },
+   "within": 15000
+  },
+  {
+   "do": "action",
+   "name": "projects::GetFromVersionControl"
+  },
+  {
+   "find": [
+    "Get from Version Control",
+    "Repository URL",
+    "Version control:",
+    "URL:",
+    "Clone into:"
+   ],
+   "ordered": true
+  },
+  {
+   "do": "type",
+   "text": "$FIXTURE"
+  },
+  {
+   "do": "click",
+   "label": "Clone",
+   "role": "AXButton"
+  },
+  {
+   "sh": "git -C ../home/SporkIdeProjects/fixture log --oneline | wc -l | tr -d ' '",
+   "is": "2",
+   "within": 15000
+  },
+  {
+   "find": {
+    "label": "fixture",
+    "role": "AXButton",
+    "in": "Title bar"
+   },
+   "within": 15000
+  }
+ ]
+}

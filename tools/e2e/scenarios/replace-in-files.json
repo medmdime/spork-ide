@@ -1,0 +1,167 @@
+{
+ "id": "replace-in-files",
+ "covers": [
+  "action:ReplaceInPath"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-r"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "FindInFiles",
+     "Input"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "h e l l o"
+  },
+  {
+   "find": [
+    {
+     "label": "Replace in Files",
+     "role": "AXWindow"
+    },
+    {
+     "label": "3 matches in 2 files",
+     "role": "AXStaticText"
+    },
+    {
+     "label": "Search",
+     "role": "AXTextField",
+     "value": "hello"
+    },
+    {
+     "label": "Replace",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Preserve case",
+     "role": "AXButton"
+    },
+    {
+     "label": "In Project",
+     "role": "AXRadioButton",
+     "selected": true
+    },
+    {
+     "label": "Open in Find Window",
+     "role": "AXButton"
+    },
+    {
+     "label": "Replace All",
+     "role": "AXButton"
+    },
+    {
+     "label": "Replace",
+     "role": "AXButton"
+    }
+   ],
+   "ordered": true,
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Replace",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "g r e e t"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "replace-in-files"
+  },
+  {
+   "do": "click",
+   "label": "Replace",
+   "role": "AXButton"
+  },
+  {
+   "sh": "cat src/greeting.rs",
+   "contains": "pub fn greet(name: &str)"
+  },
+  {
+   "find": {
+    "label": "2 matches in 2 files",
+    "role": "AXStaticText"
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Preserve case",
+   "role": "AXButton"
+  },
+  {
+   "do": "click",
+   "label": "Replace All",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "Replace",
+     "role": "AXButton"
+    },
+    {
+     "label": "Replace",
+     "role": "AXButton"
+    },
+    {
+     "label": "Cancel",
+     "role": "AXButton"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "Replace",
+   "role": "AXButton",
+   "nth": 1
+  },
+  {
+   "sh": "cat src/greeting.rs src/main.rs",
+   "is": "pub fn greet(name: &str) -> String {\n    format!(\"Greet, {name}!\")\n}\nmod greeting;\n\nfn main() {\n    println!(\"{}\", greeting::greet(\"world\"));\n}"
+  },
+  {
+   "find": {
+    "label": "Nothing found"
+   },
+   "within": 8000
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": {
+    "label": "Replace in Files",
+    "role": "AXWindow"
+   },
+   "absent": true
+  }
+ ],
+ "settings": {
+  "use_system_prompts": false
+ }
+}

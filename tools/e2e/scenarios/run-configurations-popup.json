@@ -1,0 +1,346 @@
+{
+ "id": "run-configurations-popup",
+ "covers": [
+  "action:AllRunConfigurationsToggle"
+ ],
+ "settings": {
+  "languages": {
+   "JSON": {
+    "prettier": {
+     "allowed": false
+    }
+   },
+   "JSONC": {
+    "prettier": {
+     "allowed": false
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "sh": "mkdir -p .zed"
+  },
+  {
+   "file": ".zed/tasks.json",
+   "text": "[{\"label\": \"a\", \"command\": \"echo a > ran.txt\"}, {\"label\": \"b\", \"command\": \"echo b > ran.txt\"}, {\"label\": \"c\", \"command\": \"echo c > ran.txt\"}, {\"label\": \"d\", \"command\": \"echo d > ran.txt\"}, {\"label\": \"e\", \"command\": \"echo e > ran.txt\"}]"
+  },
+  {
+   "do": "open",
+   "path": "README.md"
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "find": {
+    "label": "a, Run / Debug Configurations",
+    "role": "AXButton"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "a, Run / Debug Configurations",
+   "role": "AXButton"
+  },
+  {
+   "menu": "Run / Debug Configurations",
+   "items": [
+    "a",
+    "b",
+    "c",
+    "d",
+    "e",
+    "Current File",
+    "Edit Configurations…"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "c",
+   "role": "AXMenuItem",
+   "hover": true
+  },
+  {
+   "find": [
+    {
+     "label": "Run",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Edit…",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Delete…",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Pin",
+     "role": "AXMenuItem"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "submenu"
+  },
+  {
+   "do": "click",
+   "label": "Pin",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "run.configurations.pinned": [
+     "c"
+    ]
+   }
+  },
+  {
+   "do": "click",
+   "label": "a, Run / Debug Configurations",
+   "role": "AXButton"
+  },
+  {
+   "menu": "Run / Debug Configurations",
+   "items": [
+    "c",
+    "All Configurations 5",
+    "Current File",
+    "Edit Configurations…"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "All Configurations 5",
+   "role": "AXMenuItem"
+  },
+  {
+   "menu": "Run / Debug Configurations",
+   "items": [
+    "c",
+    "All Configurations 5",
+    "a",
+    "b",
+    "c",
+    "d",
+    "e",
+    "Current File",
+    "Edit Configurations…"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "b",
+   "role": "AXMenuItem",
+   "hover": true
+  },
+  {
+   "do": "click",
+   "label": "Run",
+   "role": "AXMenuItem"
+  },
+  {
+   "sh": "cat ran.txt",
+   "is": "b",
+   "within": 10000
+  },
+  {
+   "expect": {
+    "run.configurations.recent": [
+     "b"
+    ]
+   }
+  },
+  {
+   "do": "click",
+   "label": "a, Run / Debug Configurations",
+   "role": "AXButton"
+  },
+  {
+   "menu": "Run / Debug Configurations",
+   "items": [
+    "c",
+    "b",
+    "All Configurations 5",
+    "a",
+    "b",
+    "c",
+    "d",
+    "e",
+    "Current File",
+    "Edit Configurations…"
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "all-configurations"
+  },
+  {
+   "do": "click",
+   "label": "All Configurations 5",
+   "role": "AXMenuItem"
+  },
+  {
+   "menu": "Run / Debug Configurations",
+   "items": [
+    "c",
+    "b",
+    "All Configurations 5",
+    "Current File",
+    "Edit Configurations…"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "c",
+   "role": "AXMenuItem",
+   "hover": true
+  },
+  {
+   "do": "click",
+   "label": "Unpin",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "run.configurations.pinned": []
+   }
+  },
+  {
+   "do": "click",
+   "label": "a, Run / Debug Configurations",
+   "role": "AXButton"
+  },
+  {
+   "menu": "Run / Debug Configurations",
+   "items": [
+    "b",
+    "All Configurations 5",
+    "Current File",
+    "Edit Configurations…"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "All Configurations 5",
+   "role": "AXMenuItem"
+  },
+  {
+   "do": "click",
+   "label": "e",
+   "role": "AXMenuItem",
+   "hover": true
+  },
+  {
+   "do": "click",
+   "label": "Delete…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "Confirmation"
+    },
+    {
+     "label": "Are you sure you want to delete e?"
+    },
+    {
+     "label": "No",
+     "role": "AXButton"
+    },
+    {
+     "label": "Yes",
+     "role": "AXButton"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "Yes",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "run.configurations.names": [
+     "a",
+     "b",
+     "c",
+     "d"
+    ]
+   },
+   "within": 8000
+  },
+  {
+   "sh": "cat .zed/tasks.json",
+   "lacks": "\"label\": \"e\""
+  },
+  {
+   "do": "click",
+   "label": "a, Run / Debug Configurations",
+   "role": "AXButton"
+  },
+  {
+   "menu": "Run / Debug Configurations",
+   "items": [
+    "a",
+    "b",
+    "c",
+    "d",
+    "Current File",
+    "Edit Configurations…"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "d",
+   "role": "AXMenuItem",
+   "hover": true
+  },
+  {
+   "do": "click",
+   "label": "Edit…",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Run/Debug Configurations"
+   },
+   "within": 8000
+  },
+  {
+   "find": [
+    {
+     "label": "d",
+     "role": "AXRow",
+     "selected": true
+    },
+    {
+     "label": "Name:",
+     "role": "AXTextField",
+     "value": "d"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "keys",
+   "keys": "escape",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "expect": {
+    "windows.1": null
+   }
+  }
+ ]
+}

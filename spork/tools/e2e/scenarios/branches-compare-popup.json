@@ -1,0 +1,179 @@
+{
+ "id": "branches-compare-popup",
+ "covers": [
+  "context-menu:Git.Compare.With.Branch.Popup.Settings"
+ ],
+ "reference-app": [
+  "screenshots/menus/git-compare-with-branch-popup-settings.png"
+ ],
+ "steps": [
+  {
+   "do": "action",
+   "name": "spork::ToggleCommit"
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXCheckBox"
+    }
+   ]
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "README.md",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "Compare with Branch or Tag…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "Search for branches and tags",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Branches Tree"
+    },
+    {
+     "label": "main",
+     "role": "AXRow",
+     "in": "Branches Tree"
+    },
+    {
+     "label": "Settings",
+     "role": "AXButton"
+    }
+   ],
+   "missing": [
+    {
+     "label": "Fetch",
+     "role": "AXButton"
+    },
+    {
+     "label": "New Branch…",
+     "in": "Branches Tree"
+    },
+    {
+     "label": "Recent",
+     "in": "Branches Tree"
+    }
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "open"
+  },
+  {
+   "do": "click",
+   "label": "Settings",
+   "role": "AXButton"
+  },
+  {
+   "menu": "context-menu:Git.Compare.With.Branch.Popup.Settings",
+   "checked": [
+    "Group by Directory",
+    "Show Tags"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Show Tags",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Search for branches",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "find": {
+    "label": "Tags",
+    "in": "Branches Tree"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Settings",
+   "role": "AXButton"
+  },
+  {
+   "do": "click",
+   "label": "Show Tags",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Search for branches and tags",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "drag",
+   "label": "Resize",
+   "by": [
+    80,
+    60
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Settings",
+   "role": "AXButton"
+  },
+  {
+   "menu": "context-menu:Git.Compare.With.Branch.Popup.Settings",
+   "items": [
+    "Group by Directory",
+    "Show Tags",
+    "Restore Popup Size"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Restore Popup Size",
+   "role": "AXMenuItem"
+  },
+  {
+   "do": "keys",
+   "keys": "f i x"
+  },
+  {
+   "find": {
+    "label": "fix/typo",
+    "role": "AXRow",
+    "in": "Branches Tree"
+   }
+  },
+  {
+   "do": "click",
+   "label": "fix/typo",
+   "role": "AXRow",
+   "in": "Branches Tree"
+  },
+  {
+   "find": {
+    "label": "Branches Tree"
+   },
+   "absent": true
+  },
+  {
+   "expect": {
+    "view": "Changes"
+   }
+  }
+ ]
+}

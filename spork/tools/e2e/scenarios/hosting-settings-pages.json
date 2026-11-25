@@ -1,0 +1,665 @@
+{
+ "id": "hosting-settings-pages",
+ "covers": [
+  "settings:Version Control",
+  "settings:Version Control › Directory Mappings",
+  "settings:Version Control › File Status Colors",
+  "settings:Version Control › Issue Navigation",
+  "settings:Version Control › Log",
+  "settings:Version Control › Git",
+  "settings:Version Control › GitHub",
+  "settings:Version Control › GitLab"
+ ],
+ "reference-app": [
+  "screenshots/settings/version-control.jpg",
+  "screenshots/settings/version-control-directory-mappings.jpg",
+  "screenshots/settings/version-control-file-status-colors.jpg",
+  "screenshots/settings/version-control-issue-navigation.jpg",
+  "screenshots/settings/version-control-log.jpg",
+  "screenshots/settings/version-control-git.jpg",
+  "screenshots/settings/version-control-github.jpg",
+  "screenshots/settings/version-control-gitlab.jpg"
+ ],
+ "steps": [
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Version Control"
+  },
+  {
+   "expect": {
+    "settings": "Version Control"
+   }
+  },
+  {
+   "within": 6000,
+   "find": [
+    {
+     "role": "AXLink",
+     "label": "Changelists"
+    },
+    {
+     "role": "AXLink",
+     "label": "Commit"
+    },
+    {
+     "role": "AXLink",
+     "label": "Confirmation"
+    },
+    {
+     "role": "AXLink",
+     "label": "Directory Mappings"
+    },
+    {
+     "role": "AXLink",
+     "label": "File Status Colors"
+    },
+    {
+     "role": "AXLink",
+     "label": "Issue Navigation"
+    },
+    {
+     "role": "AXLink",
+     "label": "Log"
+    },
+    {
+     "role": "AXLink",
+     "label": "Shelf"
+    },
+    {
+     "role": "AXLink",
+     "label": "Git"
+    },
+    {
+     "role": "AXLink",
+     "label": "GitHub"
+    },
+    {
+     "role": "AXLink",
+     "label": "GitLab"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "version-control",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Version Control/Directory Mappings"
+  },
+  {
+   "expect": {
+    "settings": "Version Control/Directory Mappings"
+   }
+  },
+  {
+   "within": 6000,
+   "find": [
+    {
+     "role": "AXButton",
+     "label": "Add"
+    },
+    {
+     "role": "AXButton",
+     "label": "Remove"
+    },
+    {
+     "role": "AXButton",
+     "label": "Edit"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Enable automatic mapping detection",
+     "value": "1"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "directory-mappings",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Version Control/File Status Colors"
+  },
+  {
+   "expect": {
+    "settings": "Version Control/File Status Colors"
+   }
+  },
+  {
+   "within": 6000,
+   "find": [
+    {
+     "role": "AXGroup",
+     "label": "Added"
+    },
+    {
+     "role": "AXGroup",
+     "label": "Added in not active changelist"
+    },
+    {
+     "role": "AXGroup",
+     "label": "Changelist conflict"
+    },
+    {
+     "role": "AXGroup",
+     "label": "Deleted"
+    },
+    {
+     "role": "AXGroup",
+     "label": "Deleted from file system"
+    },
+    {
+     "role": "AXGroup",
+     "label": "Have changed descendants"
+    },
+    {
+     "role": "AXGroup",
+     "label": "Have immediate changed children"
+    },
+    {
+     "role": "AXGroup",
+     "label": "Hijacked"
+    },
+    {
+     "role": "AXGroup",
+     "label": "Ignored"
+    },
+    {
+     "role": "AXGroup",
+     "label": "Merged"
+    },
+    {
+     "role": "AXGroup",
+     "label": "Merged with conflicts"
+    },
+    {
+     "role": "AXGroup",
+     "label": "Merged with property conflicts"
+    },
+    {
+     "role": "AXGroup",
+     "label": "Merged with text and property conflicts"
+    },
+    {
+     "role": "AXGroup",
+     "label": "Modified"
+    },
+    {
+     "role": "AXGroup",
+     "label": "Modified in not active changelist"
+    },
+    {
+     "role": "AXGroup",
+     "label": "Obsolete"
+    },
+    {
+     "role": "AXGroup",
+     "label": "Suppressed"
+    },
+    {
+     "role": "AXGroup",
+     "label": "Switched"
+    },
+    {
+     "role": "AXGroup",
+     "label": "Unknown"
+    },
+    {
+     "role": "AXGroup",
+     "label": "Up to date"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "file-status-colors",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Version Control/Issue Navigation"
+  },
+  {
+   "expect": {
+    "settings": "Version Control/Issue Navigation"
+   }
+  },
+  {
+   "within": 6000,
+   "find": [
+    {
+     "role": "AXButton",
+     "label": "Add…"
+    },
+    {
+     "role": "AXButton",
+     "label": "Edit"
+    },
+    {
+     "role": "AXButton",
+     "label": "Remove"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "issue-navigation",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Version Control/Log"
+  },
+  {
+   "expect": {
+    "settings": "Version Control/Log"
+   }
+  },
+  {
+   "within": 6000,
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Show the log in the editor window",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show only the first reference for a commit in the table",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show tag names in the table",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show the time when the change was committed rather than authored",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show references on the left of commit message",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Display changes to each merged commit separately",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show the issue preview on hover over an issue id in",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show the diff preview panel",
+     "value": "0"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Bottom",
+     "value": "1"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Right",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Author",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Hash",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Date",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "GPG Signature",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Enable indexing for project",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Display details panel",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show file names",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show the diff preview panel",
+     "value": "1"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Bottom",
+     "value": "0"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Right",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Author",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Hash",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Date",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "GPG Signature",
+     "value": "0"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "log",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Version Control/Git"
+  },
+  {
+   "expect": {
+    "settings": "Version Control/Git"
+   }
+  },
+  {
+   "within": 6000,
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Set this path only for the current project",
+     "value": "0"
+    },
+    {
+     "role": "AXButton",
+     "label": "Test"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Automatically exclude ignored directories from the analysis",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Enable staging area",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Warn if CRLF line separators are about to be committed",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Warn when committing in detached HEAD or during rebase",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Warn when committing files larger than",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Warn when committing files with names that might cause issues on other systems",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Add the 'cherry-picked from <hash>' suffix when picking commits pushed to protected branches",
+     "value": "1"
+    },
+    {
+     "role": "AXButton",
+     "label": "Configure GPG Key…"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Auto-update if push of the current branch was rejected",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show Push dialog for Commit and Push",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show Push dialog only when committing to protected branches",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Load branch protection rules from GitHub",
+     "value": "1"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Merge",
+     "value": "1"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Rebase",
+     "value": "0"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Stash",
+     "value": "0"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Shelve",
+     "value": "1"
+    },
+    {
+     "role": "AXLink",
+     "label": "All"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Fetch remote changes automatically",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Check remote for incoming changes",
+     "value": "1"
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "Auto"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Use credential helper",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Combine stashes and shelves in one tab",
+     "value": "0"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "With the local version of a file",
+     "value": "1"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "With the parent commit",
+     "value": "0"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "git",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Version Control/GitHub"
+  },
+  {
+   "expect": {
+    "settings": "Version Control/GitHub"
+   }
+  },
+  {
+   "within": 6000,
+   "find": [
+    {
+     "role": "AXButton",
+     "label": "Add"
+    },
+    {
+     "role": "AXButton",
+     "label": "Remove"
+    },
+    {
+     "role": "AXButton",
+     "label": "Set as Default"
+    },
+    {
+     "role": "AXLink",
+     "label": "Add account…"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Clone git repositories using ssh",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Automatically mark opened files as viewed",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Enable unread markers on Pull Requests in the list",
+     "value": "1"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "github",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Version Control/GitLab"
+  },
+  {
+   "expect": {
+    "settings": "Version Control/GitLab"
+   }
+  },
+  {
+   "within": 6000,
+   "find": [
+    {
+     "role": "AXButton",
+     "label": "Add"
+    },
+    {
+     "role": "AXButton",
+     "label": "Remove"
+    },
+    {
+     "role": "AXButton",
+     "label": "Set as Default"
+    },
+    {
+     "role": "AXLink",
+     "label": "Add account…"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Automatically mark opened files as viewed",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Clone using SSH",
+     "value": "0"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "gitlab",
+   "window": "smallest"
+  }
+ ]
+}

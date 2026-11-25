@@ -1,0 +1,180 @@
+{
+ "id": "plugins-debug-adapter",
+ "covers": [],
+ "reference-app": [],
+ "settings": {
+  "dap": {
+   "FixtureDebug": {
+    "binary": "$E2E/dap_fixture.py"
+   }
+  }
+ },
+ "steps": [
+  {
+   "sh": "(nohup python3 \"$E2E/extensions_http.py\" ../registry-port 600 > ../registry.log 2>&1 &) && for i in $(seq 1800); do [ -s ../registry-port ] && break; sleep 0.1; done && python3 -c \"import json; p='../home/.config/spork-ide/settings.json'; s=json.load(open(p)); url='http://127.0.0.1:'+open('../registry-port').read().strip(); s['server_url']=url; s.setdefault('lsp', {})['fixture-ls']={'settings': {'download_url': url+'/files/lsp_fixture.py'}}; json.dump(s, open(p, 'w'))\""
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-,"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "Plugins",
+   "role": "AXRow",
+   "in": "Settings categories",
+   "within": 8000
+  },
+  {
+   "expect": {
+    "settings.page": "Plugins",
+    "settings.plugins.marketplace": [
+     "Fixture Theme",
+     "Fixture Language",
+     "Fixture Snippets",
+     "Fixture Icons",
+     "Fixture MCP",
+     "Fixture Debugger"
+    ]
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Search plugins",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "d e b u g g e r",
+   "window": "Settings – fixture"
+  },
+  {
+   "expect": {
+    "settings.plugins.marketplace": [
+     "Fixture Debugger"
+    ]
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Fixture Debugger",
+   "in": "Plugins"
+  },
+  {
+   "do": "click",
+   "label": "Install",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings.plugins.installed": [
+     "Fixture Debugger"
+    ]
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings": null
+   },
+   "within": 8000
+  },
+  {
+   "sh": "mkdir -p .zed && printf '[{\"label\": \"debug fixture\", \"adapter\": \"FixtureDebug\", \"request\": \"launch\", \"program\": \"$FIXTURE/target/debug/fixture\", \"cwd\": \"$FIXTURE\"}]' > .zed/debug.json"
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   },
+   "within": 8000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "find": {
+    "label": "debug fixture, Run / Debug Configurations",
+    "role": "AXButton"
+   },
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "run::EditConfigurations"
+  },
+  {
+   "find": [
+    {
+     "text": "FixtureDebug"
+    },
+    {
+     "text": "debug fixture"
+    }
+   ],
+   "within": 8000
+  },
+  {
+   "do": "keys",
+   "keys": "escape",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down down down"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "expect": {
+    "run.breakpoints.0.at": "main.rs:4"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-d"
+  },
+  {
+   "expect": {
+    "docks.bottom.panel": "DebugPanel",
+    "run.debug.status": "Stopped"
+   },
+   "within": 20000
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "debug"
+  }
+ ]
+}

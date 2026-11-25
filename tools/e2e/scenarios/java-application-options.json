@@ -1,0 +1,259 @@
+{
+ "id": "java-application-options",
+ "fixture": "maven",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "find": {
+    "label": "Load Maven Project",
+    "role": "AXLink"
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "Load Maven Project",
+   "role": "AXLink"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 300000
+  },
+  {
+   "do": "action",
+   "name": "run::EditConfigurations"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Run/Debug Configurations"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "find": {
+    "label": "Add New Configuration",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Add New Configuration",
+   "role": "AXButton"
+  },
+  {
+   "menu": "Add New Configuration",
+   "items": [
+    "Add New Configuration (disabled)",
+    "Shell Script",
+    "Application",
+    "GDB",
+    "Go Build",
+    "Native Application",
+    "Node.js",
+    "Python"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Application",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Modify options",
+    "role": "AXLink"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Name:",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "do": "type",
+   "text": "Main",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "do": "click",
+   "label": "Main class:",
+   "role": "AXTextField"
+  },
+  {
+   "do": "type",
+   "text": "com.example.Main",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "do": "click",
+   "label": "Modify options",
+   "role": "AXLink"
+  },
+  {
+   "menu": "Modify options",
+   "items": [
+    "Operating System (disabled)",
+    "Allow multiple instances",
+    "Redirect input (disabled)",
+    "Java (disabled)",
+    "Do not build before run",
+    "Add VM options",
+    "Modify classpath (disabled)",
+    "Shorten command line (disabled)",
+    "Add dependencies with “provided” scope to classpath (disabled)"
+   ],
+   "part": true,
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Add VM options",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "VM options:",
+    "role": "AXTextField"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "VM options:",
+   "role": "AXTextField"
+  },
+  {
+   "do": "type",
+   "text": "-Xmx256m",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "do": "click",
+   "label": "Modify options",
+   "role": "AXLink"
+  },
+  {
+   "do": "click",
+   "label": "Do not build before run",
+   "role": "AXMenuItem",
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Modify options",
+   "role": "AXLink"
+  },
+  {
+   "do": "click",
+   "label": "Allow multiple instances",
+   "role": "AXMenuItem",
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Modify options",
+   "role": "AXLink"
+  },
+  {
+   "menu": "Modify options",
+   "items": [
+    "Operating System (disabled)",
+    "Allow multiple instances",
+    "Redirect input (disabled)",
+    "Java (disabled)",
+    "Do not build before run",
+    "Add VM options"
+   ],
+   "part": true,
+   "checked": [
+    "Allow multiple instances",
+    "Do not build before run",
+    "Add VM options"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "keys",
+   "keys": "escape",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "modify-options",
+   "window": "smallest"
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 60000
+  },
+  {
+   "do": "click",
+   "label": "Run",
+   "role": "AXButton",
+   "nth": 1
+  },
+  {
+   "expect": {
+    "windows.1": null
+   },
+   "within": 5000
+  },
+  {
+   "sh": "cat .zed/debug.json",
+   "contains": "\"vmArgs\": \"-Xmx256m\"",
+   "within": 8000
+  },
+  {
+   "sh": "cat .zed/debug.json",
+   "contains": "\"skipBuild\": true"
+  },
+  {
+   "sh": "cat .zed/debug.json",
+   "contains": "\"allowMultipleInstances\": true"
+  },
+  {
+   "expect": {
+    "run.tabs.0.title": "Main",
+    "run.tabs.0.running": false,
+    "run.tabs.0.output": "Hello, world!\n\nProcess finished with exit code 0"
+   },
+   "within": 60000
+  }
+ ]
+}

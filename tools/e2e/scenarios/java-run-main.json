@@ -1,0 +1,94 @@
+{
+ "id": "java-run-main",
+ "fixture": "maven",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "find": {
+    "label": "Load Maven Project",
+    "role": "AXLink"
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "Load Maven Project",
+   "role": "AXLink"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 300000
+  },
+  {
+   "do": "open",
+   "path": "src/main/java/com/example/Main.java"
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/Main.java",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 60000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "shot": "gutter"
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-r"
+  },
+  {
+   "expect": {
+    "run.tabs.0.title": "Main",
+    "run.tabs.0.running": false,
+    "run.tabs.0.output": "Hello, world!\n\nProcess finished with exit code 0"
+   },
+   "within": 60000
+  }
+ ]
+}

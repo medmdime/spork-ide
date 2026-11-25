@@ -1,0 +1,10 @@
+#!/bin/sh
+# The `docker` CLI for the Docker scenarios' Compose actions, on the PATH they give the IDE: it
+# answers `docker compose version` and writes every other call, with its DOCKER_HOST, to
+# docker-cli.log beside the socket DOCKER_HOST names.
+if [ "$1 $2" = "compose version" ]; then
+  echo "Docker Compose version v2.29.7"
+  exit 0
+fi
+socket="${DOCKER_HOST#unix://}"
+echo "DOCKER_HOST=$DOCKER_HOST docker $*" >> "$(dirname "$socket")/docker-cli.log"

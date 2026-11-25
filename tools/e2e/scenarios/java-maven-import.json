@@ -1,0 +1,128 @@
+{
+ "id": "java-maven-import",
+ "fixture": "maven",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "find": {
+    "label": "Load Maven Project",
+    "role": "AXLink"
+   },
+   "within": 20000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "shot": "build-scripts-found"
+  },
+  {
+   "do": "click",
+   "label": "Load Maven Project",
+   "role": "AXLink"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 300000
+  },
+  {
+   "file": "src/main/java/com/example/Main.java",
+   "text": "package com.example;\n\n/** Prints the greeting. */\npublic class Main {\n    public static void main(String[] args) {\n        int count = \"one\";\n        System.out.println(Greeting.hello(\"world\"));\n    }\n}\n"
+  },
+  {
+   "do": "open",
+   "path": "src/main/java/com/example/Main.java"
+  },
+  {
+   "expect": {
+    "editor.diagnostics": [
+     "error: Type mismatch: cannot convert from String to int"
+    ]
+   },
+   "within": 60000
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/Main.java",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "type",
+   "text": "7:37"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-space"
+  },
+  {
+   "expect": {
+    "editor.completions": [
+     "hello Greeting.hello(String name) : String",
+     "class class : Class<com.example.Greeting>"
+    ]
+   },
+   "within": 20000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 60000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "shot": "completion"
+  }
+ ]
+}

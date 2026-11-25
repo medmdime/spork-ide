@@ -1,0 +1,127 @@
+{
+ "id": "log-panes-merge",
+ "covers": [
+  "action:Vcs.Log.ShowChangesFromParents"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "expect": {
+    "view": "History",
+    "commits": 7
+   }
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "action",
+   "name": "spork::SelectNextCommit"
+  },
+  {
+   "do": "action",
+   "name": "spork::SelectNextCommit"
+  },
+  {
+   "expect": {
+    "selected": 1
+   }
+  },
+  {
+   "wait": 800
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "find": {
+    "label": "Show changes to parents",
+    "role": "AXLink"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Show changes to parents"
+  },
+  {
+   "expect": {
+    "log.changes_to_parents": true
+   }
+  },
+  {
+   "find": {
+    "label": "Changes to 1cf6d449",
+    "role": "AXRow"
+   }
+  },
+  {
+   "find": {
+    "label": "Changes to d8f3ed33",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "README.md",
+   "role": "AXRow"
+  },
+  {
+   "expect": {
+    "log.merge_parent": 1,
+    "log.changes_selected": "README.md"
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "README.md",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "menu": "context-menu:Vcs.Log.ChangesBrowser.Popup",
+   "part": true,
+   "items": [
+    "Get",
+    "History Up to Here",
+    "Show Changes to Parents"
+   ],
+   "checked": [
+    "Show Changes to Parents"
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "Show Changes to Parents",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "log.changes_to_parents": false
+   }
+  },
+  {
+   "find": {
+    "label": "No merged conflicts."
+   }
+  },
+  {
+   "find": {
+    "label": "Changes to 1cf6d449",
+    "role": "AXRow"
+   },
+   "absent": true
+  }
+ ]
+}

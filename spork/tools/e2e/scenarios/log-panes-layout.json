@@ -1,0 +1,294 @@
+{
+ "id": "log-panes-layout",
+ "covers": [
+  "context-menu:Vcs.Log.ChangesBrowser.PresentationSettings",
+  "context-menu:Vcs.Log.LayoutConfiguration",
+  "context-menu:ChangesView.GroupBy",
+  "context-menu:Vcs.Log.Diff.Preview.Location",
+  "action:ChangesView.GroupBy.Directory",
+  "action:ChangesView.GroupBy.Repository",
+  "action:Vcs.Log.ShowDiffPreview",
+  "action:Vcs.Log.MoveDiffPreviewToRight",
+  "action:Vcs.Log.MoveDiffPreviewToBottom",
+  "action:Vcs.Log.ShowDetailsAction"
+ ],
+ "reference-app": [
+  "screenshots/menus/vcs-log-layoutconfiguration.png"
+ ],
+ "steps": [
+  {
+   "expect": {
+    "view": "History",
+    "commits": 7
+   }
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "action",
+   "name": "spork::SelectNextCommit"
+  },
+  {
+   "do": "action",
+   "name": "spork::SelectNextCommit"
+  },
+  {
+   "do": "action",
+   "name": "spork::SelectNextCommit"
+  },
+  {
+   "expect": {
+    "selected": 2
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "View Options",
+   "nth": 1
+  },
+  {
+   "menu": "context-menu:Vcs.Log.ChangesBrowser.PresentationSettings",
+   "items": [
+    "Group By ▸",
+    "Show Details",
+    "Show Diff Preview"
+   ],
+   "checked": [
+    "Show Details"
+   ]
+  },
+  {
+   "menu": "context-menu:Vcs.Log.LayoutConfiguration",
+   "part": true
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "Group By",
+   "role": "AXMenuItem"
+  },
+  {
+   "menu": "context-menu:ChangesView.GroupBy",
+   "items": [
+    "Directory",
+    "Repository"
+   ],
+   "checked": [
+    "Directory"
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "Repository",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "log.by_repository": true,
+    "log.by_directory": true
+   }
+  },
+  {
+   "find": {
+    "label": "repo",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-p"
+  },
+  {
+   "expect": {
+    "log.by_directory": false
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-p"
+  },
+  {
+   "expect": {
+    "log.by_directory": true
+   }
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "View Options",
+   "nth": 1
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "Show Diff Preview",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "log.diff_preview": true,
+    "log.diff_preview_right": false
+   }
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "find": {
+    "label": "Diff Preview"
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "View Options",
+   "nth": 1
+  },
+  {
+   "menu": "context-menu:Vcs.Log.ChangesBrowser.PresentationSettings",
+   "items": [
+    "Group By ▸",
+    "Show Details",
+    "Show Diff Preview",
+    "Diff Preview Location ▸"
+   ],
+   "checked": [
+    "Show Details",
+    "Show Diff Preview"
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "Diff Preview Location",
+   "role": "AXMenuItem"
+  },
+  {
+   "menu": "context-menu:Vcs.Log.Diff.Preview.Location",
+   "items": [
+    "Bottom",
+    "Right"
+   ],
+   "checked": [
+    "Bottom"
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "Right",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "log.diff_preview_right": true
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "preview-right"
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "View Options",
+   "nth": 1
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "Diff Preview Location",
+   "role": "AXMenuItem"
+  },
+  {
+   "menu": "context-menu:Vcs.Log.Diff.Preview.Location",
+   "items": [
+    "Bottom",
+    "Right"
+   ],
+   "checked": [
+    "Right"
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "Bottom",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "log.diff_preview_right": false
+   }
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "View Options",
+   "nth": 1
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "Show Details",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "log.details": false
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "preview-bottom-no-details"
+  }
+ ]
+}

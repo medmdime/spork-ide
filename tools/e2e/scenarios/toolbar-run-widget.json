@@ -1,0 +1,308 @@
+{
+ "id": "toolbar-run-widget",
+ "covers": [
+  "action:ChooseRunConfiguration",
+  "action:ChooseDebugConfiguration",
+  "action:Run",
+  "action:Debug"
+ ],
+ "reference-app": [
+  "screenshots/frame/main-window.jpg"
+ ],
+ "settings": {
+  "languages": {
+   "JSON": {
+    "prettier": {
+     "allowed": false
+    }
+   },
+   "JSONC": {
+    "prettier": {
+     "allowed": false
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "toolbar": "Title bar",
+   "items": [
+    "Current File, Run / Debug Configurations",
+    "Run",
+    "Debug"
+   ],
+   "part": true,
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Run",
+   "role": "AXButton",
+   "in": "Title bar"
+  },
+  {
+   "find": {
+    "label": "Spawn",
+    "role": "AXButton"
+   },
+   "missing": [
+    {
+     "label": "Edit debug.json"
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": {
+    "label": "Spawn",
+    "role": "AXButton"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Debug",
+   "role": "AXButton",
+   "in": "Title bar"
+  },
+  {
+   "find": {
+    "label": "Edit debug.json",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": {
+    "label": "Edit debug.json",
+    "role": "AXButton"
+   },
+   "absent": true
+  },
+  {
+   "sh": "mkdir -p .zed && printf '[{\\\"label\\\": \\\"hello\\\", \\\"command\\\": \\\"echo hello > ran.txt\\\"}, {\\\"label\\\": \\\"bye\\\", \\\"command\\\": \\\"echo bye > ran.txt\\\"}]' > .zed/tasks.json && printf '[{\\\"label\\\": \\\"debug fixture\\\", \\\"adapter\\\": \\\"CodeLLDB\\\", \\\"request\\\": \\\"launch\\\", \\\"program\\\": \\\"target/debug/fixture\\\"}]' > .zed/debug.json"
+  },
+  {
+   "toolbar": "Title bar",
+   "items": [
+    "hello, Run / Debug Configurations",
+    "Run 'hello'",
+    "Debug 'hello' (disabled)"
+   ],
+   "part": true,
+   "within": 10000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "configuration"
+  },
+  {
+   "do": "click",
+   "label": "hello, Run / Debug Configurations",
+   "role": "AXButton"
+  },
+  {
+   "menu": "Run / Debug Configurations",
+   "items": [
+    "hello",
+    "bye",
+    "debug fixture",
+    "Current File",
+    "Edit Configurations…"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "bye",
+   "role": "AXMenuItem"
+  },
+  {
+   "toolbar": "Title bar",
+   "items": [
+    "bye, Run / Debug Configurations",
+    "Run 'bye'",
+    "Debug 'bye' (disabled)"
+   ],
+   "part": true
+  },
+  {
+   "do": "click",
+   "label": "Run 'bye'",
+   "role": "AXButton"
+  },
+  {
+   "sh": "cat ran.txt",
+   "is": "bye",
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "bye, Run / Debug Configurations",
+   "role": "AXButton"
+  },
+  {
+   "do": "click",
+   "label": "hello",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Run 'hello'",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "run_widget::Run"
+  },
+  {
+   "sh": "cat ran.txt",
+   "is": "hello",
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "hello, Run / Debug Configurations",
+   "role": "AXButton"
+  },
+  {
+   "do": "click",
+   "label": "Edit Configurations…",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Run/Debug Configurations"
+   },
+   "within": 8000
+  },
+  {
+   "do": "keys",
+   "keys": "escape",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "expect": {
+    "windows.1": null
+   }
+  },
+  {
+   "do": "click",
+   "label": "hello, Run / Debug Configurations",
+   "role": "AXButton"
+  },
+  {
+   "menu": "Run / Debug Configurations",
+   "items": [
+    "hello",
+    "bye",
+    "debug fixture",
+    "Current File",
+    "Edit Configurations…"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "debug fixture",
+   "role": "AXMenuItem"
+  },
+  {
+   "toolbar": "Title bar",
+   "items": [
+    "debug fixture, Run / Debug Configurations",
+    "Run 'debug fixture' (disabled)",
+    "Debug 'debug fixture'"
+   ],
+   "part": true
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-alt-r"
+  },
+  {
+   "find": [
+    {
+     "label": "Run",
+     "role": "AXWindow"
+    },
+    {
+     "label": "Edit Configurations…",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "hello",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "bye",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "debug fixture",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Hold ⇧ to Debug"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "run-popup"
+  },
+  {
+   "do": "keys",
+   "keys": "2"
+  },
+  {
+   "find": {
+    "label": "Run",
+    "role": "AXWindow"
+   },
+   "absent": true
+  },
+  {
+   "sh": "cat ran.txt",
+   "is": "bye",
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-alt-d"
+  },
+  {
+   "find": [
+    {
+     "label": "Debug",
+     "role": "AXWindow"
+    },
+    {
+     "label": "Hold ⇧ to Run"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": {
+    "label": "Debug",
+    "role": "AXWindow"
+   },
+   "absent": true
+  }
+ ]
+}

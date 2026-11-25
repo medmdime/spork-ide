@@ -1,0 +1,317 @@
+{
+ "id": "editor-multiple-carets",
+ "covers": [
+  "action:SelectNextOccurrence",
+  "action:UnselectPreviousOccurrence",
+  "action:EditorCloneCaretAbove",
+  "action:EditorCloneCaretBelow",
+  "action:EditorAddCaretPerSelectedLine",
+  "action:EditorSelectWord",
+  "action:EditorUnSelectWord",
+  "action:MoveLineUp",
+  "action:MoveLineDown",
+  "action:SmartSelect",
+  "action:SmartUnSelect"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "file": "src/carets.txt",
+   "text": "item = 1\nitem = 2\nitem = 3\n"
+  },
+  {
+   "file": "src/select.rs",
+   "text": "fn main() {\n    let value = 1 + 2;\n}\n"
+  },
+  {
+   "do": "open",
+   "path": "src/carets.txt"
+  },
+  {
+   "expect": {
+    "active": "src/carets.txt",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-g ctrl-g"
+  },
+  {
+   "do": "type",
+   "text": "x"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/carets.txt",
+   "is": "x = 1|x = 2|item = 3|"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-z escape cmd-home"
+  },
+  {
+   "find": {
+    "label": "Line 1, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-g ctrl-g ctrl-g ctrl-shift-g"
+  },
+  {
+   "do": "type",
+   "text": "y"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/carets.txt",
+   "is": "y = 1|y = 2|item = 3|"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-z escape cmd-home"
+  },
+  {
+   "find": {
+    "label": "Line 1, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "modifiers",
+   "held": [
+    "alt"
+   ]
+  },
+  {
+   "do": "modifiers",
+   "held": []
+  },
+  {
+   "do": "modifiers",
+   "held": [
+    "alt"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "alt-down"
+  },
+  {
+   "do": "modifiers",
+   "held": []
+  },
+  {
+   "do": "modifiers",
+   "held": [
+    "alt"
+   ]
+  },
+  {
+   "do": "modifiers",
+   "held": []
+  },
+  {
+   "do": "modifiers",
+   "held": [
+    "alt"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "alt-down"
+  },
+  {
+   "do": "modifiers",
+   "held": []
+  },
+  {
+   "do": "type",
+   "text": "z"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/carets.txt",
+   "is": "zitem = 1|zitem = 2|zitem = 3|"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-z escape cmd-home down down"
+  },
+  {
+   "find": {
+    "label": "Line 3, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "modifiers",
+   "held": [
+    "alt"
+   ]
+  },
+  {
+   "do": "modifiers",
+   "held": []
+  },
+  {
+   "do": "modifiers",
+   "held": [
+    "alt"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "alt-up"
+  },
+  {
+   "do": "modifiers",
+   "held": []
+  },
+  {
+   "do": "type",
+   "text": "w"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/carets.txt",
+   "is": "item = 1|witem = 2|witem = 3|"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-z escape cmd-home shift-down shift-right alt-shift-g"
+  },
+  {
+   "do": "type",
+   "text": "!"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/carets.txt",
+   "is": "item = 1!|item = 2!|item = 3|"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-z escape cmd-home down alt-shift-up"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/carets.txt",
+   "is": "item = 2|item = 1|item = 3|"
+  },
+  {
+   "do": "keys",
+   "keys": "alt-shift-down"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/carets.txt",
+   "is": "item = 1|item = 2|item = 3|"
+  },
+  {
+   "do": "open",
+   "path": "src/select.rs"
+  },
+  {
+   "expect": {
+    "active": "src/select.rs"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down alt-right alt-right left"
+  },
+  {
+   "find": {
+    "label": "Line 2, column 13",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-up"
+  },
+  {
+   "do": "type",
+   "text": "v"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/select.rs",
+   "is": "fn main() {|    let v = 1 + 2;|}|"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-z escape cmd-home down alt-right alt-right left alt-up alt-up alt-down"
+  },
+  {
+   "do": "type",
+   "text": "v"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/select.rs",
+   "is": "fn main() {|    let v = 1 + 2;|}|"
+  }
+ ]
+}

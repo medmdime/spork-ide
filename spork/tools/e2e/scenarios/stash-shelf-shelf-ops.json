@@ -1,0 +1,342 @@
+{
+ "id": "stash-shelf-shelf-ops",
+ "covers": [
+  "action:Frontend.ChangesView.UnshelveSilently",
+  "action:ShelvedChanges.Restore",
+  "action:Frontend.ChangesView.Shelf.Restore",
+  "action:Frontend.Delete.Action"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "sh": "mkdir -p src .idea/shelf/Fix_readme && echo 'fn a() {}' > src/a.rs && git add -N src/a.rs && printf '/shelf/\\n' > .idea/.gitignore && git diff README.md src/a.rs > .idea/shelf/Fix_readme/shelved.patch && printf '<changelist name=\"Fix_readme\" date=\"1767261600000\" recycled=\"false\" deleted=\"false\">\\n  <option name=\"DESCRIPTION\" value=\"Fix readme\" />\\n</changelist>\\n' > .idea/shelf/Fix_readme.xml && git checkout -- README.md && git rm -q --cached src/a.rs && rm -rf src"
+  },
+  {
+   "do": "action",
+   "name": "spork::ShowShelf"
+  },
+  {
+   "find": [
+    {
+     "role": "AXRadioButton",
+     "label": "Shelf",
+     "value": "1"
+    },
+    {
+     "role": "AXRow",
+     "label": "Fix readme"
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "role": "AXRow",
+     "label": "Fix readme"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Fix readme",
+   "role": "AXRow"
+  },
+  {
+   "wait": 400
+  },
+  {
+   "find": [
+    {
+     "role": "AXButton",
+     "label": "Unshelve Silently"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Unshelve Silently",
+   "role": "AXButton"
+  },
+  {
+   "sh": "git status --porcelain README.md src",
+   "is": "M README.md\n?? src/"
+  },
+  {
+   "sh": "grep -c 'recycled=\"false\"' .idea/shelf/Fix_readme.xml",
+   "is": "1"
+  },
+  {
+   "sh": "git checkout -- README.md && rm -rf src"
+  },
+  {
+   "find": [
+    {
+     "role": "AXRow",
+     "label": "Fix readme"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Fix readme",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "find": [
+    {
+     "role": "AXMenuItem",
+     "label": "Unshelve…"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Unshelve…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Remove successfully applied files from the shelf",
+     "value": "0"
+    },
+    {
+     "role": "AXButton",
+     "label": "Cancel"
+    },
+    {
+     "role": "AXButton",
+     "label": "Unshelve Changes"
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "Remove successfully applied files from the shelf"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Remove successfully applied files from the shelf"
+  },
+  {
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Remove successfully applied files from the shelf",
+     "value": "1"
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "role": "AXButton",
+     "label": "Unshelve Changes"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Unshelve Changes",
+   "role": "AXButton"
+  },
+  {
+   "sh": "git status --porcelain README.md src",
+   "is": "M README.md\n?? src/"
+  },
+  {
+   "sh": "grep -c 'recycled=\"true\"' .idea/shelf/Fix_readme.xml",
+   "is": "1"
+  },
+  {
+   "missing": [
+    {
+     "role": "AXRow",
+     "label": "Fix readme"
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "role": "AXButton",
+     "label": "View Options"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "View Options",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "role": "AXMenuItem",
+     "label": "Show/Hide Applied Shelved Changes"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Show/Hide Applied Shelved Changes",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "role": "AXRow",
+     "label": "Fix readme"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Fix readme",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "find": [
+    {
+     "role": "AXMenuItem",
+     "label": "Restore"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Restore",
+   "role": "AXMenuItem"
+  },
+  {
+   "sh": "grep -c 'recycled=\"false\"' .idea/shelf/Fix_readme.xml",
+   "is": "1"
+  },
+  {
+   "find": [
+    {
+     "role": "AXRow",
+     "label": "Fix readme"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Fix readme",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "find": [
+    {
+     "role": "AXMenuItem",
+     "label": "Delete…"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Delete…",
+   "role": "AXMenuItem"
+  },
+  {
+   "sh": "grep -c 'deleted=\"true\"' .idea/shelf/Fix_readme.xml",
+   "is": "1"
+  },
+  {
+   "find": [
+    {
+     "role": "AXRow",
+     "label": "Recently Deleted"
+    }
+   ]
+  },
+  {
+   "missing": [
+    {
+     "role": "AXRow",
+     "label": "Fix readme"
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "role": "AXRow",
+     "label": "Recently Deleted"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Recently Deleted",
+   "role": "AXRow"
+  },
+  {
+   "find": [
+    {
+     "role": "AXRow",
+     "label": "Fix readme"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Fix readme",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "find": [
+    {
+     "role": "AXMenuItem",
+     "label": "Restore"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Restore",
+   "role": "AXMenuItem"
+  },
+  {
+   "sh": "grep -c 'deleted=\"false\"' .idea/shelf/Fix_readme.xml",
+   "is": "1"
+  },
+  {
+   "missing": [
+    {
+     "role": "AXRow",
+     "label": "Recently Deleted"
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "role": "AXRow",
+     "label": "Fix readme"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Fix readme",
+   "role": "AXRow"
+  },
+  {
+   "do": "keys",
+   "keys": "delete"
+  },
+  {
+   "sh": "grep -c 'deleted=\"true\"' .idea/shelf/Fix_readme.xml",
+   "is": "1"
+  }
+ ]
+}

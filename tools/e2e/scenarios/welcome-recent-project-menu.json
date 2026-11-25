@@ -1,0 +1,82 @@
+{
+ "id": "welcome-recent-project-menu",
+ "covers": [
+  "action:WelcomeScreen.CopyProjectPath",
+  "action:WelcomeScreen.OpenSelected"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "action",
+   "name": "workspace::CloseProject"
+  },
+  {
+   "expect": {
+    "roots": [],
+    "windows.0.title": "Welcome to Spork IDE"
+   },
+   "within": 10000
+  },
+  {
+   "find": {
+    "label": "fixture",
+    "role": "AXButton"
+   },
+   "within": 10000
+  },
+  {
+   "sh": "printf none | pbcopy"
+  },
+  {
+   "do": "click",
+   "label": "More Actions",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    "Open Selected",
+    "Reveal in Finder",
+    "Copy Path",
+    "Remove from Recent Projects…"
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "Copy Path"
+  },
+  {
+   "sh": "pbpaste",
+   "is": "$FIXTURE"
+  },
+  {
+   "sh": "printf none | pbcopy"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-c",
+   "window": "Welcome to Spork IDE"
+  },
+  {
+   "sh": "pbpaste",
+   "is": "$FIXTURE"
+  },
+  {
+   "do": "click",
+   "label": "More Actions",
+   "role": "AXButton"
+  },
+  {
+   "do": "click",
+   "label": "Open Selected"
+  },
+  {
+   "expect": {
+    "roots": [
+     "$FIXTURE"
+    ]
+   },
+   "within": 15000
+  }
+ ]
+}

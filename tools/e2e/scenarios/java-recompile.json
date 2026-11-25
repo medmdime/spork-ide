@@ -1,0 +1,82 @@
+{
+ "id": "java-recompile",
+ "fixture": "maven",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "find": {
+    "label": "Load Maven Project",
+    "role": "AXLink"
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "Load Maven Project",
+   "role": "AXLink"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 300000
+  },
+  {
+   "sh": "test -f target/classes/com/example/Main.class && echo yes",
+   "is": "yes",
+   "within": 60000
+  },
+  {
+   "sh": "rm target/classes/com/example/Main.class"
+  },
+  {
+   "do": "open",
+   "path": "src/main/java/com/example/Main.java"
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/Main.java"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "shift-cmd-f9"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "Build",
+    "java.build.status": "recompile finished",
+    "java.build.running": false,
+    "java.build.errors": 0
+   },
+   "within": 120000
+  },
+  {
+   "sh": "test -f target/classes/com/example/Main.class && echo yes",
+   "is": "yes",
+   "within": 30000
+  }
+ ]
+}

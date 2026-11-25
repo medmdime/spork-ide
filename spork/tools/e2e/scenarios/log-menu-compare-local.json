@@ -1,0 +1,38 @@
+{
+ "id": "log-menu-compare-local",
+ "covers": [
+  "action:Vcs.ShowDiffWithLocal"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "find": {
+    "text": "feat: an empty program",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "feat: an empty program",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "find": {
+    "text": "Compare with Local",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Compare with Local",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "text": "Difference between dd65753a and local version",
+    "role": "AXGroup"
+   }
+  }
+ ]
+}

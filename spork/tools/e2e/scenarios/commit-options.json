@@ -1,0 +1,96 @@
+{
+ "id": "commit-options",
+ "covers": [
+  "action:ChangesView.ShowCommitOptions"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "keys",
+   "keys": "cmd-k"
+  },
+  {
+   "expect": {
+    "left": "[Commit, Project]"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Show Commit Options",
+     "role": "AXButton"
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-o"
+  },
+  {
+   "menu": "action:ChangesView.ShowCommitOptions",
+   "items": [
+    "Git (disabled)",
+    "Sign-off commit",
+    "Add Co-Author…",
+    "Generate Commit Message with AI"
+   ],
+   "checked": []
+  },
+  {
+   "do": "click",
+   "label": "Sign-off commit",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "Sign-off commit",
+     "role": "AXMenuItem"
+    }
+   ],
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Show Commit Options",
+   "role": "AXButton"
+  },
+  {
+   "menu": "action:ChangesView.ShowCommitOptions",
+   "items": [
+    "Git (disabled)",
+    "Sign-off commit",
+    "Add Co-Author…",
+    "Generate Commit Message with AI"
+   ],
+   "checked": [
+    "Sign-off commit"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": [
+    {
+     "label": "Sign-off commit",
+     "role": "AXMenuItem"
+    }
+   ],
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-o"
+  },
+  {
+   "find": [
+    {
+     "label": "Sign-off commit",
+     "role": "AXMenuItem"
+    }
+   ]
+  }
+ ]
+}

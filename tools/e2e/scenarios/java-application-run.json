@@ -1,0 +1,203 @@
+{
+ "id": "java-application-run",
+ "fixture": "maven",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "find": {
+    "label": "Load Maven Project",
+    "role": "AXLink"
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "Load Maven Project",
+   "role": "AXLink"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 300000
+  },
+  {
+   "do": "action",
+   "name": "run::EditConfigurations"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Run/Debug Configurations"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "find": {
+    "label": "Add New Configuration",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Add New Configuration",
+   "role": "AXButton"
+  },
+  {
+   "menu": "Add New Configuration",
+   "items": [
+    "Add New Configuration (disabled)",
+    "Shell Script",
+    "Application",
+    "GDB",
+    "Go Build",
+    "Native Application",
+    "Node.js",
+    "Python"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Application",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "Unnamed",
+     "role": "AXRow",
+     "selected": true
+    },
+    {
+     "label": "Name:",
+     "role": "AXTextField",
+     "value": "Unnamed"
+    },
+    {
+     "label": "Modify options",
+     "role": "AXLink"
+    },
+    {
+     "label": "Main class:",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Program arguments:",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Working directory:",
+     "role": "AXTextField"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "missing": [
+    {
+     "label": "VM options:",
+     "role": "AXTextField"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Name:",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "do": "type",
+   "text": "Main",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "do": "click",
+   "label": "Main class:",
+   "role": "AXTextField"
+  },
+  {
+   "do": "type",
+   "text": "com.example.Main",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "find": {
+    "label": "Run",
+    "role": "AXButton",
+    "enabled": true
+   }
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 60000
+  },
+  {
+   "shot": "dialog",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Run",
+   "role": "AXButton",
+   "nth": 1
+  },
+  {
+   "expect": {
+    "windows.1": null
+   },
+   "within": 5000
+  },
+  {
+   "sh": "cat .zed/debug.json",
+   "contains": "\"mainClass\": \"com.example.Main\"",
+   "within": 8000
+  },
+  {
+   "expect": {
+    "run.configurations.names": [
+     "Main"
+    ],
+    "run.configurations.selected": "Main"
+   },
+   "within": 8000
+  },
+  {
+   "expect": {
+    "run.tabs.0.title": "Main",
+    "run.tabs.0.running": false,
+    "run.tabs.0.output": "Hello, world!\n\nProcess finished with exit code 0"
+   },
+   "within": 60000
+  }
+ ]
+}

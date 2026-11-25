@@ -1,0 +1,173 @@
+{
+ "id": "navigate-go-to-line",
+ "covers": [
+  "action:GotoLine",
+  "dialog:GotoLine"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-f12"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "down down right right"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": [
+    {
+     "label": "Go to Line:Column",
+     "role": "Heading"
+    },
+    {
+     "label": "[Line] [:column]:",
+     "role": "AXStaticText"
+    },
+    {
+     "label": "[Line] [:column]:",
+     "role": "AXTextField",
+     "value": "3:3"
+    },
+    {
+     "label": "Cancel",
+     "role": "AXButton"
+    },
+    {
+     "label": "OK",
+     "role": "AXButton"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "go-to-line"
+  },
+  {
+   "do": "keys",
+   "keys": "4 : 5 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 4, column 5",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField",
+    "value": "4:5"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "- 2 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 2, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "do": "keys",
+   "keys": "x enter"
+  },
+  {
+   "find": {
+    "label": "Go to Line:Column",
+    "role": "Heading"
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "Cancel",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 2, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "menu": "Navigate",
+   "path": [
+    "Navigate"
+   ],
+   "items": [
+    "Line:Column…"
+   ],
+   "part": true
+  }
+ ]
+}

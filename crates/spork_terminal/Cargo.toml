@@ -1,0 +1,19 @@
+[package]
+name = "spork_terminal"
+description = "A terminal panel for GPUI apps, on alacritty_terminal"
+version = "0.0.1"
+edition.workspace = true
+publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
+
+[lib]
+path = "src/spork_terminal.rs"
+doctest = false
+
+[dependencies]
+alacritty_terminal.workspace = true
+gpui_kit.workspace = true
+smol.workspace = true

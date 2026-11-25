@@ -1,0 +1,116 @@
+{
+ "id": "debug-quick-evaluate",
+ "covers": [
+  "action:QuickEvaluateExpression"
+ ],
+ "settings": {
+  "dap": {
+   "CodeLLDB": {
+    "binary": "/usr/bin/python3",
+    "args": [
+     "$E2E/dap_fixture.py"
+    ]
+   }
+  },
+  "languages": {
+   "JSON": {
+    "prettier": {
+     "allowed": false
+    }
+   },
+   "JSONC": {
+    "prettier": {
+     "allowed": false
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "sh": "mkdir -p .zed && printf '[{\"label\": \"debug fixture\", \"adapter\": \"CodeLLDB\", \"request\": \"launch\", \"program\": \"$FIXTURE/target/debug/fixture\", \"cwd\": \"$FIXTURE\", \"requestLog\": \"$FIXTURE/../dap-requests.log\"}]' > .zed/debug.json"
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "find": {
+    "label": "debug fixture, Run / Debug Configurations",
+    "role": "AXButton"
+   },
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "expect": {
+    "run.breakpoints.0.at": "greeting.rs:2"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-d"
+  },
+  {
+   "expect": {
+    "docks.bottom.panel": "DebugPanel",
+    "run.debug.status": "Stopped"
+   },
+   "within": 15000
+  },
+  {
+   "find": {
+    "label": "fixture::greeting::hello:2, greeting.rs",
+    "role": "AXGroup",
+    "in": "Frames"
+   },
+   "within": 10000
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "do": "keys",
+   "keys": "right right right right right right right right right right right right right right right right right right right right right right"
+  },
+  {
+   "do": "keys",
+   "keys": "alt-cmd-f8"
+  },
+  {
+   "find": {
+    "label": "name = \"world\"",
+    "role": "AXRow",
+    "in": "Quick Evaluate"
+   },
+   "within": 5000
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "hint"
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": {
+    "label": "Quick Evaluate"
+   },
+   "absent": true
+  }
+ ]
+}

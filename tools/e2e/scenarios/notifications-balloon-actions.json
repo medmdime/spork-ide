@@ -1,0 +1,143 @@
+{
+ "id": "notifications-balloon-actions",
+ "covers": [],
+ "steps": [
+  {
+   "toolbar": "Right stripe",
+   "items": [
+    "Notifications",
+    "AI Chat"
+   ],
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   },
+   "within": 3000
+  },
+  {
+   "do": "notify",
+   "type": "info",
+   "title": "Maven build scripts found",
+   "text": "Load the Maven project to work with its modules and dependencies.",
+   "sticky": true,
+   "actions": [
+    "Load Maven Project",
+    "Skip"
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "Load Maven Project",
+     "role": "AXLink"
+    },
+    {
+     "label": "Skip",
+     "role": "AXLink"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "find": {
+    "label": "More",
+    "role": "AXLink"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Skip",
+   "role": "AXLink"
+  },
+  {
+   "expect": {
+    "notifications.balloons": [],
+    "notifications.count": 2
+   }
+  },
+  {
+   "do": "notify",
+   "type": "warning",
+   "title": "Plugins supporting *.py files found",
+   "text": "Install the plugins the Marketplace has for this file type, or ignore the extension.",
+   "sticky": true,
+   "actions": [
+    "Install Plugins",
+    "Configure Python Interpreter",
+    "Ignore Extension",
+    "Don't Ask Again"
+   ]
+  },
+  {
+   "find": {
+    "label": "More",
+    "role": "AXLink"
+   }
+  },
+  {
+   "find": {
+    "label": "Don't Ask Again",
+    "role": "AXLink"
+   },
+   "absent": true
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "more"
+  },
+  {
+   "do": "click",
+   "label": "More",
+   "role": "AXLink"
+  },
+  {
+   "find": {
+    "label": "Don't Ask Again"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Don't Ask Again"
+  },
+  {
+   "expect": {
+    "notifications.balloons": [],
+    "notifications.count": 4
+   }
+  },
+  {
+   "do": "action",
+   "name": "notifications_panel::ToggleFocus"
+  },
+  {
+   "find": [
+    {
+     "label": "Ran Don't Ask Again",
+     "in": "Notifications"
+    },
+    {
+     "label": "Ran Skip",
+     "in": "Notifications"
+    }
+   ],
+   "ordered": true,
+   "within": 3000
+  }
+ ]
+}

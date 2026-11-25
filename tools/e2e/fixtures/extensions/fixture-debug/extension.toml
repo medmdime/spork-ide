@@ -1,0 +1,11 @@
+id = "fixture-debug"
+name = "Fixture Debugger"
+version = "1.0.0"
+schema_version = 1
+authors = ["Spork IDE Tests"]
+description = "A debug adapter and a debug locator for the tests."
+repository = "https://example.com/fixture-debug"
+
+[debug_adapters.FixtureDebug]
+
+[debug_locators.fixture-locator]

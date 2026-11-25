@@ -1,0 +1,51 @@
+{
+ "id": "hosting-settings-sync-fork",
+ "covers": [
+  "action:Github.Sync.Fork"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "sh": "git remote add upstream ../repo.origin && git fetch -q upstream && git remote set-head upstream main && git push -q ../repo.origin fix/typo:main"
+  },
+  {
+   "do": "git",
+   "args": [
+    "remote",
+    "add",
+    "github",
+    "https://github.e2e.invalid/spork/fixture.git"
+   ]
+  },
+  {
+   "menu": "context-menu:GitHub.MainMenu",
+   "path": [
+    "Git",
+    "GitHub"
+   ],
+   "within": 8000,
+   "part": true,
+   "items": [
+    "Create Pull Request…",
+    "View Pull Requests",
+    "Sync Fork"
+   ]
+  },
+  {
+   "do": "action",
+   "name": "spork::SyncFork"
+  },
+  {
+   "sh": "test \"$(git rev-parse main)\" = \"$(git rev-parse fix/typo)\" && echo synced",
+   "is": "synced",
+   "within": 10000
+  },
+  {
+   "git": [
+    "status",
+    "--porcelain"
+   ],
+   "contains": " M README.md"
+  }
+ ]
+}

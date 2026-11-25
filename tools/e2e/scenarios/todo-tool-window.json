@@ -1,0 +1,293 @@
+{
+ "id": "todo-tool-window",
+ "covers": [
+  "action:TodoViewGroupByShowPackages",
+  "action:TodoViewGroupByFlattenPackage"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "file": "src/main.rs",
+   "text": "mod greeting;\n\n// TODO: greet everyone\nfn main() {\n    let todo = \"TODO in a string\";\n    println!(\"{}\", greeting::hello(todo));\n}\n"
+  },
+  {
+   "sh": "mkdir -p src/util"
+  },
+  {
+   "file": "src/util/notes.rs",
+   "text": "/* FIXME: notes */\npub fn note() {}\n"
+  },
+  {
+   "file": "README.md",
+   "text": "# Fixture\n"
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "do": "action",
+   "name": "workspace::CloseAllDocks"
+  },
+  {
+   "do": "action",
+   "name": "todo_panel::ToggleFocus"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "TODO"
+   },
+   "within": 5000
+  },
+  {
+   "find": [
+    {
+     "label": "Found 2 TODO items in 2 files",
+     "role": "AXRow",
+     "in": "TODO"
+    },
+    {
+     "label": "src",
+     "role": "AXRow",
+     "in": "TODO"
+    },
+    {
+     "label": "main.rs",
+     "role": "AXRow",
+     "in": "TODO"
+    },
+    {
+     "label": "3 // TODO: greet everyone",
+     "role": "AXRow",
+     "in": "TODO"
+    },
+    {
+     "label": "util",
+     "role": "AXRow",
+     "in": "TODO"
+    },
+    {
+     "label": "notes.rs",
+     "role": "AXRow",
+     "in": "TODO"
+    },
+    {
+     "label": "1 /* FIXME: notes */",
+     "role": "AXRow",
+     "in": "TODO"
+    }
+   ],
+   "ordered": true,
+   "within": 20000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 800
+  },
+  {
+   "shot": "project"
+  },
+  {
+   "find": {
+    "label": "5 let todo = \"TODO in a string\";",
+    "role": "AXRow",
+    "in": "TODO"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Group By",
+   "in": "TODO Toolbar"
+  },
+  {
+   "menu": "action:TodoViewGroupByShowPackages",
+   "items": [
+    "Modules",
+    "Packages",
+    "Flatten View"
+   ],
+   "checked": [
+    "Packages"
+   ],
+   "part": true,
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Flatten View",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "Found 2 TODO items in 2 files",
+     "role": "AXRow",
+     "in": "TODO"
+    },
+    {
+     "label": "src",
+     "role": "AXRow",
+     "in": "TODO"
+    },
+    {
+     "label": "main.rs",
+     "role": "AXRow",
+     "in": "TODO"
+    },
+    {
+     "label": "3 // TODO: greet everyone",
+     "role": "AXRow",
+     "in": "TODO"
+    },
+    {
+     "label": "src/util",
+     "role": "AXRow",
+     "in": "TODO"
+    },
+    {
+     "label": "notes.rs",
+     "role": "AXRow",
+     "in": "TODO"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Group By",
+   "in": "TODO Toolbar"
+  },
+  {
+   "do": "click",
+   "label": "Packages",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "src/util",
+    "role": "AXRow",
+    "in": "TODO"
+   },
+   "absent": true,
+   "within": 5000
+  },
+  {
+   "find": [
+    {
+     "label": "Found 2 TODO items in 2 files",
+     "role": "AXRow",
+     "in": "TODO"
+    },
+    {
+     "label": "main.rs",
+     "role": "AXRow",
+     "in": "TODO"
+    },
+    {
+     "label": "3 // TODO: greet everyone",
+     "role": "AXRow",
+     "in": "TODO"
+    },
+    {
+     "label": "notes.rs",
+     "role": "AXRow",
+     "in": "TODO"
+    },
+    {
+     "label": "1 /* FIXME: notes */",
+     "role": "AXRow",
+     "in": "TODO"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "3 // TODO: greet everyone",
+   "role": "AXRow",
+   "in": "TODO"
+  },
+  {
+   "find": {
+    "label": "There is no preview for the selected item"
+   },
+   "absent": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "3 // TODO: greet everyone",
+   "role": "AXRow",
+   "in": "TODO",
+   "count": 2
+  },
+  {
+   "expect": {
+    "active": "src/main.rs",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "find": {
+    "label": "Line 3, column 1",
+    "role": "AXButton"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Current File",
+   "role": "AXRadioButton"
+  },
+  {
+   "find": [
+    {
+     "label": "main.rs",
+     "role": "AXRow",
+     "in": "TODO"
+    },
+    {
+     "label": "3 // TODO: greet everyone",
+     "role": "AXRow",
+     "in": "TODO"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "find": {
+    "label": "notes.rs",
+    "role": "AXRow",
+    "in": "TODO"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Next TODO Item",
+   "in": "TODO Toolbar"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   },
+   "within": 5000
+  }
+ ]
+}

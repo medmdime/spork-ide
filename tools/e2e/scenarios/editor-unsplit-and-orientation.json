@@ -1,0 +1,261 @@
+{
+ "id": "editor-unsplit-and-orientation",
+ "covers": [
+  "action:Unsplit",
+  "action:ChangeSplitOrientation",
+  "action:UnsplitAll"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "do": "action",
+   "name": "workspace::CloseAllDocks"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs",
+    "split": null
+   }
+  },
+  {
+   "do": "action",
+   "name": "pane::SplitRight"
+  },
+  {
+   "expect": {
+    "split": "horizontal",
+    "items": [
+     "src/main.rs",
+     "src/greeting.rs",
+     "src/greeting.rs"
+    ]
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "More Actions",
+     "role": "AXCheckBox"
+    },
+    {
+     "label": "More Actions",
+     "role": "AXCheckBox"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "More Actions",
+   "role": "AXCheckBox",
+   "nth": 1
+  },
+  {
+   "menu": "popup:EditorTabsEntryPoint",
+   "items": [
+    "Recent Files",
+    "Recent Locations",
+    "Go to File…",
+    "Close All Tabs",
+    "Close Unmodified Tabs",
+    "Reopen Closed Tab",
+    "Unsplit",
+    "Unsplit All",
+    "Change Splitter Orientation",
+    "Configure Editor Tabs…"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Change Splitter Orientation",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "split": "vertical"
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "vertical"
+  },
+  {
+   "do": "action",
+   "name": "workspace::ChangeSplitOrientation"
+  },
+  {
+   "expect": {
+    "split": "horizontal"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "More Actions",
+     "role": "AXCheckBox"
+    },
+    {
+     "label": "More Actions",
+     "role": "AXCheckBox"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "More Actions",
+   "role": "AXCheckBox",
+   "nth": 1
+  },
+  {
+   "menu": "popup:EditorTabsEntryPoint",
+   "items": [
+    "Recent Files",
+    "Recent Locations",
+    "Go to File…",
+    "Close All Tabs",
+    "Close Unmodified Tabs",
+    "Reopen Closed Tab",
+    "Unsplit",
+    "Unsplit All",
+    "Change Splitter Orientation",
+    "Configure Editor Tabs…"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Unsplit",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "split": null,
+    "active": "src/greeting.rs",
+    "items": [
+     "src/main.rs",
+     "src/greeting.rs"
+    ]
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "More Actions",
+     "role": "AXCheckBox"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "More Actions",
+   "role": "AXCheckBox"
+  },
+  {
+   "menu": "popup:EditorTabsEntryPoint",
+   "items": [
+    "Recent Files",
+    "Recent Locations",
+    "Go to File…",
+    "Close All Tabs",
+    "Close Unmodified Tabs",
+    "Reopen Closed Tab",
+    "Configure Editor Tabs…"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "action",
+   "name": "pane::SplitDown"
+  },
+  {
+   "expect": {
+    "split": "vertical"
+   }
+  },
+  {
+   "do": "action",
+   "name": "pane::SplitRight"
+  },
+  {
+   "expect": {
+    "split": "vertical"
+   }
+  },
+  {
+   "do": "action",
+   "name": "workspace::Unsplit"
+  },
+  {
+   "expect": {
+    "split": "vertical"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "More Actions",
+     "role": "AXCheckBox"
+    },
+    {
+     "label": "More Actions",
+     "role": "AXCheckBox"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "More Actions",
+   "role": "AXCheckBox",
+   "nth": 1
+  },
+  {
+   "menu": "popup:EditorTabsEntryPoint",
+   "items": [
+    "Recent Files",
+    "Recent Locations",
+    "Go to File…",
+    "Close All Tabs",
+    "Close Unmodified Tabs",
+    "Reopen Closed Tab",
+    "Unsplit",
+    "Unsplit All",
+    "Change Splitter Orientation",
+    "Configure Editor Tabs…"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Unsplit All",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "split": null
+   }
+  }
+ ]
+}

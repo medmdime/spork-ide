@@ -1,0 +1,282 @@
+{
+ "id": "run-tool-window",
+ "covers": [
+  "action:Stop",
+  "action:Rerun"
+ ],
+ "reference-app": [],
+ "settings": {
+  "languages": {
+   "JSON": {
+    "prettier": {
+     "allowed": false
+    }
+   },
+   "JSONC": {
+    "prettier": {
+     "allowed": false
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "sh": "mkdir -p .zed && printf '[{\"label\": \"hello\", \"command\": \"echo hello; echo src/main.rs:4\"}, {\"label\": \"wait\", \"command\": \"sleep 30\"}]' > .zed/tasks.json"
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "find": {
+    "label": "hello, Run / Debug Configurations",
+    "role": "AXButton"
+   },
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-r"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "Run",
+    "run.tabs.0.title": "hello",
+    "run.tabs.0.running": false,
+    "run.tabs.0.last_line": "Process finished with exit code 0"
+   },
+   "within": 10000
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Run",
+     "role": "AXCheckBox",
+     "value": "1",
+     "in": "Left stripe"
+    },
+    {
+     "label": "Run",
+     "role": "AXToolbar"
+    },
+    {
+     "label": "hello",
+     "role": "AXRadioButton",
+     "value": "1",
+     "in": "Run"
+    },
+    {
+     "label": "Close",
+     "role": "AXButton",
+     "in": "Run"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "toolbar": "RunTab.TopToolbar",
+   "items": [
+    "Rerun 'hello'",
+    "Stop 'hello' (disabled)"
+   ]
+  },
+  {
+   "toolbar": "Console Toolbar",
+   "items": [
+    "Scroll to End",
+    "Clear All"
+   ]
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "console"
+  },
+  {
+   "do": "click",
+   "label": "Rerun 'hello'",
+   "role": "AXButton"
+  },
+  {
+   "wait": 2000
+  },
+  {
+   "expect": {
+    "run.tabs.0.title": "hello",
+    "run.tabs.1": null,
+    "run.tabs.0.last_line": "Process finished with exit code 0"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Clear All",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "run.tabs.0.text": ""
+   }
+  },
+  {
+   "do": "click",
+   "label": "hello",
+   "role": "AXRadioButton",
+   "in": "Run",
+   "button": "right"
+  },
+  {
+   "menu": "Run tab",
+   "items": [
+    "Close Tab",
+    "Close All Tabs",
+    "Close Other Tabs",
+    "Pin Tab"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Pin Tab",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "run.tabs.0.pinned": true
+   }
+  },
+  {
+   "do": "action",
+   "name": "run_widget::Run"
+  },
+  {
+   "expect": {
+    "run.tabs.1.title": "hello (1)",
+    "run.tabs.1.last_line": "Process finished with exit code 0"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "hello, Run / Debug Configurations",
+   "role": "AXButton"
+  },
+  {
+   "do": "click",
+   "label": "wait",
+   "role": "AXMenuItem"
+  },
+  {
+   "do": "click",
+   "label": "wait, Run / Debug Configurations",
+   "role": "AXButton"
+  },
+  {
+   "do": "click",
+   "label": "Run 'wait'",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "run.tabs.2.title": "wait",
+    "run.tabs.2.running": true
+   },
+   "within": 10000
+  },
+  {
+   "find": [
+    {
+     "label": "Stop 'wait'",
+     "role": "AXButton",
+     "in": "Title bar"
+    },
+    {
+     "label": "Stop 'wait'",
+     "role": "AXButton",
+     "in": "RunTab.TopToolbar"
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f2"
+  },
+  {
+   "expect": {
+    "run.tabs.2.running": false
+   },
+   "within": 10000
+  },
+  {
+   "find": {
+    "label": "Stop 'wait'",
+    "role": "AXButton",
+    "in": "Title bar"
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-4"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": false
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-4"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "Run",
+    "focused.2": "RunPanel"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-4"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": false
+   }
+  },
+  {
+   "menu": "menu:RunMenu",
+   "path": [
+    "Run"
+   ],
+   "items": [
+    "Run",
+    "Debug",
+    "Run…",
+    "Debug…",
+    "Attach to Process…",
+    "Edit Configurations…",
+    "Stop (disabled)",
+    "Stop Background Processes… (disabled)",
+    "Show Running List (disabled)",
+    "Debugging Actions",
+    "Toggle Breakpoint",
+    "View Breakpoints…"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  }
+ ]
+}

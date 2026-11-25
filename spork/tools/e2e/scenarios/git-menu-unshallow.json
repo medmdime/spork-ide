@@ -1,0 +1,55 @@
+{
+ "id": "git-menu-unshallow",
+ "covers": [
+  "action:Git.Unshallow"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "git": ["fetch", "-q", "--depth=1", "origin"]
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "do": "menubar",
+   "path": ["Git"]
+  },
+  {
+   "menu": "context-menu:Git.MainMenu",
+   "items": [
+    "Commit…",
+    "Push…",
+    "Update Project...",
+    "Pull…",
+    "Fetch",
+    "Unshallow repository",
+    "Merge…",
+    "Rebase…",
+    "Branches…",
+    "New Branch…",
+    "New Tag…",
+    "Reset HEAD…",
+    "New Worktree…",
+    "Worktrees…",
+    "Show Git Log",
+    "Patch ▸",
+    "Uncommitted Changes ▸",
+    "Current File ▸",
+    "GitLab ▸",
+    "GitHub ▸",
+    "Manage Remotes…",
+    "Clone…",
+    "VCS Operations Popup…"
+   ]
+  },
+  {
+   "do": "action",
+   "name": "spork::Unshallow"
+  },
+  {
+   "git": ["rev-parse", "--is-shallow-repository"],
+   "is": "false"
+  }
+ ]
+}

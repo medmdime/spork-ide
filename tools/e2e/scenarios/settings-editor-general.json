@@ -1,0 +1,350 @@
+{
+ "id": "settings-editor-general",
+ "covers": [],
+ "reference-app": [
+  "screenshots/settings/editor-general.jpg",
+  "screenshots/settings/editor-general-editor-tabs.jpg"
+ ],
+ "steps": [
+  {
+   "do": "keys",
+   "keys": "cmd-,"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture",
+    "settings.page": "Appearance & Behavior/Appearance"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "General",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Editor/General"
+   },
+   "within": 8000
+  },
+  {
+   "toolbar": "Settings page",
+   "items": [
+    "Change font size with Command+Mouse Wheel in:",
+    "Move code fragments with drag-and-drop",
+    "Remove trailing spaces on:",
+    "Remove trailing spaces on",
+    "Ensure every saved file ends with a line break"
+   ],
+   "within": 8000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "general",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Appearance",
+   "role": "AXRow",
+   "in": "Settings categories",
+   "nth": 1
+  },
+  {
+   "expect": {
+    "settings.page": "Editor/General/Appearance"
+   }
+  },
+  {
+   "toolbar": "Settings page",
+   "items": [
+    "Caret blinking (ms):",
+    "Use block caret",
+    "Highlight occurrences of selected text",
+    "Show hard wrap and visual guides (configured in Code Style options)",
+    "Show line numbers:",
+    "Show line numbers",
+    "Show whitespaces",
+    "Show indent guides"
+   ]
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "appearance",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Breadcrumbs",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Editor/General/Breadcrumbs"
+   }
+  },
+  {
+   "toolbar": "Settings page",
+   "items": [
+    "Show breadcrumbs"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Show breadcrumbs",
+   "role": "AXCheckBox"
+  },
+  {
+   "expect": {
+    "settings.apply": true,
+    "settings.modified": [
+     "Editor/General/Breadcrumbs"
+    ]
+   }
+  },
+  {
+   "do": "click",
+   "label": "Apply",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings.apply": false
+   },
+   "within": 8000
+  },
+  {
+   "expect": {
+    "value": true
+   },
+   "of": {
+    "do": "setting",
+    "path": "/toolbar/breadcrumbs"
+   },
+   "within": 8000
+  },
+  {
+   "sh": "cat ../home/.config/spork-ide/settings.json",
+   "contains": "\"breadcrumbs\":true"
+  },
+  {
+   "do": "click",
+   "label": "Code Completion",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Editor/General/Code Completion"
+   }
+  },
+  {
+   "toolbar": "Settings page",
+   "items": [
+    "Sort suggestions alphabetically",
+    "Show suggestions as you type",
+    "Insert selected suggestion by pressing space, dot, or other context-dependent keys",
+    "Show the documentation popup in",
+    "Show the parameter info popup in"
+   ]
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "code-completion",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Code Folding",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Editor/General/Code Folding"
+   }
+  },
+  {
+   "toolbar": "Settings page",
+   "items": [
+    "Show code folding arrows"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Editor Tabs",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Editor/General/Editor Tabs"
+   }
+  },
+  {
+   "toolbar": "Settings page",
+   "items": [
+    "Tab placement",
+    "Show pinned tabs in a separate row",
+    "Show file icon",
+    "Close button position",
+    "Enable preview tab",
+    "The tab on the left",
+    "The tab on the right",
+    "Most recently opened tab"
+   ]
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "editor-tabs",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "value": "Right",
+   "role": "AXPopUpButton"
+  },
+  {
+   "do": "click",
+   "label": "None",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "settings.modified": [
+     "Editor/General/Editor Tabs"
+    ]
+   }
+  },
+  {
+   "do": "click",
+   "label": "Smart Keys",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Editor/General/Smart Keys"
+   }
+  },
+  {
+   "toolbar": "Settings page",
+   "items": [
+    "Insert paired brackets (), [], {}, <>",
+    "Surround selection on typing quote or brace",
+    "Smart indent",
+    "Reformat on paste"
+   ]
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "smart-keys",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Sticky Lines",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Editor/General/Sticky Lines"
+   }
+  },
+  {
+   "toolbar": "Settings page",
+   "items": [
+    "Show sticky lines while scrolling"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings": null
+   }
+  },
+  {
+   "expect": {
+    "value": "hidden"
+   },
+   "of": {
+    "do": "setting",
+    "path": "/tabs/show_close_button"
+   },
+   "within": 8000
+  },
+  {
+   "sh": "cat ../home/.config/spork-ide/settings.json",
+   "contains": "\"show_close_button\":\"hidden\""
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-,"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture",
+    "settings.page": "Editor/General/Sticky Lines"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "Show sticky lines while scrolling",
+   "role": "AXCheckBox",
+   "within": 8000
+  },
+  {
+   "expect": {
+    "settings.apply": true
+   }
+  },
+  {
+   "do": "click",
+   "label": "Cancel",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings": null
+   }
+  },
+  {
+   "expect": {
+    "value": false
+   },
+   "of": {
+    "do": "setting",
+    "path": "/sticky_scroll/enabled"
+   }
+  },
+  {
+   "sh": "cat ../home/.config/spork-ide/settings.json",
+   "lacks": "sticky_scroll"
+  }
+ ]
+}

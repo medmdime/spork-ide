@@ -1,0 +1,20 @@
+{
+ "id": "history-diff-current-file",
+ "covers": [
+  "context-menu:Git.MainMenu.FileActions"
+ ],
+ "reference-app": [
+  "screenshots/menus/git-mainmenu-fileactions.png"
+ ],
+ "steps": [
+  {"menu": "context-menu:Git.MainMenu.FileActions", "path": ["Git", "Current File"]},
+  {"do": "open", "what": "change", "path": "README.md"},
+  {"expect": {"change_file": "README.md"}, "of": {"do": "history"}},
+  {"menu": "context-menu:Git.MainMenu.FileActions", "path": ["Git", "Current File"], "items": ["Commit File…", "Add", "Show Diff", "Compare with Revision…", "Compare with Branch or Tag…", "Show History"]},
+  {"do": "action", "name": "spork::ShowFileHistory"},
+  {"expect": {"view": "File", "file": "README.md", "mode": "history"}, "of": {"do": "history"}},
+  {"do": "open", "what": "change", "path": "notes.txt"},
+  {"expect": {"change_file": "notes.txt"}, "of": {"do": "history"}},
+  {"menu": "context-menu:Git.MainMenu.FileActions", "path": ["Git", "Current File"], "items": ["Commit File…", "Add", "Show Diff (disabled)", "Compare with Revision… (disabled)", "Compare with Branch or Tag… (disabled)", "Show History (disabled)"]}
+ ]
+}

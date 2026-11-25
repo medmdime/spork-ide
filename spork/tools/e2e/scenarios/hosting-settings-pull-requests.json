@@ -1,0 +1,608 @@
+{
+ "id": "hosting-settings-pull-requests",
+ "covers": [
+  "context-menu:Github.PullRequest.ToolWindow.List.Popup",
+  "action:Github.PullRequest.CheckoutBranch",
+  "action:Github.PullRequest.Copy.Link",
+  "action:Github.PullRequest.Open.Link",
+  "action:Github.PullRequest.List.Reload",
+  "context-menu:Github.PullRequest.Details.Popup",
+  "action:Github.PullRequest.Details.Reload",
+  "context-menu:Github.PullRequest.Details.Commit.Tree.ViewOptions",
+  "context-menu:Github.PullRequest.Changes.Toolbar",
+  "toolbar:Github.PullRequest.Changes.Toolbar",
+  "context-menu:Github.PullRequest.Timeline.Popup",
+  "action:Github.PullRequest.Timeline.Update",
+  "action:Github.PullRequest.OpenInWorktree"
+ ],
+ "reference-app": [
+  "screenshots/menus/github-pullrequest-toolwindow-list-popup.png",
+  "screenshots/menus/github-pullrequest-changes-popup.png",
+  "screenshots/menus/github-pullrequest-details-popup.png"
+ ],
+ "steps": [
+  {
+   "sh": "git config url.\"$(cd ../repo.origin && pwd)\".insteadOf https://github.e2e.invalid/spork/fixture.git"
+  },
+  {
+   "sh": "git --git-dir=../repo.origin branch feature/readme fix/typo && git --git-dir=../repo.origin update-ref refs/pull/1/head refs/heads/feature/readme"
+  },
+  {
+   "do": "git",
+   "args": [
+    "remote",
+    "add",
+    "github",
+    "https://github.e2e.invalid/spork/fixture.git"
+   ]
+  },
+  {
+   "menu": "context-menu:GitHub.MainMenu",
+   "path": [
+    "Git",
+    "GitHub"
+   ],
+   "within": 8000,
+   "part": true,
+   "items": [
+    "Create Pull Request…",
+    "View Pull Requests"
+   ]
+  },
+  {
+   "do": "pulls",
+   "pulls": [
+    {
+     "number": 1,
+     "title": "Fix the typo in the readme",
+     "user": {
+      "login": "ann"
+     },
+     "head": {
+      "ref": "feature/readme",
+      "repo": {
+       "full_name": "spork/fixture"
+      }
+     },
+     "base": {
+      "ref": "main",
+      "repo": {
+       "full_name": "spork/fixture"
+      }
+     },
+     "html_url": "https://github.e2e.invalid/spork/fixture/pull/1",
+     "body": "Fixes the readme's typo."
+    }
+   ]
+  },
+  {
+   "do": "action",
+   "name": "spork::ViewPullRequests"
+  },
+  {
+   "within": 6000,
+   "find": [
+    {
+     "label": "Fix the typo in the readme",
+     "role": "AXRow",
+     "in": "Pull Requests List"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Fix the typo in the readme",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Pull Requests List"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "menu": "context-menu:Github.PullRequest.ToolWindow.List.Popup",
+   "items": [
+    "View Pull Request",
+    "Checkout Branch",
+    "Open in Worktree",
+    "View Pull Request in Browser",
+    "Copy Pull Request URL",
+    "Refresh List"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Copy Pull Request URL",
+   "role": "AXMenuItem"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "pbpaste",
+   "is": "https://github.e2e.invalid/spork/fixture/pull/1"
+  },
+  {
+   "do": "click",
+   "label": "Fix the typo in the readme",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Pull Requests List"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "View Pull Request in Browser",
+   "role": "AXMenuItem"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "expect": {
+    "opened": "https://github.e2e.invalid/spork/fixture/pull/1"
+   }
+  },
+  {
+   "do": "pulls",
+   "pulls": [
+    {
+     "number": 1,
+     "title": "Fix the typo in the readme",
+     "user": {
+      "login": "ann"
+     },
+     "head": {
+      "ref": "feature/readme",
+      "repo": {
+       "full_name": "spork/fixture"
+      }
+     },
+     "base": {
+      "ref": "main",
+      "repo": {
+       "full_name": "spork/fixture"
+      }
+     },
+     "html_url": "https://github.e2e.invalid/spork/fixture/pull/1",
+     "body": "Fixes the readme's typo."
+    },
+    {
+     "number": 2,
+     "title": "Second request",
+     "user": {
+      "login": "ann"
+     },
+     "head": {
+      "ref": "fix/typo",
+      "repo": {
+       "full_name": "spork/fixture"
+      }
+     },
+     "base": {
+      "ref": "main",
+      "repo": {
+       "full_name": "spork/fixture"
+      }
+     },
+     "html_url": "https://github.e2e.invalid/spork/fixture/pull/2"
+    }
+   ],
+   "listed": false
+  },
+  {
+   "find": [],
+   "missing": [
+    {
+     "label": "Second request",
+     "role": "AXRow"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Fix the typo in the readme",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Pull Requests List"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "Refresh List",
+   "role": "AXMenuItem"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "within": 6000,
+   "find": [
+    {
+     "label": "Second request",
+     "role": "AXRow",
+     "in": "Pull Requests List"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Fix the typo in the readme",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Pull Requests List"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "View Pull Request",
+   "role": "AXMenuItem"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "within": 8000,
+   "find": [
+    {
+     "label": "#1",
+     "role": "AXRadioButton",
+     "value": "1"
+    },
+    {
+     "label": "Pull Request Details"
+    },
+    {
+     "text": "main ← feature/readme"
+    },
+    {
+     "label": "typo.txt",
+     "role": "AXRow",
+     "in": "Pull Request Changes"
+    }
+   ]
+  },
+  {
+   "toolbar": "Pull Request Changes Toolbar",
+   "items": [
+    "Show Diff (disabled)",
+    "Group By"
+   ],
+   "id": "context-menu:Github.PullRequest.Changes.Toolbar"
+  },
+  {
+   "do": "click",
+   "label": "typo.txt",
+   "role": "AXRow",
+   "in": "Pull Request Changes"
+  },
+  {
+   "toolbar": "Pull Request Changes Toolbar",
+   "items": [
+    "Show Diff",
+    "Group By"
+   ],
+   "id": "toolbar:Github.PullRequest.Changes.Toolbar"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "git": [
+    "rev-parse",
+    "--verify",
+    "--quiet",
+    "refs/remotes/github/main"
+   ],
+   "within": 8000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "details"
+  },
+  {
+   "do": "click",
+   "label": "typo.txt",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Pull Request Changes"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "menu": "context-menu:Github.PullRequest.Changes.Popup",
+   "items": [
+    "Show Diff",
+    "Show Diff in a New Tab or Window",
+    "Jump to Source",
+    "Toggle viewed/not viewed state (disabled)",
+    "View Options",
+    "Expand All",
+    "Collapse All",
+    "Refresh Pull Request",
+    "View Pull Request in Browser",
+    "Copy Pull Request URL"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "View Options",
+   "role": "AXMenuItem",
+   "hover": true
+  },
+  {
+   "wait": 500
+  },
+  {
+   "menu": "context-menu:Github.PullRequest.Details.Commit.Tree.ViewOptions",
+   "items": [
+    "Group By"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "Pull Request Details",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "menu": "context-menu:Github.PullRequest.Details.Popup",
+   "items": [
+    "Refresh Pull Request",
+    "View Pull Request in Browser",
+    "Copy Pull Request URL"
+   ]
+  },
+  {
+   "sh": "git checkout -q -b more fix/typo && echo more > more.txt && git add more.txt && git commit -q -m 'docs: more' && git push -q -f ../repo.origin more:refs/pull/1/head && git checkout -q main"
+  },
+  {
+   "do": "click",
+   "label": "Refresh Pull Request",
+   "role": "AXMenuItem"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "within": 8000,
+   "find": [
+    {
+     "label": "more.txt",
+     "role": "AXRow",
+     "in": "Pull Request Changes"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "View Timeline",
+   "role": "AXLink"
+  },
+  {
+   "within": 6000,
+   "find": [
+    {
+     "label": "#1 Timeline",
+     "role": "AXRadioButton",
+     "value": "1"
+    },
+    {
+     "text": "Fixes the readme's typo."
+    },
+    {
+     "text": "added 2 commits to this pull request"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Pull Request Timeline",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "menu": "context-menu:Github.PullRequest.Timeline.Popup",
+   "items": [
+    "Refresh Timeline",
+    "View Pull Request in Browser",
+    "Copy Pull Request URL"
+   ]
+  },
+  {
+   "sh": "git checkout -q more && echo again >> more.txt && git commit -q -am 'docs: again' && git push -q -f ../repo.origin more:refs/pull/1/head && git checkout -q main"
+  },
+  {
+   "do": "click",
+   "label": "Refresh Timeline",
+   "role": "AXMenuItem"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "within": 8000,
+   "find": [
+    {
+     "text": "added 3 commits to this pull request"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "spork/fixture",
+   "role": "AXRadioButton"
+  },
+  {
+   "do": "click",
+   "label": "Second request",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Pull Requests List"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "View Pull Request",
+   "role": "AXMenuItem"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "View Timeline",
+   "role": "AXLink"
+  },
+  {
+   "within": 8000,
+   "find": [
+    {
+     "text": "Can't load timeline items"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Pull Request Timeline",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "menu": "context-menu:Github.PullRequest.Timeline.Popup",
+   "items": [
+    "Refresh Timeline",
+    "View Pull Request in Browser",
+    "Copy Pull Request URL"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "click",
+   "label": "spork/fixture",
+   "role": "AXRadioButton"
+  },
+  {
+   "within": 4000,
+   "find": [
+    {
+     "label": "Fix the typo in the readme",
+     "role": "AXRow",
+     "in": "Pull Requests List"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Fix the typo in the readme",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Pull Requests List"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "Checkout Branch",
+   "role": "AXMenuItem"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "git": [
+    "branch",
+    "--show-current"
+   ],
+   "is": "feature/readme",
+   "within": 8000
+  },
+  {
+   "git": [
+    "rev-parse",
+    "--abbrev-ref",
+    "feature/readme@{upstream}"
+   ],
+   "is": "github/feature/readme"
+  },
+  {
+   "do": "click",
+   "label": "Second request",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Pull Requests List"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "Open in Worktree",
+   "role": "AXMenuItem"
+  },
+  {
+   "git": [
+    "worktree",
+    "list"
+   ],
+   "contains": "reviewWorktrees/repo-typo",
+   "within": 8000
+  },
+  {
+   "git": [
+    "worktree",
+    "list"
+   ],
+   "contains": "[fix/typo]"
+  },
+  {
+   "within": 8000,
+   "find": [
+    {
+     "label": "Git Branch: fix/typo",
+     "role": "AXButton"
+    },
+    {
+     "label": "#2",
+     "role": "AXRadioButton",
+     "value": "1"
+    },
+    {
+     "text": "main ← fix/typo"
+    }
+   ]
+  }
+ ]
+}

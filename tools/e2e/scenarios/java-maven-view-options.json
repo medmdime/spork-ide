@@ -1,0 +1,242 @@
+{
+ "id": "java-maven-view-options",
+ "fixture": "maven",
+ "covers": [
+  "action:Maven.ShowBasicPhasesOnly",
+  "action:Maven.AlwaysShowArtifactId",
+  "action:Maven.ShowVersions"
+ ],
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven"
+   },
+   "within": 20000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "wait": 2000
+  },
+  {
+   "do": "action",
+   "name": "maven_tool_window::ToggleFocus"
+  },
+  {
+   "expect": {
+    "docks.right.open": true,
+    "docks.right.panel": "Maven"
+   }
+  },
+  {
+   "find": {
+    "label": "Expand All",
+    "role": "AXButton",
+    "in": "Maven Toolbar"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Expand All",
+   "role": "AXButton",
+   "in": "Maven Toolbar"
+  },
+  {
+   "find": [
+    {
+     "label": "clean",
+     "role": "AXRow"
+    },
+    {
+     "label": "validate",
+     "role": "AXRow"
+    },
+    {
+     "label": "compile",
+     "role": "AXRow"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "missing": [
+    {
+     "label": "generate-sources",
+     "role": "AXRow"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Options",
+   "in": "Maven"
+  },
+  {
+   "menu": "action:Maven.GroupProjects",
+   "items": [
+    "Group Modules",
+    "Show Ignored Projects",
+    "Show Basic Phases Only",
+    "Always Show ArtifactId",
+    "Show version"
+   ],
+   "part": true,
+   "checked": [
+    "Show Ignored Projects",
+    "Show Basic Phases Only",
+    "Right"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Show Basic Phases Only",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "validate",
+     "role": "AXRow"
+    },
+    {
+     "label": "generate-sources",
+     "role": "AXRow"
+    },
+    {
+     "label": "process-sources",
+     "role": "AXRow"
+    },
+    {
+     "label": "generate-resources",
+     "role": "AXRow"
+    },
+    {
+     "label": "process-resources",
+     "role": "AXRow"
+    },
+    {
+     "label": "compile",
+     "role": "AXRow"
+    },
+    {
+     "label": "process-classes",
+     "role": "AXRow"
+    },
+    {
+     "label": "test-compile",
+     "role": "AXRow"
+    },
+    {
+     "label": "prepare-package",
+     "role": "AXRow"
+    },
+    {
+     "label": "post-integration-test",
+     "role": "AXRow"
+    },
+    {
+     "label": "verify",
+     "role": "AXRow"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "file": "pom.xml",
+   "text": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project xmlns=\"http://maven.apache.org/POM/4.0.0\">\n    <modelVersion>4.0.0</modelVersion>\n    <groupId>com.example</groupId>\n    <artifactId>fixture</artifactId>\n    <version>1.0-SNAPSHOT</version>\n    <name>Greeting App</name>\n</project>\n"
+  },
+  {
+   "do": "click",
+   "label": "Generate Sources and Update Folders For All Projects",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Greeting App",
+    "role": "AXRow"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Options",
+   "in": "Maven"
+  },
+  {
+   "do": "click",
+   "label": "Always Show ArtifactId",
+   "role": "AXMenuItem",
+   "within": 3000
+  },
+  {
+   "find": {
+    "label": "fixture",
+    "role": "AXRow"
+   }
+  },
+  {
+   "missing": [
+    {
+     "label": "Greeting App",
+     "role": "AXRow"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Options",
+   "in": "Maven"
+  },
+  {
+   "do": "click",
+   "label": "Show version",
+   "role": "AXMenuItem",
+   "within": 3000
+  },
+  {
+   "find": {
+    "text": ":1.0-SNAPSHOT"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Options",
+   "in": "Maven"
+  },
+  {
+   "menu": "action:Maven.GroupProjects",
+   "items": [
+    "Group Modules",
+    "Show Ignored Projects",
+    "Show Basic Phases Only",
+    "Always Show ArtifactId",
+    "Show version"
+   ],
+   "part": true,
+   "checked": [
+    "Show Ignored Projects",
+    "Always Show ArtifactId",
+    "Show version",
+    "Right"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "view-options"
+  }
+ ]
+}

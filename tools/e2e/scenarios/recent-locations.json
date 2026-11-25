@@ -1,0 +1,169 @@
+{
+ "id": "recent-locations",
+ "covers": [
+  "action:RecentLocations"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "down down down"
+  },
+  {
+   "do": "keys",
+   "keys": "x"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-e"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "RecentLocations"
+    ]
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Recent Locations",
+     "role": "AXWindow"
+    },
+    {
+     "label": "Show edited only",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "main.rs 4",
+     "role": "AXStaticText",
+     "selected": true,
+     "in": "Recent Locations"
+    },
+    {
+     "label": "greeting.rs 2",
+     "role": "AXStaticText",
+     "in": "Recent Locations"
+    }
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "recent-locations"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-e"
+  },
+  {
+   "find": [
+    {
+     "label": "Show edited only",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "main.rs 4",
+     "role": "AXStaticText",
+     "in": "Recent Locations"
+    }
+   ]
+  },
+  {
+   "find": {
+    "label": "greeting.rs 2",
+    "role": "AXStaticText"
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-e"
+  },
+  {
+   "do": "keys",
+   "keys": "f o r m a t"
+  },
+  {
+   "find": {
+    "label": "greeting.rs 2",
+    "role": "AXStaticText",
+    "selected": true
+   }
+  },
+  {
+   "find": {
+    "label": "main.rs 4",
+    "role": "AXStaticText"
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 2, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::RecentLocations"
+  },
+  {
+   "find": {
+    "label": "Recent Locations",
+    "role": "AXWindow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": {
+    "label": "Recent Locations",
+    "role": "AXWindow"
+   },
+   "absent": true
+  }
+ ]
+}

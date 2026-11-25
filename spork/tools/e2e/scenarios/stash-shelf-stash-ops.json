@@ -1,0 +1,356 @@
+{
+ "id": "stash-shelf-stash-ops",
+ "covers": [
+  "action:Git.Unstash",
+  "action:Git.Stash.Apply",
+  "action:Git.Stash.Pop",
+  "action:Git.Stash.Drop",
+  "action:Git.Stash.Clear",
+  "action:Git.Stash.UnstashAs"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "sh": "git stash push -q -m 'wip readme' README.md"
+  },
+  {
+   "do": "action",
+   "name": "spork::Unstash"
+  },
+  {
+   "find": [
+    {
+     "role": "AXRadioButton",
+     "label": "Stash",
+     "value": "1"
+    },
+    {
+     "role": "AXRow",
+     "label": "wip readme"
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "wip readme"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "wip readme",
+   "button": "right"
+  },
+  {
+   "find": [
+    {
+     "role": "AXMenuItem",
+     "label": "Apply"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Apply",
+   "role": "AXMenuItem"
+  },
+  {
+   "sh": "git status --porcelain README.md",
+   "is": "M README.md"
+  },
+  {
+   "sh": "git stash list | wc -l | tr -d ' '",
+   "is": "1"
+  },
+  {
+   "sh": "git checkout -- README.md"
+  },
+  {
+   "find": [
+    {
+     "label": "wip readme"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "wip readme",
+   "button": "right"
+  },
+  {
+   "find": [
+    {
+     "role": "AXMenuItem",
+     "label": "Pop"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Pop",
+   "role": "AXMenuItem"
+  },
+  {
+   "sh": "git stash list | wc -l | tr -d ' '",
+   "is": "0"
+  },
+  {
+   "sh": "git status --porcelain README.md",
+   "is": "M README.md"
+  },
+  {
+   "sh": "git stash push -q -m 'to drop' README.md"
+  },
+  {
+   "do": "action",
+   "name": "spork::ShowStash"
+  },
+  {
+   "find": [
+    {
+     "role": "AXRow",
+     "label": "to drop"
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "to drop"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "to drop",
+   "button": "right"
+  },
+  {
+   "find": [
+    {
+     "role": "AXMenuItem",
+     "label": "Drop"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Drop",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "role": "AXButton",
+     "label": "Yes"
+    },
+    {
+     "role": "AXButton",
+     "label": "No"
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "role": "AXButton",
+     "label": "Yes"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Yes",
+   "role": "AXButton"
+  },
+  {
+   "sh": "git stash list | wc -l | tr -d ' '",
+   "is": "0"
+  },
+  {
+   "sh": "echo a >> README.md && git stash push -q -m one README.md && echo b >> README.md && git stash push -q -m two README.md"
+  },
+  {
+   "do": "action",
+   "name": "spork::ShowStash"
+  },
+  {
+   "find": [
+    {
+     "role": "AXRow",
+     "label": "one"
+    },
+    {
+     "role": "AXRow",
+     "label": "two"
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "two"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "two",
+   "button": "right"
+  },
+  {
+   "find": [
+    {
+     "role": "AXMenuItem",
+     "label": "Clear"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Clear",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "role": "AXButton",
+     "label": "Yes"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Yes",
+   "role": "AXButton"
+  },
+  {
+   "sh": "git stash list | wc -l | tr -d ' '",
+   "is": "0"
+  },
+  {
+   "sh": "echo c >> README.md && git add README.md && git stash push -q -m staged"
+  },
+  {
+   "do": "action",
+   "name": "spork::ShowStash"
+  },
+  {
+   "find": [
+    {
+     "role": "AXRow",
+     "label": "staged"
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "staged"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "staged",
+   "button": "right"
+  },
+  {
+   "find": [
+    {
+     "role": "AXMenuItem",
+     "label": "Unstash…"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Unstash…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Pop stash",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Reinstate index",
+     "value": "0"
+    },
+    {
+     "role": "AXButton",
+     "label": "Cancel"
+    },
+    {
+     "role": "AXButton",
+     "label": "Apply Stash"
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "Pop stash"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Pop stash"
+  },
+  {
+   "find": [
+    {
+     "label": "Reinstate index"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Reinstate index"
+  },
+  {
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Pop stash",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Reinstate index",
+     "value": "1"
+    },
+    {
+     "role": "AXButton",
+     "label": "Pop Stash"
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "role": "AXButton",
+     "label": "Pop Stash"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Pop Stash",
+   "role": "AXButton"
+  },
+  {
+   "sh": "git stash list | wc -l | tr -d ' '",
+   "is": "0"
+  },
+  {
+   "sh": "git status --porcelain README.md",
+   "is": "M  README.md"
+  }
+ ]
+}

@@ -1,0 +1,9 @@
+id = "fixture-mcp"
+name = "Fixture MCP"
+version = "1.0.0"
+schema_version = 1
+authors = ["Spork IDE Tests"]
+description = "A Model Context Protocol server for the tests."
+repository = "https://example.com/fixture-mcp"
+
+[context_servers.fixture-mcp]

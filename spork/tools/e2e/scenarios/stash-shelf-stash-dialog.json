@@ -1,0 +1,175 @@
+{
+ "id": "stash-shelf-stash-dialog",
+ "covers": [
+  "action:Git.Stash",
+  "dialog:Git.Stash"
+ ],
+ "reference-app": [
+  "screenshots/dialogs/git-stash.jpg"
+ ],
+ "steps": [
+  {
+   "do": "action",
+   "name": "spork::Stash"
+  },
+  {
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Keep index",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Include untracked",
+     "value": "0"
+    },
+    {
+     "role": "AXButton",
+     "label": "Cancel"
+    },
+    {
+     "role": "AXButton",
+     "label": "Create Stash"
+    }
+   ]
+  },
+  {
+   "wait": 400
+  },
+  {
+   "shot": "open"
+  },
+  {
+   "find": [
+    {
+     "label": "Include untracked"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Include untracked"
+  },
+  {
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Include untracked",
+     "value": "1"
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "role": "AXButton",
+     "label": "Create Stash"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Create Stash",
+   "role": "AXButton"
+  },
+  {
+   "sh": "git stash list | wc -l | tr -d ' '",
+   "is": "1"
+  },
+  {
+   "sh": "git status --porcelain",
+   "is": ""
+  },
+  {
+   "do": "action",
+   "name": "spork::Stash"
+  },
+  {
+   "find": [
+    {
+     "role": "AXButton",
+     "label": "Create Stash"
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "role": "AXButton",
+     "label": "Cancel"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Cancel",
+   "role": "AXButton"
+  },
+  {
+   "missing": [
+    {
+     "role": "AXButton",
+     "label": "Create Stash"
+    }
+   ]
+  },
+  {
+   "sh": "echo staged >> main.rs && git add main.rs && echo work >> README.md"
+  },
+  {
+   "do": "action",
+   "name": "spork::Stash"
+  },
+  {
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Keep index",
+     "value": "0"
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "Keep index"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Keep index"
+  },
+  {
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Keep index",
+     "value": "1"
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "role": "AXButton",
+     "label": "Create Stash"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Create Stash",
+   "role": "AXButton"
+  },
+  {
+   "sh": "git stash list | wc -l | tr -d ' '",
+   "is": "2"
+  },
+  {
+   "sh": "git status --porcelain",
+   "is": "M  main.rs"
+  }
+ ]
+}

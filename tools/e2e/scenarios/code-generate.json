@@ -1,0 +1,127 @@
+{
+ "id": "code-generate",
+ "covers": [
+  "action:Generate",
+  "dialog:Generate"
+ ],
+ "reference-app": [],
+ "settings": {
+  "enable_language_server": true,
+  "lsp": {
+   "rust-analyzer": {
+    "binary": {
+     "path": "$RUST_ANALYZER"
+    },
+    "initialization_options": {
+     "checkOnSave": false,
+     "cargo": {
+      "buildScripts": {
+       "enable": false
+      }
+     },
+     "procMacro": {
+      "enable": false
+     }
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "expect": {
+    "code.ready": true
+   },
+   "within": 120000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "right right right right right right right right"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-n"
+  },
+  {
+   "find": {
+    "label": "Generate",
+    "role": "AXMenu"
+   },
+   "within": 20000
+  },
+  {
+   "find": {
+    "label": "Generate a documentation template",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "generate"
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-n"
+  },
+  {
+   "find": {
+    "label": "Generate a documentation template",
+    "role": "AXMenuItem"
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "Generate a documentation template",
+   "role": "AXMenuItem"
+  },
+  {
+   "sh": "cat src/greeting.rs",
+   "contains": "/// ",
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-alt-t"
+  },
+  {
+   "find": {
+    "label": "Surround With",
+    "role": "AXMenu"
+   },
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": {
+    "label": "Surround With",
+    "role": "AXMenu"
+   },
+   "absent": true
+  }
+ ]
+}

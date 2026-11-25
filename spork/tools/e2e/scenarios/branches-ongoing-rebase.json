@@ -1,0 +1,253 @@
+{
+ "id": "branches-ongoing-rebase",
+ "covers": [
+  "action:Git.Rebase.Abort",
+  "action:Git.Rebase.Continue",
+  "action:Git.Rebase.Skip"
+ ],
+ "reference-app": [
+  "screenshots/menus/git-ongoing-rebase-actions.png"
+ ],
+ "steps": [
+  {
+   "file": "conflict.txt",
+   "text": "base\n"
+  },
+  {
+   "git": [
+    "add",
+    "conflict.txt"
+   ]
+  },
+  {
+   "git": [
+    "commit",
+    "-q",
+    "-m",
+    "base"
+   ]
+  },
+  {
+   "git": [
+    "branch",
+    "topic"
+   ]
+  },
+  {
+   "file": "conflict.txt",
+   "text": "main\n"
+  },
+  {
+   "git": [
+    "add",
+    "conflict.txt"
+   ]
+  },
+  {
+   "git": [
+    "commit",
+    "-q",
+    "-m",
+    "mine"
+   ]
+  },
+  {
+   "git": [
+    "switch",
+    "-q",
+    "topic"
+   ]
+  },
+  {
+   "file": "conflict.txt",
+   "text": "topic\n"
+  },
+  {
+   "git": [
+    "add",
+    "conflict.txt"
+   ]
+  },
+  {
+   "git": [
+    "commit",
+    "-q",
+    "-m",
+    "topic"
+   ]
+  },
+  {
+   "git": [
+    "rebase",
+    "--autostash",
+    "main"
+   ],
+   "contains": "CONFLICT"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "menu": "context-menu:Git.Ongoing.Rebase.Actions",
+   "items": [
+    "Commit…",
+    "Abort Rebase",
+    "Continue Rebase",
+    "Skip Commit",
+    "New Branch…",
+    "New Worktree…",
+    "Checkout Tag or Revision…"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Abort Rebase",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Abort",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "git": [
+    "status"
+   ],
+   "contains": "On branch topic",
+   "lacks": "rebase"
+  },
+  {
+   "git": [
+    "rebase",
+    "--autostash",
+    "main"
+   ],
+   "contains": "CONFLICT"
+  },
+  {
+   "file": "conflict.txt",
+   "text": "resolved\n"
+  },
+  {
+   "git": [
+    "add",
+    "conflict.txt"
+   ]
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "find": {
+    "label": "Continue Rebase",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Continue Rebase",
+   "role": "AXMenuItem"
+  },
+  {
+   "git": [
+    "status"
+   ],
+   "contains": "On branch topic",
+   "lacks": "rebase"
+  },
+  {
+   "git": [
+    "log",
+    "-2",
+    "--format=%s"
+   ],
+   "contains": "topic\nmine"
+  },
+  {
+   "git": [
+    "switch",
+    "-q",
+    "main"
+   ]
+  },
+  {
+   "file": "conflict.txt",
+   "text": "again\n"
+  },
+  {
+   "git": [
+    "add",
+    "conflict.txt"
+   ]
+  },
+  {
+   "git": [
+    "commit",
+    "-q",
+    "-m",
+    "again"
+   ]
+  },
+  {
+   "git": [
+    "switch",
+    "-q",
+    "topic"
+   ]
+  },
+  {
+   "git": [
+    "rebase",
+    "--autostash",
+    "main"
+   ],
+   "contains": "CONFLICT"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "find": {
+    "label": "Skip Commit",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Skip Commit",
+   "role": "AXMenuItem"
+  },
+  {
+   "git": [
+    "status"
+   ],
+   "contains": "On branch topic",
+   "lacks": "rebase"
+  },
+  {
+   "git": [
+    "log",
+    "-1",
+    "--format=%s"
+   ],
+   "contains": "again"
+  }
+ ]
+}

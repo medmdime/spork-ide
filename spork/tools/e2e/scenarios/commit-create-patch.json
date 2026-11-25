@@ -1,0 +1,377 @@
+{
+ "id": "commit-create-patch",
+ "covers": [
+  "dialog:ChangesView.CreatePatch",
+  "action:ChangesView.CreatePatch"
+ ],
+ "reference-app": [
+  "screenshots/dialogs/changesview-createpatch.jpg"
+ ],
+ "steps": [
+  {
+   "do": "action",
+   "name": "spork::ToggleCommit"
+  },
+  {
+   "expect": {
+    "left": "[Commit, Project]"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXCheckBox"
+    }
+   ],
+   "within": 6000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "README.md",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "find": [
+    {
+     "label": "Create Patch from Local Changes…",
+     "role": "AXMenuItem"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Create Patch from Local Changes…",
+   "role": "AXMenuItem"
+  },
+  {
+   "toolbar": "Dialog Changes Toolbar",
+   "items": [
+    "Show Diff",
+    "Rollback…",
+    "Refresh",
+    "View Options ▸",
+    "Expand All",
+    "Collapse All"
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "Changelist:",
+     "in": "Create Patch"
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "Changes",
+     "enabled": false,
+     "in": "Create Patch"
+    },
+    {
+     "label": "1 file",
+     "role": "AXRow",
+     "in": "Create Patch"
+    },
+    {
+     "label": "README.md",
+     "role": "AXCheckBox",
+     "value": "1",
+     "in": "Create Patch"
+    },
+    {
+     "label": "1 modified",
+     "in": "Create Patch"
+    },
+    {
+     "label": "Commit Message",
+     "in": "Create Patch"
+    },
+    {
+     "role": "AXTextArea",
+     "in": "Create Patch"
+    },
+    {
+     "label": "Diff",
+     "role": "AXButton",
+     "in": "Create Patch"
+    },
+    {
+     "label": "Cancel",
+     "role": "AXButton"
+    },
+    {
+     "label": "Create Patch…",
+     "role": "AXButton"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Create Patch…",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "Save Patch to",
+     "in": "Patch File Settings"
+    },
+    {
+     "label": "To file:",
+     "role": "AXRadioButton",
+     "value": "1",
+     "in": "Patch File Settings"
+    },
+    {
+     "label": "To file:",
+     "role": "AXTextField",
+     "in": "Patch File Settings"
+    },
+    {
+     "label": "To clipboard",
+     "role": "AXRadioButton",
+     "value": "0",
+     "in": "Patch File Settings"
+    },
+    {
+     "label": "Base path:",
+     "role": "AXTextField",
+     "in": "Patch File Settings"
+    },
+    {
+     "label": "Reverse patch",
+     "role": "AXCheckBox",
+     "value": "0",
+     "in": "Patch File Settings"
+    },
+    {
+     "label": "Encoding:",
+     "in": "Patch File Settings"
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "UTF-8",
+     "in": "Patch File Settings"
+    },
+    {
+     "label": "Cancel",
+     "role": "AXButton"
+    },
+    {
+     "label": "OK",
+     "role": "AXButton"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "Successfully created patch Changes.patch"
+    },
+    {
+     "label": "Show in Finder",
+     "role": "AXButton"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "sh": "grep -q '^+changed' Changes.patch && grep -q '^--- a/README.md' Changes.patch"
+  },
+  {
+   "do": "click",
+   "label": "Cancel",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "Show in Finder",
+     "role": "AXButton"
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "README.md",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "Create Patch from Local Changes…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "Create Patch…",
+     "role": "AXButton"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Create Patch…",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "Reverse patch",
+     "role": "AXCheckBox"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Reverse patch",
+   "role": "AXCheckBox"
+  },
+  {
+   "find": [
+    {
+     "label": "Reverse patch",
+     "role": "AXCheckBox",
+     "value": "1"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "Yes",
+     "role": "AXButton"
+    },
+    {
+     "label": "No",
+     "role": "AXButton"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Yes",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "Don't ask again",
+     "role": "AXCheckBox"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "sh": "grep -q '^-changed' Changes.patch && ! grep -q '^+changed' Changes.patch"
+  },
+  {
+   "do": "click",
+   "label": "Don't ask again",
+   "role": "AXCheckBox"
+  },
+  {
+   "find": [
+    {
+     "label": "Don't ask again",
+     "role": "AXCheckBox",
+     "value": "1"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Cancel",
+   "role": "AXButton"
+  },
+  {
+   "sh": "rm Changes.patch"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "README.md",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "Create Patch from Local Changes…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "Create Patch…",
+     "role": "AXButton"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Create Patch…",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "OK",
+     "role": "AXButton"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "sh": "ls",
+   "contains": "Changes.patch"
+  },
+  {
+   "find": [
+    {
+     "label": "Show in Finder",
+     "role": "AXButton"
+    }
+   ],
+   "absent": true
+  }
+ ]
+}

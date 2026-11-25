@@ -1,0 +1,156 @@
+{
+ "id": "log-panes-split",
+ "covers": [
+  "action:Git.InMemory.Extract.Selected.Changes",
+  "action:Git.Drop.Selected.Changes"
+ ],
+ "reference-app": [
+  "screenshots/menus/vcs-log-changesbrowser-popup.png"
+ ],
+ "steps": [
+  {
+   "sh": "printf 'x\\n' > x.txt && printf 'y\\n' > y.txt && printf 'z\\n' > z.txt && git add x.txt y.txt z.txt && GIT_AUTHOR_DATE=2026-01-09T10:00:00Z GIT_COMMITTER_DATE=2026-01-09T10:00:00Z git commit -q -m 'three files'"
+  },
+  {
+   "expect": {
+    "commits": 8
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "three files",
+   "role": "AXRow"
+  },
+  {
+   "find": {
+    "label": "x.txt",
+    "role": "AXRow"
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "x.txt",
+   "role": "AXRow"
+  },
+  {
+   "do": "click",
+   "label": "x.txt",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "menu": "context-menu:Vcs.Log.ChangesBrowser.Popup",
+   "items": [
+    "Revert Selected Changes",
+    "Cherry-Pick Selected Changes",
+    "Extract Selected Changes to Separate Commit…",
+    "Drop Selected Changes",
+    "Create Patch…"
+   ],
+   "part": true
+  },
+  {
+   "do": "click",
+   "label": "Extract Selected Changes to Separate Commit…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "New Commit Message",
+    "role": "AXGroup"
+   }
+  },
+  {
+   "do": "click",
+   "role": "AXTextArea"
+  },
+  {
+   "do": "keys",
+   "keys": "x space a l o n e"
+  },
+  {
+   "shot": "extract"
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "sh": "git log -3 --format=%s",
+   "is": "x alone\nthree files\nMerge branch 'feature/login'"
+  },
+  {
+   "sh": "git show --name-only --format= HEAD",
+   "is": "x.txt"
+  },
+  {
+   "sh": "git show --name-only --format= HEAD~1",
+   "is": "y.txt\nz.txt"
+  },
+  {
+   "find": {
+    "label": "three files",
+    "role": "AXRow"
+   },
+   "within": 8000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "three files",
+   "role": "AXRow"
+  },
+  {
+   "find": {
+    "label": "y.txt",
+    "role": "AXRow"
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "y.txt",
+   "role": "AXRow"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "y.txt",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "find": {
+    "label": "Drop Selected Changes",
+    "role": "AXMenuItem"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Drop Selected Changes",
+   "role": "AXMenuItem"
+  },
+  {
+   "sh": "git show --name-only --format= HEAD~1",
+   "is": "z.txt"
+  },
+  {
+   "sh": "git log -3 --format=%s",
+   "is": "x alone\nthree files\nMerge branch 'feature/login'"
+  }
+ ]
+}

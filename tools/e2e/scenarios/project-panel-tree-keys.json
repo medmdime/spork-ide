@@ -1,0 +1,137 @@
+{
+ "id": "project-panel-tree-keys",
+ "covers": [
+  "action:Tree-selectNext",
+  "action:Tree-selectPrevious",
+  "action:Tree-selectChild",
+  "action:Tree-selectFirst",
+  "action:Tree-selectLast"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "find": {
+    "label": "src",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-1"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Dock",
+     "ProjectPanel"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home"
+  },
+  {
+   "find": {
+    "label": "fixture",
+    "role": "AXRow",
+    "selected": true,
+    "in": "Project Panel"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "find": {
+    "label": "src",
+    "role": "AXRow",
+    "selected": true,
+    "in": "Project Panel"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "right"
+  },
+  {
+   "find": {
+    "label": "src",
+    "role": "AXRow",
+    "selected": true,
+    "in": "Project Panel"
+   }
+  },
+  {
+   "find": {
+    "label": "greeting.rs",
+    "role": "AXRow",
+    "in": "Project Panel"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "right"
+  },
+  {
+   "find": {
+    "label": "greeting.rs",
+    "role": "AXRow",
+    "selected": true,
+    "in": "Project Panel"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "find": {
+    "label": "main.rs",
+    "role": "AXRow",
+    "selected": true,
+    "in": "Project Panel"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "up"
+  },
+  {
+   "find": {
+    "label": "greeting.rs",
+    "role": "AXRow",
+    "selected": true,
+    "in": "Project Panel"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-end"
+  },
+  {
+   "find": {
+    "label": "README.md",
+    "role": "AXRow",
+    "selected": true,
+    "in": "Project Panel"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home"
+  },
+  {
+   "find": {
+    "label": "fixture",
+    "role": "AXRow",
+    "selected": true,
+    "in": "Project Panel"
+   }
+  }
+ ]
+}

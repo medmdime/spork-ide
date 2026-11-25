@@ -1,0 +1,43 @@
+{
+ "id": "git-menu-color-scheme",
+ "covers": [],
+ "reference-app": [
+  "screenshots/menus/changescheme.png"
+ ],
+ "steps": [
+  {
+   "do": "keys",
+   "keys": "ctrl-`"
+  },
+  {
+   "menu": "context-menu:ChangeScheme"
+  },
+  {
+   "do": "click",
+   "label": "Editor Color Scheme",
+   "role": "AXMenuItem"
+  },
+  {
+   "menu": "action:ChangeColorScheme",
+   "items": [
+    "Classic Light",
+    "Darcula",
+    "Darcula Contrast",
+    "Dark",
+    "High contrast",
+    "IntelliJ Light",
+    "Islands Dark",
+    "Light"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Darcula",
+   "role": "AXMenuItem"
+  },
+  {
+   "sh": "cat '../home/Library/Application Support/Spork/settings.conf'",
+   "contains": "appearance.editorScheme=Darcula"
+  }
+ ]
+}

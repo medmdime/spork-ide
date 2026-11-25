@@ -1,0 +1,298 @@
+{
+ "id": "commit-settings",
+ "covers": [
+  "settings:Version Control › Commit",
+  "settings:Version Control › Changelists",
+  "settings:Version Control › Confirmation"
+ ],
+ "reference-app": [
+  "screenshots/settings/version-control-commit.jpg",
+  "screenshots/settings/version-control-changelists.jpg",
+  "screenshots/settings/version-control-confirmation.jpg"
+ ],
+ "steps": [
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Version Control/Commit"
+  },
+  {
+   "expect": {
+    "settings": "Version Control/Commit"
+   }
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "find": [
+    {
+     "label": "Clear initial commit message",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "Blank line between subject and body",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "Limit body line",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "Limit subject line",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "Warning",
+     "enabled": false
+    }
+   ],
+   "within": 6000
+  },
+  {
+   "do": "click",
+   "label": "Limit subject line",
+   "role": "AXCheckBox"
+  },
+  {
+   "find": [
+    {
+     "label": "Limit subject line",
+     "role": "AXCheckBox",
+     "value": "1"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Limit subject line",
+   "role": "AXRow"
+  },
+  {
+   "find": [
+    {
+     "role": "AXPopUpButton",
+     "value": "Warning",
+     "enabled": true
+    }
+   ]
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Version Control/Changelists"
+  },
+  {
+   "expect": {
+    "settings": "Version Control/Changelists"
+   }
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "find": [
+    {
+     "label": "Create changelists automatically",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "Allow putting changes within one file into different changelists",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "Highlight files from inactive changelists",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "Show dialog on attempt to edit file from inactive changelist",
+     "role": "AXCheckBox",
+     "value": "0",
+     "enabled": false
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "Show options"
+    },
+    {
+     "label": "Highlight files with changelist conflicts",
+     "role": "AXCheckBox",
+     "value": "1",
+     "enabled": false
+    },
+    {
+     "label": "Clear",
+     "role": "AXButton",
+     "enabled": false
+    }
+   ],
+   "within": 6000
+  },
+  {
+   "do": "click",
+   "value": "Show options",
+   "role": "AXPopUpButton"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "menu": "settings:Version Control › Changelists",
+   "items": [
+    "Show options",
+    "Do nothing",
+    "Remove silently"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Version Control/Confirmation"
+  },
+  {
+   "expect": {
+    "settings": "Version Control/Confirmation"
+   }
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "find": [
+    {
+     "label": "Apply to files created outside Spork",
+     "role": "AXCheckBox",
+     "value": "0",
+     "enabled": false
+    },
+    {
+     "label": "Update",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "Ask for confirmation to drop commits",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "Check for conflicts with the server every",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "Highlight files changed in the last",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "Highlight directories that contain modified files in the Project tree",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "Restore workspace when switching branches",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "Limit history to",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "Highlight modified lines in the gutter",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "Highlight modified lines in error stripe on the scrollbar",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "Highlight lines with whitespace-only modifications with a different color",
+     "role": "AXCheckBox",
+     "value": "1"
+    }
+   ],
+   "within": 6000
+  },
+  {
+   "do": "click",
+   "value": "Ask",
+   "role": "AXPopUpButton"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "menu": "settings:Version Control › Confirmation",
+   "items": [
+    "Ask",
+    "Do not add",
+    "Add silently"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "wait": 900
+  },
+  {
+   "do": "click",
+   "value": "Ask",
+   "role": "AXPopUpButton",
+   "nth": 1
+  },
+  {
+   "wait": 500
+  },
+  {
+   "menu": "settings:Version Control › Confirmation",
+   "items": [
+    "Ask",
+    "Do not remove",
+    "Remove silently"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "wait": 900
+  },
+  {
+   "do": "click",
+   "value": "Ask",
+   "role": "AXPopUpButton",
+   "nth": 2
+  },
+  {
+   "wait": 500
+  },
+  {
+   "menu": "settings:Version Control › Confirmation",
+   "items": [
+    "Ask",
+    "Do nothing",
+    "Show in Finder"
+   ]
+  }
+ ]
+}

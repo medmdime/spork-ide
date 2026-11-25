@@ -1,0 +1,358 @@
+{
+ "id": "editor-edit-keys",
+ "covers": [
+  "action:EditorSplitLine",
+  "action:EditorStartNewLine",
+  "action:EditorStartNewLineBefore",
+  "action:EditorEnter",
+  "action:EditorBackSpace",
+  "action:EditorDelete",
+  "action:EditorDeleteToWordStart",
+  "action:EditorDeleteToWordEnd",
+  "action:EditorJoinLines",
+  "action:EditorCutLineEnd",
+  "action:EditorCopy",
+  "action:$Copy",
+  "action:$Paste",
+  "action:$Cut",
+  "action:$Undo",
+  "action:$Redo",
+  "action:$SelectAll"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "file": "src/edit.txt",
+   "text": "onetwo\nthree\n"
+  },
+  {
+   "do": "open",
+   "path": "src/edit.txt"
+  },
+  {
+   "expect": {
+    "active": "src/edit.txt",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "right right right cmd-enter"
+  },
+  {
+   "find": {
+    "label": "Line 1, column 4",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/edit.txt",
+   "is": "one|two|three|"
+  },
+  {
+   "do": "keys",
+   "keys": "shift-enter"
+  },
+  {
+   "find": {
+    "label": "Line 2, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "type",
+   "text": "x"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/edit.txt",
+   "is": "one|x|two|three|"
+  },
+  {
+   "do": "keys",
+   "keys": "alt-cmd-enter"
+  },
+  {
+   "find": {
+    "label": "Line 2, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "type",
+   "text": "y"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/edit.txt",
+   "is": "one|y|x|two|three|"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "find": {
+    "label": "Line 3, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "type",
+   "text": "z"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/edit.txt",
+   "is": "one|y|z|x|two|three|"
+  },
+  {
+   "do": "keys",
+   "keys": "backspace backspace"
+  },
+  {
+   "find": {
+    "label": "Line 2, column 2",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/edit.txt",
+   "is": "one|y|x|two|three|"
+  },
+  {
+   "do": "keys",
+   "keys": "delete"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/edit.txt",
+   "is": "one|yx|two|three|"
+  },
+  {
+   "do": "keys",
+   "keys": "right alt-backspace"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/edit.txt",
+   "is": "one||two|three|"
+  },
+  {
+   "do": "keys",
+   "keys": "up"
+  },
+  {
+   "find": {
+    "label": "Line 1, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-delete"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/edit.txt",
+   "is": "||two|three|"
+  },
+  {
+   "do": "type",
+   "text": "one"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home ctrl-shift-j"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/edit.txt",
+   "is": "one|two|three|"
+  },
+  {
+   "do": "keys",
+   "keys": "down ctrl-shift-j"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/edit.txt",
+   "is": "one|two three|"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down alt-right ctrl-k"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/edit.txt",
+   "is": "one|two|"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home end cmd-v"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/edit.txt",
+   "is": "one three|two|"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home shift-end cmd-c down end cmd-v"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/edit.txt",
+   "is": "one three|twoone three|"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home shift-down cmd-x"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/edit.txt",
+   "is": "twoone three|"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-z"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/edit.txt",
+   "is": "one three|twoone three|"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-z"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/edit.txt",
+   "is": "twoone three|"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a"
+  },
+  {
+   "do": "type",
+   "text": "Q"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/edit.txt",
+   "is": "Q|"
+  }
+ ]
+}

@@ -1,0 +1,172 @@
+{
+ "id": "popup-menu-keys",
+ "covers": [
+  "action:PopupMenu-selectNext",
+  "action:PopupMenu-selectPrevious",
+  "action:PopupMenu-selectChild",
+  "action:PopupMenu-selectParent",
+  "action:PopupMenu-return",
+  "action:PopupMenu-cancel"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "find": {
+    "label": "src",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 10000
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "click",
+   "label": "src",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Project Panel"
+  },
+  {
+   "find": {
+    "label": "New",
+    "role": "AXMenuItem",
+    "selected": true
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": {
+    "label": "New",
+    "role": "AXMenuItem"
+   },
+   "absent": true
+  },
+  {
+   "find": {
+    "label": "src",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 10000
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "click",
+   "label": "src",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Project Panel"
+  },
+  {
+   "find": {
+    "label": "New",
+    "role": "AXMenuItem",
+    "selected": true
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "find": {
+    "label": "Cut",
+    "role": "AXMenuItem",
+    "selected": true
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "up"
+  },
+  {
+   "find": {
+    "label": "New",
+    "role": "AXMenuItem",
+    "selected": true
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "right"
+  },
+  {
+   "find": [
+    {
+     "label": "File",
+     "role": "AXMenuItem",
+     "selected": true
+    },
+    {
+     "label": "Scratch File",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Directory",
+     "role": "AXMenuItem"
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "left"
+  },
+  {
+   "find": {
+    "label": "Scratch File",
+    "role": "AXMenuItem"
+   },
+   "absent": true
+  },
+  {
+   "find": {
+    "label": "New",
+    "role": "AXMenuItem",
+    "selected": true
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "down down down down"
+  },
+  {
+   "find": {
+    "label": "Copy Path/Reference…",
+    "role": "AXMenuItem",
+    "selected": true
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "find": {
+    "label": "New",
+    "role": "AXMenuItem"
+   },
+   "absent": true
+  },
+  {
+   "find": [
+    "Absolute Path",
+    "File Name"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": "Absolute Path",
+   "absent": true
+  }
+ ]
+}

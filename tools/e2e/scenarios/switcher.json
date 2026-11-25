@@ -1,0 +1,238 @@
+{
+ "id": "switcher",
+ "covers": [
+  "action:Switcher"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "open",
+   "path": "README.md"
+  },
+  {
+   "expect": {
+    "active": "README.md"
+   }
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "do": "modifiers",
+   "held": [
+    "ctrl"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-tab"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Switcher"
+    ]
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Switcher",
+     "role": "AXWindow"
+    },
+    {
+     "label": "main.rs",
+     "role": "AXStaticText",
+     "in": "Files"
+    },
+    {
+     "label": "greeting.rs",
+     "role": "AXStaticText",
+     "selected": true,
+     "in": "Files"
+    },
+    {
+     "label": "README.md",
+     "role": "AXStaticText",
+     "in": "Files"
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "AI Chat",
+     "role": "AXStaticText",
+     "in": "Tool windows"
+    },
+    {
+     "label": "Bookmarks",
+     "role": "AXStaticText",
+     "in": "Tool windows"
+    },
+    {
+     "label": "Commit",
+     "role": "AXStaticText",
+     "in": "Tool windows"
+    },
+    {
+     "label": "Debug",
+     "role": "AXStaticText",
+     "in": "Tool windows"
+    },
+    {
+     "label": "Git",
+     "role": "AXStaticText",
+     "in": "Tool windows"
+    },
+    {
+     "label": "Project",
+     "role": "AXStaticText",
+     "in": "Tool windows"
+    },
+    {
+     "label": "Structure",
+     "role": "AXStaticText",
+     "in": "Tool windows"
+    },
+    {
+     "label": "Terminal",
+     "role": "AXStaticText",
+     "in": "Tool windows"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "switcher"
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-tab"
+  },
+  {
+   "find": {
+    "label": "README.md",
+    "role": "AXStaticText",
+    "selected": true,
+    "in": "Files"
+   }
+  },
+  {
+   "do": "modifiers",
+   "held": []
+  },
+  {
+   "expect": {
+    "active": "README.md",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Switcher",
+    "role": "AXWindow"
+   },
+   "absent": true
+  },
+  {
+   "do": "modifiers",
+   "held": [
+    "ctrl",
+    "shift"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-shift-tab"
+  },
+  {
+   "find": {
+    "label": "greeting.rs",
+    "role": "AXStaticText",
+    "selected": true,
+    "in": "Files"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-shift-tab"
+  },
+  {
+   "find": {
+    "label": "main.rs",
+    "role": "AXStaticText",
+    "selected": true,
+    "in": "Files"
+   }
+  },
+  {
+   "do": "modifiers",
+   "held": []
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "do": "modifiers",
+   "held": [
+    "ctrl"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-tab"
+  },
+  {
+   "find": {
+    "label": "Switcher",
+    "role": "AXWindow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": {
+    "label": "Switcher",
+    "role": "AXWindow"
+   },
+   "absent": true
+  },
+  {
+   "do": "modifiers",
+   "held": []
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  }
+ ]
+}

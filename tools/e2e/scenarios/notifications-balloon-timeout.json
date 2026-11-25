@@ -1,0 +1,71 @@
+{
+ "id": "notifications-balloon-timeout",
+ "covers": [],
+ "steps": [
+  {
+   "toolbar": "Right stripe",
+   "items": [
+    "Notifications",
+    "AI Chat"
+   ],
+   "within": 10000
+  },
+  {
+   "do": "notify",
+   "type": "info",
+   "title": "Hides",
+   "text": "A balloon hides after 10 seconds.",
+   "sticky": false
+  },
+  {
+   "do": "notify",
+   "type": "info",
+   "title": "Stays",
+   "text": "A sticky balloon stays 5 minutes.",
+   "sticky": true
+  },
+  {
+   "do": "push",
+   "type": "error",
+   "title": "Push failed",
+   "text": "An error of Spork's views stays, as VCS important messages do."
+  },
+  {
+   "do": "push",
+   "type": "info",
+   "text": "Pushed 1 commit to origin/main"
+  },
+  {
+   "expect": {
+    "notifications.balloons": [
+     "Stays",
+     "Push failed",
+     "Pushed 1 commit to origin/main"
+    ],
+    "notifications.more": 1,
+    "notifications.count": 4
+   }
+  },
+  {
+   "do": "click",
+   "at": [
+    300,
+    300
+   ],
+   "hover": true
+  },
+  {
+   "wait": 11000
+  },
+  {
+   "expect": {
+    "notifications.balloons": [
+     "Stays",
+     "Push failed"
+    ],
+    "notifications.count": 4
+   },
+   "within": 3000
+  }
+ ]
+}

@@ -1,0 +1,662 @@
+{
+ "id": "list-keys",
+ "covers": [
+  "action:List-selectNextRow",
+  "action:List-selectPreviousRow",
+  "action:List-selectFirstRow",
+  "action:List-selectLastRow",
+  "action:List-scrollDown",
+  "action:List-scrollUp",
+  "action:List-selectNextRowExtendSelection",
+  "action:List-selectPreviousRowExtendSelection",
+  "action:List-selectFirstRowExtendSelection",
+  "action:List-selectLastRowExtendSelection",
+  "action:List-scrollDownExtendSelection",
+  "action:List-scrollUpExtendSelection",
+  "action:List-selectNextColumn",
+  "action:List-selectPreviousColumn",
+  "action:DeleteRecentFiles",
+  "action:DeleteRecentFilesFallback"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "open",
+   "path": "README.md"
+  },
+  {
+   "expect": {
+    "active": "README.md"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-w"
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "do": "open",
+   "path": "Cargo.toml"
+  },
+  {
+   "expect": {
+    "active": "Cargo.toml"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-1"
+  },
+  {
+   "expect": {
+    "docks.left.open": true
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-e"
+  },
+  {
+   "find": [
+    {
+     "label": "Cargo.toml",
+     "role": "AXStaticText",
+     "in": "Files"
+    },
+    {
+     "label": "greeting.rs",
+     "role": "AXStaticText",
+     "in": "Files"
+    },
+    {
+     "label": "main.rs",
+     "role": "AXStaticText",
+     "in": "Files"
+    },
+    {
+     "label": "README.md",
+     "role": "AXStaticText",
+     "in": "Files"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "find": [
+    {
+     "label": "greeting.rs",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "find": [
+    {
+     "label": "main.rs",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "up"
+  },
+  {
+   "find": [
+    {
+     "label": "greeting.rs",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "alt-down"
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "find": [
+    {
+     "label": "Cargo.toml",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "up"
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "alt-up"
+  },
+  {
+   "find": [
+    {
+     "label": "Cargo.toml",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "pagedown"
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "pageup"
+  },
+  {
+   "find": [
+    {
+     "label": "Cargo.toml",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "find": [
+    {
+     "label": "greeting.rs",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "shift-down"
+  },
+  {
+   "find": [
+    {
+     "label": "greeting.rs",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    },
+    {
+     "label": "main.rs",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "shift-up"
+  },
+  {
+   "find": [
+    {
+     "label": "greeting.rs",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "main.rs",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    }
+   ],
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "shift-up"
+  },
+  {
+   "find": [
+    {
+     "label": "Cargo.toml",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    },
+    {
+     "label": "greeting.rs",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "find": [
+    {
+     "label": "greeting.rs",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "Cargo.toml",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    }
+   ],
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "find": [
+    {
+     "label": "main.rs",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "greeting.rs",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    }
+   ],
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "alt-shift-up"
+  },
+  {
+   "find": [
+    {
+     "label": "Cargo.toml",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    },
+    {
+     "label": "greeting.rs",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    },
+    {
+     "label": "main.rs",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "alt-shift-down"
+  },
+  {
+   "find": [
+    {
+     "label": "main.rs",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    },
+    {
+     "label": "README.md",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "greeting.rs",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    }
+   ],
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "up"
+  },
+  {
+   "find": [
+    {
+     "label": "main.rs",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "shift-pageup"
+  },
+  {
+   "find": [
+    {
+     "label": "Cargo.toml",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    },
+    {
+     "label": "greeting.rs",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    },
+    {
+     "label": "main.rs",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "shift-pagedown"
+  },
+  {
+   "find": [
+    {
+     "label": "main.rs",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    },
+    {
+     "label": "README.md",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "Cargo.toml",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    }
+   ],
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "left"
+  },
+  {
+   "find": {
+    "role": "AXStaticText",
+    "selected": true,
+    "in": "Tool windows"
+   }
+  },
+  {
+   "find": {
+    "label": "README.md",
+    "role": "AXStaticText",
+    "in": "Files",
+    "selected": true
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "right"
+  },
+  {
+   "find": {
+    "role": "AXStaticText",
+    "selected": true,
+    "in": "Files"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-down"
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "backspace"
+  },
+  {
+   "find": {
+    "label": "README.md",
+    "role": "AXStaticText",
+    "in": "Files"
+   },
+   "absent": true
+  },
+  {
+   "find": [
+    {
+     "label": "main.rs",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "shift-up"
+  },
+  {
+   "find": [
+    {
+     "label": "greeting.rs",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    },
+    {
+     "label": "main.rs",
+     "role": "AXStaticText",
+     "in": "Files",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-backspace"
+  },
+  {
+   "find": [
+    {
+     "label": "greeting.rs",
+     "role": "AXStaticText",
+     "in": "Files"
+    },
+    {
+     "label": "main.rs",
+     "role": "AXStaticText",
+     "in": "Files"
+    }
+   ],
+   "absent": true
+  },
+  {
+   "expect": {
+    "items": [
+     "Cargo.toml"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Cargo.toml",
+    "role": "AXStaticText",
+    "in": "Files"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "left"
+  },
+  {
+   "do": "keys",
+   "keys": "alt-up"
+  },
+  {
+   "do": "keys",
+   "keys": "down down down down down down down"
+  },
+  {
+   "find": [
+    {
+     "label": "Project",
+     "role": "AXStaticText",
+     "in": "Tool windows",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "delete"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   }
+  },
+  {
+   "find": {
+    "label": "Recent Files",
+    "role": "AXWindow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": {
+    "label": "Recent Files",
+    "role": "AXWindow"
+   },
+   "absent": true
+  }
+ ]
+}

@@ -1,0 +1,589 @@
+{
+ "id": "main-menu-intellij-order",
+ "covers": [],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "menu": "the menu bar",
+   "path": [],
+   "items": [
+    "Spork IDE",
+    "File",
+    "Edit",
+    "View",
+    "Navigate",
+    "Code",
+    "Refactor",
+    "Build",
+    "Run",
+    "Tools",
+    "Git",
+    "Window",
+    "Help"
+   ]
+  },
+  {
+   "menu": "app-menu:Spork IDE",
+   "path": [
+    "Spork IDE"
+   ],
+   "items": [
+    "About Spork IDE (disabled)",
+    "Settings…",
+    "Hide Spork IDE (disabled)",
+    "Hide Others (disabled)",
+    "Show All (disabled)",
+    "Quit Spork IDE (disabled)"
+   ]
+  },
+  {
+   "menu": "menu:FileMenu",
+   "path": [
+    "File"
+   ],
+   "items": [
+    "New",
+    "Open…",
+    "Attach Project…",
+    "Recent Projects",
+    "Close Project",
+    "Close All Projects",
+    "Close Other Projects",
+    "Remote Development…",
+    "Plugins…",
+    "File Properties",
+    "Local History",
+    "Save All",
+    "Manage IDE Settings"
+   ]
+  },
+  {
+   "menu": "menu:FileMenu ▸ New",
+   "path": [
+    "File",
+    "New"
+   ],
+   "items": [
+    "Project…",
+    "Project from Version Control…",
+    "File",
+    "Scratch File",
+    "Directory"
+   ]
+  },
+  {
+   "menu": "menu:FileMenu ▸ Recent Projects",
+   "path": [
+    "File",
+    "Recent Projects"
+   ],
+   "items": [
+    "Manage Projects…"
+   ]
+  },
+  {
+   "menu": "menu:FileMenu ▸ File Properties",
+   "path": [
+    "File",
+    "File Properties"
+   ],
+   "items": [
+    "File Encoding",
+    "Line Separators"
+   ]
+  },
+  {
+   "menu": "menu:FileMenu ▸ Local History",
+   "path": [
+    "File",
+    "Local History"
+   ],
+   "items": [
+    "Show History…",
+    "Put Label…"
+   ]
+  },
+  {
+   "menu": "menu:EditMenu",
+   "path": [
+    "Edit"
+   ],
+   "items": [
+    "Undo",
+    "Redo",
+    "Cut",
+    "Copy",
+    "Copy Paths",
+    "Copy Path/Reference…",
+    "Paste",
+    "Delete",
+    "Search in Selection Only",
+    "Find",
+    "Find Usages",
+    "Column Selection Mode",
+    "Select All",
+    "Add Carets to Ends of Selected Lines",
+    "Extend Selection",
+    "Shrink Selection",
+    "Toggle Case",
+    "Join Lines",
+    "Duplicate Line or Selection",
+    "Fill Paragraph",
+    "Sort Lines",
+    "Reverse Lines",
+    "Transpose",
+    "Indent Selection",
+    "Unindent Line or Selection",
+    "Convert Indents",
+    "Bookmarks"
+   ]
+  },
+  {
+   "menu": "menu:EditMenu ▸ Copy Path/Reference…",
+   "path": [
+    "Edit",
+    "Copy Path/Reference…"
+   ],
+   "items": [
+    "Absolute Path",
+    "Path From Content Root",
+    "Path With Line Number"
+   ]
+  },
+  {
+   "menu": "menu:EditMenu ▸ Paste",
+   "path": [
+    "Edit",
+    "Paste"
+   ],
+   "items": [
+    "Paste",
+    "Paste from History…",
+    "Paste as Plain Text"
+   ]
+  },
+  {
+   "menu": "menu:EditMenu ▸ Find",
+   "path": [
+    "Edit",
+    "Find"
+   ],
+   "items": [
+    "Find…",
+    "Replace…",
+    "Find Next / Move to Next Occurrence",
+    "Find Previous / Move to Previous Occurrence",
+    "Select All Occurrences",
+    "Add Selection for Next Occurrence",
+    "Unselect Occurrence",
+    "Search in Selection Only",
+    "Next Occurrence of the Word at Caret",
+    "Previous Occurrence of the Word at Caret",
+    "Find in Files…",
+    "Replace in Files…"
+   ]
+  },
+  {
+   "menu": "menu:EditMenu ▸ Find Usages",
+   "path": [
+    "Edit",
+    "Find Usages"
+   ],
+   "items": [
+    "Find Usages (disabled)",
+    "Show Usages (disabled)",
+    "Next Highlighted Usage",
+    "Previous Highlighted Usage"
+   ]
+  },
+  {
+   "menu": "menu:EditMenu ▸ Convert Indents",
+   "path": [
+    "Edit",
+    "Convert Indents"
+   ],
+   "items": [
+    "To Spaces",
+    "To Tabs"
+   ]
+  },
+  {
+   "menu": "menu:EditMenu ▸ Bookmarks",
+   "path": [
+    "Edit",
+    "Bookmarks"
+   ],
+   "items": [
+    "Rename Bookmark…",
+    "Toggle Bookmark",
+    "Remove Mnemonic",
+    "Toggle Bookmark Mnemonic…",
+    "Previous Line Bookmark",
+    "Next Line Bookmark",
+    "Show Bookmarks…",
+    "Go to Mnemonic…"
+   ]
+  },
+  {
+   "menu": "menu:ViewMenu",
+   "path": [
+    "View"
+   ],
+   "items": [
+    "Tool Windows",
+    "Appearance",
+    "Quick Definition (disabled)",
+    "Quick Documentation",
+    "External Documentation",
+    "Parameter Info",
+    "Jump to Source",
+    "Recent Files",
+    "Recently Changed Files",
+    "Recent Locations",
+    "Compare Files (disabled)",
+    "Compare with Clipboard",
+    "Quick Switch Scheme… (disabled)",
+    "Active Editor",
+    "Increase Font Size in All Editors",
+    "Decrease Font Size in All Editors",
+    "Reset Font Size in All Editors"
+   ]
+  },
+  {
+   "menu": "menu:ViewMenu ▸ Tool Windows",
+   "path": [
+    "View",
+    "Tool Windows"
+   ],
+   "items": [
+    "AI Chat",
+    "Bookmarks",
+    "Commit",
+    "Debug",
+    "Git",
+    "Hierarchy",
+    "Notifications",
+    "Problems",
+    "Project",
+    "Run",
+    "Services",
+    "Structure",
+    "Terminal",
+    "TODO"
+   ]
+  },
+  {
+   "menu": "menu:ViewMenu ▸ Appearance",
+   "path": [
+    "View",
+    "Appearance"
+   ],
+   "items": [
+    "Toggle Full Screen Mode"
+   ]
+  },
+  {
+   "menu": "menu:ViewMenu ▸ Active Editor",
+   "path": [
+    "View",
+    "Active Editor"
+   ],
+   "items": [
+    "Soft-Wrap",
+    "Show Line Numbers",
+    "Show Indent Guides",
+    "Show Breadcrumbs",
+    "Increase Font Size",
+    "Decrease Font Size"
+   ]
+  },
+  {
+   "menu": "menu:GoToMenu",
+   "path": [
+    "Navigate"
+   ],
+   "items": [
+    "Back",
+    "Forward",
+    "Search Everywhere",
+    "Class…",
+    "File…",
+    "Symbol…",
+    "Text…",
+    "Line:Column…",
+    "Next Highlighted Error",
+    "Previous Highlighted Error",
+    "Last Edit Location",
+    "Next Edit Location",
+    "Navigate in File",
+    "Select In…",
+    "Jump to Navigation Bar",
+    "Declaration or Usages (disabled)",
+    "Implementation(s) (disabled)",
+    "Type Declaration (disabled)",
+    "Super Method (disabled)",
+    "Test",
+    "Related Symbol…",
+    "File Structure",
+    "File Path",
+    "Type Hierarchy (disabled)",
+    "Call Hierarchy (disabled)",
+    "Previous Occurrence",
+    "Next Occurrence"
+   ]
+  },
+  {
+   "menu": "menu:GoToMenu ▸ Navigate in File",
+   "path": [
+    "Navigate",
+    "Navigate in File"
+   ],
+   "items": [
+    "Next Method",
+    "Previous Method",
+    "Move Caret to Matching Brace",
+    "Next Change",
+    "Previous Change"
+   ]
+  },
+  {
+   "menu": "menu:CodeMenu",
+   "path": [
+    "Code"
+   ],
+   "items": [
+    "Override Methods… (disabled)",
+    "Implement Methods… (disabled)",
+    "Delegate Methods… (disabled)",
+    "Generate… (disabled)",
+    "Code Completion",
+    "Inspect Code…",
+    "Surround With… (disabled)",
+    "Folding",
+    "Comment with Line Comment",
+    "Comment with Block Comment",
+    "Reformat Code",
+    "Reformat File…",
+    "Auto-Indent Lines",
+    "Optimize Imports (disabled)",
+    "Move Statement Down",
+    "Move Statement Up",
+    "Move Line Down",
+    "Move Line Up"
+   ]
+  },
+  {
+   "menu": "menu:CodeMenu ▸ Code Completion",
+   "path": [
+    "Code",
+    "Code Completion"
+   ],
+   "items": [
+    "Basic",
+    "Call Inline Completion"
+   ]
+  },
+  {
+   "menu": "menu:CodeMenu ▸ Folding",
+   "path": [
+    "Code",
+    "Folding"
+   ],
+   "items": [
+    "Expand",
+    "Expand Recursively",
+    "Expand All",
+    "Collapse",
+    "Collapse Recursively",
+    "Collapse All",
+    "Toggle Folding",
+    "Fold Selection / Remove Region"
+   ]
+  },
+  {
+   "menu": "menu:RefactoringMenu",
+   "path": [
+    "Refactor"
+   ],
+   "items": [
+    "Refactor This… (disabled)",
+    "Rename… (disabled)",
+    "Rename File…",
+    "Change Signature… (disabled)",
+    "Extract/Introduce",
+    "Inline… (disabled)",
+    "Copy…"
+   ]
+  },
+  {
+   "menu": "menu:RefactoringMenu ▸ Extract/Introduce",
+   "path": [
+    "Refactor",
+    "Extract/Introduce"
+   ],
+   "items": [
+    "Introduce Variable… (disabled)",
+    "Introduce Constant… (disabled)",
+    "Extract Method… (disabled)"
+   ]
+  },
+  {
+   "menu": "menu:RunMenu",
+   "path": [
+    "Run"
+   ],
+   "items": [
+    "Run",
+    "Debug",
+    "Run…",
+    "Debug…",
+    "Attach to Process…",
+    "Edit Configurations…",
+    "Stop (disabled)",
+    "Stop Background Processes… (disabled)",
+    "Show Running List (disabled)",
+    "Debugging Actions",
+    "Toggle Breakpoint",
+    "View Breakpoints…"
+   ]
+  },
+  {
+   "menu": "menu:RunMenu ▸ Debugging Actions",
+   "path": [
+    "Run",
+    "Debugging Actions"
+   ],
+   "items": [
+    "Step Over (disabled)",
+    "Force Step Over (disabled)",
+    "Step Into (disabled)",
+    "Force Step Into (disabled)",
+    "Smart Step Into (disabled)",
+    "Step Out (disabled)",
+    "Run to Cursor (disabled)",
+    "Force Run to Cursor (disabled)",
+    "Reset Frame (disabled)",
+    "Pause Program (disabled)",
+    "Resume Program (disabled)",
+    "Evaluate Expression… (disabled)",
+    "Show Execution Point (disabled)"
+   ]
+  },
+  {
+   "menu": "menu:RunMenu ▸ Toggle Breakpoint",
+   "path": [
+    "Run",
+    "Toggle Breakpoint"
+   ],
+   "items": [
+    "Line Breakpoint",
+    "Toggle Breakpoint Enabled"
+   ]
+  },
+  {
+   "menu": "menu:ToolsMenu",
+   "path": [
+    "Tools"
+   ],
+   "items": [
+    "Create Command Line Launcher…"
+   ]
+  },
+  {
+   "menu": "menu:WindowMenu",
+   "path": [
+    "Window"
+   ],
+   "items": [
+    "Minimize",
+    "Zoom",
+    "Tool Window Layouts",
+    "Active Tool Window",
+    "Editor Tabs",
+    "Notifications",
+    "Next Project Window",
+    "Previous Project Window",
+    "Merge All Project Windows (disabled)"
+   ]
+  },
+  {
+   "menu": "menu:WindowMenu ▸ Active Tool Window",
+   "path": [
+    "Window",
+    "Active Tool Window"
+   ],
+   "items": [
+    "Hide Active Tool Window",
+    "Hide All Tool Windows",
+    "Jump to Last Tool Window",
+    "Maximize Tool Window",
+    "Resize"
+   ]
+  },
+  {
+   "menu": "menu:WindowMenu ▸ Editor Tabs",
+   "path": [
+    "Window",
+    "Editor Tabs"
+   ],
+   "items": [
+    "Select Next Tab",
+    "Select Previous Tab",
+    "Pin Active Tab",
+    "Close Tab",
+    "Close Other Tabs",
+    "Close All Tabs",
+    "Close Unmodified Tabs",
+    "Close All but Pinned",
+    "Close Tabs to the Left",
+    "Close Tabs to the Right",
+    "Reopen Closed Tab",
+    "Split Right",
+    "Split and Move Right",
+    "Split Down",
+    "Split and Move Down",
+    "Change Splitter Orientation",
+    "Unsplit",
+    "Unsplit All",
+    "Go to Next Splitter",
+    "Go to Previous Splitter"
+   ]
+  },
+  {
+   "menu": "menu:WindowMenu ▸ Notifications",
+   "path": [
+    "Window",
+    "Notifications"
+   ],
+   "items": [
+    "Close First (disabled)",
+    "Close All (disabled)"
+   ]
+  },
+  {
+   "menu": "menu:HelpMenu",
+   "path": [
+    "Help"
+   ],
+   "items": [
+    "Find Action…",
+    "Configure the New UI (disabled)",
+    "Show Log in Finder (disabled)"
+   ]
+  }
+ ]
+}

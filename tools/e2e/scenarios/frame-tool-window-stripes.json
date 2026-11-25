@@ -1,0 +1,453 @@
+{
+ "id": "frame-tool-window-stripes",
+ "covers": [
+  "action:ActivateTerminalToolWindow",
+  "action:ActivateDebugToolWindow",
+  "action:ActivateStructureToolWindow",
+  "action:HideActiveWindow"
+ ],
+ "reference-app": [
+  "screenshots/frame/main-window.jpg"
+ ],
+ "steps": [
+  {
+   "toolbar": "Left stripe",
+   "items": [
+    "Project",
+    "Commit",
+    "Structure",
+    "More",
+    "Services",
+    "Terminal",
+    "Problems",
+    "Git"
+   ],
+   "within": 10000
+  },
+  {
+   "toolbar": "Right stripe",
+   "items": [
+    "Notifications",
+    "AI Chat"
+   ]
+  },
+  {
+   "expect": {
+    "docks.left.open": true,
+    "docks.left.panel": "Project Panel",
+    "docks.bottom.open": false,
+    "docks.right.open": false
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Project",
+     "role": "AXCheckBox",
+     "value": "1",
+     "in": "Left stripe"
+    },
+    {
+     "label": "Commit",
+     "role": "AXCheckBox",
+     "value": "0",
+     "in": "Left stripe"
+    },
+    {
+     "label": "Git",
+     "role": "AXCheckBox",
+     "value": "0",
+     "in": "Left stripe"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Commit",
+   "role": "AXCheckBox",
+   "in": "Left stripe"
+  },
+  {
+   "expect": {
+    "docks.left.open": true,
+    "docks.left.panel": "Commit"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Commit",
+     "role": "AXCheckBox",
+     "value": "1",
+     "in": "Left stripe"
+    },
+    {
+     "label": "Project",
+     "role": "AXCheckBox",
+     "value": "0",
+     "in": "Left stripe"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Commit",
+   "role": "AXCheckBox",
+   "in": "Left stripe"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   }
+  },
+  {
+   "find": {
+    "label": "Commit",
+    "role": "AXCheckBox",
+    "value": "0",
+    "in": "Left stripe"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Structure",
+   "role": "AXCheckBox",
+   "in": "Left stripe"
+  },
+  {
+   "expect": {
+    "docks.left.open": true,
+    "docks.left.panel": "Outline Panel",
+    "focused": [
+     "Workspace",
+     "Dock",
+     "OutlinePanel",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Structure",
+    "role": "AXToolbar"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Structure",
+   "role": "AXCheckBox",
+   "in": "Left stripe"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   }
+  },
+  {
+   "find": {
+    "label": "Debug",
+    "in": "Left stripe"
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-5"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "DebugPanel",
+    "focused": [
+     "Workspace",
+     "Dock",
+     "DebugPanel"
+    ]
+   }
+  },
+  {
+   "toolbar": "Left stripe",
+   "items": [
+    "Project",
+    "Commit",
+    "Structure",
+    "More",
+    "Debug",
+    "Services",
+    "Terminal",
+    "Problems",
+    "Git"
+   ],
+   "within": 3000
+  },
+  {
+   "find": {
+    "label": "Debug",
+    "role": "AXCheckBox",
+    "value": "1",
+    "in": "Left stripe"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Debug",
+   "role": "AXCheckBox",
+   "in": "Left stripe"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": false
+   }
+  },
+  {
+   "do": "click",
+   "label": "Terminal",
+   "role": "AXCheckBox",
+   "in": "Left stripe"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "TerminalPanel",
+    "focused": [
+     "Workspace",
+     "Dock",
+     "Pane",
+     "Terminal"
+    ]
+   }
+  },
+  {
+   "toolbar": "Terminal",
+   "items": [
+    "Local",
+    "New Tab",
+    "New Predefined Session",
+    "Options",
+    "Hide"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Project",
+   "role": "AXCheckBox",
+   "in": "Left stripe"
+  },
+  {
+   "expect": {
+    "docks.left.open": true,
+    "docks.left.panel": "Project Panel",
+    "docks.bottom.open": true
+   }
+  },
+  {
+   "wait": 800
+  },
+  {
+   "do": "click",
+   "at": [
+    800,
+    450
+   ],
+   "hover": true
+  },
+  {
+   "shot": "project-and-terminal"
+  },
+  {
+   "do": "click",
+   "label": "Terminal",
+   "role": "AXCheckBox",
+   "in": "Left stripe"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": false
+   }
+  },
+  {
+   "do": "click",
+   "label": "Git",
+   "role": "AXCheckBox",
+   "in": "Left stripe"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "Git"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Git",
+   "role": "AXCheckBox",
+   "in": "Left stripe"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": false
+   }
+  },
+  {
+   "do": "click",
+   "label": "AI Chat",
+   "role": "AXCheckBox",
+   "in": "Right stripe"
+  },
+  {
+   "expect": {
+    "docks.right.open": true,
+    "docks.right.panel": "AgentPanel"
+   }
+  },
+  {
+   "find": {
+    "label": "AI Chat",
+    "role": "AXCheckBox",
+    "value": "1",
+    "in": "Right stripe"
+   }
+  },
+  {
+   "do": "click",
+   "label": "AI Chat",
+   "role": "AXCheckBox",
+   "in": "Right stripe"
+  },
+  {
+   "expect": {
+    "docks.right.open": false
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-7"
+  },
+  {
+   "expect": {
+    "docks.left.open": true,
+    "docks.left.panel": "Outline Panel",
+    "focused": [
+     "Workspace",
+     "Dock",
+     "OutlinePanel",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-7"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-5"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "DebugPanel",
+    "focused": [
+     "Workspace",
+     "Dock",
+     "DebugPanel"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-5"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": false
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-f12"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "TerminalPanel",
+    "focused": [
+     "Workspace",
+     "Dock",
+     "Pane",
+     "Terminal"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-f12"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": false
+   }
+  },
+  {
+   "do": "click",
+   "label": "Terminal",
+   "role": "AXCheckBox",
+   "in": "Left stripe"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "focused": [
+     "Workspace",
+     "Dock",
+     "Pane",
+     "Terminal"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "shift-escape"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": false
+   }
+  },
+  {
+   "do": "click",
+   "label": "Debug",
+   "role": "AXCheckBox",
+   "in": "Left stripe"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "DebugPanel"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Hide",
+   "in": "Debug"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": false
+   }
+  },
+  {
+   "find": {
+    "label": "Debug",
+    "role": "AXCheckBox",
+    "value": "0",
+    "in": "Left stripe"
+   }
+  }
+ ]
+}

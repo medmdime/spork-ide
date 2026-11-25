@@ -1,0 +1,198 @@
+{
+ "id": "intellij-editor-keys",
+ "covers": [
+  "action:EditorDuplicate",
+  "action:EditorDeleteLine",
+  "action:GotoLine"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-d"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "sed -n 1,3p src/main.rs",
+   "is": "mod greeting;\nmod greeting;"
+  },
+  {
+   "do": "keys",
+   "keys": "shift-right shift-right shift-right cmd-d"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "sed -n 2p src/main.rs",
+   "is": "modmod greeting;"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-backspace"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "git diff -U0 | tail -n +5",
+   "is": ""
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-f12"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   }
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Root",
+     "Dialog",
+     "Input"
+    ]
+   }
+  },
+  {
+   "shot": "go-to-line"
+  },
+  {
+   "do": "keys",
+   "keys": "3 enter"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-/"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "sed -n 3p src/main.rs",
+   "is": "// fn main() {"
+  },
+  {
+   "do": "keys",
+   "keys": "up cmd-/"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "git diff -U0 | tail -n +5",
+   "is": ""
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "4 : 5 enter"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "x cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "sed -n 4p src/main.rs | tr ' ' '.'",
+   "is": "....xprintln!(\"{}\",.greeting::hello(\"world\"));"
+  }
+ ]
+}

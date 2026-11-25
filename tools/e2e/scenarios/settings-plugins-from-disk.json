@@ -1,0 +1,102 @@
+{
+ "id": "settings-plugins-from-disk",
+ "covers": [
+  "action:plugin.InstallFromDiskAction"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "sh": "(nohup python3 \"$E2E/extensions_http.py\" ../registry-port 300 > /dev/null 2>&1 &) && for i in $(seq 1800); do [ -s ../registry-port ] && break; sleep 0.1; done && python3 -c \"import json; p='../home/.config/spork-ide/settings.json'; s=json.load(open(p)); s['server_url']='http://127.0.0.1:'+open('../registry-port').read().strip(); json.dump(s, open(p, 'w'))\""
+  },
+  {
+   "sh": "mkdir -p disk-theme/themes"
+  },
+  {
+   "file": "disk-theme/extension.toml",
+   "text": "id = \"disk-theme\"\nname = \"Disk Theme\"\nversion = \"0.0.1\"\nschema_version = 1\nauthors = [\"Ada Lovelace\"]\ndescription = \"A theme installed from disk\"\nrepository = \"https://example.com/disk-theme\"\n"
+  },
+  {
+   "file": "disk-theme/themes/disk.json",
+   "text": "{\"$schema\": \"https://zed.dev/schema/themes/v0.2.0.json\", \"name\": \"Disk Theme\", \"author\": \"Ada Lovelace\", \"themes\": [{\"name\": \"Disk Dark\", \"appearance\": \"dark\", \"style\": {}}]}\n"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-,"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "Plugins",
+   "role": "AXRow",
+   "in": "Settings categories",
+   "within": 8000
+  },
+  {
+   "expect": {
+    "settings.page": "Plugins",
+    "settings.plugins.tab": "Marketplace"
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Manage Repositories, Configure Proxy or Install Plugin from Disk",
+   "role": "AXButton"
+  },
+  {
+   "menu": "Plugins gear",
+   "items": [
+    "Install Plugin from Disk"
+   ]
+  },
+  {
+   "do": "pick",
+   "paths": [
+    "disk-theme"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Install Plugin from Disk",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "settings.plugins.tab": "Installed",
+    "settings.plugins.installed": [
+     "Disk Theme"
+    ]
+   },
+   "within": 20000
+  },
+  {
+   "find": {
+    "label": "Disk Theme",
+    "in": "Plugins"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Cancel",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings": null
+   },
+   "within": 8000
+  }
+ ]
+}

@@ -1,0 +1,152 @@
+{
+ "id": "git-menu-remotes",
+ "covers": [
+  "action:Git.Configure.Remotes",
+  "dialog:Git.Configure.Remotes"
+ ],
+ "reference-app": [
+  "screenshots/dialogs/git-configure-remotes.png"
+ ],
+ "steps": [
+  {
+   "do": "action",
+   "name": "spork::ManageRemotes"
+  },
+  {
+   "find": [
+    {
+     "text": "Git Remotes"
+    },
+    {
+     "text": "Add"
+    },
+    {
+     "text": "Remove",
+     "enabled": false
+    },
+    {
+     "text": "Edit",
+     "enabled": false
+    },
+    {
+     "text": "origin"
+    },
+    {
+     "text": "OK"
+    }
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "open"
+  },
+  {
+   "do": "click",
+   "label": "Add",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "text": "Define Remote"
+    },
+    {
+     "text": "Name:"
+    },
+    {
+     "text": "URL:"
+    },
+    {
+     "text": "Cancel"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "role": "AXTextField",
+   "nth": 2
+  },
+  {
+   "do": "keys",
+   "keys": "u p s t r e a m"
+  },
+  {
+   "do": "click",
+   "role": "AXTextField",
+   "nth": 3
+  },
+  {
+   "do": "keys",
+   "keys": "u p . g i t"
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton",
+   "nth": 1
+  },
+  {
+   "git": [
+    "remote"
+   ],
+   "is": "origin\nupstream"
+  },
+  {
+   "find": [
+    {
+     "text": "upstream",
+     "role": "AXRow"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "origin",
+   "role": "AXRow",
+   "in": "Remote List"
+  },
+  {
+   "find": [
+    {
+     "text": "Remove",
+     "enabled": true,
+     "role": "AXButton"
+    },
+    {
+     "text": "Edit",
+     "enabled": true,
+     "role": "AXButton"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Remove",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "text": "Remove Remote"
+    },
+    {
+     "text": "Remove remote origin?"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Remove",
+   "role": "AXButton",
+   "nth": 1
+  },
+  {
+   "git": [
+    "remote"
+   ],
+   "is": "upstream"
+  }
+ ]
+}

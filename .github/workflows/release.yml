@@ -1,0 +1,111 @@
+name: Release
+
+# A version tag (v0.1.0, or v0.1.0-alpha.1: a hyphen makes it a pre-release), which script/publish-mirror pushes,
+# builds Spork and Spork IDE for macOS, Windows and Linux and publishes them as the tag's GitHub release, with
+# release-notes/<tag>.md as its text when there is one.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+  # the runners have 7 GB (macOS) to 16 GB of memory: no debug info, no LTO and parallel codegen keep the links
+  # within it (the release profile's thin LTO with one codegen unit doesn't)
+  CARGO_PROFILE_RELEASE_DEBUG: "0"
+  CARGO_PROFILE_RELEASE_LTO: "off"
+  CARGO_PROFILE_RELEASE_CODEGEN_UNITS: "16"
+
+jobs:
+  build:
+    name: build (${{ matrix.platform }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { platform: macos-arm64, os: macos-26 }
+          - { platform: windows-x64, os: windows-2025 }
+          - { platform: linux-x64, os: ubuntu-24.04 }
+    steps:
+      # the assets' symlinks (icons, fonts) and the tree's long paths
+      - name: Git for Windows' symlinks and long paths
+        if: runner.os == 'Windows'
+        run: |
+          git config --global core.symlinks true
+          git config --global core.longpaths true
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Free disk space (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
+          sudo docker image prune --all --force
+          df -h /
+      - name: GPUI's system libraries (Linux)
+        if: runner.os == 'Linux'
+        run: ./script/linux
+      # GPUI compiles its shaders with it; Xcode 26 downloads it apart
+      - name: Metal toolchain (macOS)
+        if: runner.os == 'macOS'
+        run: xcrun metal --version || xcodebuild -downloadComponent MetalToolchain
+      - name: Rust toolchain of rust-toolchain.toml
+        run: rustup toolchain install
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          key: release
+          cache-on-failure: true
+      - name: Build Spork and Spork IDE
+        shell: bash
+        run: cargo build --release --locked --keep-going -p spork -p zed -p cli
+      - name: Package
+        shell: bash
+        run: |
+          script/package-release "$GITHUB_REF_NAME"
+          df -h .
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ matrix.platform }}
+          path: target/dist/*
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: release-notes
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ls -l dist
+          test "$(ls dist | wc -l)" -eq 6
+          tag=$GITHUB_REF_NAME
+          version=${tag#v}
+          title="Spork IDE $version"
+          flags=()
+          if [[ $version == *-* ]]; then
+            # v0.1.0-alpha.1: "Spork IDE 0.1.0 alpha 1"
+            pre=${version#*-}
+            title="Spork IDE ${version%%-*} ${pre//./ }"
+            flags+=(--prerelease)
+          fi
+          if [[ -f release-notes/$tag.md ]]; then
+            flags+=(--notes-file "release-notes/$tag.md")
+          else
+            flags+=(--generate-notes)
+          fi
+          gh release create "$tag" dist/* --repo "$GITHUB_REPOSITORY" --title "$title" "${flags[@]}"

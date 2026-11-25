@@ -1,0 +1,25 @@
+{
+ "id": "find-action",
+ "covers": [
+  "action:GotoAction",
+  "dialog:GotoAction"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "action",
+   "name": "spork::CommandPalette"
+  },
+  {
+   "expect": {
+    "search_everywhere": true
+   }
+  },
+  {
+   "wait": 800
+  },
+  {
+   "shot": "open"
+  }
+ ]
+}

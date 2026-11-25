@@ -1,0 +1,44 @@
+{
+ "id": "git-menu-quick-switch",
+ "covers": [
+  "context-menu:ChangeScheme",
+  "action:ChangeLaf"
+ ],
+ "reference-app": [
+  "screenshots/menus/changescheme.png"
+ ],
+ "steps": [
+  {
+   "do": "keys",
+   "keys": "ctrl-`"
+  },
+  {
+   "menu": "context-menu:ChangeScheme"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "open"
+  },
+  {
+   "do": "click",
+   "label": "Theme",
+   "role": "AXMenuItem"
+  },
+  {
+   "menu": "action:ChangeLaf",
+   "items": ["Islands Dark", "Islands Light"]
+  },
+  {
+   "do": "click",
+   "label": "Islands Light",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "appearance": "Light"
+   }
+  }
+ ]
+}

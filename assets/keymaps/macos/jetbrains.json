@@ -1,0 +1,800 @@
+[
+  {
+    "context": "Workspace",
+    "use_key_equivalents": true,
+    "bindings": {
+      "cmd-o": null,
+    },
+  },
+  {
+    "use_key_equivalents": true,
+    "bindings": {
+      "cmd-{": "pane::ActivatePreviousItem",
+      "cmd-}": "pane::ActivateNextItem",
+      "shift-escape": "workspace::CloseActiveDock", // IntelliJ: Hide Active Tool Window, in place of workspace::ToggleZoom
+      "cmd-f2": "run::Stop",
+      "f7": "debugger::StepInto",
+      "alt-shift-f7": "debugger::StepInto", // IntelliJ: Force Step Into; the adapters have no stepping filters
+      "shift-f7": "run::SmartStepInto",
+      "alt-shift-f8": "run::ForceStepOver",
+      "alt-cmd-f9": "run::ForceRunToCursor",
+      "alt-shift-f5": "run::AttachToProcess",
+      "shift-cmd-f2": "run::StopBackgroundProcesses",
+      "f8": "debugger::StepOver",
+      "shift-f8": "debugger::StepOut",
+      "f9": "debugger::Continue",
+      "alt-cmd-r": "debugger::Continue",
+      "alt-f9": "debugger::RunToCursor",
+      "alt-f8": "run::EvaluateExpression",
+      "alt-cmd-f8": "run::QuickEvaluateExpression",
+      "alt-f10": "run::ShowExecutionPoint",
+      "ctrl-r": "run_widget::Run",
+      "ctrl-d": "run_widget::Debug",
+      "ctrl-alt-r": "run::ChooseRunConfiguration",
+      "ctrl-alt-d": "run::ChooseDebugConfiguration",
+      "cmd-shift-f8": "run::ViewBreakpoints",
+      // IntelliJ: Zoom In IDE, Zoom Out IDE, Reset IDE Zoom (Settings › Appearance › Zoom)
+      "ctrl-alt-=": ["zed::IncreaseUiFontSize", { "persist": true }],
+      "ctrl-alt--": ["zed::DecreaseUiFontSize", { "persist": true }],
+      "ctrl-alt-0": ["zed::ResetUiFontSize", { "persist": true }],
+    },
+  },
+  {
+    "context": "Editor",
+    "use_key_equivalents": true,
+    "bindings": {
+      "ctrl->": ["zed::IncreaseBufferFontSize", { "persist": true }],
+      "ctrl-<": ["zed::DecreaseBufferFontSize", { "persist": true }],
+      "cmd-insert": "editor::Copy",
+      "shift-delete": "editor::Cut",
+      "shift-insert": "editor::Paste",
+      "alt-shift-backspace": "editor::Redo",
+      // IntelliJ shows these first shortcuts in menus: bound again after the secondary keys above, as the latest binding is the one shown
+      "cmd-c": "editor::Copy",
+      "cmd-x": "editor::Cut",
+      "cmd-v": "editor::Paste",
+      "cmd-shift-z": "editor::Redo",
+      "ctrl-shift-j": "editor::JoinLines",
+      "cmd-d": "editor::DuplicateSelection",
+      "cmd-backspace": "editor::DeleteLine",
+      "ctrl-k": "editor::CutToEndOfLine",
+      "ctrl-alt-shift-b": "editor::SelectToPreviousWordStart",
+      "ctrl-alt-shift-f": "editor::SelectToNextWordEnd",
+      "ctrl-alt-b": "editor::MoveToPreviousWordStart",
+      "ctrl-alt-f": "editor::MoveToNextWordEnd",
+      "cmd-alt-enter": "editor::NewlineAbove",
+      "shift-enter": "editor::NewlineBelow",
+      "alt-shift-g": "spork_editor::AddCaretsToLineEnds",
+      "ctrl-g": ["editor::SelectNext", { "replace_newest": false }],
+      "ctrl-shift-g": "editor::UndoSelection",
+      "ctrl-cmd-g": "editor::SelectAllMatches",
+      "cmd-/": ["editor::ToggleComments", { "advance_downwards": true, "comment_empty_lines": true }],
+      "alt-up": "editor::SelectLargerSyntaxNode",
+      "alt-down": "editor::SelectSmallerSyntaxNode",
+      "shift-alt-up": "editor::MoveLineUp",
+      "shift-alt-down": "editor::MoveLineDown",
+      // IntelliJ: Clone Caret Above and Below, ⌥ pressed twice and held with the arrow
+      "alt alt-up": ["editor::AddSelectionAbove", { "skip_soft_wrap": true }],
+      "alt alt-down": ["editor::AddSelectionBelow", { "skip_soft_wrap": true }],
+      "cmd-alt-l": "editor::Format",
+      "ctrl-alt-o": "editor::OrganizeImports",
+      "shift-f6": "editor::Rename",
+      "cmd-[": "pane::GoBack",
+      "cmd-]": "pane::GoForward",
+      "alt-f7": "editor::FindAllReferences",
+      "cmd-b": "editor::GoToDefinition", // Conflicts with workspace::ToggleLeftDock
+      "cmd-alt-b": "editor::GoToImplementation",
+      "cmd-shift-b": "editor::GoToTypeDefinition",
+      "f2": "spork_editor::GoToNextError", // IntelliJ: Next Highlighted Error, errors first
+      "shift-f2": "spork_editor::GoToPreviousError",
+      "ctrl-alt-shift-down": "vcs::ShowNextChangeMarker", // IntelliJ: Next Change, with its popup
+      "ctrl-alt-shift-up": "vcs::ShowPrevChangeMarker",
+      "cmd-home": "editor::MoveToBeginning",
+      "cmd-end": "editor::MoveToEnd",
+      "cmd-shift-home": "editor::SelectToBeginning",
+      "cmd-shift-end": "editor::SelectToEnd",
+      "cmd-f8": "editor::ToggleBreakpoint",
+      // IntelliJ's run keys, over the default keymap's editing ones
+      "f7": "debugger::StepInto", // the default's breakpoint and diagnostics keys otherwise
+      "shift-f7": "run::SmartStepInto",
+      "alt-shift-f7": "debugger::StepInto",
+      "f8": "debugger::StepOver",
+      "shift-f8": "debugger::StepOut",
+      "alt-shift-f8": "run::ForceStepOver",
+      "f9": "debugger::Continue",
+      "alt-f9": "debugger::RunToCursor",
+      "alt-cmd-f9": "run::ForceRunToCursor",
+      "alt-f8": "run::EvaluateExpression",
+      "alt-cmd-f8": "run::QuickEvaluateExpression",
+      "ctrl-d": "run_widget::Debug",
+      "ctrl-alt-d": "run::ChooseDebugConfiguration",
+      "cmd-shift-f8": "run::EditBreakpoint", // the Breakpoints dialog without a breakpoint on the line
+      "cmd-shift-u": "editor::ToggleCase",
+    },
+  },
+  {
+    "context": "Editor && mode == full",
+    "use_key_equivalents": true,
+    "bindings": {
+      "cmd-f12": "navigate::FileStructure",
+      "cmd-r": ["buffer_search::Deploy", { "replace_enabled": true }],
+      "cmd-l": "navigate::GoToLine",
+      "cmd-e": "navigate::RecentFiles",
+      "cmd-shift-o": "navigate::GoToFile",
+      "cmd-shift-backspace": "navigate::LastEditLocation",
+      "cmd-shift-e": "navigate::RecentLocations",
+      "alt-enter": "editor::ToggleCodeActions",
+      "ctrl-space": "editor::ShowCompletions",
+      "ctrl-shift-space": "editor::ShowCompletions", // IntelliJ: Type-Matching, the language server's completions
+      "cmd-enter": "spork_editor::SplitLine",
+      "cmd-shift-up": "editor::MoveLineUp", // IntelliJ: Move Statement Up, by lines
+      "cmd-shift-down": "editor::MoveLineDown",
+      "ctrl-j": "spork_editor::QuickDocumentation",
+      "f1": "spork_editor::QuickDocumentation", // last: the shortcut menus show, as IntelliJ's first
+      "shift-f1": "editor::OpenDocs",
+      "cmd-p": "editor::ShowSignatureHelp",
+      "cmd-\\": "assistant::InlineAssist",
+      "ctrl-alt-h": "call_hierarchy::ShowIncomingCalls",
+      "cmd--": "editor::Fold",
+      "cmd-=": "editor::UnfoldLines",
+      "alt-cmd--": "editor::FoldRecursive",
+      "alt-cmd-=": "editor::UnfoldRecursive",
+      "cmd-_": "editor::FoldAll",
+      "cmd-+": "editor::UnfoldAll",
+      "cmd-shift--": "editor::FoldAll",
+      "cmd-shift-=": "editor::UnfoldAll",
+      "cmd-.": "editor::FoldSelectedRanges",
+      "cmd-shift-.": "editor::Fold", // IntelliJ: Fold Code Block, the innermost region at the caret
+      "alt-shift-cmd-v": "editor::Paste", // IntelliJ: Paste as Plain Text, Zed's paste being plain
+      "cmd-v": "editor::Paste", // shown in menus over Paste as Plain Text
+      "alt-cmd-/": "editor::ToggleBlockComments",
+      "ctrl-?": "editor::ToggleBlockComments",
+      "cmd-?": "editor::ToggleBlockComments",
+      "ctrl-alt-i": "editor::AutoIndent",
+      "ctrl-shift-b": "editor::GoToTypeDefinition",
+      "ctrl-alt-down": "editor::GoToNextDocumentHighlight", // IntelliJ: Next Highlighted Usage
+      "ctrl-alt-up": "editor::GoToPreviousDocumentHighlight",
+      "ctrl-shift-down": "editor::GoToNextSymbol", // IntelliJ: Next Method
+      "ctrl-shift-up": "editor::GoToPreviousSymbol",
+      "alt-cmd-z": "git::Restore", // IntelliJ: Rollback Lines
+      "f3": "editor::ToggleBookmark",
+      "alt-f3": "navigate::ToggleBookmarkMnemonic", // IntelliJ: Toggle Bookmark Mnemonic…, its chooser
+      "ctrl-shift-1": ["navigate::ToggleMnemonic", { "mnemonic": "1" }],
+      "ctrl-shift-2": ["navigate::ToggleMnemonic", { "mnemonic": "2" }],
+      "ctrl-shift-3": ["navigate::ToggleMnemonic", { "mnemonic": "3" }],
+      "ctrl-shift-4": ["navigate::ToggleMnemonic", { "mnemonic": "4" }],
+      "ctrl-shift-5": ["navigate::ToggleMnemonic", { "mnemonic": "5" }],
+      "ctrl-shift-6": ["navigate::ToggleMnemonic", { "mnemonic": "6" }],
+      "ctrl-shift-7": ["navigate::ToggleMnemonic", { "mnemonic": "7" }],
+      "ctrl-shift-8": ["navigate::ToggleMnemonic", { "mnemonic": "8" }],
+      "ctrl-shift-9": ["navigate::ToggleMnemonic", { "mnemonic": "9" }],
+      "ctrl-shift-0": ["navigate::ToggleMnemonic", { "mnemonic": "0" }],
+      "alt-shift-cmd-c": "editor::CopyFileLocation", // IntelliJ: Copy Reference
+      "alt-|": "editor::ShowEditPrediction", // IntelliJ: Call Inline Completion
+      "alt-tab": "workspace::ActivateNextPane", // IntelliJ: Goto Next Splitter
+      "alt-shift-tab": "workspace::ActivatePreviousPane",
+      "ctrl-m": "spork_editor::MoveToMatchingBrace", // IntelliJ's, over the default's enclosing bracket
+      "cmd-shift-8": "spork_editor::ToggleColumnMode", // IntelliJ: Column Selection Mode
+      "alt-cmd-[": "spork_editor::MoveToCodeBlockStart", // over the default's Fold
+      "alt-cmd-]": "spork_editor::MoveToCodeBlockEnd",
+      "alt-cmd-{": "spork_editor::SelectToCodeBlockStart",
+      "alt-cmd-}": "spork_editor::SelectToCodeBlockEnd",
+      "cmd-pageup": "spork_editor::MoveToPageTop", // over the default's Page Up
+      "cmd-pagedown": "spork_editor::MoveToPageBottom",
+      "cmd-shift-pageup": "spork_editor::SelectToPageTop",
+      "cmd-shift-pagedown": "spork_editor::SelectToPageBottom",
+      "cmd-shift-v": "spork_editor::PasteFromHistory", // over the default's Markdown preview
+    },
+  },
+  {
+    // Paste from History's chooser: ⌦ drops a copy
+    "context": "PasteChooser",
+    "use_key_equivalents": true,
+    "bindings": {
+      "delete": "spork_editor::RemoveFromHistory",
+      "backspace": "spork_editor::RemoveFromHistory",
+    },
+  },
+  {
+    // IntelliJ's Column Selection Mode: ⇧↑ and ⇧↓ grow the block a line
+    "context": "Editor && column_mode",
+    "use_key_equivalents": true,
+    "bindings": {
+      "shift-down": ["editor::AddSelectionBelow", { "skip_soft_wrap": true }],
+      "shift-up": ["editor::AddSelectionAbove", { "skip_soft_wrap": true }],
+    },
+  },
+  {
+    // IntelliJ's Jump to Source (⌘↓, F4) from a list of results
+    "context": "Editor && multibuffer",
+    "use_key_equivalents": true,
+    "bindings": {
+      "cmd-down": "editor::OpenExcerpts",
+      "f4": "editor::OpenExcerpts",
+    },
+  },
+  {
+    "context": "Editor && showing_completions",
+    "use_key_equivalents": true,
+    "bindings": {
+      "enter": "editor::ConfirmCompletionInsert",
+      "tab": "editor::ConfirmCompletionReplace",
+      "ctrl-.": ["workspace::SendKeystrokes", "enter ."], // IntelliJ: Choose Lookup Item and Insert Dot
+    },
+  },
+  {
+    "context": "Editor && edit_prediction",
+    "use_key_equivalents": true,
+    "bindings": {
+      "alt-right": "editor::AcceptNextWordEditPrediction",
+      "ctrl-alt-f": "editor::AcceptNextWordEditPrediction",
+      "cmd-right": "editor::AcceptNextLineEditPrediction",
+      "ctrl-e": "editor::AcceptNextLineEditPrediction",
+      "end": "editor::AcceptNextLineEditPrediction",
+      "alt-]": "editor::NextEditPrediction",
+      "alt-[": "editor::PreviousEditPrediction",
+    },
+  },
+  {
+    "context": "Editor && mode == auto_height",
+    "use_key_equivalents": true,
+    "bindings": {
+      "shift-enter": "editor::Newline",
+      "ctrl-shift-enter": "editor::NewlineBelow",
+    },
+  },
+  {
+    "context": "BufferSearchBar && !in_replace > Editor",
+    "use_key_equivalents": true,
+    "bindings": {
+      "shift-enter": "search::SelectPreviousMatch",
+    },
+  },
+  {
+    // IntelliJ: ⌘R in the find bar shows the replace field
+    "context": "BufferSearchBar",
+    "use_key_equivalents": true,
+    "bindings": {
+      "cmd-r": ["buffer_search::Deploy", { "replace_enabled": true }],
+    },
+  },
+  {
+    "context": "AcpThreadSearchBar > Editor",
+    "use_key_equivalents": true,
+    "bindings": {
+      "shift-enter": "agent::SelectPreviousThreadMatch",
+    },
+  },
+  {
+    "context": "BufferSearchBar || ProjectSearchBar",
+    "use_key_equivalents": true,
+    "bindings": {
+      "alt-c": "search::ToggleCaseSensitive",
+      "alt-e": "search::ToggleSelection",
+      "alt-x": "search::ToggleRegex",
+      "alt-w": "search::ToggleWholeWord",
+      "ctrl-alt-c": "search::ToggleCaseSensitive",
+      "ctrl-alt-e": "search::ToggleSelection",
+      "ctrl-alt-w": "search::ToggleWholeWord",
+      "ctrl-alt-x": "search::ToggleRegex",
+    },
+  },
+  {
+    "context": "ProjectSearchView > Editor",
+    "use_key_equivalents": true,
+    "bindings": {
+      "alt-cmd-down": "search::SelectNextMatch", // IntelliJ: Next Occurrence
+      "alt-cmd-up": "search::SelectPreviousMatch",
+    },
+  },
+  {
+    "context": "Workspace",
+    "use_key_equivalents": true,
+    "bindings": {
+      "cmd-s": "workspace::SaveAll",
+      "cmd-shift-f12": "workspace::ToggleAllDocks",
+      "f12": "tool_windows::JumpToLastToolWindow",
+      "shift-f12": "tool_windows::RestoreDefaultLayout",
+      "alt-cmd-down": "navigate::NextOccurrence",
+      "alt-cmd-up": "navigate::PreviousOccurrence",
+      "alt-f1": "navigate::SelectIn",
+      "cmd-up": "navigate::JumpToNavigationBar",
+      "alt-cmd-f12": "navigate::ShowFilePath",
+      "cmd-shift-f": "navigate::FindInFiles",
+      "cmd-shift-r": "navigate::ReplaceInFiles",
+      "shift shift": "navigate::SearchEverywhere",
+      "alt-shift-cmd-e": "navigate::GoToText", // IntelliJ: Search Everywhere's Text tab
+      "ctrl-alt-r": "run::ChooseRunConfiguration",
+      "ctrl ctrl": "task::Spawn", // IntelliJ: Run Anything
+      "cmd-e": "navigate::RecentFiles",
+      "cmd-shift-e": "navigate::RecentLocations",
+      "ctrl-tab": "navigate::Switcher",
+      "ctrl-shift-tab": ["navigate::Switcher", { "select_last": true }],
+      "cmd-shift-o": "navigate::GoToFile",
+      "cmd-shift-a": "navigate::FindAction",
+      "cmd-alt-o": "navigate::GoToSymbol",
+      "cmd-o": "navigate::GoToClass",
+      "cmd-shift-backspace": "navigate::LastEditLocation",
+      "cmd-[": "pane::GoBack",
+      "cmd-]": "pane::GoForward",
+      "cmd-alt-left": "pane::GoBack",
+      "cmd-alt-right": "pane::GoForward",
+      "cmd-f3": "navigate::ShowBookmarks",
+      "alt-cmd-f3": "navigate::GoToMnemonic",
+      "ctrl-1": ["navigate::GoToBookmark", { "mnemonic": "1" }],
+      "ctrl-2": ["navigate::GoToBookmark", { "mnemonic": "2" }],
+      "ctrl-3": ["navigate::GoToBookmark", { "mnemonic": "3" }],
+      "ctrl-4": ["navigate::GoToBookmark", { "mnemonic": "4" }],
+      "ctrl-5": ["navigate::GoToBookmark", { "mnemonic": "5" }],
+      "ctrl-6": ["navigate::GoToBookmark", { "mnemonic": "6" }],
+      "ctrl-7": ["navigate::GoToBookmark", { "mnemonic": "7" }],
+      "ctrl-8": ["navigate::GoToBookmark", { "mnemonic": "8" }],
+      "ctrl-9": ["navigate::GoToBookmark", { "mnemonic": "9" }],
+      "ctrl-0": ["navigate::GoToBookmark", { "mnemonic": "0" }],
+      "cmd-shift-c": "workspace::CopyPath",
+      "cmd-shift-n": "project_panel::NewScratchFile", // IntelliJ: New Scratch File
+      "ctrl-alt-n": "project_panel::NewElementSamePlace", // IntelliJ: New in This Directory…
+      "alt-tab": "workspace::ActivateNextPane",
+      "alt-shift-tab": "workspace::ActivatePreviousPane",
+      "cmd-`": "workspace::ActivateNextWindow",
+      "cmd-~": "workspace::ActivatePreviousWindow",
+      "alt-cmd-`": "workspace::ActivateNextWindow",
+      "alt-cmd-~": "workspace::ActivatePreviousWindow",
+      "ctrl-cmd-=": "zed::Zoom",
+      "cmd-1": "project_panel::ToggleFocus",
+      "cmd-2": "bookmarks_panel::ToggleFocus",
+      "cmd-3": "find_panel::ToggleFocus",
+      "cmd-4": "run_panel::ToggleFocus",
+      "cmd-5": "debug_panel::ToggleFocus",
+      "cmd-6": "problems_panel::ToggleFocus",
+      "cmd-7": "outline_panel::ToggleFocus",
+      "cmd-8": "services_panel::ToggleFocus",
+      "cmd-9": "git_panel::ToggleFocus", // the Git tool window (bottom dock)
+    },
+  },
+  {
+    "context": "Workspace || Editor",
+    "use_key_equivalents": true,
+    "bindings": {
+      "alt-f12": "terminal_panel::ToggleFocus",
+    },
+  },
+  {
+    "context": "Pane",
+    "use_key_equivalents": true,
+    "bindings": {
+      "ctrl-1": ["navigate::GoToBookmark", { "mnemonic": "1" }],
+      "ctrl-2": ["navigate::GoToBookmark", { "mnemonic": "2" }],
+      "ctrl-3": ["navigate::GoToBookmark", { "mnemonic": "3" }],
+      "ctrl-4": ["navigate::GoToBookmark", { "mnemonic": "4" }],
+      "ctrl-5": ["navigate::GoToBookmark", { "mnemonic": "5" }],
+      "ctrl-6": ["navigate::GoToBookmark", { "mnemonic": "6" }],
+      "ctrl-7": ["navigate::GoToBookmark", { "mnemonic": "7" }],
+      "ctrl-8": ["navigate::GoToBookmark", { "mnemonic": "8" }],
+      "ctrl-9": ["navigate::GoToBookmark", { "mnemonic": "9" }],
+      "ctrl-0": ["navigate::GoToBookmark", { "mnemonic": "0" }], // IntelliJ: Go to Bookmark, over the default's tab keys
+      "cmd-shift-f": "navigate::FindInFiles",
+      "cmd-[": "pane::GoBack",
+      "cmd-]": "pane::GoForward",
+      "cmd-alt-left": "pane::GoBack",
+      "cmd-alt-right": "pane::GoForward",
+      "ctrl-left": "pane::ActivatePreviousItem",
+      "ctrl-right": "pane::ActivateNextItem",
+    },
+  },
+  {
+    "context": "menu && !showing_completions && !showing_code_actions",
+    "use_key_equivalents": true,
+    "bindings": {
+      "ctrl-f": "menu::SelectChild",
+      "ctrl-b": "menu::SelectParent",
+    },
+  },
+  {
+    // IntelliJ's Resize ▸ Stretch to Left/Right/Top/Bottom, in a tool window
+    "context": "Dock",
+    "use_key_equivalents": true,
+    "bindings": {
+      "ctrl-alt-left": "workspace::StretchToolWindowLeft",
+      "ctrl-alt-right": "workspace::StretchToolWindowRight",
+      "ctrl-alt-up": "workspace::StretchToolWindowUp",
+      "ctrl-alt-down": "workspace::StretchToolWindowDown",
+    },
+  },
+  {
+    // the Find tool window (spork_navigate's find_panel), IntelliJ's usage view keys; the last of
+    // an action's keys is the one its menu item shows
+    "context": "FindPanel",
+    "use_key_equivalents": true,
+    "bindings": {
+      "cmd-r": "find_panel::Rerun",
+      "f4": "find_panel::JumpToSource",
+      "cmd-down": "find_panel::JumpToSource",
+      "shift-enter": "find_panel::OpenInRightSplit",
+      "backspace": "find_panel::Exclude",
+      "cmd-backspace": "find_panel::Exclude",
+      "delete": "find_panel::Exclude",
+      "shift-backspace": "find_panel::Include",
+      "shift-delete": "find_panel::Remove",
+      "cmd-x": "find_panel::Remove",
+    },
+  },
+  {
+    // Recent Files and the Switcher: Delete from Recent Files (⌫ too, while nothing is typed)
+    "context": "Switcher",
+    "use_key_equivalents": true,
+    "bindings": {
+      "delete": "navigate::DeleteRecentFiles",
+      "cmd-backspace": "navigate::DeleteRecentFiles",
+      // Select Next/Previous Problem File: Next/Previous Highlighted Error's keys
+      "f2": "navigate::SwitcherNextProblem",
+      "shift-f2": "navigate::SwitcherPreviousProblem",
+    },
+  },
+  {
+    // the Bookmarks tool window's tree (spork_navigate's bookmarks)
+    "context": "BookmarksTree",
+    "use_key_equivalents": true,
+    "bindings": {
+      "f2": "bookmarks_panel::Rename",
+      // the last of an action's keys is the one its menu item shows, as IntelliJ's first
+      "backspace": "bookmarks_panel::Delete",
+      "cmd-backspace": "bookmarks_panel::Delete",
+      "delete": "bookmarks_panel::Delete",
+      "alt-f3": "bookmarks_panel::ChooseType",
+      "alt-cmd-up": "bookmarks_panel::MoveUp",
+      "alt-cmd-down": "bookmarks_panel::MoveDown",
+      "f4": "bookmarks_panel::OpenBookmarkGroup",
+      "cmd-down": "bookmarks_panel::OpenBookmarkGroup",
+    },
+  },
+  {
+    // IntelliJ's tree and list keys (spork_workbench's tree_keys): ⇧ extends the selection, Page
+    // Up/Down by a page, ⌘A, Expand/Collapse All, Scroll to Center, speed search's ⌘F
+    "context": "tree",
+    "use_key_equivalents": true,
+    "bindings": {
+      "shift-up": "tree::SelectPreviousExtend",
+      "shift-down": "tree::SelectNextExtend",
+      "shift-left": "tree::SelectParentExtend",
+      "shift-right": "tree::SelectChildExtend",
+      "pageup": "tree::PageUp",
+      "pagedown": "tree::PageDown",
+      "shift-pageup": "tree::PageUpExtend",
+      "shift-pagedown": "tree::PageDownExtend",
+      "cmd-home": "menu::SelectFirst",
+      "cmd-end": "menu::SelectLast",
+      "alt-up": "menu::SelectFirst", // List-selectFirstRow
+      "alt-down": "menu::SelectLast",
+      "shift-home": "tree::SelectFirstExtend",
+      "shift-end": "tree::SelectLastExtend",
+      "shift-cmd-home": "tree::SelectFirstExtend",
+      "shift-cmd-end": "tree::SelectLastExtend",
+      "alt-shift-up": "tree::SelectFirstExtend",
+      "alt-shift-down": "tree::SelectLastExtend",
+      "cmd-a": "tree::SelectAll",
+      "cmd-=": "tree::ExpandAll",
+      "cmd-+": "tree::ExpandAll",
+      "cmd--": "tree::CollapseAll",
+      "ctrl-l": "tree::ScrollToCenter",
+      "cmd-f": "tree::SpeedSearch",
+      "escape": "menu::Cancel",
+    },
+  },
+  {
+    "context": "ProjectPanel",
+    "use_key_equivalents": true,
+    "bindings": {
+      "enter": "project_panel::Open",
+      "cmd-down": "project_panel::OpenPermanent", // IntelliJ: Jump to Source
+      "f4": "project_panel::OpenPermanent",
+      "shift-enter": "project_panel::OpenSplitVertical", // IntelliJ: Open in Right Split
+      "cmd-shift-f": "navigate::FindInFiles",
+      "cmd-insert": "project_panel::Copy",
+      "shift-delete": "project_panel::Cut",
+      "shift-insert": "project_panel::Paste",
+      "alt-shift-backspace": "project_panel::Redo",
+      // IntelliJ shows these first shortcuts in menus: bound again after the secondary keys above, as the latest binding is the one shown
+      "cmd-c": "project_panel::Copy",
+      "cmd-x": "project_panel::Cut",
+      "cmd-v": "project_panel::Paste",
+      "cmd-shift-z": "project_panel::Redo",
+      "cmd-d": "project_panel::CompareMarkedFiles",
+      "cmd-n": "project_panel::NewElement", // IntelliJ: New…
+      "f5": "project_panel::CopyElement", // IntelliJ: Copy…
+      "f6": "project_panel::MoveElement", // IntelliJ: Move…
+      "cmd-backspace": ["project_panel::Trash", { "skip_prompt": false }],
+      "backspace": ["project_panel::Trash", { "skip_prompt": false }],
+      "delete": ["project_panel::Trash", { "skip_prompt": false }],
+      "shift-f6": "project_panel::Rename",
+      "cmd--": "project_panel::CollapseAllEntries",
+      "cmd-=": "project_panel::ExpandSelectedEntryAndChildren",
+      "cmd-+": "project_panel::ExpandAllEntries",
+      "ctrl-f": "project_panel::ExpandSelectedEntry",
+      "ctrl-b": "project_panel::CollapseSelectedEntry",
+      "cmd-home": "menu::SelectFirst",
+      "cmd-end": "menu::SelectLast",
+      "ctrl-l": "project_panel::ScrollCursorCenter",
+    },
+  },
+  {
+    "context": "OutlinePanel",
+    "use_key_equivalents": true,
+    "bindings": {
+      "cmd-down": "outline_panel::OpenSelectedEntry",
+      "f4": "outline_panel::OpenSelectedEntry",
+      "cmd--": "outline_panel::CollapseAllEntries",
+      "cmd-=": "outline_panel::ExpandAllEntries",
+    },
+  },
+  {
+    "context": "Terminal",
+    "use_key_equivalents": true,
+    "bindings": {
+      "cmd-t": "workspace::NewTerminal",
+      "alt-f12": "workspace::CloseActiveDock",
+      "cmd-r": "terminal::RerunTask",
+      "ctrl-shift-f4": "pane::CloseActiveItem",
+      "cmd-insert": "terminal::Copy",
+      "shift-insert": "terminal::Paste",
+      // IntelliJ shows these first shortcuts in menus: bound again after the secondary keys above, as the latest binding is the one shown
+      "cmd-c": "terminal::Copy",
+      "cmd-v": "terminal::Paste",
+      "cmd-up": "terminal::ScrollLineUp",
+      "cmd-down": "terminal::ScrollLineDown",
+      "shift-pageup": "terminal::ScrollPageUp",
+      "shift-pagedown": "terminal::ScrollPageDown",
+    },
+  },
+  { "context": "ProjectPanel", "use_key_equivalents": true, "bindings": { "cmd-1": "workspace::CloseActiveDock" } },
+  // the Welcome window (spork_projects): Open…
+  { "context": "WelcomeScreen", "use_key_equivalents": true, "bindings": { "cmd-o": "workspace::Open", "cmd-shift-c": "projects::CopyProjectPath" } },
+  { "context": "DebugPanel", "use_key_equivalents": true, "bindings": { "cmd-5": "workspace::CloseActiveDock", "cmd-r": "debugger::RerunSession" } },
+  { "context": "RunPanel", "use_key_equivalents": true, "bindings": { "cmd-4": "workspace::CloseActiveDock", "cmd-r": "run::Rerun", "cmd-d": "run::SendEof" } },
+  // IntelliJ's F7 is Step Into, the default's Step Over while the program stops
+  { "context": "Workspace && debugger_stopped", "use_key_equivalents": true, "bindings": { "f7": "debugger::StepInto" } },
+  { "context": "ServicesPanel", "use_key_equivalents": true, "bindings": { "cmd-8": "workspace::CloseActiveDock", "ctrl-t": "services_panel::GroupServicesByType" } },
+  {
+    "context": "ProblemsPanel",
+    "use_key_equivalents": true,
+    "bindings": {
+      "cmd-6": "workspace::CloseActiveDock",
+      "cmd-c": "problems_panel::CopyProblemDescription", // IntelliJ: Copy Problem Description
+      "cmd-insert": "problems_panel::CopyProblemDescription",
+      "alt-enter": "problems_panel::ShowQuickFixes",
+      "cmd-down": "problems_panel::JumpToSource",
+      "f4": "problems_panel::JumpToSource",
+    },
+  },
+  { "context": "OutlinePanel", "use_key_equivalents": true, "bindings": { "cmd-7": "workspace::CloseActiveDock" } },
+  {
+    // `cmd-alt-l` is bound to `editor::Format` (jetbrains "Reformat Code") in
+    // the Editor context above, which collides with the default
+    // `agent::OpenRulesLibrary` binding. Mirror the windows keymap and use
+    // `shift-alt-l` instead so the menu hint and the action stay in sync.
+    "context": "AgentPanel",
+    "use_key_equivalents": true,
+    "bindings": {
+      "cmd-alt-l": null,
+      "shift-alt-l": "agent::OpenRulesLibrary",
+    },
+  },
+  {
+    "context": "Dock || Workspace || OutlinePanel || ProjectPanel || CollabPanel",
+    "use_key_equivalents": true,
+    "bindings": {
+      "escape": "editor::ToggleFocus",
+    },
+  },
+  {
+    "context": "Dock",
+    "use_key_equivalents": true,
+    "bindings": {
+      "cmd-\"": "workspace::ToggleZoom", // IntelliJ: Maximize Tool Window
+    },
+  },
+  {
+    "context": "Editor && mode == auto_height",
+    "use_key_equivalents": true,
+    "bindings": {
+      "escape": "editor::Cancel",
+    },
+  },
+  {
+    "context": "CallHierarchyPicker > Picker > Editor",
+    "use_key_equivalents": true,
+    "bindings": {
+      "cmd-k": null,
+    },
+  },
+  {
+    // IntelliJ's Search Everywhere: Tab and ⇧Tab through its tabs, over the field's and the lists' Tab
+    "context": "SearchEverywhere > Input",
+    "use_key_equivalents": true,
+    "bindings": {
+      "tab": "navigate::NextTab",
+      "shift-tab": "navigate::PreviousTab",
+    },
+  },
+  {
+    // Complete Command on the same ⇥, ahead of Next Tab: it lets the key go on when no `/` command
+    // is typed
+    "context": "SearchEverywhere > Input",
+    "use_key_equivalents": true,
+    "bindings": {
+      "tab": "navigate::CompleteCommand",
+    },
+  },
+  {
+    "context": "Picker > Editor",
+    "use_key_equivalents": true,
+    "bindings": {
+      "ctrl-n": "menu::SelectNext",
+      "ctrl-p": "menu::SelectPrevious",
+      "alt-up": "menu::SelectFirst",
+      "alt-down": "menu::SelectLast",
+    },
+  },
+  {
+    "context": "FileFinder > Picker > Editor",
+    "use_key_equivalents": true,
+    "bindings": {
+      "shift-enter": "menu::SecondaryConfirm", // IntelliJ: Open in Right Split
+    },
+  },
+  {
+    "context": "VariableList",
+    "use_key_equivalents": true,
+    "bindings": {
+      "f2": "variable_list::EditVariable",
+      "cmd-backspace": "variable_list::RemoveWatch",
+      "cmd-insert": "variable_list::CopyVariableValue",
+      "cmd-c": "variable_list::CopyVariableValue", // shown in menus over ⌘Insert
+    },
+  },
+  {
+    "context": "TableView",
+    "use_key_equivalents": true,
+    "bindings": {
+      "ctrl-n": ["tabular_data::MoveFocusedCell", { "direction": "down" }],
+      "ctrl-p": ["tabular_data::MoveFocusedCell", { "direction": "up" }],
+      "ctrl-f": ["tabular_data::MoveFocusedCell", { "direction": "right" }],
+      "ctrl-b": ["tabular_data::MoveFocusedCell", { "direction": "left" }],
+      "cmd-home": ["tabular_data::MoveFocusedCell", { "direction": "up", "unit": "edge" }],
+      "cmd-end": ["tabular_data::MoveFocusedCell", { "direction": "down", "unit": "edge" }],
+      "cmd-shift-home": ["tabular_data::ExtendSelection", { "direction": "up", "unit": "edge" }],
+      "cmd-shift-end": ["tabular_data::ExtendSelection", { "direction": "down", "unit": "edge" }],
+    },
+  },
+  {
+    "context": "ImageViewer",
+    "use_key_equivalents": true,
+    "bindings": {
+      "cmd-/": "image_viewer::ZoomToActualSize",
+    },
+  },
+  {
+    "context": "NotebookEditor",
+    "use_key_equivalents": true,
+    "bindings": {
+      "ctrl-enter": "notebook::Run",
+      "ctrl-alt-shift-enter": "notebook::RunAll",
+      "cmd-enter": "notebook::AddCodeBlock",
+    },
+  },
+  {
+    "context": "NotebookEditor && notebook_mode == command",
+    "use_key_equivalents": true,
+    "bindings": {
+      "b": "notebook::AddCodeBlock",
+      "delete": "notebook::DeleteCell",
+      "i i": "notebook::InterruptKernel",
+      "j": "menu::SelectNext",
+      "k": "menu::SelectPrevious",
+      "alt-j": "notebook::MoveCellDown",
+      "alt-k": "notebook::MoveCellUp",
+    },
+  },
+  {
+    "context": "NotebookEditor > Editor",
+    "use_key_equivalents": true,
+    "bindings": {
+      "shift-enter": "notebook::RunAndAdvance",
+      "ctrl-enter": "notebook::Run",
+      "ctrl-alt-shift-enter": "notebook::RunAll",
+      "cmd-enter": "notebook::AddCodeBlock",
+      "alt-j": "notebook::MoveCellDown",
+      "alt-k": "notebook::MoveCellUp",
+    },
+  },
+  {
+    // IntelliJ's code intelligence (spork_code): the Code and Refactor menus and code navigation, over the editing keys above
+    "context": "Editor && mode == full",
+    "use_key_equivalents": true,
+    "bindings": {
+      "cmd-alt-l": "code::ReformatCode",
+      "cmd-alt-shift-l": "code::ReformatFile",
+      "ctrl-alt-o": "code::OptimizeImports",
+      "cmd-n": "code::Generate",
+      "cmd-alt-t": "code::SurroundWith",
+      "cmd-shift-down": "code::MoveStatementDown",
+      "cmd-shift-up": "code::MoveStatementUp",
+      "ctrl-t": "code::RefactorThis",
+      "shift-f6": "code::Rename",
+      "cmd-f6": "code::ChangeSignature",
+      "cmd-alt-v": "code::IntroduceVariable",
+      "cmd-alt-c": "code::IntroduceConstant",
+      "cmd-alt-m": "code::ExtractMethod",
+      "cmd-alt-n": "code::Inline",
+      "cmd-b": "code::GotoDeclaration",
+      "cmd-alt-b": "code::GotoImplementation",
+      "ctrl-shift-b": "code::GotoTypeDeclaration",
+      "cmd-shift-b": "code::GotoTypeDeclaration",
+      "cmd-u": "code::GotoSuperMethod",
+      "cmd-alt-f7": "code::ShowUsages",
+      "alt-f7": "code::FindUsages",
+      "alt-space": "code::QuickDefinition",
+      "cmd-y": "code::QuickDefinition",
+      "ctrl-alt-h": "code::CallHierarchy",
+      "ctrl-h": "code::TypeHierarchy",
+      "cmd-shift-t": "code::GotoTest",
+      "ctrl-cmd-up": "code::GotoRelated",
+      // the navigation and tool window keys of the Workspace block, over the default's editing
+      // ones (F12 Go to Definition, ⌘↑ Move to Beginning…)
+      "f12": "tool_windows::JumpToLastToolWindow",
+      "shift-f12": "tool_windows::RestoreDefaultLayout",
+      "alt-cmd-down": "navigate::NextOccurrence",
+      "alt-cmd-up": "navigate::PreviousOccurrence",
+      "alt-f1": "navigate::SelectIn",
+      "cmd-up": "navigate::JumpToNavigationBar",
+      "alt-cmd-f12": "navigate::ShowFilePath",
+    },
+  },
+  {
+    // IntelliJ's Build menu (spork_java): Build Project and Rebuild, from anywhere in the window
+    "context": "Workspace",
+    "use_key_equivalents": true,
+    "bindings": {
+      "cmd-f9": "build::BuildProject",
+      "shift-cmd-f9": "build::Rebuild",
+    },
+  },
+  {
+    // IntelliJ's Override and Implement Methods (spork_java), over the default's editing keys
+    "context": "Editor && mode == full",
+    "use_key_equivalents": true,
+    "bindings": {
+      "ctrl-o": "java::OverrideMethods",
+      "ctrl-i": "java::ImplementMethods",
+    },
+  },
+  {
+    // IntelliJ's Recompile (spork_java): the Java file in the editor, over the window's Rebuild
+    "context": "Editor && extension == java",
+    "use_key_equivalents": true,
+    "bindings": {
+      "shift-cmd-f9": "build::Recompile",
+    },
+  },
+  {
+    // the Hierarchy tool window's Base on This Method (spork_code), Call Hierarchy's key
+    "context": "HierarchyPanel",
+    "use_key_equivalents": true,
+    "bindings": {
+      "ctrl-alt-h": "code::CallHierarchy",
+    },
+  },
+  {
+    // IntelliJ's Markdown styling keys, over the code keys above in Markdown files
+    "context": "Editor && extension == md",
+    "use_key_equivalents": true,
+    "bindings": {
+      "cmd-b": "spork_editor::ToggleBold",
+      "cmd-i": "spork_editor::ToggleItalic",
+      "cmd-shift-s": "spork_editor::ToggleStrikethrough",
+      "cmd-shift-c": "spork_editor::ToggleCodeSpan",
+      "cmd-shift-u": "spork_editor::CreateLink",
+      "cmd-u": "spork_editor::InsertImage", // over Go to Super Method
+    },
+  },
+]

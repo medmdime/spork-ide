@@ -1,0 +1,37 @@
+{
+ "id": "history-diff-file-history-actions",
+ "covers": [
+  "action:VcsHistory.ShowAllAffected"
+ ],
+ "reference-app": [],
+ "steps": [
+  {"do": "open", "what": "file-history", "path": "README.md"},
+  {"expect": {"selected": "docs: a second line"}, "of": {"do": "history"}},
+  {"do": "ui"},
+  {"wait": 500},
+  {"do": "click", "label": "docs: a second line"},
+  {"wait": 500},
+  {"do": "keys", "keys": "ctrl-cmd-a"},
+  {"expect": {"view": "CommitDiff", "log_selected": "docs: a second line", "commit_file": null}, "of": {"do": "history"}},
+  {"do": "open", "what": "file-history", "path": "README.md"},
+  {"expect": {"view": "File", "selected": "docs: a second line"}, "of": {"do": "history"}},
+  {"do": "click", "label": "docs: start the readme"},
+  {"wait": 500},
+  {"do": "keys", "keys": "cmd-d"},
+  {"expect": {"view": "CommitDiff", "log_selected": "docs: start the readme", "commit_file": "README.md"}, "of": {"do": "history"}},
+  {"do": "open", "what": "file-history", "path": "README.md"},
+  {"expect": {"view": "File", "selected": "docs: a second line"}, "of": {"do": "history"}},
+  {"do": "click", "label": "docs: start the readme", "button": "right"},
+  {"wait": 500},
+  {"do": "click", "label": "Show in VCS Log", "role": "AXMenuItem"},
+  {"wait": 500},
+  {"expect": {"view": "History", "log_selected": "docs: start the readme"}, "of": {"do": "history"}},
+  {"do": "open", "what": "file-history", "path": "README.md"},
+  {"expect": {"view": "File", "selected": "docs: a second line"}, "of": {"do": "history"}},
+  {"do": "click", "label": "docs: a second line", "button": "right"},
+  {"wait": 500},
+  {"do": "click", "label": "Fixup…", "role": "AXMenuItem"},
+  {"wait": 500},
+  {"expect": {"commit_message": "fixup! docs: a second line", "commit_window": true}, "of": {"do": "history"}}
+ ]
+}

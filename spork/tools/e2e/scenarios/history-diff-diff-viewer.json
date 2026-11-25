@@ -1,0 +1,44 @@
+{
+ "id": "history-diff-diff-viewer",
+ "covers": [
+  "context-menu:Diff.EditorPopupMenu",
+  "action:Diff.NextChange",
+  "action:Diff.PrevChange",
+  "action:Vcs.CombinedDiff.ToggleCollapseAllBlock"
+ ],
+ "reference-app": [
+  "screenshots/menus/diff-editorpopupmenu.png"
+ ],
+ "steps": [
+  {"do": "ui"},
+  {"do": "open", "what": "change", "path": "README.md"},
+  {"expect": {"view": "Changes", "change_file": "README.md"}, "of": {"do": "history"}},
+  {"do": "keys", "keys": "ctrl-shift-right"},
+  {"expect": {"change_file": "notes.txt"}, "of": {"do": "history"}},
+  {"do": "keys", "keys": "ctrl-shift-right"},
+  {"expect": {"change_file": "notes.txt"}, "of": {"do": "history"}},
+  {"do": "keys", "keys": "ctrl-shift-left"},
+  {"expect": {"change_file": "README.md"}, "of": {"do": "history"}},
+  {"wait": 800},
+  {"do": "ui"},
+  {"do": "click", "label": "Diff for README.md", "button": "right"},
+  {"wait": 500},
+  {"menu": "context-menu:Diff.EditorPopupMenu"},
+  {"shot": "editor-menu"},
+  {"do": "click", "label": "Annotate with Git Blame", "role": "AXMenuItem"},
+  {"wait": 500},
+  {"expect": {"view": "File", "file": "README.md", "mode": "annotate"}, "of": {"do": "history"}},
+  {"do": "open", "what": "file-history", "path": "README.md"},
+  {"expect": {"selected": "docs: a second line"}, "of": {"do": "history"}},
+  {"do": "ui"},
+  {"wait": 500},
+  {"do": "click", "label": "docs: a second line"},
+  {"wait": 500},
+  {"do": "keys", "keys": "ctrl-cmd-a"},
+  {"expect": {"view": "CommitDiff", "diff_files": ["README.md"], "collapsed_files": []}, "of": {"do": "history"}},
+  {"do": "action", "name": "diff::CollapseAllFiles"},
+  {"expect": {"collapsed_files": ["README.md"]}, "of": {"do": "history"}},
+  {"do": "action", "name": "diff::CollapseAllFiles"},
+  {"expect": {"collapsed_files": []}, "of": {"do": "history"}}
+ ]
+}

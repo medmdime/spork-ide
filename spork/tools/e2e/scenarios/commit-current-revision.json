@@ -1,0 +1,126 @@
+{
+ "id": "commit-current-revision",
+ "covers": [
+  "action:Show.Current.Revision"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "action",
+   "name": "spork::ToggleCommit"
+  },
+  {
+   "expect": {
+    "left": "[Commit, Project]"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXCheckBox"
+    }
+   ],
+   "within": 6000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "Expand All",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "notes.txt",
+     "role": "AXCheckBox"
+    }
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "notes.txt",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "find": [
+    {
+     "label": "Show Current Revision",
+     "role": "AXMenuItem",
+     "enabled": false
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "README.md",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "find": [
+    {
+     "label": "Show Current Revision",
+     "role": "AXMenuItem",
+     "enabled": true
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Show Current Revision",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "in": "Show Current Revision"
+    },
+    {
+     "label": "Current version is 1cf6d4493796fdf08f82986087fa34933dfa478e.",
+     "in": "Show Current Revision"
+    },
+    {
+     "label": "Modified by Ada Lovelace",
+     "in": "Show Current Revision"
+    },
+    {
+     "label": "docs: a second line",
+     "in": "Show Current Revision"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": [
+    {
+     "label": "Modified by Ada Lovelace"
+    }
+   ],
+   "absent": true
+  }
+ ]
+}

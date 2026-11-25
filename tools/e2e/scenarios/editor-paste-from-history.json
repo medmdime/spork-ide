@@ -1,0 +1,202 @@
+{
+ "id": "editor-paste-from-history",
+ "covers": [
+  "action:PasteMultiple"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "file": "src/paste.txt",
+   "text": "one\ntwo\nend\n"
+  },
+  {
+   "do": "open",
+   "path": "src/paste.txt"
+  },
+  {
+   "do": "action",
+   "name": "workspace::CloseAllDocks"
+  },
+  {
+   "expect": {
+    "active": "src/paste.txt",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home shift-end cmd-c down home shift-end cmd-c cmd-end"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-v"
+  },
+  {
+   "find": {
+    "label": "Choose Content to Paste"
+   },
+   "within": 5000
+  },
+  {
+   "find": [
+    {
+     "label": "two",
+     "in": "Choose Content to Paste"
+    },
+    {
+     "label": "one",
+     "in": "Choose Content to Paste"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "find": {
+    "label": "OK",
+    "role": "AXButton"
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "chooser"
+  },
+  {
+   "do": "keys",
+   "keys": "down enter"
+  },
+  {
+   "find": {
+    "label": "Choose Content to Paste"
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/paste.txt",
+   "is": "one|two|end|one|"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-v"
+  },
+  {
+   "find": [
+    {
+     "label": "one",
+     "in": "Choose Content to Paste"
+    },
+    {
+     "label": "two",
+     "in": "Choose Content to Paste"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "2"
+  },
+  {
+   "find": {
+    "label": "Choose Content to Paste"
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/paste.txt",
+   "is": "one|two|end|one|two|"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-v"
+  },
+  {
+   "find": {
+    "label": "two",
+    "in": "Choose Content to Paste"
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "delete"
+  },
+  {
+   "find": {
+    "label": "two",
+    "in": "Choose Content to Paste"
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": {
+    "label": "Choose Content to Paste"
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-v"
+  },
+  {
+   "find": {
+    "label": "one",
+    "in": "Choose Content to Paste"
+   },
+   "within": 5000
+  },
+  {
+   "find": {
+    "label": "two",
+    "in": "Choose Content to Paste"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Cancel",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Choose Content to Paste"
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/paste.txt",
+   "is": "one|two|end|one|two|"
+  }
+ ]
+}

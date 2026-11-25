@@ -1,0 +1,153 @@
+{
+ "id": "scrollbar-behaviour",
+ "covers": [],
+ "reference-app": [],
+ "steps": [
+  {
+   "file": "long.txt",
+   "text": "line 1 of a file long enough to scroll\nline 2 of a file long enough to scroll\nline 3 of a file long enough to scroll\nline 4 of a file long enough to scroll\nline 5 of a file long enough to scroll\nline 6 of a file long enough to scroll\nline 7 of a file long enough to scroll\nline 8 of a file long enough to scroll\nline 9 of a file long enough to scroll\nline 10 of a file long enough to scroll\nline 11 of a file long enough to scroll\nline 12 of a file long enough to scroll\nline 13 of a file long enough to scroll\nline 14 of a file long enough to scroll\nline 15 of a file long enough to scroll\nline 16 of a file long enough to scroll\nline 17 of a file long enough to scroll\nline 18 of a file long enough to scroll\nline 19 of a file long enough to scroll\nline 20 of a file long enough to scroll\nline 21 of a file long enough to scroll\nline 22 of a file long enough to scroll\nline 23 of a file long enough to scroll\nline 24 of a file long enough to scroll\nline 25 of a file long enough to scroll\nline 26 of a file long enough to scroll\nline 27 of a file long enough to scroll\nline 28 of a file long enough to scroll\nline 29 of a file long enough to scroll\nline 30 of a file long enough to scroll\nline 31 of a file long enough to scroll\nline 32 of a file long enough to scroll\nline 33 of a file long enough to scroll\nline 34 of a file long enough to scroll\nline 35 of a file long enough to scroll\nline 36 of a file long enough to scroll\nline 37 of a file long enough to scroll\nline 38 of a file long enough to scroll\nline 39 of a file long enough to scroll\nline 40 of a file long enough to scroll\nline 41 of a file long enough to scroll\nline 42 of a file long enough to scroll\nline 43 of a file long enough to scroll\nline 44 of a file long enough to scroll\nline 45 of a file long enough to scroll\nline 46 of a file long enough to scroll\nline 47 of a file long enough to scroll\nline 48 of a file long enough to scroll\nline 49 of a file long enough to scroll\nline 50 of a file long enough to scroll\nline 51 of a file long enough to scroll\nline 52 of a file long enough to scroll\nline 53 of a file long enough to scroll\nline 54 of a file long enough to scroll\nline 55 of a file long enough to scroll\nline 56 of a file long enough to scroll\nline 57 of a file long enough to scroll\nline 58 of a file long enough to scroll\nline 59 of a file long enough to scroll\nline 60 of a file long enough to scroll\nline 61 of a file long enough to scroll\nline 62 of a file long enough to scroll\nline 63 of a file long enough to scroll\nline 64 of a file long enough to scroll\nline 65 of a file long enough to scroll\nline 66 of a file long enough to scroll\nline 67 of a file long enough to scroll\nline 68 of a file long enough to scroll\nline 69 of a file long enough to scroll\nline 70 of a file long enough to scroll\nline 71 of a file long enough to scroll\nline 72 of a file long enough to scroll\nline 73 of a file long enough to scroll\nline 74 of a file long enough to scroll\nline 75 of a file long enough to scroll\nline 76 of a file long enough to scroll\nline 77 of a file long enough to scroll\nline 78 of a file long enough to scroll\nline 79 of a file long enough to scroll\nline 80 of a file long enough to scroll\nline 81 of a file long enough to scroll\nline 82 of a file long enough to scroll\nline 83 of a file long enough to scroll\nline 84 of a file long enough to scroll\nline 85 of a file long enough to scroll\nline 86 of a file long enough to scroll\nline 87 of a file long enough to scroll\nline 88 of a file long enough to scroll\nline 89 of a file long enough to scroll\nline 90 of a file long enough to scroll\nline 91 of a file long enough to scroll\nline 92 of a file long enough to scroll\nline 93 of a file long enough to scroll\nline 94 of a file long enough to scroll\nline 95 of a file long enough to scroll\nline 96 of a file long enough to scroll\nline 97 of a file long enough to scroll\nline 98 of a file long enough to scroll\nline 99 of a file long enough to scroll\nline 100 of a file long enough to scroll\nline 101 of a file long enough to scroll\nline 102 of a file long enough to scroll\nline 103 of a file long enough to scroll\nline 104 of a file long enough to scroll\nline 105 of a file long enough to scroll\nline 106 of a file long enough to scroll\nline 107 of a file long enough to scroll\nline 108 of a file long enough to scroll\nline 109 of a file long enough to scroll\nline 110 of a file long enough to scroll\nline 111 of a file long enough to scroll\nline 112 of a file long enough to scroll\nline 113 of a file long enough to scroll\nline 114 of a file long enough to scroll\nline 115 of a file long enough to scroll\nline 116 of a file long enough to scroll\nline 117 of a file long enough to scroll\nline 118 of a file long enough to scroll\nline 119 of a file long enough to scroll\nline 120 of a file long enough to scroll\nline 121 of a file long enough to scroll\nline 122 of a file long enough to scroll\nline 123 of a file long enough to scroll\nline 124 of a file long enough to scroll\nline 125 of a file long enough to scroll\nline 126 of a file long enough to scroll\nline 127 of a file long enough to scroll\nline 128 of a file long enough to scroll\nline 129 of a file long enough to scroll\nline 130 of a file long enough to scroll\nline 131 of a file long enough to scroll\nline 132 of a file long enough to scroll\nline 133 of a file long enough to scroll\nline 134 of a file long enough to scroll\nline 135 of a file long enough to scroll\nline 136 of a file long enough to scroll\nline 137 of a file long enough to scroll\nline 138 of a file long enough to scroll\nline 139 of a file long enough to scroll\nline 140 of a file long enough to scroll\nline 141 of a file long enough to scroll\nline 142 of a file long enough to scroll\nline 143 of a file long enough to scroll\nline 144 of a file long enough to scroll\nline 145 of a file long enough to scroll\nline 146 of a file long enough to scroll\nline 147 of a file long enough to scroll\nline 148 of a file long enough to scroll\nline 149 of a file long enough to scroll\nline 150 of a file long enough to scroll\nline 151 of a file long enough to scroll\nline 152 of a file long enough to scroll\nline 153 of a file long enough to scroll\nline 154 of a file long enough to scroll\nline 155 of a file long enough to scroll\nline 156 of a file long enough to scroll\nline 157 of a file long enough to scroll\nline 158 of a file long enough to scroll\nline 159 of a file long enough to scroll\nline 160 of a file long enough to scroll\nline 161 of a file long enough to scroll\nline 162 of a file long enough to scroll\nline 163 of a file long enough to scroll\nline 164 of a file long enough to scroll\nline 165 of a file long enough to scroll\nline 166 of a file long enough to scroll\nline 167 of a file long enough to scroll\nline 168 of a file long enough to scroll\nline 169 of a file long enough to scroll\nline 170 of a file long enough to scroll\nline 171 of a file long enough to scroll\nline 172 of a file long enough to scroll\nline 173 of a file long enough to scroll\nline 174 of a file long enough to scroll\nline 175 of a file long enough to scroll\nline 176 of a file long enough to scroll\nline 177 of a file long enough to scroll\nline 178 of a file long enough to scroll\nline 179 of a file long enough to scroll\nline 180 of a file long enough to scroll\nline 181 of a file long enough to scroll\nline 182 of a file long enough to scroll\nline 183 of a file long enough to scroll\nline 184 of a file long enough to scroll\nline 185 of a file long enough to scroll\nline 186 of a file long enough to scroll\nline 187 of a file long enough to scroll\nline 188 of a file long enough to scroll\nline 189 of a file long enough to scroll\nline 190 of a file long enough to scroll\nline 191 of a file long enough to scroll\nline 192 of a file long enough to scroll\nline 193 of a file long enough to scroll\nline 194 of a file long enough to scroll\nline 195 of a file long enough to scroll\nline 196 of a file long enough to scroll\nline 197 of a file long enough to scroll\nline 198 of a file long enough to scroll\nline 199 of a file long enough to scroll\nline 200 of a file long enough to scroll\n"
+  },
+  {
+   "do": "open",
+   "path": "long.txt"
+  },
+  {
+   "expect": {
+    "active": "long.txt"
+   }
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   }
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "expect": {
+    "opacity": 0.0,
+    "thumbs.0.axis": "vertical",
+    "thumbs.0.width": 6.0
+   },
+   "of": {
+    "do": "scrollbar",
+    "at": [
+     900,
+     450
+    ]
+   }
+  },
+  {
+   "do": "scroll",
+   "at": [
+    900,
+    450
+   ],
+   "by": [
+    0,
+    -100
+   ]
+  },
+  {
+   "expect": {
+    "opacity": 1.0,
+    "offset.1": -100.0
+   },
+   "of": {
+    "do": "scrollbar",
+    "at": [
+     900,
+     450
+    ]
+   },
+   "within": 2000
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "editor-scrolled"
+  },
+  {
+   "do": "click",
+   "at": [
+    1349,
+    120
+   ],
+   "hover": true
+  },
+  {
+   "expect": {
+    "thumbs.0.width": 8.0
+   },
+   "of": {
+    "do": "scrollbar",
+    "at": [
+     900,
+     450
+    ]
+   },
+   "within": 2000
+  },
+  {
+   "wait": 2500
+  },
+  {
+   "expect": {
+    "opacity": 1.0
+   },
+   "of": {
+    "do": "scrollbar",
+    "at": [
+     900,
+     450
+    ]
+   }
+  },
+  {
+   "do": "click",
+   "at": [
+    900,
+    450
+   ],
+   "hover": true
+  },
+  {
+   "expect": {
+    "thumbs.0.width": 6.0
+   },
+   "of": {
+    "do": "scrollbar",
+    "at": [
+     900,
+     450
+    ]
+   },
+   "within": 2000
+  },
+  {
+   "expect": {
+    "opacity": 0.0
+   },
+   "of": {
+    "do": "scrollbar",
+    "at": [
+     900,
+     450
+    ]
+   },
+   "within": 4000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "editor-faded"
+  }
+ ]
+}

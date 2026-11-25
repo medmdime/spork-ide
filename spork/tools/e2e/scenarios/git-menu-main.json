@@ -1,0 +1,50 @@
+{
+ "id": "git-menu-main",
+ "covers": [
+  "menu:VcsGroups",
+  "context-menu:Git.MainMenu"
+ ],
+ "reference-app": [
+  "screenshots/menus/git-mainmenu.png"
+ ],
+ "steps": [
+  {
+   "do": "menubar",
+   "path": ["Git"]
+  },
+  {
+   "menu": "context-menu:Git.MainMenu"
+  },
+  {
+   "do": "menubar",
+   "path": ["Git"]
+  },
+  {
+   "menu": "menu:VcsGroups",
+   "items": [
+    "Commit…",
+    "Push…",
+    "Update Project...",
+    "Pull…",
+    "Fetch",
+    "Merge…",
+    "Rebase…",
+    "Branches…",
+    "New Branch…",
+    "New Tag…",
+    "Reset HEAD…",
+    "New Worktree…",
+    "Worktrees…",
+    "Show Git Log",
+    "Patch ▸",
+    "Uncommitted Changes ▸",
+    "Current File ▸",
+    "GitLab ▸",
+    "GitHub ▸",
+    "Manage Remotes…",
+    "Clone…",
+    "VCS Operations Popup…"
+   ]
+  }
+ ]
+}

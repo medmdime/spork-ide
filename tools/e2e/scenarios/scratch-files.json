@@ -1,0 +1,132 @@
+{
+ "id": "scratch-files",
+ "covers": [
+  "action:NewScratchFile"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "find": {
+    "label": "src",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-n"
+  },
+  {
+   "find": [
+    "New Scratch File",
+    {
+     "label": "Plain text",
+     "role": "AXMenuItem"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 400
+  },
+  {
+   "shot": "language-popup"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "sh": "test -f ../home/.config/spork-ide/scratches/scratch.txt && echo ok",
+   "is": "ok",
+   "within": 8000
+  },
+  {
+   "expect": {
+    "items": [
+     "scratches/scratch.txt"
+    ]
+   },
+   "within": 8000
+  },
+  {
+   "find": [
+    {
+     "label": "fixture",
+     "role": "AXRow",
+     "in": "Project Panel"
+    },
+    {
+     "label": "Scratches and Consoles",
+     "role": "AXRow",
+     "in": "Project Panel"
+    },
+    {
+     "label": "Scratches",
+     "role": "AXRow",
+     "in": "Project Panel"
+    }
+   ],
+   "ordered": true,
+   "within": 8000
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "click",
+   "label": "Scratches",
+   "role": "AXRow",
+   "in": "Project Panel"
+  },
+  {
+   "find": {
+    "label": "scratch.txt",
+    "role": "AXRow",
+    "in": "Project Panel"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-n"
+  },
+  {
+   "find": "New Scratch File"
+  },
+  {
+   "do": "type",
+   "text": "json"
+  },
+  {
+   "find": {
+    "label": "Plain text",
+    "role": "AXMenuItem"
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "sh": "test -f ../home/.config/spork-ide/scratches/scratch.json && echo ok",
+   "is": "ok",
+   "within": 8000
+  },
+  {
+   "find": {
+    "label": "scratch.json",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 8000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "scratches-node"
+  }
+ ]
+}

@@ -1,0 +1,623 @@
+{
+ "id": "branches-branch-actions",
+ "covers": [
+  "action:GitUpdateSelectedBranchAction",
+  "action:Git.Checkout.Update",
+  "action:GitCheckoutAction",
+  "action:GitRebaseBranchAction",
+  "action:GitMergeRefAction",
+  "action:GitPullBranchAction$WithMerge",
+  "action:GitPullBranchAction$WithRebase",
+  "action:GitCheckoutWithRebaseAction"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "git": [
+    "-C",
+    "../repo-worktree",
+    "switch",
+    "-q",
+    "-c",
+    "tmp",
+    "fix/typo"
+   ]
+  },
+  {
+   "file": "../repo-worktree/up.txt",
+   "text": "1\n"
+  },
+  {
+   "git": [
+    "-C",
+    "../repo-worktree",
+    "add",
+    "up.txt"
+   ]
+  },
+  {
+   "git": [
+    "-C",
+    "../repo-worktree",
+    "commit",
+    "-q",
+    "-m",
+    "upstream1"
+   ]
+  },
+  {
+   "git": [
+    "-C",
+    "../repo-worktree",
+    "push",
+    "-q",
+    "origin",
+    "tmp:fix/typo"
+   ]
+  },
+  {
+   "git": [
+    "branch",
+    "--set-upstream-to=origin/fix/typo",
+    "fix/typo"
+   ]
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "find": {
+    "label": "fix/typo",
+    "role": "AXRow",
+    "in": "Branches Tree"
+   }
+  },
+  {
+   "do": "click",
+   "label": "fix/typo",
+   "role": "AXRow",
+   "in": "Branches Tree"
+  },
+  {
+   "find": {
+    "label": "Update",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Update",
+   "role": "AXMenuItem"
+  },
+  {
+   "git": [
+    "log",
+    "-1",
+    "--format=%s",
+    "fix/typo"
+   ],
+   "contains": "upstream1"
+  },
+  {
+   "git": [
+    "branch",
+    "--show-current"
+   ],
+   "contains": "main"
+  },
+  {
+   "file": "../repo-worktree/up.txt",
+   "text": "2\n"
+  },
+  {
+   "git": [
+    "-C",
+    "../repo-worktree",
+    "commit",
+    "-q",
+    "-a",
+    "-m",
+    "upstream2"
+   ]
+  },
+  {
+   "git": [
+    "-C",
+    "../repo-worktree",
+    "push",
+    "-q",
+    "origin",
+    "tmp:fix/typo"
+   ]
+  },
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "find": {
+    "label": "fix/typo",
+    "role": "AXRow",
+    "in": "Branches Tree"
+   }
+  },
+  {
+   "do": "click",
+   "label": "fix/typo",
+   "role": "AXRow",
+   "in": "Branches Tree"
+  },
+  {
+   "find": {
+    "label": "Checkout and Update",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Checkout and Update",
+   "role": "AXMenuItem"
+  },
+  {
+   "git": [
+    "branch",
+    "--show-current"
+   ],
+   "contains": "fix/typo"
+  },
+  {
+   "git": [
+    "log",
+    "-1",
+    "--format=%s"
+   ],
+   "contains": "upstream2"
+  },
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "find": {
+    "label": "main",
+    "role": "AXRow",
+    "in": "Branches Tree"
+   }
+  },
+  {
+   "do": "click",
+   "label": "main",
+   "role": "AXRow",
+   "in": "Branches Tree"
+  },
+  {
+   "find": {
+    "label": "Checkout",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Checkout",
+   "role": "AXMenuItem"
+  },
+  {
+   "git": [
+    "branch",
+    "--show-current"
+   ],
+   "contains": "main"
+  },
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "find": {
+    "label": "fix/typo",
+    "role": "AXRow",
+    "in": "Branches Tree"
+   }
+  },
+  {
+   "do": "click",
+   "label": "fix/typo",
+   "role": "AXRow",
+   "in": "Branches Tree"
+  },
+  {
+   "find": {
+    "label": "Checkout",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Checkout",
+   "role": "AXMenuItem"
+  },
+  {
+   "git": [
+    "branch",
+    "--show-current"
+   ],
+   "contains": "fix/typo"
+  },
+  {
+   "git": [
+    "-C",
+    "../repo-worktree",
+    "switch",
+    "-q",
+    "main"
+   ]
+  },
+  {
+   "file": "../repo-worktree/extra.txt",
+   "text": "extra\n"
+  },
+  {
+   "git": [
+    "-C",
+    "../repo-worktree",
+    "add",
+    "extra.txt"
+   ]
+  },
+  {
+   "git": [
+    "-C",
+    "../repo-worktree",
+    "commit",
+    "-q",
+    "-m",
+    "extra"
+   ]
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "find": {
+    "label": "main",
+    "role": "AXRow",
+    "in": "Branches Tree"
+   }
+  },
+  {
+   "do": "click",
+   "label": "main",
+   "role": "AXRow",
+   "in": "Branches Tree"
+  },
+  {
+   "find": {
+    "label": "Rebase 'fix/typo' onto 'main'",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Rebase 'fix/typo' onto 'main'",
+   "role": "AXMenuItem"
+  },
+  {
+   "git": [
+    "log",
+    "--format=%s",
+    "fix/typo"
+   ],
+   "contains": "extra"
+  },
+  {
+   "git": [
+    "status"
+   ],
+   "contains": "On branch fix/typo",
+   "lacks": "rebase"
+  },
+  {
+   "git": [
+    "-C",
+    "../repo-worktree",
+    "switch",
+    "-q",
+    "release/2026.1"
+   ]
+  },
+  {
+   "file": "../repo-worktree/side.txt",
+   "text": "side\n"
+  },
+  {
+   "git": [
+    "-C",
+    "../repo-worktree",
+    "add",
+    "side.txt"
+   ]
+  },
+  {
+   "git": [
+    "-C",
+    "../repo-worktree",
+    "commit",
+    "-q",
+    "-m",
+    "side"
+   ]
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "find": {
+    "label": "Search for branches and actions"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "r e l e a s e"
+  },
+  {
+   "find": {
+    "label": "release/2026.1",
+    "role": "AXRow",
+    "in": "Branches Tree"
+   }
+  },
+  {
+   "do": "click",
+   "label": "release/2026.1",
+   "role": "AXRow",
+   "in": "Branches Tree"
+  },
+  {
+   "find": {
+    "label": "Merge 'release/2026.1' into 'fix/typo'",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Merge 'release/2026.1' into 'fix/typo'",
+   "role": "AXMenuItem"
+  },
+  {
+   "git": [
+    "log",
+    "-1",
+    "--format=%s"
+   ],
+   "contains": "Merge branch 'release/2026.1'"
+  },
+  {
+   "file": "../repo-worktree/side.txt",
+   "text": "side2\n"
+  },
+  {
+   "git": [
+    "-C",
+    "../repo-worktree",
+    "commit",
+    "-q",
+    "-a",
+    "-m",
+    "side2"
+   ]
+  },
+  {
+   "git": [
+    "-C",
+    "../repo-worktree",
+    "push",
+    "-q",
+    "origin",
+    "release/2026.1:main"
+   ]
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "find": {
+    "label": "Search for branches and actions"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "o r i g i n / m a i n"
+  },
+  {
+   "find": {
+    "label": "origin/main",
+    "role": "AXRow",
+    "in": "Branches Tree"
+   }
+  },
+  {
+   "do": "click",
+   "label": "origin/main",
+   "role": "AXRow",
+   "in": "Branches Tree"
+  },
+  {
+   "find": {
+    "label": "Pull into 'fix/typo' Using Merge",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Pull into 'fix/typo' Using Merge",
+   "role": "AXMenuItem"
+  },
+  {
+   "git": [
+    "log",
+    "-1",
+    "--format=%s"
+   ],
+   "contains": "Merge branch 'main' of"
+  },
+  {
+   "git": [
+    "log",
+    "--format=%s",
+    "-n",
+    "30"
+   ],
+   "contains": "side2"
+  },
+  {
+   "file": "../repo-worktree/side.txt",
+   "text": "side3\n"
+  },
+  {
+   "git": [
+    "-C",
+    "../repo-worktree",
+    "commit",
+    "-q",
+    "-a",
+    "-m",
+    "side3"
+   ]
+  },
+  {
+   "git": [
+    "-C",
+    "../repo-worktree",
+    "push",
+    "-q",
+    "origin",
+    "release/2026.1:main"
+   ]
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "find": {
+    "label": "Search for branches and actions"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "o r i g i n / m a i n"
+  },
+  {
+   "find": {
+    "label": "origin/main",
+    "role": "AXRow",
+    "in": "Branches Tree"
+   }
+  },
+  {
+   "do": "click",
+   "label": "origin/main",
+   "role": "AXRow",
+   "in": "Branches Tree"
+  },
+  {
+   "find": {
+    "label": "Pull into 'fix/typo' Using Rebase",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Pull into 'fix/typo' Using Rebase",
+   "role": "AXMenuItem"
+  },
+  {
+   "git": [
+    "log",
+    "--format=%s",
+    "-n",
+    "30"
+   ],
+   "contains": "side3"
+  },
+  {
+   "git": [
+    "status"
+   ],
+   "contains": "On branch fix/typo",
+   "lacks": "rebase"
+  },
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "find": {
+    "label": "Search for branches and actions"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "l o g i n"
+  },
+  {
+   "find": {
+    "label": "feature/login",
+    "role": "AXRow",
+    "in": "Branches Tree"
+   }
+  },
+  {
+   "do": "click",
+   "label": "feature/login",
+   "role": "AXRow",
+   "in": "Branches Tree"
+  },
+  {
+   "find": {
+    "label": "Checkout and Rebase onto 'fix/typo'",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Checkout and Rebase onto 'fix/typo'",
+   "role": "AXMenuItem"
+  },
+  {
+   "git": [
+    "branch",
+    "--show-current"
+   ],
+   "contains": "feature/login"
+  },
+  {
+   "git": [
+    "log",
+    "--format=%s",
+    "-n",
+    "30"
+   ],
+   "contains": "side3"
+  }
+ ]
+}

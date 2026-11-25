@@ -1,0 +1,130 @@
+{
+ "id": "notifications-balloon-actions",
+ "covers": [],
+ "reference-app": [],
+ "steps": [
+  {
+   "find": {
+    "label": "Notifications",
+    "role": "AXButton"
+   },
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "spork::ToggleProject"
+  },
+  {
+   "expect": {
+    "left": "[]"
+   }
+  },
+  {
+   "do": "notify",
+   "type": "info",
+   "title": "Remote branches loaded",
+   "text": "Fetch the remotes now, or later from the Git menu.",
+   "sticky": true,
+   "actions": [
+    "Fetch",
+    "Later"
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "Fetch",
+     "role": "AXLink"
+    },
+    {
+     "label": "Later",
+     "role": "AXLink"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "find": {
+    "label": "More",
+    "role": "AXLink"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Later",
+   "role": "AXLink"
+  },
+  {
+   "expect": {
+    "balloons.0": null
+   },
+   "of": {
+    "do": "balloons"
+   }
+  },
+  {
+   "expect": {
+    "last_notification": "Ran Later"
+   },
+   "of": {
+    "do": "history"
+   }
+  },
+  {
+   "do": "notify",
+   "type": "warning",
+   "title": "Untracked files would be overwritten",
+   "text": "The checkout would overwrite untracked files of the working tree.",
+   "sticky": true,
+   "actions": [
+    "Show Files",
+    "Move Files Aside",
+    "Delete Files",
+    "Cancel Checkout"
+   ]
+  },
+  {
+   "find": {
+    "label": "More",
+    "role": "AXLink"
+   }
+  },
+  {
+   "find": {
+    "label": "Cancel Checkout",
+    "role": "AXLink"
+   },
+   "absent": true
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "more"
+  },
+  {
+   "do": "click",
+   "label": "More",
+   "role": "AXLink"
+  },
+  {
+   "find": {
+    "label": "Cancel Checkout"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Cancel Checkout"
+  },
+  {
+   "expect": {
+    "last_notification": "Ran Cancel Checkout"
+   },
+   "of": {
+    "do": "history"
+   }
+  }
+ ]
+}

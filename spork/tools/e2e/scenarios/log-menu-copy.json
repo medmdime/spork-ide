@@ -1,0 +1,58 @@
+{
+ "id": "log-menu-copy",
+ "covers": [
+  "action:Vcs.CopyRevisionNumberAction"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "find": {
+    "text": "docs: a second line",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "docs: a second line",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "find": {
+    "text": "Copy Revision Number",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Copy Revision Number",
+   "role": "AXMenuItem"
+  },
+  {
+   "sh": "test \"$(pbpaste)\" = \"$(git rev-parse main~1)\" && echo same",
+   "is": "same"
+  },
+  {
+   "wait": 600
+  },
+  {
+   "find": {
+    "text": "feat: an empty program",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "feat: an empty program",
+   "role": "AXRow"
+  },
+  {
+   "do": "keys",
+   "keys": "alt-shift-cmd-c"
+  },
+  {
+   "sh": "test \"$(pbpaste)\" = \"$(git rev-parse main~2)\" && echo same",
+   "is": "same"
+  }
+ ]
+}

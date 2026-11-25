@@ -1,0 +1,35 @@
+{
+ "id": "git-menu-local-changes",
+ "covers": [
+  "context-menu:Git.MainMenu.LocalChanges"
+ ],
+ "reference-app": [
+  "screenshots/menus/git-mainmenu-localchanges.png"
+ ],
+ "steps": [
+  {
+   "menu": "context-menu:Git.MainMenu.LocalChanges",
+   "path": ["Git", "Uncommitted Changes"]
+  },
+  {
+   "do": "git",
+   "args": ["stash", "push", "-q", "-m", "wip"]
+  },
+  {
+   "file": "README.md",
+   "text": "# Fixture\nchanged again\n"
+  },
+  {
+   "menu": "context-menu:Git.MainMenu.LocalChanges",
+   "path": ["Git", "Uncommitted Changes"],
+   "items": [
+    "Shelve Changes…",
+    "Show Shelf",
+    "Show Git Stash",
+    "Stash Changes…",
+    "Unstash Changes…",
+    "Rollback…"
+   ]
+  }
+ ]
+}

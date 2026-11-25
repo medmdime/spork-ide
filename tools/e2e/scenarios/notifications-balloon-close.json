@@ -1,0 +1,159 @@
+{
+ "id": "notifications-balloon-close",
+ "covers": [
+  "action:CloseFirstNotification",
+  "action:CloseAllNotifications"
+ ],
+ "steps": [
+  {
+   "toolbar": "Right stripe",
+   "items": [
+    "Notifications",
+    "AI Chat"
+   ],
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   },
+   "within": 3000
+  },
+  {
+   "menu": "menu:Notifications",
+   "path": [
+    "Window",
+    "Notifications"
+   ],
+   "items": [
+    "Close First (disabled)",
+    "Close All (disabled)"
+   ]
+  },
+  {
+   "do": "notify",
+   "type": "info",
+   "title": "Close me",
+   "text": "A balloon closes from its close button, which shows under the pointer.",
+   "sticky": true
+  },
+  {
+   "find": {
+    "label": "Close. ⌥click to close all notifications"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Close me",
+   "role": "AXGroup",
+   "hover": true
+  },
+  {
+   "find": [
+    {
+     "label": "Turn off or change behavior",
+     "in": "Close me"
+    },
+    {
+     "label": "Close. ⌥click to close all notifications",
+     "in": "Close me"
+    }
+   ],
+   "ordered": true,
+   "within": 3000
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "hover"
+  },
+  {
+   "do": "click",
+   "label": "Close. ⌥click to close all notifications",
+   "in": "Close me"
+  },
+  {
+   "expect": {
+    "notifications.balloons": [],
+    "notifications.count": 1
+   }
+  },
+  {
+   "do": "notify",
+   "type": "info",
+   "title": "One",
+   "text": "The first one.",
+   "sticky": true
+  },
+  {
+   "do": "notify",
+   "type": "info",
+   "title": "Two",
+   "text": "The second one.",
+   "sticky": true
+  },
+  {
+   "do": "notify",
+   "type": "info",
+   "title": "Three",
+   "text": "The third one.",
+   "sticky": true
+  },
+  {
+   "menu": "menu:Notifications",
+   "path": [
+    "Window",
+    "Notifications"
+   ],
+   "items": [
+    "Close First",
+    "Close All"
+   ]
+  },
+  {
+   "do": "action",
+   "name": "workspace::CloseFirstNotification"
+  },
+  {
+   "expect": {
+    "notifications.balloons": [
+     "Two",
+     "Three"
+    ]
+   }
+  },
+  {
+   "do": "click",
+   "label": "Two",
+   "role": "AXGroup",
+   "hover": true
+  },
+  {
+   "do": "click",
+   "label": "Close. ⌥click to close all notifications",
+   "in": "Two",
+   "modifiers": [
+    "alt"
+   ],
+   "within": 3000
+  },
+  {
+   "expect": {
+    "notifications.balloons": [],
+    "notifications.count": 4
+   }
+  }
+ ]
+}

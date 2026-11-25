@@ -1,0 +1,140 @@
+{
+ "id": "frame-notifications-tool-window",
+ "covers": [
+  "action:ActivateNotificationsToolWindow",
+  "action:ClearAllNotifications"
+ ],
+ "steps": [
+  {
+   "toolbar": "Right stripe",
+   "items": [
+    "Notifications",
+    "AI Chat"
+   ],
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Notifications",
+   "role": "AXCheckBox",
+   "in": "Right stripe"
+  },
+  {
+   "expect": {
+    "docks.right.open": true,
+    "docks.right.panel": "Notifications"
+   }
+  },
+  {
+   "find": [
+    {
+     "text": "Suggestions, events,"
+    },
+    {
+     "text": "and errors will appear here"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "Notifications",
+   "role": "AXCheckBox",
+   "in": "Right stripe"
+  },
+  {
+   "expect": {
+    "docks.right.open": false
+   }
+  },
+  {
+   "sh": "git checkout -q -b clash && printf '# Clash\\n' > README.md && git commit -qam 'docs: clash' && git checkout -q main && printf '# Main\\n' > README.md && git commit -qam 'docs: main' && (git merge clash > /dev/null 2>&1 || true) && test -f .git/MERGE_HEAD"
+  },
+  {
+   "find": {
+    "label": "Git",
+    "role": "AXCheckBox",
+    "in": "Left stripe"
+   },
+   "within": 10000
+  },
+  {
+   "menu": "menu:VcsGroups",
+   "path": [
+    "Git"
+   ],
+   "part": true,
+   "items": [
+    "Commit merge",
+    "Abort Merge"
+   ],
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "spork::AbortMerge"
+  },
+  {
+   "find": {
+    "label": "Abort",
+    "role": "AXButton"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Abort",
+   "role": "AXButton"
+  },
+  {
+   "sh": "test -f .git/MERGE_HEAD && echo merging || echo done",
+   "is": "done",
+   "within": 8000
+  },
+  {
+   "do": "action",
+   "name": "notifications_panel::ToggleFocus"
+  },
+  {
+   "expect": {
+    "docks.right.open": true,
+    "docks.right.panel": "Notifications"
+   }
+  },
+  {
+   "find": [
+    {
+     "text": "Timeline"
+    },
+    {
+     "label": "Clear all",
+     "role": "AXLink"
+    },
+    {
+     "label": "Aborted",
+     "in": "Notifications"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Clear all",
+   "role": "AXLink"
+  },
+  {
+   "find": {
+    "text": "Suggestions, events,"
+   },
+   "within": 3000
+  },
+  {
+   "find": {
+    "label": "Aborted",
+    "in": "Notifications"
+   },
+   "absent": true
+  }
+ ]
+}

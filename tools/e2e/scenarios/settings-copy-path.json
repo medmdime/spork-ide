@@ -1,0 +1,84 @@
+{
+ "id": "settings-copy-path",
+ "covers": [
+  "action:CopySettingsPath"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "keys",
+   "keys": "cmd-,"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture",
+    "settings.page": "Appearance & Behavior/Appearance"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "General",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Editor/General"
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "General",
+   "role": "AXRow",
+   "in": "Settings categories",
+   "button": "right"
+  },
+  {
+   "menu": "Copy Settings Path",
+   "items": [
+    "Copy Settings Path"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Copy Settings Path",
+   "role": "AXMenuItem"
+  },
+  {
+   "sh": "pbpaste",
+   "is": "Settings | Editor | General"
+  },
+  {
+   "do": "click",
+   "label": "Ensure every saved file ends with a line break",
+   "role": "AXCheckBox",
+   "button": "right"
+  },
+  {
+   "menu": "Copy Settings Path",
+   "items": [
+    "Copy Settings Path"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Copy Settings Path",
+   "role": "AXMenuItem"
+  },
+  {
+   "sh": "pbpaste",
+   "is": "Settings | Editor | General | Ensure every saved file ends with a line break"
+  },
+  {
+   "expect": {
+    "settings.page": "Editor/General",
+    "settings.apply": false
+   }
+  }
+ ]
+}

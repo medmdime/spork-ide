@@ -1,0 +1,227 @@
+{
+ "id": "toolbar-vcs-widget",
+ "covers": [
+  "toolbar:MainToolbarVCSGroup",
+  "action:main.toolbar.git.Branches"
+ ],
+ "reference-app": [
+  "screenshots/frame/main-window.jpg"
+ ],
+ "steps": [
+  {
+   "toolbar": "MainToolbarVCSGroup",
+   "items": [
+    "Update Project",
+    "Push…",
+    "Git Branch: main"
+   ],
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Git Branch: main",
+   "role": "AXButton",
+   "in": "Title bar"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "BranchesPopup",
+     "Input"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "farewell",
+    "role": "AXRow",
+    "in": "Branches Tree"
+   }
+  },
+  {
+   "wait": 600
+  },
+  {
+   "shot": "branches-popup"
+  },
+  {
+   "do": "click",
+   "label": "farewell",
+   "role": "AXRow",
+   "in": "Branches Tree"
+  },
+  {
+   "find": {
+    "label": "Checkout",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Checkout",
+   "role": "AXMenuItem"
+  },
+  {
+   "git": [
+    "branch",
+    "--show-current"
+   ],
+   "is": "farewell"
+  },
+  {
+   "find": {
+    "label": "Git Branch: farewell",
+    "role": "AXButton",
+    "in": "Title bar"
+   },
+   "within": 8000
+  },
+  {
+   "menu": "menu:VcsGroups",
+   "path": [
+    "Git"
+   ],
+   "items": [
+    "Branches…"
+   ],
+   "part": true
+  },
+  {
+   "do": "action",
+   "name": "spork::QuickCheckout"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "BranchesPopup",
+     "Input"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "main",
+    "role": "AXRow",
+    "in": "Branches Tree"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": {
+    "label": "Branches Tree"
+   },
+   "absent": true
+  },
+  {
+   "file": "conflict.txt",
+   "text": "base\n"
+  },
+  {
+   "git": [
+    "add",
+    "conflict.txt"
+   ]
+  },
+  {
+   "git": [
+    "commit",
+    "-q",
+    "-m",
+    "base"
+   ]
+  },
+  {
+   "git": [
+    "switch",
+    "-q",
+    "-c",
+    "other"
+   ]
+  },
+  {
+   "file": "conflict.txt",
+   "text": "other\n"
+  },
+  {
+   "git": [
+    "commit",
+    "-q",
+    "-am",
+    "other"
+   ]
+  },
+  {
+   "git": [
+    "switch",
+    "-q",
+    "farewell"
+   ]
+  },
+  {
+   "file": "conflict.txt",
+   "text": "mine\n"
+  },
+  {
+   "git": [
+    "commit",
+    "-q",
+    "-am",
+    "mine"
+   ]
+  },
+  {
+   "git": [
+    "merge",
+    "other"
+   ],
+   "contains": "CONFLICT"
+  },
+  {
+   "toolbar": "MainToolbarVCSGroup",
+   "items": [
+    "Update Project",
+    "Push…",
+    "Git Branch: farewell",
+    "Resolve Conflicts…",
+    "Commit merge",
+    "Abort Merge"
+   ],
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Abort Merge",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Abort",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "git": [
+    "status"
+   ],
+   "lacks": "unmerged paths"
+  },
+  {
+   "toolbar": "MainToolbarVCSGroup",
+   "items": [
+    "Update Project",
+    "Push…",
+    "Git Branch: farewell"
+   ],
+   "within": 8000
+  }
+ ]
+}

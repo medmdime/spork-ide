@@ -1,0 +1,66 @@
+{
+ "id": "branches-find-action",
+ "covers": [
+  "action:Git.ShowBranches",
+  "action:Git.Toolbar.ShowMoreActions"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "keys",
+   "keys": "cmd-shift-a"
+  },
+  {
+   "wait": 800
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "keys",
+   "keys": "s h o w space b r a n c h e s"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "branches_popup": true
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "expect": {
+    "branches_popup": false
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-a"
+  },
+  {
+   "wait": 800
+  },
+  {
+   "do": "keys",
+   "keys": "v e r s i o n space c o n t r o l"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "menu": "context-menu:Vcs.Operations.Popup"
+  }
+ ]
+}

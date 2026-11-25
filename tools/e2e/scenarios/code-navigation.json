@@ -1,0 +1,233 @@
+{
+ "id": "code-navigation",
+ "covers": [
+  "action:GotoDeclaration",
+  "action:GotoImplementation",
+  "action:GotoTypeDeclaration",
+  "action:GotoSuperMethod",
+  "action:QuickImplementations"
+ ],
+ "reference-app": [],
+ "settings": {
+  "enable_language_server": true,
+  "lsp": {
+   "rust-analyzer": {
+    "binary": {
+     "path": "$RUST_ANALYZER"
+    },
+    "initialization_options": {
+     "checkOnSave": false,
+     "cargo": {
+      "buildScripts": {
+       "enable": false
+      }
+     },
+     "procMacro": {
+      "enable": false
+     }
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "file": "src/greeter.rs",
+   "text": "pub trait Greet {\n    fn greet(&self) -> String;\n}\n\npub struct English;\npub struct French;\n\nimpl Greet for English {\n    fn greet(&self) -> String {\n        \"Hello\".into()\n    }\n}\n\nimpl Greet for French {\n    fn greet(&self) -> String {\n        \"Bonjour\".into()\n    }\n}\n"
+  },
+  {
+   "file": "src/main.rs",
+   "text": "mod greeter;\nmod greeting;\n\nuse greeter::Greet;\n\nfn main() {\n    let english = greeter::English;\n    println!(\"{} {}\", english.greet(), greeting::hello(\"world\"));\n}\n"
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "expect": {
+    "code.ready": true
+   },
+   "within": 120000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down down down down down down down right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-b"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   },
+   "within": 20000
+  },
+  {
+   "find": {
+    "label": "Line 1, column 8",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-b"
+  },
+  {
+   "find": {
+    "label": "Usages of hello",
+    "role": "AXWindow"
+   },
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down down down down down down down right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-alt-b"
+  },
+  {
+   "find": {
+    "label": "Choose Implementation of greet (2 found)",
+    "role": "AXMenu"
+   },
+   "within": 20000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "implementations"
+  },
+  {
+   "do": "keys",
+   "keys": "down enter"
+  },
+  {
+   "expect": {
+    "active": "src/greeter.rs"
+   },
+   "within": 10000
+  },
+  {
+   "find": {
+    "label": "Line 15, column 8",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-u"
+  },
+  {
+   "find": {
+    "label": "Line 2, column 8",
+    "role": "AXButton"
+   },
+   "within": 20000
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down down down down down down down down down down"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down down down down down down down right right right right right right right right right right right right right right right right right right right right right right right right right right"
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-shift-b"
+  },
+  {
+   "expect": {
+    "active": "src/greeter.rs"
+   },
+   "within": 20000
+  },
+  {
+   "find": {
+    "label": "Line 5, column 12",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down down down down down down down right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right right"
+  },
+  {
+   "do": "keys",
+   "keys": "alt-space"
+  },
+  {
+   "find": {
+    "label": "Definition of hello",
+    "role": "AXWindow"
+   },
+   "within": 20000
+  },
+  {
+   "find": {
+    "label": "greeting.rs:1",
+    "role": "AXStaticText"
+   }
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "quick-definition"
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  }
+ ]
+}

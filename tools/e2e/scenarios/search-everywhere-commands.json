@@ -1,0 +1,224 @@
+{
+ "id": "search-everywhere-commands",
+ "covers": [
+  "action:SearchEverywhere.CompleteCommand"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   },
+   "within": 3000
+  },
+  {
+   "do": "action",
+   "name": "navigate::SearchEverywhere"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "SearchEverywhere",
+     "Input"
+    ]
+   }
+  },
+  {
+   "do": "type",
+   "text": "/fi"
+  },
+  {
+   "find": {
+    "label": "/files",
+    "selected": true,
+    "in": "Search Everywhere"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "tab"
+  },
+  {
+   "find": {
+    "label": "Search Everywhere",
+    "role": "AXTextField",
+    "value": "/files "
+   }
+  },
+  {
+   "find": {
+    "label": "All",
+    "role": "AXRadioButton",
+    "value": "1",
+    "in": "Search Everywhere"
+   }
+  },
+  {
+   "find": {
+    "label": "main.rs",
+    "role": "AXStaticText",
+    "selected": true,
+    "in": "Search Everywhere"
+   }
+  },
+  {
+   "do": "type",
+   "text": "re"
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXStaticText",
+     "selected": true,
+     "in": "Search Everywhere"
+    },
+    {
+     "label": "greeting.rs",
+     "role": "AXStaticText",
+     "in": "Search Everywhere"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "find": {
+    "label": "Redo",
+    "role": "AXStaticText",
+    "in": "Search Everywhere"
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "tab"
+  },
+  {
+   "find": {
+    "label": "Classes",
+    "role": "AXRadioButton",
+    "value": "1",
+    "in": "Search Everywhere"
+   }
+  },
+  {
+   "find": {
+    "label": "Search Everywhere",
+    "role": "AXTextField",
+    "value": "/files re"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a backspace"
+  },
+  {
+   "do": "type",
+   "text": "/"
+  },
+  {
+   "find": [
+    {
+     "label": "/all",
+     "selected": true,
+     "in": "Search Everywhere"
+    },
+    {
+     "label": "/classes",
+     "in": "Search Everywhere"
+    },
+    {
+     "label": "/files",
+     "in": "Search Everywhere"
+    },
+    {
+     "label": "/symbols",
+     "in": "Search Everywhere"
+    },
+    {
+     "label": "/actions",
+     "in": "Search Everywhere"
+    },
+    {
+     "label": "/text",
+     "in": "Search Everywhere"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "commands"
+  },
+  {
+   "do": "keys",
+   "keys": "down down"
+  },
+  {
+   "find": {
+    "label": "/files",
+    "selected": true,
+    "in": "Search Everywhere"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "tab"
+  },
+  {
+   "find": {
+    "label": "Search Everywhere",
+    "role": "AXTextField",
+    "value": "/files "
+   }
+  },
+  {
+   "do": "type",
+   "text": "gre"
+  },
+  {
+   "find": {
+    "label": "greeting.rs",
+    "role": "AXStaticText",
+    "selected": true,
+    "in": "Search Everywhere"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  }
+ ]
+}

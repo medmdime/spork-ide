@@ -1,0 +1,40 @@
+{
+ "id": "log-menu-checkout",
+ "covers": [
+  "action:Git.CheckoutRevision"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "find": {
+    "text": "docs: a second line",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "docs: a second line",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "find": {
+    "text": "Checkout Revision",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Checkout Revision",
+   "role": "AXMenuItem"
+  },
+  {
+   "sh": "test \"$(git rev-parse HEAD)\" = \"$(git rev-parse main~1)\" && echo same",
+   "is": "same"
+  },
+  {
+   "sh": "git branch --show-current",
+   "is": ""
+  }
+ ]
+}

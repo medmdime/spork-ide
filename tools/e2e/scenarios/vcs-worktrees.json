@@ -1,0 +1,232 @@
+{
+ "id": "vcs-worktrees",
+ "covers": [
+  "action:Git.Show.WorkingTrees",
+  "toolbar:Git.WorkingTrees.ToolwindowGroup.Toolbar",
+  "context-menu:Git.WorkingTrees.ToolwindowGroup.Popup",
+  "action:Git.WorkingTrees.Open"
+ ],
+ "reference-app": [
+  "screenshots/menus/git-workingtrees-toolwindowgroup-toolbar.png",
+  "screenshots/menus/git-workingtrees-toolwindowgroup-popup.png"
+ ],
+ "steps": [
+  {
+   "find": [
+    {
+     "label": "Git",
+     "role": "AXCheckBox",
+     "in": "Left stripe"
+    }
+   ],
+   "within": 10000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "expect": {
+    "docks.bottom.open": false
+   }
+  },
+  {
+   "do": "action",
+   "name": "spork::ShowHistory"
+  },
+  {
+   "find": [
+    {
+     "label": "Log",
+     "role": "AXRadioButton",
+     "value": "1"
+    },
+    {
+     "label": "Console",
+     "role": "AXRadioButton",
+     "value": "0"
+    }
+   ],
+   "within": 8000
+  },
+  {
+   "find": {
+    "label": "Worktrees",
+    "role": "AXRadioButton"
+   },
+   "absent": true
+  },
+  {
+   "do": "action",
+   "name": "spork::ShowWorktrees"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "Git"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Log",
+     "role": "AXRadioButton",
+     "value": "0"
+    },
+    {
+     "label": "Console",
+     "role": "AXRadioButton",
+     "value": "0"
+    },
+    {
+     "label": "Worktrees",
+     "role": "AXRadioButton",
+     "value": "1"
+    }
+   ]
+  },
+  {
+   "toolbar": "Worktrees",
+   "items": [
+    "New Worktree…",
+    "Refresh",
+    "Delete… (disabled)",
+    "Prune (disabled)",
+    "Help"
+   ]
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   }
+  },
+  {
+   "do": "click",
+   "at": [
+    700,
+    300
+   ],
+   "hover": true
+  },
+  {
+   "wait": 800
+  },
+  {
+   "shot": "worktrees-tab"
+  },
+  {
+   "git": [
+    "worktree",
+    "add",
+    "-q",
+    "-b",
+    "fix/typo",
+    "../fixture-typo"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Refresh",
+   "in": "Worktrees"
+  },
+  {
+   "find": [
+    {
+     "text": "main",
+     "role": "AXRow",
+     "in": "Worktree List"
+    },
+    {
+     "text": "fix/typo",
+     "role": "AXRow",
+     "in": "Worktree List"
+    }
+   ],
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Console",
+   "role": "AXRadioButton"
+  },
+  {
+   "find": {
+    "label": "Worktrees",
+    "role": "AXRadioButton",
+    "value": "0"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Worktrees",
+   "role": "AXRadioButton"
+  },
+  {
+   "find": {
+    "text": "fix/typo",
+    "role": "AXRow",
+    "in": "Worktree List"
+   }
+  },
+  {
+   "do": "click",
+   "label": "fix/typo",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Worktree List"
+  },
+  {
+   "wait": 400
+  },
+  {
+   "menu": "context-menu:Git.WorkingTrees.ToolwindowGroup.Popup",
+   "items": [
+    "Open Worktree",
+    "Lock",
+    "Delete…"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Open Worktree",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "windows.1.title": "fixture-typo"
+   },
+   "within": 15000
+  },
+  {
+   "do": "click",
+   "label": "fix/typo",
+   "role": "AXRow",
+   "in": "Worktree List"
+  },
+  {
+   "toolbar": "Worktrees",
+   "items": [
+    "New Worktree…",
+    "Refresh",
+    "Delete…",
+    "Prune (disabled)",
+    "Help"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Close Tab",
+   "in": "Worktrees"
+  },
+  {
+   "find": {
+    "label": "Worktrees",
+    "role": "AXRadioButton"
+   },
+   "absent": true
+  }
+ ]
+}

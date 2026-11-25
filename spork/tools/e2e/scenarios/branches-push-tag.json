@@ -1,0 +1,20 @@
+{
+ "id": "branches-push-tag",
+ "covers": [
+  "action:Git.Tag.Push"
+ ],
+ "reference-app": [],
+ "steps": [
+  {"git": ["ls-remote", "--tags", "origin"], "lacks": "refs/tags/v1.0"},
+  {"do": "action", "name": "spork::SelectNextCommit"},
+  {"do": "action", "name": "spork::SelectNextCommit"},
+  {"expect": {"selected": 1}},
+  {"do": "action", "name": "spork::CommandPalette"},
+  {"expect": {"search_everywhere": true}},
+  {"wait": 500},
+  {"do": "keys", "keys": "p u s h space t a g"},
+  {"wait": 500},
+  {"do": "keys", "keys": "enter"},
+  {"git": ["ls-remote", "--tags", "origin"], "contains": "refs/tags/v1.0"}
+ ]
+}

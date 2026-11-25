@@ -1,0 +1,47 @@
+{
+ "id": "recent-projects-menu",
+ "covers": [],
+ "steps": [
+  {
+   "find": {
+    "label": "Git",
+    "role": "AXCheckBox",
+    "in": "Left stripe"
+   },
+   "within": 10000
+  },
+  {
+   "menu": "menu:$LRU",
+   "path": [
+    "File",
+    "Recent Projects"
+   ],
+   "items": [
+    "Manage Projects…"
+   ]
+  },
+  {
+   "wait": 5000
+  },
+  {
+   "sh": "mkdir -p ../other && echo notes > ../other/notes.md"
+  },
+  {
+   "do": "open_project",
+   "path": "$FIXTURE/../other",
+   "new_window": true
+  },
+  {
+   "menu": "menu:$LRU",
+   "path": [
+    "File",
+    "Recent Projects"
+   ],
+   "items": [
+    "fixture",
+    "Manage Projects…"
+   ],
+   "within": 10000
+  }
+ ]
+}

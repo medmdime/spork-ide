@@ -1,0 +1,137 @@
+{
+ "id": "settings-git",
+ "covers": [],
+ "reference-app": [],
+ "steps": [
+  {
+   "find": {
+    "label": "Git",
+    "role": "AXCheckBox",
+    "in": "Left stripe"
+   },
+   "within": 15000
+  },
+  {
+   "do": "action",
+   "name": "zed::OpenSettings"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "Version Control",
+   "role": "AXRow",
+   "in": "Settings categories",
+   "within": 8000
+  },
+  {
+   "find": {
+    "label": "Git",
+    "role": "AXRow",
+    "in": "Settings categories"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Git",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Version Control/Git",
+    "settings.apply": false
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Enable staging area",
+     "role": "AXCheckBox"
+    },
+    {
+     "label": "Warn if CRLF line separators are about to be committed",
+     "role": "AXCheckBox"
+    },
+    {
+     "label": "Show Push dialog for Commit and Push",
+     "role": "AXCheckBox"
+    }
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "git",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Enable staging area",
+   "role": "AXCheckBox"
+  },
+  {
+   "expect": {
+    "settings.apply": true,
+    "settings.modified": [
+     "Version Control/Git"
+    ]
+   }
+  },
+  {
+   "do": "click",
+   "label": "Cancel",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings": null
+   }
+  },
+  {
+   "sh": "cat ../home/.config/spork-ide/spork/settings.conf 2>/dev/null || true",
+   "lacks": "git.stagingArea"
+  },
+  {
+   "do": "action",
+   "name": "zed::OpenSettings"
+  },
+  {
+   "expect": {
+    "settings.page": "Version Control/Git"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "Enable staging area",
+   "role": "AXCheckBox",
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings": null
+   }
+  },
+  {
+   "sh": "cat ../home/.config/spork-ide/spork/settings.conf",
+   "contains": "git.stagingArea=true"
+  }
+ ]
+}

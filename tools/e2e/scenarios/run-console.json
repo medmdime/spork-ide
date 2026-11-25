@@ -1,0 +1,93 @@
+{
+ "id": "run-console",
+ "covers": [],
+ "reference-app": [],
+ "settings": {
+  "dap": {
+   "CodeLLDB": {
+    "binary": "/usr/bin/python3",
+    "args": [
+     "$E2E/dap_fixture.py"
+    ]
+   }
+  },
+  "languages": {
+   "JSON": {
+    "prettier": {
+     "allowed": false
+    }
+   },
+   "JSONC": {
+    "prettier": {
+     "allowed": false
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "sh": "mkdir -p .zed"
+  },
+  {
+   "file": ".zed/tasks.json",
+   "text": "[{\"label\": \"noisy\", \"command\": \"printf 'at src/main.rs:4\\\\n'; echo oops >&2; exit 3\"}]"
+  },
+  {
+   "do": "open",
+   "path": "README.md"
+  },
+  {
+   "find": {
+    "label": "noisy, Run / Debug Configurations",
+    "role": "AXButton"
+   },
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-r"
+  },
+  {
+   "expect": {
+    "docks.bottom.panel": "Run",
+    "run.tabs.0.last_line": "Process finished with exit code 3"
+   },
+   "within": 15000
+  },
+  {
+   "expect": {
+    "run.tabs.0.errors": [
+     "oops"
+    ]
+   }
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "console"
+  },
+  {
+   "do": "click",
+   "console_text": "src/main.rs:4",
+   "hover": true
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "console_text": "src/main.rs:4"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   },
+   "within": 5000
+  }
+ ]
+}

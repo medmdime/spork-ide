@@ -1,0 +1,524 @@
+{
+ "id": "find-in-files",
+ "covers": [
+  "action:FindInPath",
+  "action:ActivateFindToolWindow"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-f"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "FindInFiles",
+     "Input"
+    ]
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Find in Files",
+     "role": "AXWindow"
+    },
+    {
+     "label": "File mask:",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "Search",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Match Case",
+     "role": "AXButton"
+    },
+    {
+     "label": "Words",
+     "role": "AXButton"
+    },
+    {
+     "label": "Regex",
+     "role": "AXButton"
+    },
+    {
+     "label": "In Project",
+     "role": "AXRadioButton",
+     "selected": true
+    },
+    {
+     "label": "Module",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "Directory",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "Scope",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "Type search query to find in files"
+    },
+    {
+     "label": "Open results in new tab",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "Open in Find Window",
+     "role": "AXButton",
+     "enabled": false
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "keys",
+   "keys": "h e l l o"
+  },
+  {
+   "find": [
+    {
+     "label": "3 matches in 2 files",
+     "role": "AXStaticText"
+    },
+    {
+     "label": "pub fn hello(name: &str) -> String {",
+     "role": "AXStaticText",
+     "selected": true
+    },
+    {
+     "label": "greeting.rs 1",
+     "role": "AXStaticText"
+    },
+    {
+     "label": "format!(\"Hello, {name}!\")",
+     "role": "AXStaticText"
+    },
+    {
+     "label": "greeting.rs 2",
+     "role": "AXStaticText"
+    },
+    {
+     "label": "println!(\"{}\", greeting::hello(\"world\"));",
+     "role": "AXStaticText"
+    },
+    {
+     "label": "main.rs 4",
+     "role": "AXStaticText"
+    }
+   ],
+   "ordered": true,
+   "within": 8000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "find-in-files"
+  },
+  {
+   "do": "click",
+   "label": "Match Case",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "2 matches in 2 files",
+    "role": "AXStaticText"
+   },
+   "within": 8000
+  },
+  {
+   "find": {
+    "label": "format!(\"Hello, {name}!\")",
+    "role": "AXStaticText"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Directory",
+   "role": "AXRadioButton"
+  },
+  {
+   "find": [
+    {
+     "label": "Directory",
+     "role": "AXRadioButton",
+     "selected": true
+    },
+    {
+     "label": "Directory",
+     "role": "AXTextField",
+     "value": "src"
+    },
+    {
+     "label": "Recursively",
+     "role": "AXButton"
+    },
+    {
+     "label": "2 matches in 2 files",
+     "role": "AXStaticText"
+    }
+   ],
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "File mask:",
+   "role": "AXCheckBox"
+  },
+  {
+   "do": "click",
+   "label": "File mask",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "m a i n . r s"
+  },
+  {
+   "find": {
+    "label": "1 match in 1 file",
+    "role": "AXStaticText"
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "File mask:",
+   "role": "AXCheckBox"
+  },
+  {
+   "do": "click",
+   "label": "In Project",
+   "role": "AXRadioButton"
+  },
+  {
+   "find": {
+    "label": "2 matches in 2 files",
+    "role": "AXStaticText"
+   },
+   "within": 8000
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "find": {
+    "label": "println!(\"{}\", greeting::hello(\"world\"));",
+    "role": "AXStaticText",
+    "selected": true
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "find": {
+    "label": "Find in Files",
+    "role": "AXWindow"
+   },
+   "absent": true
+  },
+  {
+   "expect": {
+    "active": "src/main.rs",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 4, column 30",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-f"
+  },
+  {
+   "find": {
+    "label": "2 matches in 2 files",
+    "role": "AXStaticText"
+   },
+   "within": 8000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-enter"
+  },
+  {
+   "find": {
+    "label": "Find in Files",
+    "role": "AXWindow"
+   },
+   "absent": true
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "Find",
+    "focused": [
+     "Workspace",
+     "Dock",
+     "FindPanel"
+    ]
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Find",
+     "role": "AXCheckBox",
+     "value": "1",
+     "in": "Left stripe"
+    },
+    {
+     "label": "Occurrences of 'hello'",
+     "role": "AXRadioButton",
+     "value": "1"
+    },
+    {
+     "label": "Rerun",
+     "role": "AXButton",
+     "in": "Find Toolbar"
+    },
+    {
+     "label": "Previous Occurrence",
+     "role": "AXButton",
+     "in": "Find Toolbar"
+    },
+    {
+     "label": "Next Occurrence",
+     "role": "AXButton",
+     "in": "Find Toolbar"
+    },
+    {
+     "label": "Expand All",
+     "role": "AXButton",
+     "in": "Find Toolbar"
+    },
+    {
+     "label": "Collapse All",
+     "role": "AXButton",
+     "in": "Find Toolbar"
+    },
+    {
+     "label": "Preview Source",
+     "role": "AXButton",
+     "in": "Find Toolbar"
+    },
+    {
+     "label": "Found occurrences",
+     "role": "AXRow"
+    },
+    {
+     "label": "src",
+     "role": "AXRow",
+     "in": "Find Results"
+    },
+    {
+     "label": "greeting.rs",
+     "role": "AXRow",
+     "in": "Find Results"
+    },
+    {
+     "label": "pub fn hello(name: &str) -> String {",
+     "role": "AXRow",
+     "selected": true
+    },
+    {
+     "label": "main.rs",
+     "role": "AXRow",
+     "in": "Find Results"
+    },
+    {
+     "label": "println!(\"{}\", greeting::hello(\"world\"));",
+     "role": "AXRow"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "find-window"
+  },
+  {
+   "do": "click",
+   "label": "Collapse All",
+   "role": "AXButton",
+   "in": "Find Toolbar"
+  },
+  {
+   "find": {
+    "label": "src",
+    "role": "AXRow",
+    "in": "Find Results"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Expand All",
+   "role": "AXButton",
+   "in": "Find Toolbar"
+  },
+  {
+   "find": {
+    "label": "main.rs",
+    "role": "AXRow",
+    "in": "Find Results"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Next Occurrence",
+   "role": "AXButton",
+   "in": "Find Toolbar"
+  },
+  {
+   "find": {
+    "label": "pub fn hello(name: &str) -> String {",
+    "role": "AXRow",
+    "selected": true
+   }
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 1, column 8",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Next Occurrence",
+   "role": "AXButton",
+   "in": "Find Toolbar"
+  },
+  {
+   "find": {
+    "label": "println!(\"{}\", greeting::hello(\"world\"));",
+    "role": "AXRow",
+    "selected": true
+   }
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 4, column 30",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Previous Occurrence",
+   "role": "AXButton",
+   "in": "Find Toolbar"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "find": {
+    "label": "pub fn hello(name: &str) -> String {",
+    "role": "AXRow",
+    "selected": true
+   }
+  },
+  {
+   "file": "src/farewell.rs",
+   "text": "pub fn hello_again() {}\n"
+  },
+  {
+   "wait": 2000
+  },
+  {
+   "do": "click",
+   "label": "Rerun",
+   "role": "AXButton",
+   "in": "Find Toolbar"
+  },
+  {
+   "find": {
+    "label": "farewell.rs",
+    "role": "AXRow",
+    "in": "Find Results"
+   },
+   "within": 8000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-3"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-3"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Dock",
+     "FindPanel"
+    ]
+   }
+  },
+  {
+   "do": "click",
+   "label": "Close",
+   "role": "AXButton",
+   "in": "Occurrences of 'hello'"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": false
+   }
+  }
+ ]
+}

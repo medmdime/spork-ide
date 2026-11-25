@@ -1,0 +1,217 @@
+{
+ "id": "navigate-back-forward",
+ "covers": [
+  "action:Back",
+  "action:Forward",
+  "action:JumpToLastChange",
+  "action:JumpToNextChange"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "down down down"
+  },
+  {
+   "do": "keys",
+   "keys": "x"
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "do": "keys",
+   "keys": "y"
+  },
+  {
+   "do": "open",
+   "path": "README.md"
+  },
+  {
+   "expect": {
+    "active": "README.md"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-["
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-alt-left"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-]"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-alt-right"
+  },
+  {
+   "expect": {
+    "active": "README.md"
+   }
+  },
+  {
+   "find": {
+    "label": "README.md",
+    "role": "AXRadioButton",
+    "value": "1"
+   }
+  },
+  {
+   "do": "click",
+   "label": "README.md",
+   "role": "AXRadioButton",
+   "button": "back"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "find": {
+    "label": "greeting.rs",
+    "role": "AXRadioButton",
+    "value": "1"
+   }
+  },
+  {
+   "do": "click",
+   "label": "greeting.rs",
+   "role": "AXRadioButton",
+   "button": "forward"
+  },
+  {
+   "expect": {
+    "active": "README.md"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-1"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Dock",
+     "ProjectPanel"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-["
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-]"
+  },
+  {
+   "expect": {
+    "active": "README.md"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-backspace"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 2, column 2",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-backspace"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 4, column 2",
+    "role": "AXButton"
+   }
+  },
+  {
+   "menu": "Navigate",
+   "path": [
+    "Navigate"
+   ],
+   "items": [
+    "Last Edit Location",
+    "Next Edit Location"
+   ],
+   "part": true
+  },
+  {
+   "do": "action",
+   "name": "navigate::NextEditLocation"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::LastEditLocation"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  }
+ ]
+}

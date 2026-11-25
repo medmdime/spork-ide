@@ -1,0 +1,54 @@
+{
+ "id": "log-menu-drop",
+ "covers": [
+  "action:Git.Drop.Commits"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "sh": "git commit -q --allow-empty -m one && git commit -q --allow-empty -m two"
+  },
+  {
+   "find": {
+    "text": "one",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "one",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "find": {
+    "text": "Drop Commit",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Drop Commit",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "text": "Drop Commit",
+    "role": "AXGroup"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Drop",
+   "role": "AXButton"
+  },
+  {
+   "sh": "git log -2 --format=%s | tr '\\n' ,",
+   "is": "two,Merge branch 'feature/login',"
+  },
+  {
+   "sh": "git status --porcelain README.md",
+   "is": "M README.md"
+  }
+ ]
+}

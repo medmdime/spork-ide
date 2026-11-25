@@ -1,0 +1,658 @@
+{
+ "id": "settings-languages-tools",
+ "covers": [
+  "settings:Build Tools",
+  "settings:Languages & Frameworks",
+  "settings:Languages & Frameworks › Schemas and DTDs › Default XML Schemas",
+  "settings:Languages & Frameworks › Schemas and DTDs › XML Catalog",
+  "settings:Languages & Frameworks › Template Data Languages",
+  "settings:Tools › Startup Tasks",
+  "settings:Advanced Settings"
+ ],
+ "reference-app": [
+  "screenshots/settings/build-tools.jpg",
+  "screenshots/settings/languages-frameworks.jpg",
+  "screenshots/settings/languages-frameworks-schemas-and-dtds-default-xml-schemas.jpg",
+  "screenshots/settings/languages-frameworks-schemas-and-dtds-xml-catalog.jpg",
+  "screenshots/settings/languages-frameworks-template-data-languages.jpg",
+  "screenshots/settings/tools-startup-tasks.jpg",
+  "screenshots/settings/advanced-settings.jpg"
+ ],
+ "steps": [
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Build Tools"
+  },
+  {
+   "expect": {
+    "settings": "Build Tools"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Sync project after changes in the build scripts:",
+     "value": "1"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Any changes",
+     "value": "0"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "External changes",
+     "value": "1"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ]
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "build-tools",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Languages & Frameworks"
+  },
+  {
+   "expect": {
+    "settings": "Languages & Frameworks"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXLink",
+     "label": "Schemas and DTDs"
+    },
+    {
+     "role": "AXLink",
+     "label": "Template Data Languages"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ]
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "languages-frameworks",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Languages & Frameworks/Schemas and DTDs/Default XML Schemas"
+  },
+  {
+   "expect": {
+    "settings": "Languages & Frameworks/Schemas and DTDs/Default XML Schemas"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXRadioButton",
+     "label": "HTML 4 (\"http://www.w3.org/TR/html4/loose.dtd\")",
+     "value": "0"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "HTML 5",
+     "value": "1"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Other doctype:",
+     "value": "0"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "XML Schema 1.0",
+     "value": "1"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "XML Schema 1.1",
+     "value": "0"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ]
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "languages-frameworks-schemas-and-dtds-default-xml-schemas",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Languages & Frameworks/Schemas and DTDs/XML Catalog"
+  },
+  {
+   "expect": {
+    "settings": "Languages & Frameworks/Schemas and DTDs/XML Catalog"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ]
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "languages-frameworks-schemas-and-dtds-xml-catalog",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Languages & Frameworks/Template Data Languages"
+  },
+  {
+   "expect": {
+    "settings": "Languages & Frameworks/Template Data Languages"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ]
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "languages-frameworks-template-data-languages",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Tools/Startup Tasks"
+  },
+  {
+   "expect": {
+    "settings": "Tools/Startup Tasks"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ]
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "tools-startup-tasks",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Advanced Settings"
+  },
+  {
+   "expect": {
+    "settings": "Advanced Settings"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Show modified only",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Enable Islands UI for custom themes",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show only line bookmarks in popup",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Restore bookmark context on branch switching",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "All-in-one Diff for Code Reviews",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Keep increased margins for Diff threads",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show inlay Run to Cursor popup",
+     "value": "1"
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "As plain code"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Basic syntax highlighting of multiline code blocks",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Syntax highlighting of links on code elements",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Add background to inline and multiline code blocks",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show QuickDoc automatically during code completion in modal dialogs",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Use undo transparent caret movement",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Don't copy/cut the current line when invoking the Copy or Cut action with no selection",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Don't select the copied line after invoking the Copy action with no selection",
+     "value": "0"
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "Paste above the caret line"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Render special characters, such as control codes, using their Unicode name abbreviations",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show zoom indicator",
+     "value": "1"
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "Horizontal line"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Select whitespace characters with 'Extend Selection'",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Move caret down after Comment with Line Comment action",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Hide floating toolbar for code editing",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "When navigating to a file, prefer selecting existing tab in inactive split pane",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Open declaration source in the same tab",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Open declaration source called from a detached window in the main IDE window",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Perform 'Hide All Tool Windows' / 'Restore Windows' with double-click on editor tab",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Perform 'Maximize Editor' / 'Normalize Splits' with double-click on editor tab",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Equalize proportions in nested splits",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Keep pinned tabs on the left",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Enable similar usages clustering in Find Usages view",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show Home window when the last project is closed",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Increase font size in Project view",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Move focus to editor when Enter is pressed",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "When collapsing a node, also collapse all expanded nodes under it",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "When navigating to a library class, do not select it in the project tree",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Enable Scratches and Consoles in the Project view",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Confirm rerun with process termination",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Make configurations pinned by default",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Wait for all contributors to finish before showing results",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show notifications above search results",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show recent files at the top of results list",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show text search results in Search Everywhere",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Keep last selected search scope",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Open README.md file if there are no open files on the first project startup",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show a hint for suggested refactoring in the editor",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Typeahead",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Use 1.0 line spacing for alternative screen buffer (mc, vim, nano, etc.)",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Fill character background including line spacing",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Send Esc+CR on Shift+Enter",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Always show tool window header icons",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Allow dragging tool windows by header to move to another location",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Use native file chooser dialog on Windows/macOS",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show file type icon in IDE frame header",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Use words instead of symbols for macOS keyboard shortcuts",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Activate menu items on right mouse button release",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Cyclic scrolling in lists and trees",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Position mouse cursor on default button in dialogs",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Disable double modifier key shortcuts",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show settings in a non-modal dialog",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Open Diff as Editor Tab",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "All-in-One Diff",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Load file annotations from VCS when file is opened in editor",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Highlight ignored files",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Enable Commit tool window",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Toggle commit controls",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Automatically close the Commit tool window in Window/Float mode after committing",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Select all repositories with new commits for push",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Do not show a warning when force pushing",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Use modal commit interface for Git and Mercurial",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Recursively clone submodules in the project",
+     "value": "1"
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "Filters"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Use Safe Force Push",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Check for incoming and outgoing commits",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Automatically open the 'Update Info' tab after updating the project",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Do not run Git commit hooks",
+     "value": "0"
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "All projects"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show Git tab in Search Everywhere",
+     "value": "0"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "advanced-settings",
+   "window": "smallest"
+  }
+ ]
+}

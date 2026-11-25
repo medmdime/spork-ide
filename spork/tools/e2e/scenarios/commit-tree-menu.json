@@ -1,0 +1,144 @@
+{
+ "id": "commit-tree-menu",
+ "covers": [
+  "context-menu:Git.ContextMenu",
+  "context-menu:Git.FileActions"
+ ],
+ "reference-app": [
+  "screenshots/menus/changesviewpopupmenu.png",
+  "screenshots/menus/git-contextmenu.png",
+  "screenshots/menus/git-stage-tree-menu.png"
+ ],
+ "steps": [
+  {
+   "do": "action",
+   "name": "changes::UseStagingArea"
+  },
+  {
+   "do": "action",
+   "name": "spork::ToggleCommit"
+  },
+  {
+   "expect": {
+    "left": "[Commit, Project]"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXRow"
+    }
+   ],
+   "within": 6000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "Changes Tree",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "menu": "context-menu:Git.Stage.Tree.Menu"
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "action",
+   "name": "changes::UseChangelists"
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXCheckBox"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "Changes Tree",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "menu": "context-menu:Git.ContextMenu",
+   "part": true
+  },
+  {
+   "menu": "context-menu:Git.FileActions",
+   "part": true
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "open",
+   "what": "file-history",
+   "path": "README.md"
+  },
+  {
+   "expect": {
+    "view": "File"
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "Changes Tree",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "menu": "context-menu:ChangesViewPopupMenu"
+  },
+  {
+   "do": "click",
+   "label": "Shelve Changes…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXCheckBox",
+     "value": "1",
+     "in": "Shelve Changes"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Cancel",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "Shelve Changes",
+     "role": "AXButton"
+    }
+   ],
+   "absent": true
+  }
+ ]
+}

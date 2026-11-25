@@ -1,0 +1,102 @@
+{
+ "id": "vcs-diff-navigation",
+ "covers": [
+  "action:NextDiff",
+  "action:PreviousDiff",
+  "action:CloseDiffEditor"
+ ],
+ "steps": [
+  {
+   "sh": "seq 1 600 > numbers.txt && git add numbers.txt && git commit -q -m 'chore: count' && perl -pi -e 's/^(25|125|225|325|425|525)$/changed $1/' numbers.txt"
+  },
+  {
+   "find": {
+    "label": "Commit",
+    "role": "AXCheckBox",
+    "in": "Left stripe"
+   },
+   "within": 10000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-0"
+  },
+  {
+   "find": {
+    "label": "numbers.txt",
+    "role": "AXCheckBox"
+   },
+   "within": 8000
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-d"
+  },
+  {
+   "expect": {
+    "active": "Commit: numbers.txt"
+   },
+   "within": 8000
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "do": "keys",
+   "keys": "f7"
+  },
+  {
+   "expect": {
+    "vcs.diff_top": "numbers.txt:25"
+   },
+   "within": 3000
+  },
+  {
+   "do": "keys",
+   "keys": "f7"
+  },
+  {
+   "expect": {
+    "vcs.diff_top": "numbers.txt:125"
+   },
+   "within": 3000
+  },
+  {
+   "do": "keys",
+   "keys": "f7"
+  },
+  {
+   "expect": {
+    "vcs.diff_top": "numbers.txt:225"
+   },
+   "within": 3000
+  },
+  {
+   "do": "keys",
+   "keys": "shift-f7"
+  },
+  {
+   "expect": {
+    "vcs.diff_top": "numbers.txt:125"
+   },
+   "within": 3000
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "expect": {
+    "active": null
+   },
+   "within": 3000
+  }
+ ]
+}

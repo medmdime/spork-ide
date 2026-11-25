@@ -1,0 +1,247 @@
+{
+ "id": "editor-inspection-widget",
+ "covers": [
+  "action:GotoNextError",
+  "action:GotoPreviousError"
+ ],
+ "reference-app": [],
+ "settings": {
+  "enable_language_server": true,
+  "lsp": {
+   "rust-analyzer": {
+    "binary": {
+     "path": "$RUST_ANALYZER"
+    },
+    "initialization_options": {
+     "checkOnSave": false,
+     "cargo": {
+      "buildScripts": {
+       "enable": false
+      }
+     },
+     "procMacro": {
+      "enable": false
+     }
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "file": "src/main.rs",
+   "text": "mod greeting;\n\nfn main() {\n    let Count = 1;\n    let total: u32 = \"three\";\n    println!(\"{Count} {total} {}\", greeting::hello(\"world\"));\n}\n\n#[cfg(any())]\nfn inactive() {}\n"
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "1 error, 1 warning, 1 weak warning",
+    "role": "AXButton"
+   },
+   "within": 90000
+  },
+  {
+   "find": [
+    {
+     "label": "Previous Highlighted Error",
+     "role": "AXButton"
+    },
+    {
+     "label": "Next Highlighted Error",
+     "role": "AXButton"
+    }
+   ]
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "problems"
+  },
+  {
+   "do": "keys",
+   "keys": "f2"
+  },
+  {
+   "find": {
+    "label": "Line 5, column 22",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "f2"
+  },
+  {
+   "find": {
+    "label": "Line 5, column 22",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home"
+  },
+  {
+   "do": "click",
+   "label": "Next Highlighted Error",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Line 5, column 22",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home"
+  },
+  {
+   "do": "click",
+   "label": "Previous Highlighted Error",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Line 5, column 22",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home"
+  },
+  {
+   "do": "click",
+   "label": "Next Highlighted Error",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Line 5, column 22",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "click",
+   "label": "1 error, 1 warning, 1 weak warning",
+   "role": "AXButton",
+   "hover": true
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "tooltip"
+  },
+  {
+   "do": "keys",
+   "keys": "escape cmd-shift-right"
+  },
+  {
+   "do": "type",
+   "text": "3;"
+  },
+  {
+   "find": {
+    "label": "1 warning, 1 weak warning",
+    "role": "AXButton"
+   },
+   "within": 30000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home f2"
+  },
+  {
+   "find": {
+    "label": "Line 4, column 9",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home shift-f2"
+  },
+  {
+   "find": {
+    "label": "Line 4, column 9",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-g ctrl-g"
+  },
+  {
+   "do": "type",
+   "text": "count"
+  },
+  {
+   "find": {
+    "label": "1 weak warning",
+    "role": "AXButton"
+   },
+   "within": 30000
+  },
+  {
+   "do": "keys",
+   "keys": "escape cmd-home f2"
+  },
+  {
+   "find": {
+    "label": "Line 9, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-backspace cmd-backspace"
+  },
+  {
+   "find": {
+    "label": "No problems found",
+    "role": "AXButton"
+   },
+   "within": 30000
+  },
+  {
+   "find": {
+    "label": "Next Highlighted Error",
+    "role": "AXButton"
+   },
+   "absent": true
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "no-problems"
+  },
+  {
+   "do": "click",
+   "label": "No problems found",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "Problems"
+   },
+   "within": 3000
+  }
+ ]
+}

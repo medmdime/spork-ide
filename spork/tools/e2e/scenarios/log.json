@@ -1,0 +1,23 @@
+{
+ "id": "log",
+ "covers": [
+  "window:main window"
+ ],
+ "reference-app": [
+  "screenshots/frame/main-window.jpg"
+ ],
+ "steps": [
+  {
+   "expect": {
+    "view": "History",
+    "commits": 7
+   }
+  },
+  {
+   "wait": 800
+  },
+  {
+   "shot": "log"
+  }
+ ]
+}

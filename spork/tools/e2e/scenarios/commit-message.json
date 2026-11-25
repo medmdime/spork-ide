@@ -1,0 +1,167 @@
+{
+ "id": "commit-message",
+ "covers": [
+  "action:CheckinProject",
+  "toolbar:ChangesView.CommitToolbar",
+  "action:Vcs.ToggleAmendCommitMode",
+  "action:Vcs.ShowMessageHistory",
+  "action:Git.Commit.And.Push.Executor"
+ ],
+ "reference-app": [
+  "screenshots/toolwindows/commit.jpg"
+ ],
+ "steps": [
+  {
+   "do": "keys",
+   "keys": "cmd-k"
+  },
+  {
+   "expect": {
+    "left": "[Commit, Project]"
+   }
+  },
+  {
+   "toolbar": "ChangesView.CommitToolbar",
+   "items": [
+    "Amend",
+    "last commit",
+    "Commit Message History"
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "Amend",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "Commit",
+     "role": "AXButton"
+    },
+    {
+     "label": "Commit and Push…",
+     "role": "AXButton"
+    },
+    {
+     "label": "Show Commit Options",
+     "role": "AXButton"
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-alt-m"
+  },
+  {
+   "find": [
+    {
+     "label": "Amend",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "Amend Commit",
+     "role": "AXButton"
+    },
+    {
+     "role": "AXTextArea",
+     "value": "Merge branch 'feature/login'"
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-alt-m"
+  },
+  {
+   "find": [
+    {
+     "label": "Amend",
+     "role": "AXCheckBox",
+     "value": "0"
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-m"
+  },
+  {
+   "find": [
+    {
+     "label": "Commit Message History",
+     "role": "AXTextField"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "docs: a second line",
+   "role": "AXStaticText"
+  },
+  {
+   "find": [
+    {
+     "role": "AXTextArea",
+     "value": "docs: a second line"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "README.md",
+   "role": "AXCheckBox"
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXCheckBox",
+     "value": "1"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "alt-cmd-k"
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXCheckBox"
+    }
+   ],
+   "absent": true,
+   "within": 8000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "find": {
+    "label": "main → origin : main",
+    "role": "AXRow"
+   },
+   "within": 5000
+  },
+  {
+   "find": {
+    "label": "Push",
+    "role": "AXButton",
+    "enabled": true
+   }
+  },
+  {
+   "do": "click",
+   "label": "Push",
+   "role": "AXButton"
+  },
+  {
+   "sh": "test \"$(git log -1 --format=%s)\" = 'docs: a second line' && test \"$(git rev-parse HEAD)\" = \"$(git rev-parse origin/main)\" && echo pushed",
+   "is": "pushed"
+  }
+ ]
+}

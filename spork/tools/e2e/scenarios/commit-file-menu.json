@@ -1,0 +1,297 @@
+{
+ "id": "commit-file-menu",
+ "covers": [
+  "context-menu:ChangesViewPopupMenu",
+  "context-menu:ChangesViewPopupMenuShared",
+  "action:CheckinFiles",
+  "action:Git.Add",
+  "action:ChangesView.AddUnversioned",
+  "action:Compare.SameVersion",
+  "action:Vcs.ShowTabbedFileHistory",
+  "action:Git.CompareWithBranch"
+ ],
+ "reference-app": [
+  "screenshots/menus/changesviewpopupmenu.png"
+ ],
+ "steps": [
+  {
+   "sh": "echo other > other.txt"
+  },
+  {
+   "do": "action",
+   "name": "spork::ToggleCommit"
+  },
+  {
+   "expect": {
+    "left": "[Commit, Project]"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXCheckBox"
+    }
+   ]
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "README.md",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "menu": "context-menu:ChangesViewPopupMenu",
+   "items": [
+    "Commit File…",
+    "Rollback…",
+    "Show Diff",
+    "Jump to Source",
+    "Copy Path/Reference… ▸",
+    "Delete…",
+    "Add to VCS (disabled)",
+    "Create Patch from Local Changes…",
+    "Copy as Patch to Clipboard",
+    "Shelve Changes…",
+    "Refresh",
+    "Commit File…",
+    "Add",
+    "Show Diff",
+    "Compare with Revision…",
+    "Compare with Branch or Tag…",
+    "Show History",
+    "Show Current Revision",
+    "Rollback…"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Show Diff",
+   "role": "AXMenuItem",
+   "nth": 1
+  },
+  {
+   "expect": {
+    "view": "Changes"
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "README.md",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "find": [
+    {
+     "label": "Show History",
+     "role": "AXMenuItem"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Show History",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "view": "File"
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "README.md",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "find": [
+    {
+     "label": "Compare with Branch or Tag…",
+     "role": "AXMenuItem"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Compare with Branch or Tag…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "Search for branches and tags",
+     "role": "AXTextField"
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "o r i g i n / m a i n"
+  },
+  {
+   "find": {
+    "label": "origin/main",
+    "role": "AXRow",
+    "in": "Branches Tree"
+   }
+  },
+  {
+   "do": "click",
+   "label": "origin/main",
+   "role": "AXRow",
+   "in": "Branches Tree"
+  },
+  {
+   "expect": {
+    "view": "Changes"
+   }
+  },
+  {
+   "wait": 800
+  },
+  {
+   "do": "click",
+   "label": "README.md"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "README.md",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "find": [
+    {
+     "label": "Commit File…",
+     "role": "AXMenuItem"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Commit File…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXCheckBox",
+     "value": "1"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "sh": "git diff --cached --name-only | grep -qx README.md"
+  },
+  {
+   "do": "click",
+   "label": "Unversioned Files"
+  },
+  {
+   "find": [
+    {
+     "label": "notes.txt",
+     "role": "AXCheckBox"
+    }
+   ]
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "notes.txt",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "find": [
+    {
+     "label": "Add",
+     "role": "AXMenuItem"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Add",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "notes.txt",
+     "role": "AXCheckBox",
+     "value": "1"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "sh": "git diff --cached --name-only | grep -qx notes.txt"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "other.txt",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "find": [
+    {
+     "label": "Add to VCS",
+     "role": "AXMenuItem"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Add to VCS",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "other.txt",
+     "role": "AXCheckBox",
+     "value": "1"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "sh": "git diff --cached --name-only | grep -qx other.txt"
+  }
+ ]
+}

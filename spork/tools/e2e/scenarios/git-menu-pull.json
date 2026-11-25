@@ -1,0 +1,100 @@
+{
+ "id": "git-menu-pull",
+ "covers": [
+  "action:Git.Pull",
+  "dialog:Git.Pull"
+ ],
+ "reference-app": [
+  "screenshots/dialogs/git-pull.png"
+ ],
+ "steps": [
+  {
+   "git": [
+    "push",
+    "-q",
+    "origin",
+    "fix/typo:main"
+   ]
+  },
+  {
+   "do": "action",
+   "name": "spork::GitPull"
+  },
+  {
+   "find": [
+    {
+     "text": "Pull to main"
+    },
+    {
+     "text": "git pull"
+    },
+    {
+     "text": "origin"
+    },
+    {
+     "text": "main"
+    },
+    {
+     "text": "Show help contents"
+    },
+    {
+     "text": "Modify options"
+    },
+    {
+     "text": "Cancel"
+    },
+    {
+     "text": "Pull"
+    }
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "open"
+  },
+  {
+   "do": "click",
+   "label": "Modify options"
+  },
+  {
+   "menu": "dialog:Git.Pull",
+   "items": [
+    "Add Pull Options (disabled)",
+    "--rebase  Rebase the current branch on top of incoming changes",
+    "--ff-only  Merge only if it can be fast-forwarded",
+    "--no-ff  Create a merge commit even if it can be fast-forwarded",
+    "--squash  Create a single commit for all pulled changes",
+    "--no-commit  Merge, but do not commit the result",
+    "--no-verify  Bypass the pre-merge and commit message hooks"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "--ff-only  Merge only if it can be fast-forwarded"
+  },
+  {
+   "find": [
+    {
+     "text": "--ff-only",
+     "role": "AXButton"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Pull",
+   "role": "AXButton"
+  },
+  {
+   "git": [
+    "log",
+    "-1",
+    "--format=%s",
+    "main"
+   ],
+   "is": "fix: a typo"
+  }
+ ]
+}

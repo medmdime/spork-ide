@@ -1,0 +1,153 @@
+{
+ "id": "code-menus",
+ "covers": [],
+ "reference-app": [],
+ "settings": {
+  "enable_language_server": true,
+  "lsp": {
+   "rust-analyzer": {
+    "binary": {
+     "path": "$RUST_ANALYZER"
+    },
+    "initialization_options": {
+     "checkOnSave": false,
+     "cargo": {
+      "buildScripts": {
+       "enable": false
+      }
+     },
+     "procMacro": {
+      "enable": false
+     }
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "expect": {
+    "code.ready": true
+   },
+   "within": 120000
+  },
+  {
+   "menu": "menu:CodeMenu",
+   "path": [
+    "Code"
+   ],
+   "items": [
+    "Override Methods… (disabled)",
+    "Implement Methods… (disabled)",
+    "Delegate Methods… (disabled)",
+    "Generate…",
+    "Code Completion",
+    "Inspect Code…",
+    "Surround With…",
+    "Folding",
+    "Comment with Line Comment",
+    "Comment with Block Comment",
+    "Reformat Code",
+    "Reformat File…",
+    "Auto-Indent Lines",
+    "Optimize Imports (disabled)",
+    "Move Statement Down",
+    "Move Statement Up",
+    "Move Line Down",
+    "Move Line Up"
+   ]
+  },
+  {
+   "menu": "menu:RefactoringMenu",
+   "path": [
+    "Refactor"
+   ],
+   "items": [
+    "Refactor This…",
+    "Rename…",
+    "Rename File…",
+    "Change Signature… (disabled)",
+    "Extract/Introduce",
+    "Inline…",
+    "Copy…"
+   ]
+  },
+  {
+   "menu": "menu:RefactoringMenu ▸ Extract/Introduce",
+   "path": [
+    "Refactor",
+    "Extract/Introduce"
+   ],
+   "items": [
+    "Introduce Variable…",
+    "Introduce Constant…",
+    "Extract Method…"
+   ]
+  },
+  {
+   "menu": "menu:GoToMenu",
+   "path": [
+    "Navigate"
+   ],
+   "items": [
+    "Back",
+    "Forward",
+    "Search Everywhere",
+    "Class…",
+    "File…",
+    "Symbol…",
+    "Text…",
+    "Line:Column…",
+    "Next Highlighted Error",
+    "Previous Highlighted Error",
+    "Last Edit Location",
+    "Next Edit Location",
+    "Navigate in File",
+    "Select In…",
+    "Jump to Navigation Bar",
+    "Declaration or Usages",
+    "Implementation(s)",
+    "Type Declaration",
+    "Super Method",
+    "Test",
+    "Related Symbol…",
+    "File Structure",
+    "File Path",
+    "Type Hierarchy (disabled)",
+    "Call Hierarchy",
+    "Previous Occurrence",
+    "Next Occurrence"
+   ]
+  },
+  {
+   "menu": "menu:EditMenu ▸ Find Usages",
+   "path": [
+    "Edit",
+    "Find Usages"
+   ],
+   "items": [
+    "Find Usages",
+    "Show Usages",
+    "Next Highlighted Usage",
+    "Previous Highlighted Usage"
+   ]
+  },
+  {
+   "menu": "menu:ViewMenu",
+   "path": [
+    "View"
+   ],
+   "items": [
+    "Quick Definition",
+    "Quick Documentation"
+   ],
+   "part": true
+  }
+ ]
+}

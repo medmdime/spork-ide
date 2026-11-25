@@ -1,0 +1,472 @@
+{
+ "id": "settings-system",
+ "covers": [
+  "settings:Appearance & Behavior › System Settings",
+  "settings:Appearance & Behavior › System Settings › Date Formats",
+  "settings:Appearance & Behavior › System Settings › HTTP Proxy",
+  "settings:Appearance & Behavior › System Settings › Language and Region",
+  "settings:Appearance & Behavior › System Settings › Passwords",
+  "settings:Appearance & Behavior › System Settings › Server Certificates",
+  "settings:Appearance & Behavior › System Settings › Updates"
+ ],
+ "reference-app": [
+  "screenshots/settings/appearance-behavior-system-settings.jpg",
+  "screenshots/settings/appearance-behavior-system-settings-date-formats.jpg",
+  "screenshots/settings/appearance-behavior-system-settings-http-proxy.jpg",
+  "screenshots/settings/appearance-behavior-system-settings-language-and-region.jpg",
+  "screenshots/settings/appearance-behavior-system-settings-passwords.jpg",
+  "screenshots/settings/appearance-behavior-system-settings-server-certificates.jpg",
+  "screenshots/settings/appearance-behavior-system-settings-updates.jpg"
+ ],
+ "steps": [
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Appearance & Behavior/System Settings"
+  },
+  {
+   "expect": {
+    "settings": "Appearance & Behavior/System Settings"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Confirm before exiting Spork",
+     "value": "1"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Terminate process",
+     "value": "0"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Disconnect",
+     "value": "0"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Ask",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Reopen projects on startup",
+     "value": "1"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "New window",
+     "value": "0"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Current window",
+     "value": "0"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Ask",
+     "value": "1"
+    },
+    {
+     "role": "AXButton",
+     "label": "Browse…"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Store project settings in the project root directory",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Enable indexing files for search",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Move files to the bin instead of deleting permanently",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Save files if Spork is idle for",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Save files when switching to a different application or a built-in terminal",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Back up files before saving",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "When switching to the Spork window or opening an editor tab",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Periodically when Spork is inactive (experimental)",
+     "value": "1"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ]
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "appearance-behavior-system-settings",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Appearance & Behavior/System Settings/Date Formats"
+  },
+  {
+   "expect": {
+    "settings": "Appearance & Behavior/System Settings/Date Formats"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Override system date and time format",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Use 24-hour time",
+     "value": "1",
+     "enabled": false
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Use pretty formatting",
+     "value": "1"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "appearance-behavior-system-settings-date-formats",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Appearance & Behavior/System Settings/HTTP Proxy"
+  },
+  {
+   "expect": {
+    "settings": "Appearance & Behavior/System Settings/HTTP Proxy"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXRadioButton",
+     "label": "No proxy",
+     "value": "1"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Auto-detect proxy settings",
+     "value": "0"
+    },
+    {
+     "role": "AXLink",
+     "label": "System proxy settings…"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Automatic proxy configuration URL:",
+     "value": "0",
+     "enabled": false
+    },
+    {
+     "role": "AXButton",
+     "label": "Clear Passwords",
+     "enabled": false
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Manual proxy configuration",
+     "value": "0"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "HTTP",
+     "value": "1",
+     "enabled": false
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "SOCKS",
+     "value": "0",
+     "enabled": false
+    },
+    {
+     "role": "AXButton",
+     "label": "Expand",
+     "enabled": false
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Proxy authentication",
+     "value": "0",
+     "enabled": false
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Remember",
+     "value": "0",
+     "enabled": false
+    },
+    {
+     "role": "AXButton",
+     "label": "Check Connection"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "appearance-behavior-system-settings-http-proxy",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Appearance & Behavior/System Settings/Language and Region"
+  },
+  {
+   "expect": {
+    "settings": "Appearance & Behavior/System Settings/Language and Region"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXPopUpButton",
+     "value": "English"
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "Not specified"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "appearance-behavior-system-settings-language-and-region",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Appearance & Behavior/System Settings/Passwords"
+  },
+  {
+   "expect": {
+    "settings": "Appearance & Behavior/System Settings/Passwords"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXRadioButton",
+     "label": "In native Keychain",
+     "value": "1"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "In KeePass",
+     "value": "0"
+    },
+    {
+     "role": "AXButton",
+     "label": "Browse…",
+     "enabled": false
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Protect master password using PGP key (No keys configured)",
+     "value": "0",
+     "enabled": false
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Do not save, forget passwords after restart",
+     "value": "0"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Appearance & Behavior/System Settings/Server Certificates"
+  },
+  {
+   "expect": {
+    "settings": "Appearance & Behavior/System Settings/Server Certificates"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Accept non-trusted certificates automatically",
+     "value": "0"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "appearance-behavior-system-settings-server-certificates",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Appearance & Behavior/System Settings/Updates"
+  },
+  {
+   "expect": {
+    "settings": "Appearance & Behavior/System Settings/Updates"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Check for Spork updates",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Check for plugin updates",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Update plugins automatically",
+     "value": "0"
+    },
+    {
+     "role": "AXButton",
+     "label": "Check for Updates…"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show What's New in the editor after a Spork update",
+     "value": "1"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "appearance-behavior-system-settings-updates",
+   "window": "smallest"
+  }
+ ]
+}

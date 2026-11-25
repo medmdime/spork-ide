@@ -1,0 +1,319 @@
+{
+ "id": "settings-export-import",
+ "covers": [
+  "action:ExportSettings",
+  "action:ImportSettings"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   },
+   "within": 3000
+  },
+  {
+   "menu": "Manage IDE Settings",
+   "path": [
+    "File",
+    "Manage IDE Settings"
+   ],
+   "items": [
+    "Import Settings…",
+    "Export Settings…"
+   ]
+  },
+  {
+   "do": "action",
+   "name": "settings_dialog::ExportSettings"
+  },
+  {
+   "find": [
+    {
+     "text": "Please check the settings to export:"
+    },
+    {
+     "label": "Settings",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "text": "Export settings to:"
+    },
+    {
+     "label": "Export settings to:",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Select All",
+     "role": "AXButton"
+    },
+    {
+     "label": "Select None",
+     "role": "AXButton"
+    },
+    {
+     "label": "Invert",
+     "role": "AXButton"
+    },
+    {
+     "label": "Cancel",
+     "role": "AXButton"
+    },
+    {
+     "label": "OK",
+     "role": "AXButton"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Select None",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "Settings",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "OK",
+     "role": "AXButton",
+     "enabled": false
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Invert",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Settings",
+    "role": "AXCheckBox",
+    "value": "1"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Export settings to:",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a backspace"
+  },
+  {
+   "do": "type",
+   "text": "$FIXTURE/../exported.zip"
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "text": "Export Complete"
+    },
+    {
+     "label": "Reveal in Finder",
+     "role": "AXButton"
+    },
+    {
+     "label": "Close",
+     "role": "AXButton"
+    }
+   ],
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Close",
+   "role": "AXButton"
+  },
+  {
+   "sh": "unzip -l ../exported.zip",
+   "contains": "settings.json",
+   "within": 3000
+  },
+  {
+   "sh": "unzip -l ../exported.zip",
+   "contains": "Spork IDE Global Settings"
+  },
+  {
+   "do": "action",
+   "name": "settings_dialog::ExportSettings"
+  },
+  {
+   "find": {
+    "label": "Export settings to:",
+    "role": "AXTextField"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Export settings to:",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a backspace"
+  },
+  {
+   "do": "type",
+   "text": "$FIXTURE/../exported.zip"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "find": [
+    {
+     "text": "File Already Exists"
+    },
+    {
+     "label": "Overwrite",
+     "role": "AXButton"
+    },
+    {
+     "label": "Cancel",
+     "role": "AXButton"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Overwrite",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "text": "Export Complete"
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Close",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "text": "Export Complete"
+   },
+   "absent": true
+  },
+  {
+   "sh": "sed -i '' 's/Islands Dark/Islands Light/' ../home/.config/spork-ide/settings.json"
+  },
+  {
+   "expect": {
+    "look.theme": "Islands Light"
+   },
+   "within": 8000
+  },
+  {
+   "do": "pick",
+   "paths": [
+    "../exported.zip"
+   ]
+  },
+  {
+   "do": "action",
+   "name": "settings_dialog::ImportSettings"
+  },
+  {
+   "find": [
+    {
+     "text": "Please check all components to import:"
+    },
+    {
+     "label": "Settings",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "OK",
+     "role": "AXButton"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "find": {
+    "label": "Export settings to:",
+    "role": "AXTextField"
+   },
+   "absent": true
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "import-components"
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "look.theme": "Islands Dark"
+   },
+   "within": 8000
+  },
+  {
+   "sh": "printf 'not a zip' > ../broken.zip"
+  },
+  {
+   "do": "pick",
+   "paths": [
+    "../broken.zip"
+   ]
+  },
+  {
+   "do": "action",
+   "name": "settings_dialog::ImportSettings"
+  },
+  {
+   "find": [
+    {
+     "text": "Invalid File"
+    },
+    {
+     "label": "OK",
+     "role": "AXButton"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  }
+ ]
+}

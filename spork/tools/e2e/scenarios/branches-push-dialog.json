@@ -1,0 +1,401 @@
+{
+ "id": "branches-push-dialog",
+ "covers": [
+  "dialog:Vcs.Push",
+  "action:Vcs.Push",
+  "action:GitPushBranchAction"
+ ],
+ "reference-app": [
+  "screenshots/dialogs/vcs-push.jpg"
+ ],
+ "steps": [
+  {
+   "file": "pushed.txt",
+   "text": "pushed\n"
+  },
+  {
+   "git": [
+    "add",
+    "pushed.txt"
+   ]
+  },
+  {
+   "git": [
+    "commit",
+    "-q",
+    "-m",
+    "feat: a commit to push"
+   ]
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "action",
+   "name": "spork::Push"
+  },
+  {
+   "find": [
+    {
+     "text": "Push Commits to repo"
+    },
+    {
+     "label": "main → origin : main",
+     "role": "AXRow"
+    },
+    {
+     "label": "feat: a commit to push",
+     "role": "AXRow"
+    },
+    {
+     "label": "pushed.txt"
+    },
+    {
+     "label": "Push tags:",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "All",
+     "enabled": false
+    },
+    {
+     "label": "Cancel",
+     "role": "AXButton"
+    },
+    {
+     "label": "Push",
+     "role": "AXButton"
+    },
+    {
+     "label": "Show drop-down menu",
+     "role": "AXButton"
+    }
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "open"
+  },
+  {
+   "do": "click",
+   "label": "feat: a commit to push",
+   "role": "AXRow"
+  },
+  {
+   "find": {
+    "label": "pushed.txt",
+    "role": "AXRow"
+   }
+  },
+  {
+   "find": {
+    "label": "Push",
+    "role": "AXButton",
+    "enabled": true
+   }
+  },
+  {
+   "do": "click",
+   "label": "Push",
+   "role": "AXButton"
+  },
+  {
+   "git": [
+    "log",
+    "-1",
+    "--format=%s",
+    "origin/main"
+   ],
+   "is": "feat: a commit to push"
+  },
+  {
+   "git": [
+    "switch",
+    "-q",
+    "-c",
+    "topic"
+   ]
+  },
+  {
+   "file": "topic.txt",
+   "text": "topic\n"
+  },
+  {
+   "git": [
+    "add",
+    "topic.txt"
+   ]
+  },
+  {
+   "git": [
+    "commit",
+    "-q",
+    "-m",
+    "feat: a topic"
+   ]
+  },
+  {
+   "git": [
+    "switch",
+    "-q",
+    "main"
+   ]
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "find": {
+    "label": "Search for branches and actions"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "t o p i c"
+  },
+  {
+   "find": {
+    "label": "topic",
+    "role": "AXRow",
+    "in": "Branches Tree"
+   }
+  },
+  {
+   "do": "click",
+   "label": "topic",
+   "role": "AXRow",
+   "in": "Branches Tree"
+  },
+  {
+   "find": {
+    "label": "Push…",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Push…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "topic → origin : topic",
+     "role": "AXRow"
+    },
+    {
+     "label": "New"
+    },
+    {
+     "label": "feat: a topic",
+     "role": "AXRow"
+    }
+   ]
+  },
+  {
+   "shot": "new-branch"
+  },
+  {
+   "find": {
+    "label": "Push",
+    "role": "AXButton",
+    "enabled": true
+   }
+  },
+  {
+   "do": "click",
+   "label": "Push",
+   "role": "AXButton"
+  },
+  {
+   "git": [
+    "ls-remote",
+    "origin"
+   ],
+   "contains": "refs/heads/topic"
+  },
+  {
+   "git": [
+    "rev-parse",
+    "--abbrev-ref",
+    "topic@{upstream}"
+   ],
+   "is": "origin/topic"
+  },
+  {
+   "git": [
+    "branch",
+    "-f",
+    "topic",
+    "main"
+   ]
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "find": {
+    "label": "Search for branches and actions"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "t o p i c"
+  },
+  {
+   "find": {
+    "label": "topic",
+    "role": "AXRow",
+    "in": "Branches Tree"
+   }
+  },
+  {
+   "do": "click",
+   "label": "topic",
+   "role": "AXRow",
+   "in": "Branches Tree"
+  },
+  {
+   "find": {
+    "label": "Push…",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Push…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "topic → origin : topic",
+     "role": "AXRow"
+    },
+    {
+     "label": "No commits selected"
+    }
+   ]
+  },
+  {
+   "find": {
+    "label": "Show drop-down menu",
+    "role": "AXButton",
+    "enabled": true
+   }
+  },
+  {
+   "do": "click",
+   "label": "Show drop-down menu",
+   "role": "AXButton"
+  },
+  {
+   "menu": "dialog:Vcs.Push",
+   "items": [
+    "Force Push"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Force Push",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Force Push",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Force Push",
+   "role": "AXButton"
+  },
+  {
+   "sh": "test \"$(git rev-parse main)\" = \"$(git ls-remote origin refs/heads/topic | cut -f1)\" && echo same",
+   "is": "same"
+  },
+  {
+   "do": "action",
+   "name": "spork::Push"
+  },
+  {
+   "find": {
+    "label": "main → origin : main",
+    "role": "AXRow"
+   }
+  },
+  {
+   "find": {
+    "label": "Show drop-down menu",
+    "role": "AXButton",
+    "enabled": true
+   }
+  },
+  {
+   "do": "click",
+   "label": "Show drop-down menu",
+   "role": "AXButton"
+  },
+  {
+   "menu": "dialog:Vcs.Push",
+   "items": [
+    "Force Push (disabled)"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "git": [
+    "tag",
+    "v2"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Push tags:",
+   "role": "AXCheckBox"
+  },
+  {
+   "find": {
+    "role": "AXPopUpButton",
+    "value": "All",
+    "enabled": true
+   }
+  },
+  {
+   "find": {
+    "label": "Push",
+    "role": "AXButton",
+    "enabled": true
+   }
+  },
+  {
+   "do": "click",
+   "label": "Push",
+   "role": "AXButton"
+  },
+  {
+   "git": [
+    "ls-remote",
+    "--tags",
+    "origin"
+   ],
+   "contains": "refs/tags/v2"
+  }
+ ]
+}

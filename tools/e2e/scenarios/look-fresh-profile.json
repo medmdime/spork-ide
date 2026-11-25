@@ -1,0 +1,38 @@
+{
+ "id": "look-fresh-profile",
+ "covers": [],
+ "reference-app": [],
+ "settings": {
+  "theme": null
+ },
+ "steps": [
+  {
+   "expect": {
+    "look.selection": {
+     "mode": "system",
+     "light": "Islands Light",
+     "dark": "Islands Dark"
+    },
+    "look.icon_theme": "New UI",
+    "look.ui_font": ".SystemUIFont",
+    "look.ui_font_size": 14.86,
+    "look.buffer_font": "JetBrains Mono",
+    "look.buffer_font_size": 13.0,
+    "look.line_height": 1.2,
+    "look.base_keymap": "macOS"
+   }
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "shot": "main-rs"
+  }
+ ]
+}

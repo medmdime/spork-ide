@@ -1,0 +1,7 @@
+{
+  "Fixture greeting": {
+    "prefix": "fixgreet",
+    "body": ["println!(\"Hello from the fixture snippet, ${1:name}!\");$0"],
+    "description": "Prints a greeting from the fixture snippets"
+  }
+}

@@ -1,0 +1,31 @@
+{
+ "id": "hosting-settings-tool-windows",
+ "covers": [
+  "action:ActivatePullRequestsToolWindow",
+  "action:ActivateMergeRequestsToolWindow"
+ ],
+ "reference-app": [],
+ "steps": [
+  {"do": "git", "args": ["remote", "add", "github", "https://github.e2e.invalid/spork/fixture.git"]},
+  {"menu": "context-menu:GitHub.MainMenu", "path": ["Git", "GitHub"], "within": 8000, "part": true,
+   "items": ["Create Pull Request…", "View Pull Requests"]},
+  {"expect": {"left": "[Project]"}},
+  {"do": "action", "name": "spork::ActivatePullRequestsToolWindow"},
+  {"expect": {"left": "[PullRequests]"}},
+  {"do": "action", "name": "spork::ActivatePullRequestsToolWindow"},
+  {"expect": {"left": "[]"}},
+  {"do": "action", "name": "spork::ActivateMergeRequestsToolWindow"},
+  {"wait": 300},
+  {"expect": {"left": "[]"}},
+  {"do": "git", "args": ["remote", "remove", "github"]},
+  {"do": "git", "args": ["remote", "add", "gitlab", "https://gitlab.e2e.invalid/spork/fixture.git"]},
+  {"menu": "context-menu:GitLab.Main.Group", "path": ["Git", "GitLab"], "within": 8000, "part": true,
+   "items": ["Create Merge Request…", "View Merge Requests"]},
+  {"do": "action", "name": "spork::ActivatePullRequestsToolWindow"},
+  {"wait": 300},
+  {"expect": {"left": "[]"}},
+  {"do": "action", "name": "spork::ActivateMergeRequestsToolWindow"},
+  {"expect": {"left": "[PullRequests]"}},
+  {"find": [{"text": "Merge Requests"}]}
+ ]
+}

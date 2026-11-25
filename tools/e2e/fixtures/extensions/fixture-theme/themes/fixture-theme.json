@@ -1,0 +1,25 @@
+{
+  "$schema": "https://zed.dev/schema/themes/v0.2.0.json",
+  "name": "Fixture Theme",
+  "author": "Spork IDE Tests",
+  "themes": [
+    {
+      "name": "Fixture Dark",
+      "appearance": "dark",
+      "style": {
+        "background": "#3b1f2b",
+        "editor.background": "#2b1f3b",
+        "editor.foreground": "#f0e0ff",
+        "editor.gutter.background": "#2b1f3b",
+        "editor.line_number": "#9a7fbf",
+        "text": "#f0e0ff",
+        "syntax": {
+          "keyword": { "color": "#ff7a59", "font_weight": 700 },
+          "string": { "color": "#9cff57" },
+          "function": { "color": "#57d0ff" },
+          "comment": { "color": "#a08060", "font_style": "italic" }
+        }
+      }
+    }
+  ]
+}

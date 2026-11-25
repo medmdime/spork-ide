@@ -1,0 +1,148 @@
+{
+ "id": "java-application-debug",
+ "fixture": "maven",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "sh": "mkdir -p .zed && printf '[{\"label\": \"Main\", \"adapter\": \"Java\", \"request\": \"launch\", \"mainClass\": \"com.example.Main\"}]' > .zed/debug.json"
+  },
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "find": {
+    "label": "Load Maven Project",
+    "role": "AXLink"
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "Load Maven Project",
+   "role": "AXLink"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 600000
+  },
+  {
+   "expect": {
+    "run.configurations.names": [
+     "Main"
+    ],
+    "run.configurations.selected": "Main"
+   },
+   "within": 10000
+  },
+  {
+   "do": "open",
+   "path": "src/main/java/com/example/Greeting.java"
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/Greeting.java",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "type",
+   "text": "9:9"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "expect": {
+    "run.breakpoints.0.at": "Greeting.java:9"
+   }
+  },
+  {
+   "find": {
+    "label": "Debug 'Main'",
+    "role": "AXButton",
+    "enabled": true
+   },
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-d"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "DebugPanel",
+    "run.debug.status": "Stopped"
+   },
+   "within": 120000
+  },
+  {
+   "do": "click",
+   "label": "Evaluate expression (⏎) or add a watch (⇧⌘⏎)",
+   "role": "AXTextField"
+  },
+  {
+   "do": "type",
+   "text": "name"
+  },
+  {
+   "do": "keys",
+   "keys": "shift-cmd-enter"
+  },
+  {
+   "expect": {
+    "run.debug.watches.name": "\"world\""
+   },
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-alt-r"
+  },
+  {
+   "expect": {
+    "run.debug.terminated": true
+   },
+   "within": 30000
+  }
+ ]
+}

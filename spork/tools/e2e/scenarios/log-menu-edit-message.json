@@ -1,0 +1,91 @@
+{
+ "id": "log-menu-edit-message",
+ "covers": [
+  "action:Git.Reword.Commit"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "sh": "git commit -q --allow-empty -m one && git commit -q --allow-empty -m two"
+  },
+  {
+   "find": {
+    "text": "one",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "one",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "find": {
+    "text": "Edit Commit Message…",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Edit Commit Message…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "text": "Edit Commit Message",
+    "role": "AXGroup"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a f i r s t"
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "sh": "git log -2 --format=%s | tr '\\n' ,",
+   "is": "two,first,"
+  },
+  {
+   "wait": 600
+  },
+  {
+   "find": {
+    "text": "two",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "two",
+   "role": "AXRow"
+  },
+  {
+   "do": "keys",
+   "keys": "f2"
+  },
+  {
+   "find": {
+    "text": "Edit Commit Message",
+    "role": "AXGroup"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a s e c o n d"
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "sh": "git log -2 --format=%s | tr '\\n' ,",
+   "is": "second,first,"
+  }
+ ]
+}

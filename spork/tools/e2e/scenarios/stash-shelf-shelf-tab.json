@@ -1,0 +1,389 @@
+{
+ "id": "stash-shelf-shelf-tab",
+ "covers": [
+  "action:Vcs.Show.Shelf",
+  "toolbar:ShelvedChangesToolbar",
+  "toolbar:ShelvedChangesToolbar.ViewOptions",
+  "context-menu:ShelvedChangesPopupMenu",
+  "action:ShelvedChanges.ShowHideDeleted",
+  "action:Frontend.ChangesView.GroupBy.Directory",
+  "action:Frontend.ChangesView.GroupBy.Repository",
+  "action:Frontend.ChangesView.ShowDiff",
+  "action:Frontend.Vcs.CompareWithLocal"
+ ],
+ "note": "Restore is greyed on a shelf that isn't recycled or deleted. A menu heading (Show, Group By) takes no click, so macOS's accessibility reads it as greyed: gpui-kit can't mark it otherwise.",
+ "reference-app": [
+  "screenshots/menus/shelvedchangespopupmenu.png"
+ ],
+ "steps": [
+  {
+   "sh": "mkdir -p src .idea/shelf/Fix_readme && echo 'fn a() {}' > src/a.rs && git add -N src/a.rs && printf '/shelf/\\n' > .idea/.gitignore && git diff README.md src/a.rs > .idea/shelf/Fix_readme/shelved.patch && printf '<changelist name=\"Fix_readme\" date=\"1767261600000\" recycled=\"false\" deleted=\"false\">\\n  <option name=\"DESCRIPTION\" value=\"Fix readme\" />\\n</changelist>\\n' > .idea/shelf/Fix_readme.xml && git checkout -- README.md && git rm -q --cached src/a.rs && rm -rf src"
+  },
+  {
+   "do": "action",
+   "name": "spork::ShowShelf"
+  },
+  {
+   "find": [
+    {
+     "role": "AXRadioButton",
+     "label": "Shelf",
+     "value": "1"
+    },
+    {
+     "role": "AXRow",
+     "label": "Fix readme"
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "role": "AXButton",
+     "label": "Unshelve Silently"
+    },
+    {
+     "role": "AXButton",
+     "label": "Show Diff"
+    },
+    {
+     "role": "AXButton",
+     "label": "View Options"
+    },
+    {
+     "role": "AXButton",
+     "label": "Expand All"
+    },
+    {
+     "role": "AXButton",
+     "label": "Collapse All"
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "role": "AXRow",
+     "label": "Fix readme"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Fix readme",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "menu": "context-menu:ShelvedChangesPopupMenu",
+   "items": [
+    "Unshelve…",
+    "Restore (disabled)",
+    "Show Diff",
+    "Create Patch…",
+    "Copy as Patch to Clipboard",
+    "Import Patches…",
+    "Rename…",
+    "Delete…"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": [
+    {
+     "role": "AXButton",
+     "label": "Show Diff"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Show Diff",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "view": "Stash"
+   }
+  },
+  {
+   "find": [
+    {
+     "role": "AXButton",
+     "label": "Expand All"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Expand All",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "role": "AXRow",
+     "label": "README.md"
+    },
+    {
+     "role": "AXRow",
+     "label": "a.rs"
+    }
+   ]
+  },
+  {
+   "missing": [
+    {
+     "role": "AXRow",
+     "label": "src"
+    }
+   ]
+  },
+  {
+   "do": "action",
+   "name": "spork::ShowHistory"
+  },
+  {
+   "sh": "echo local > README.md"
+  },
+  {
+   "find": [
+    {
+     "role": "AXRow",
+     "label": "README.md"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "README.md",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "menu": "context-menu:ShelvedChangesPopupMenu",
+   "items": [
+    "Unshelve…",
+    "Restore (disabled)",
+    "Show Diff",
+    "Show Diff in a New Tab or Window",
+    "Compare with Local",
+    "Create Patch…",
+    "Copy as Patch to Clipboard",
+    "Import Patches…",
+    "Rename…",
+    "Delete…"
+   ]
+  },
+  {
+   "find": [
+    {
+     "role": "AXMenuItem",
+     "label": "Compare with Local"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Compare with Local",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "view": "Stash"
+   }
+  },
+  {
+   "sh": "git checkout -- README.md"
+  },
+  {
+   "find": [
+    {
+     "role": "AXButton",
+     "label": "View Options"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "View Options",
+   "role": "AXButton"
+  },
+  {
+   "menu": "toolbar:ShelvedChangesToolbar.ViewOptions",
+   "items": [
+    "Group By",
+    "Show (disabled)",
+    "Show/Hide Applied Shelved Changes"
+   ]
+  },
+  {
+   "find": [
+    {
+     "role": "AXMenuItem",
+     "label": "Group By"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Group By",
+   "role": "AXMenuItem"
+  },
+  {
+   "menu": "toolbar:ShelvedChangesToolbar.ViewOptions",
+   "items": [
+    "Group By (disabled)",
+    "Directory",
+    "Repository"
+   ]
+  },
+  {
+   "find": [
+    {
+     "role": "AXMenuItem",
+     "label": "Directory"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Directory",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "role": "AXRow",
+     "label": "src"
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "role": "AXButton",
+     "label": "View Options"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "View Options",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "role": "AXMenuItem",
+     "label": "Group By"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Group By",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "role": "AXMenuItem",
+     "label": "Repository"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Repository",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "role": "AXRow",
+     "label": "repo"
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "role": "AXButton",
+     "label": "Collapse All"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Collapse All",
+   "role": "AXButton"
+  },
+  {
+   "missing": [
+    {
+     "role": "AXRow",
+     "label": "README.md"
+    }
+   ]
+  },
+  {
+   "sh": "sed -i '' 's/recycled=\"false\"/recycled=\"true\"/' .idea/shelf/Fix_readme.xml"
+  },
+  {
+   "do": "action",
+   "name": "spork::ShowShelf"
+  },
+  {
+   "missing": [
+    {
+     "role": "AXRow",
+     "label": "Fix readme"
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "role": "AXButton",
+     "label": "View Options"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "View Options",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "role": "AXMenuItem",
+     "label": "Show/Hide Applied Shelved Changes"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Show/Hide Applied Shelved Changes",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "role": "AXRow",
+     "label": "Fix readme"
+    }
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "shelf-tab"
+  }
+ ]
+}

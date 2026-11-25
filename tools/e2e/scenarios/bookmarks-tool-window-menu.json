@@ -1,0 +1,704 @@
+{
+ "id": "bookmarks-tool-window-menu",
+ "covers": [
+  "context-menu:Bookmarks.ToolWindow.PopupMenu",
+  "action:BookmarksView.DefaultGroup",
+  "action:BookmarksView.Rename",
+  "action:BookmarksView.Delete",
+  "action:BookmarksView.DeleteType",
+  "action:BookmarksView.ChooseType",
+  "action:BookmarksView.MoveUp",
+  "action:BookmarksView.MoveDown",
+  "action:BookmarksView.SortGroupBookmarks",
+  "action:OpenBookmarkGroup",
+  "action:GotoNextBookmarkInEditor",
+  "action:GotoPreviousBookmarkInEditor"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "file": "notes.txt",
+   "text": "one\ntwo\nthree\nfour\n"
+  },
+  {
+   "file": "b.txt",
+   "text": "bee\n"
+  },
+  {
+   "do": "open",
+   "path": "notes.txt"
+  },
+  {
+   "expect": {
+    "active": "notes.txt"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "f3"
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "do": "keys",
+   "keys": "f3"
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "do": "keys",
+   "keys": "f3"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home"
+  },
+  {
+   "find": {
+    "label": "Line 1, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "editor::GoToNextBookmark"
+  },
+  {
+   "find": {
+    "label": "Line 2, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "editor::GoToNextBookmark"
+  },
+  {
+   "find": {
+    "label": "Line 3, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "editor::GoToNextBookmark"
+  },
+  {
+   "find": {
+    "label": "Line 1, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "editor::GoToPreviousBookmark"
+  },
+  {
+   "find": {
+    "label": "Line 3, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "editor::GoToPreviousBookmark"
+  },
+  {
+   "find": {
+    "label": "Line 2, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-2"
+  },
+  {
+   "expect": {
+    "docks.left.open": true,
+    "docks.left.panel": "Bookmarks"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "fixture",
+     "role": "AXRow",
+     "in": "Bookmarks"
+    },
+    {
+     "label": "notes.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks"
+    },
+    {
+     "label": "notes.txt:2",
+     "role": "AXRow",
+     "in": "Bookmarks"
+    },
+    {
+     "label": "notes.txt:3",
+     "role": "AXRow",
+     "in": "Bookmarks"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "fixture",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Bookmarks"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "menu": "context-menu:Bookmarks.ToolWindow.PopupMenu",
+   "items": [
+    "Mark List as Default",
+    "Rename Bookmark List…",
+    "Delete Bookmark List",
+    "Sort Bookmarks by Type & Name",
+    "Open All Bookmarked Files"
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "list-menu"
+  },
+  {
+   "do": "click",
+   "label": "Mark List as Default",
+   "role": "AXMenuItem"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "fixture",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Bookmarks"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "find": {
+    "label": "Unmark List as Default",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Unmark List as Default",
+   "role": "AXMenuItem"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "fixture",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Bookmarks"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "find": {
+    "label": "Mark List as Default",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Rename Bookmark List…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "Rename Bookmark List",
+     "role": "AXWindow"
+    },
+    "Bookmark list:",
+    "Use as default list"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a backspace"
+  },
+  {
+   "do": "type",
+   "text": "Work"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "find": {
+    "label": "Rename Bookmark List",
+    "role": "AXWindow"
+   },
+   "absent": true
+  },
+  {
+   "find": [
+    {
+     "label": "Work",
+     "role": "AXRow",
+     "in": "Bookmarks"
+    },
+    {
+     "label": "notes.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks"
+    },
+    {
+     "label": "notes.txt:2",
+     "role": "AXRow",
+     "in": "Bookmarks"
+    },
+    {
+     "label": "notes.txt:3",
+     "role": "AXRow",
+     "in": "Bookmarks"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "notes.txt:3",
+   "role": "AXRow",
+   "in": "Bookmarks"
+  },
+  {
+   "do": "keys",
+   "keys": "alt-cmd-up"
+  },
+  {
+   "find": [
+    {
+     "label": "Work",
+     "role": "AXRow",
+     "in": "Bookmarks"
+    },
+    {
+     "label": "notes.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks"
+    },
+    {
+     "label": "notes.txt:3",
+     "role": "AXRow",
+     "in": "Bookmarks"
+    },
+    {
+     "label": "notes.txt:2",
+     "role": "AXRow",
+     "in": "Bookmarks"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "find": {
+    "label": "notes.txt:3",
+    "role": "AXRow",
+    "in": "Bookmarks",
+    "selected": true
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-cmd-down"
+  },
+  {
+   "find": [
+    {
+     "label": "Work",
+     "role": "AXRow",
+     "in": "Bookmarks"
+    },
+    {
+     "label": "notes.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks"
+    },
+    {
+     "label": "notes.txt:2",
+     "role": "AXRow",
+     "in": "Bookmarks"
+    },
+    {
+     "label": "notes.txt:3",
+     "role": "AXRow",
+     "in": "Bookmarks"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "notes.txt:1",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Bookmarks"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "menu": "context-menu:Bookmarks.ToolWindow.PopupMenu",
+   "items": [
+    "Rename Bookmark…",
+    "Delete Bookmark",
+    "Assign Mnemonic…",
+    "Move Up (disabled)",
+    "Move Down",
+    "Sort Bookmarks by Type & Name"
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "bookmark-menu"
+  },
+  {
+   "do": "click",
+   "label": "Move Down",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "Work",
+     "role": "AXRow",
+     "in": "Bookmarks"
+    },
+    {
+     "label": "notes.txt:2",
+     "role": "AXRow",
+     "in": "Bookmarks"
+    },
+    {
+     "label": "notes.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks"
+    },
+    {
+     "label": "notes.txt:3",
+     "role": "AXRow",
+     "in": "Bookmarks"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "keys",
+   "keys": "alt-cmd-down"
+  },
+  {
+   "find": [
+    {
+     "label": "Work",
+     "role": "AXRow",
+     "in": "Bookmarks"
+    },
+    {
+     "label": "notes.txt:2",
+     "role": "AXRow",
+     "in": "Bookmarks"
+    },
+    {
+     "label": "notes.txt:3",
+     "role": "AXRow",
+     "in": "Bookmarks"
+    },
+    {
+     "label": "notes.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "Work",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Bookmarks"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "Sort Bookmarks by Type & Name",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "Work",
+     "role": "AXRow",
+     "in": "Bookmarks"
+    },
+    {
+     "label": "notes.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks"
+    },
+    {
+     "label": "notes.txt:2",
+     "role": "AXRow",
+     "in": "Bookmarks"
+    },
+    {
+     "label": "notes.txt:3",
+     "role": "AXRow",
+     "in": "Bookmarks"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "notes.txt:2",
+   "role": "AXRow",
+   "in": "Bookmarks"
+  },
+  {
+   "do": "keys",
+   "keys": "alt-f3"
+  },
+  {
+   "find": {
+    "label": "Assign Mnemonic",
+    "role": "AXWindow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "q"
+  },
+  {
+   "find": {
+    "label": "Q notes.txt:2",
+    "role": "AXRow",
+    "in": "Bookmarks"
+   }
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "Q notes.txt:2",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Bookmarks"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "find": [
+    {
+     "label": "Remove Mnemonic",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Change Mnemonic…",
+     "role": "AXMenuItem"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "Remove Mnemonic",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "notes.txt:2",
+    "role": "AXRow",
+    "in": "Bookmarks"
+   }
+  },
+  {
+   "do": "click",
+   "label": "notes.txt:2",
+   "role": "AXRow",
+   "in": "Bookmarks"
+  },
+  {
+   "do": "keys",
+   "keys": "f2"
+  },
+  {
+   "find": {
+    "label": "Bookmark Description",
+    "role": "AXWindow"
+   }
+  },
+  {
+   "do": "type",
+   "text": "two"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "find": {
+    "label": "two notes.txt:2",
+    "role": "AXRow",
+    "in": "Bookmarks"
+   }
+  },
+  {
+   "do": "open",
+   "path": "b.txt"
+  },
+  {
+   "expect": {
+    "active": "b.txt"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "f3"
+  },
+  {
+   "do": "action",
+   "name": "workspace::CloseAllItemsAndPanes"
+  },
+  {
+   "expect": {
+    "items": []
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-2"
+  },
+  {
+   "do": "click",
+   "label": "Work",
+   "role": "AXRow",
+   "in": "Bookmarks"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-down"
+  },
+  {
+   "expect": {
+    "items": [
+     "b.txt",
+     "notes.txt"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-2"
+  },
+  {
+   "do": "click",
+   "label": "notes.txt:1",
+   "role": "AXRow",
+   "in": "Bookmarks"
+  },
+  {
+   "do": "keys",
+   "keys": "backspace"
+  },
+  {
+   "find": {
+    "label": "notes.txt:1",
+    "role": "AXRow",
+    "in": "Bookmarks"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Work",
+   "role": "AXRow",
+   "in": "Bookmarks"
+  },
+  {
+   "do": "keys",
+   "keys": "backspace"
+  },
+  {
+   "find": {
+    "label": "Are you sure you want to delete 'Work' bookmark list? This action can't be undone."
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Delete Bookmark List",
+     "role": "AXWindow"
+    },
+    {
+     "label": "Cancel",
+     "role": "AXButton"
+    },
+    {
+     "label": "Delete",
+     "role": "AXButton"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "Delete",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "No bookmarks added."
+   }
+  },
+  {
+   "find": {
+    "label": "Work",
+    "role": "AXRow",
+    "in": "Bookmarks"
+   },
+   "absent": true
+  }
+ ]
+}

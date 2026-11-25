@@ -1,0 +1,1615 @@
+{
+ "id": "bookmarks-letters",
+ "covers": [
+  "action:ToggleBookmarkA",
+  "action:ToggleBookmarkB",
+  "action:ToggleBookmarkC",
+  "action:ToggleBookmarkD",
+  "action:ToggleBookmarkE",
+  "action:ToggleBookmarkF",
+  "action:ToggleBookmarkG",
+  "action:ToggleBookmarkH",
+  "action:ToggleBookmarkI",
+  "action:ToggleBookmarkJ",
+  "action:ToggleBookmarkK",
+  "action:ToggleBookmarkL",
+  "action:ToggleBookmarkM",
+  "action:ToggleBookmarkN",
+  "action:ToggleBookmarkO",
+  "action:ToggleBookmarkP",
+  "action:ToggleBookmarkQ",
+  "action:ToggleBookmarkR",
+  "action:ToggleBookmarkS",
+  "action:ToggleBookmarkT",
+  "action:ToggleBookmarkU",
+  "action:ToggleBookmarkV",
+  "action:ToggleBookmarkW",
+  "action:ToggleBookmarkX",
+  "action:ToggleBookmarkY",
+  "action:ToggleBookmarkZ",
+  "action:GotoBookmarkA",
+  "action:GotoBookmarkB",
+  "action:GotoBookmarkC",
+  "action:GotoBookmarkD",
+  "action:GotoBookmarkE",
+  "action:GotoBookmarkF",
+  "action:GotoBookmarkG",
+  "action:GotoBookmarkH",
+  "action:GotoBookmarkI",
+  "action:GotoBookmarkJ",
+  "action:GotoBookmarkK",
+  "action:GotoBookmarkL",
+  "action:GotoBookmarkM",
+  "action:GotoBookmarkN",
+  "action:GotoBookmarkO",
+  "action:GotoBookmarkP",
+  "action:GotoBookmarkQ",
+  "action:GotoBookmarkR",
+  "action:GotoBookmarkS",
+  "action:GotoBookmarkT",
+  "action:GotoBookmarkU",
+  "action:GotoBookmarkV",
+  "action:GotoBookmarkW",
+  "action:GotoBookmarkX",
+  "action:GotoBookmarkY",
+  "action:GotoBookmarkZ"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "file": "letters.txt",
+   "text": "line 1\nline 2\nline 3\nline 4\nline 5\nline 6\nline 7\nline 8\nline 9\nline 10\nline 11\nline 12\nline 13\nline 14\nline 15\nline 16\nline 17\nline 18\nline 19\nline 20\nline 21\nline 22\nline 23\nline 24\nline 25\nline 26\nline 27\nline 28\nline 29\n"
+  },
+  {
+   "do": "open",
+   "path": "letters.txt"
+  },
+  {
+   "expect": {
+    "active": "letters.txt"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-2"
+  },
+  {
+   "expect": {
+    "docks.left.open": true,
+    "docks.left.panel": "Bookmarks"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-2"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "2 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 2, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::ToggleMnemonic",
+   "args": {
+    "mnemonic": "A"
+   }
+  },
+  {
+   "find": {
+    "label": "A letters.txt:2",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "3 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 3, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::ToggleMnemonic",
+   "args": {
+    "mnemonic": "B"
+   }
+  },
+  {
+   "find": {
+    "label": "B letters.txt:3",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "4 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 4, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::ToggleMnemonic",
+   "args": {
+    "mnemonic": "C"
+   }
+  },
+  {
+   "find": {
+    "label": "C letters.txt:4",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "5 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 5, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::ToggleMnemonic",
+   "args": {
+    "mnemonic": "D"
+   }
+  },
+  {
+   "find": {
+    "label": "D letters.txt:5",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "6 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 6, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::ToggleMnemonic",
+   "args": {
+    "mnemonic": "E"
+   }
+  },
+  {
+   "find": {
+    "label": "E letters.txt:6",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "7 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 7, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::ToggleMnemonic",
+   "args": {
+    "mnemonic": "F"
+   }
+  },
+  {
+   "find": {
+    "label": "F letters.txt:7",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "8 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 8, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::ToggleMnemonic",
+   "args": {
+    "mnemonic": "G"
+   }
+  },
+  {
+   "find": {
+    "label": "G letters.txt:8",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "9 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 9, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::ToggleMnemonic",
+   "args": {
+    "mnemonic": "H"
+   }
+  },
+  {
+   "find": {
+    "label": "H letters.txt:9",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "1 0 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 10, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::ToggleMnemonic",
+   "args": {
+    "mnemonic": "I"
+   }
+  },
+  {
+   "find": {
+    "label": "I letters.txt:10",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "1 1 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 11, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::ToggleMnemonic",
+   "args": {
+    "mnemonic": "J"
+   }
+  },
+  {
+   "find": {
+    "label": "J letters.txt:11",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "1 2 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 12, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::ToggleMnemonic",
+   "args": {
+    "mnemonic": "K"
+   }
+  },
+  {
+   "find": {
+    "label": "K letters.txt:12",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "1 3 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 13, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::ToggleMnemonic",
+   "args": {
+    "mnemonic": "L"
+   }
+  },
+  {
+   "find": {
+    "label": "L letters.txt:13",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "1 4 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 14, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::ToggleMnemonic",
+   "args": {
+    "mnemonic": "M"
+   }
+  },
+  {
+   "find": {
+    "label": "M letters.txt:14",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "1 5 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 15, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::ToggleMnemonic",
+   "args": {
+    "mnemonic": "N"
+   }
+  },
+  {
+   "find": {
+    "label": "N letters.txt:15",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "1 6 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 16, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::ToggleMnemonic",
+   "args": {
+    "mnemonic": "O"
+   }
+  },
+  {
+   "find": {
+    "label": "O letters.txt:16",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "1 7 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 17, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::ToggleMnemonic",
+   "args": {
+    "mnemonic": "P"
+   }
+  },
+  {
+   "find": {
+    "label": "P letters.txt:17",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "1 8 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 18, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::ToggleMnemonic",
+   "args": {
+    "mnemonic": "Q"
+   }
+  },
+  {
+   "find": {
+    "label": "Q letters.txt:18",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "1 9 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 19, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::ToggleMnemonic",
+   "args": {
+    "mnemonic": "R"
+   }
+  },
+  {
+   "find": {
+    "label": "R letters.txt:19",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "2 0 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 20, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::ToggleMnemonic",
+   "args": {
+    "mnemonic": "S"
+   }
+  },
+  {
+   "find": {
+    "label": "S letters.txt:20",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "2 1 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 21, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::ToggleMnemonic",
+   "args": {
+    "mnemonic": "T"
+   }
+  },
+  {
+   "find": {
+    "label": "T letters.txt:21",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "2 2 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 22, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::ToggleMnemonic",
+   "args": {
+    "mnemonic": "U"
+   }
+  },
+  {
+   "find": {
+    "label": "U letters.txt:22",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "2 3 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 23, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::ToggleMnemonic",
+   "args": {
+    "mnemonic": "V"
+   }
+  },
+  {
+   "find": {
+    "label": "V letters.txt:23",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "2 4 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 24, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::ToggleMnemonic",
+   "args": {
+    "mnemonic": "W"
+   }
+  },
+  {
+   "find": {
+    "label": "W letters.txt:24",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "2 5 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 25, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::ToggleMnemonic",
+   "args": {
+    "mnemonic": "X"
+   }
+  },
+  {
+   "find": {
+    "label": "X letters.txt:25",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "2 6 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 26, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::ToggleMnemonic",
+   "args": {
+    "mnemonic": "Y"
+   }
+  },
+  {
+   "find": {
+    "label": "Y letters.txt:26",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "2 7 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 27, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::ToggleMnemonic",
+   "args": {
+    "mnemonic": "Z"
+   }
+  },
+  {
+   "find": {
+    "label": "Z letters.txt:27",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::GoToBookmark",
+   "args": {
+    "mnemonic": "Z"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 27, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::GoToBookmark",
+   "args": {
+    "mnemonic": "Y"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 26, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::GoToBookmark",
+   "args": {
+    "mnemonic": "X"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 25, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::GoToBookmark",
+   "args": {
+    "mnemonic": "W"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 24, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::GoToBookmark",
+   "args": {
+    "mnemonic": "V"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 23, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::GoToBookmark",
+   "args": {
+    "mnemonic": "U"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 22, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::GoToBookmark",
+   "args": {
+    "mnemonic": "T"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 21, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::GoToBookmark",
+   "args": {
+    "mnemonic": "S"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 20, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::GoToBookmark",
+   "args": {
+    "mnemonic": "R"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 19, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::GoToBookmark",
+   "args": {
+    "mnemonic": "Q"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 18, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::GoToBookmark",
+   "args": {
+    "mnemonic": "P"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 17, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::GoToBookmark",
+   "args": {
+    "mnemonic": "O"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 16, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::GoToBookmark",
+   "args": {
+    "mnemonic": "N"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 15, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::GoToBookmark",
+   "args": {
+    "mnemonic": "M"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 14, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::GoToBookmark",
+   "args": {
+    "mnemonic": "L"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 13, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::GoToBookmark",
+   "args": {
+    "mnemonic": "K"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 12, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::GoToBookmark",
+   "args": {
+    "mnemonic": "J"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 11, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::GoToBookmark",
+   "args": {
+    "mnemonic": "I"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 10, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::GoToBookmark",
+   "args": {
+    "mnemonic": "H"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 9, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::GoToBookmark",
+   "args": {
+    "mnemonic": "G"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 8, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::GoToBookmark",
+   "args": {
+    "mnemonic": "F"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 7, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::GoToBookmark",
+   "args": {
+    "mnemonic": "E"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 6, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::GoToBookmark",
+   "args": {
+    "mnemonic": "D"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 5, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::GoToBookmark",
+   "args": {
+    "mnemonic": "C"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 4, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::GoToBookmark",
+   "args": {
+    "mnemonic": "B"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 3, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::GoToBookmark",
+   "args": {
+    "mnemonic": "A"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 2, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "2 8 enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 28, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::ToggleMnemonic",
+   "args": {
+    "mnemonic": "B"
+   }
+  },
+  {
+   "find": {
+    "label": "B letters.txt:28",
+    "role": "AXRow"
+   }
+  },
+  {
+   "find": {
+    "label": "letters.txt:3",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::ToggleMnemonic",
+   "args": {
+    "mnemonic": "B"
+   }
+  },
+  {
+   "find": {
+    "label": "B letters.txt:28",
+    "role": "AXRow"
+   },
+   "absent": true
+  },
+  {
+   "do": "action",
+   "name": "navigate::GoToBookmark",
+   "args": {
+    "mnemonic": "A"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 2, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::ToggleMnemonic",
+   "args": {
+    "mnemonic": "A"
+   }
+  },
+  {
+   "find": {
+    "label": "A letters.txt:2",
+    "role": "AXRow"
+   },
+   "absent": true
+  }
+ ]
+}

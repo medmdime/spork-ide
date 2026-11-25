@@ -1,0 +1,250 @@
+{
+ "id": "editor-gutter-folding",
+ "covers": [
+  "action:ExpandRegion",
+  "action:CollapseRegion",
+  "action:ExpandAllRegions",
+  "action:CollapseAllRegions",
+  "action:ExpandRegionRecursively",
+  "action:CollapseRegionRecursively",
+  "action:CollapseSelection"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "file": "src/main.rs",
+   "text": "fn main() {\n    let a = 1;\n    let b = 2;\n    if a < b {\n        println!(\"{a}\");\n    }\n}\n\nfn other() {}\n"
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "down down down"
+  },
+  {
+   "find": {
+    "label": "Line 4, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "caret-row"
+  },
+  {
+   "do": "click",
+   "at": [
+    338,
+    88
+   ],
+   "hover": true
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "outline"
+  },
+  {
+   "do": "click",
+   "at": [
+    338,
+    88
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down"
+  },
+  {
+   "find": {
+    "label": "Line 8, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "click",
+   "at": [
+    900,
+    600
+   ],
+   "hover": true
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "collapsed"
+  },
+  {
+   "do": "click",
+   "at": [
+    338,
+    88
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down"
+  },
+  {
+   "find": {
+    "label": "Line 2, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "down down down cmd--"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down down down down"
+  },
+  {
+   "find": {
+    "label": "Line 7, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down down down cmd-="
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "find": {
+    "label": "Line 5, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home cmd--"
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "find": {
+    "label": "Line 8, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home cmd-="
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "find": {
+    "label": "Line 2, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift--"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down"
+  },
+  {
+   "find": {
+    "label": "Line 8, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-="
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down"
+  },
+  {
+   "find": {
+    "label": "Line 2, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home alt-cmd--"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home alt-cmd-="
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down down down down"
+  },
+  {
+   "find": {
+    "label": "Line 5, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down shift-down shift-down cmd-."
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down down"
+  },
+  {
+   "find": {
+    "label": "Line 5, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "fold-selection"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down cmd-="
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down down"
+  },
+  {
+   "find": {
+    "label": "Line 3, column 1",
+    "role": "AXButton"
+   }
+  }
+ ]
+}

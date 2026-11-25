@@ -1,0 +1,140 @@
+{
+ "id": "vcs-git-tool-window",
+ "covers": [
+  "action:ActivateVersionControlToolWindow"
+ ],
+ "reference-app": [
+  "screenshots/toolwindows/version-control.jpg"
+ ],
+ "steps": [
+  {
+   "find": [
+    {
+     "label": "Git",
+     "role": "AXCheckBox",
+     "in": "Left stripe"
+    },
+    {
+     "label": "Commit",
+     "role": "AXCheckBox",
+     "in": "Left stripe"
+    }
+   ],
+   "within": 10000
+  },
+  {
+   "expect": {
+    "docks.bottom.open": false
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-9"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "Git",
+    "focused": [
+     "Workspace",
+     "Dock",
+     "Spork"
+    ]
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "feat: say goodbye",
+     "role": "AXRow"
+    },
+    {
+     "label": "feat: greet the world",
+     "role": "AXRow"
+    },
+    {
+     "label": "docs: start the readme",
+     "role": "AXRow"
+    }
+   ],
+   "ordered": true,
+   "within": 8000
+  },
+  {
+   "find": [
+    {
+     "label": "HEAD (Current Branch)",
+     "role": "AXRow",
+     "in": "Git Branches"
+    },
+    {
+     "label": "Local",
+     "role": "AXRow",
+     "in": "Git Branches"
+    },
+    {
+     "label": "main",
+     "role": "AXRow",
+     "in": "Git Branches"
+    },
+    {
+     "label": "farewell",
+     "role": "AXRow",
+     "in": "Git Branches"
+    },
+    {
+     "label": "Tags",
+     "role": "AXRow",
+     "in": "Git Branches"
+    },
+    {
+     "label": "v0.1.0",
+     "role": "AXRow",
+     "in": "Git Branches"
+    }
+   ]
+  },
+  {
+   "wait": 800
+  },
+  {
+   "shot": "log"
+  },
+  {
+   "do": "click",
+   "label": "Git",
+   "role": "AXCheckBox",
+   "in": "Left stripe"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": false
+   }
+  },
+  {
+   "find": {
+    "label": "feat: say goodbye",
+    "role": "AXRow"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Git",
+   "role": "AXCheckBox",
+   "in": "Left stripe"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "Git"
+   }
+  },
+  {
+   "find": {
+    "label": "feat: say goodbye",
+    "role": "AXRow"
+   }
+  }
+ ]
+}

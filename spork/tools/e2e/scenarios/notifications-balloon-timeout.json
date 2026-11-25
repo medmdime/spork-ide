@@ -1,0 +1,96 @@
+{
+ "id": "notifications-balloon-timeout",
+ "covers": [],
+ "reference-app": [],
+ "steps": [
+  {
+   "find": {
+    "label": "Notifications",
+    "role": "AXButton"
+   },
+   "within": 10000
+  },
+  {
+   "do": "push",
+   "type": "success",
+   "text": "Pushed 1 commit to origin/main"
+  },
+  {
+   "do": "push",
+   "type": "error",
+   "text": "Couldn't push: the remote rejected it"
+  },
+  {
+   "expect": {
+    "balloons.0.text": "Pushed 1 commit to origin/main",
+    "balloons.0.sticky": false,
+    "balloons.1.text": "Couldn't push: the remote rejected it",
+    "balloons.1.sticky": true,
+    "badge": "error"
+   },
+   "of": {
+    "do": "balloons"
+   }
+  },
+  {
+   "do": "click",
+   "at": [
+    300,
+    300
+   ],
+   "hover": true
+  },
+  {
+   "wait": 11000
+  },
+  {
+   "expect": {
+    "balloons.0.text": "Couldn't push: the remote rejected it",
+    "balloons.1": null
+   },
+   "of": {
+    "do": "balloons"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Notifications",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "notifications": true
+   }
+  },
+  {
+   "expect": {
+    "logged": 2
+   },
+   "of": {
+    "do": "balloons"
+   }
+  },
+  {
+   "expect": {
+    "balloons.0": null
+   },
+   "of": {
+    "do": "balloons"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Notifications",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "badge": null
+   },
+   "of": {
+    "do": "balloons"
+   }
+  }
+ ]
+}

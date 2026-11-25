@@ -1,0 +1,239 @@
+{
+ "id": "code-usages",
+ "covers": [
+  "action:ShowUsages",
+  "action:FindUsages",
+  "action:CallHierarchy",
+  "action:CallHierarchy.BaseOnThisMethod"
+ ],
+ "reference-app": [],
+ "settings": {
+  "enable_language_server": true,
+  "lsp": {
+   "rust-analyzer": {
+    "binary": {
+     "path": "$RUST_ANALYZER"
+    },
+    "initialization_options": {
+     "checkOnSave": false,
+     "cargo": {
+      "buildScripts": {
+       "enable": false
+      }
+     },
+     "procMacro": {
+      "enable": false
+     }
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "file": "src/main.rs",
+   "text": "mod greeting;\n\nfn main() {\n    println!(\"{}\", greeting::hello(\"world\"));\n    welcome();\n}\n\nfn welcome() {\n    println!(\"{}\", greeting::hello(\"you\"));\n}\n"
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "expect": {
+    "code.ready": true
+   },
+   "within": 120000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "right right right right right right right right"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-alt-f7"
+  },
+  {
+   "find": {
+    "label": "Usages of hello",
+    "role": "AXWindow"
+   },
+   "within": 30000
+  },
+  {
+   "find": [
+    {
+     "label": "2 usages",
+     "role": "AXStaticText"
+    },
+    {
+     "label": "println!(\"{}\", greeting::hello(\"world\"));",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "println!(\"{}\", greeting::hello(\"you\"));",
+     "role": "AXMenuItem"
+    }
+   ]
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "show-usages"
+  },
+  {
+   "do": "keys",
+   "keys": "down enter"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   },
+   "within": 10000
+  },
+  {
+   "find": {
+    "label": "Line 9, column 30",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-f7"
+  },
+  {
+   "find": {
+    "label": "Usages of hello",
+    "role": "AXRadioButton"
+   },
+   "within": 30000
+  },
+  {
+   "find": [
+    {
+     "label": "Usages",
+     "role": "AXRow"
+    },
+    {
+     "label": "main.rs",
+     "role": "AXRow"
+    }
+   ],
+   "within": 20000
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true
+   }
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home right right right right right right right right"
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-alt-h"
+  },
+  {
+   "find": {
+    "label": "Callers of hello",
+    "role": "AXRadioButton"
+   },
+   "within": 30000
+  },
+  {
+   "find": [
+    {
+     "label": "hello",
+     "role": "AXRow"
+    },
+    {
+     "label": "main",
+     "role": "AXRow"
+    },
+    {
+     "label": "welcome",
+     "role": "AXRow"
+    }
+   ],
+   "within": 20000
+  },
+  {
+   "expect": {
+    "docks.right.open": true
+   }
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "call-hierarchy"
+  },
+  {
+   "do": "click",
+   "label": "main",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "find": [
+    {
+     "label": "Base on This Method"
+    },
+    {
+     "label": "Jump to Source"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Base on This Method"
+  },
+  {
+   "find": {
+    "label": "Callers of main",
+    "role": "AXRadioButton"
+   },
+   "within": 20000
+  },
+  {
+   "find": {
+    "label": "Callers of hello",
+    "role": "AXRadioButton"
+   },
+   "absent": true
+  }
+ ]
+}

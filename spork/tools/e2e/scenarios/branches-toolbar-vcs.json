@@ -1,0 +1,192 @@
+{
+ "id": "branches-toolbar-vcs",
+ "covers": [
+  "toolbar:MainToolbarVCSGroup"
+ ],
+ "reference-app": [
+  "screenshots/frame/main-window.jpg"
+ ],
+ "steps": [
+  {
+   "toolbar": "MainToolbarVCSGroup",
+   "items": [
+    "Update Project",
+    "Push…",
+    "Git Branch: main"
+   ]
+  },
+  {
+   "file": "conflict.txt",
+   "text": "base\n"
+  },
+  {
+   "git": [
+    "add",
+    "conflict.txt"
+   ]
+  },
+  {
+   "git": [
+    "commit",
+    "-q",
+    "-m",
+    "base"
+   ]
+  },
+  {
+   "git": [
+    "switch",
+    "-q",
+    "-c",
+    "other"
+   ]
+  },
+  {
+   "file": "conflict.txt",
+   "text": "other\n"
+  },
+  {
+   "git": [
+    "commit",
+    "-q",
+    "-am",
+    "other"
+   ]
+  },
+  {
+   "git": [
+    "switch",
+    "-q",
+    "main"
+   ]
+  },
+  {
+   "file": "conflict.txt",
+   "text": "main\n"
+  },
+  {
+   "git": [
+    "commit",
+    "-q",
+    "-am",
+    "mine"
+   ]
+  },
+  {
+   "git": [
+    "merge",
+    "other"
+   ],
+   "contains": "CONFLICT"
+  },
+  {
+   "toolbar": "MainToolbarVCSGroup",
+   "items": [
+    "Update Project",
+    "Push…",
+    "Git Branch: main",
+    "Resolve Conflicts…",
+    "Commit merge",
+    "Abort Merge"
+   ],
+   "within": 5000
+  },
+  {
+   "shot": "merging"
+  },
+  {
+   "do": "click",
+   "label": "Abort Merge",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Abort",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "git": [
+    "status"
+   ],
+   "lacks": "unmerged paths"
+  },
+  {
+   "toolbar": "MainToolbarVCSGroup",
+   "items": [
+    "Update Project",
+    "Push…",
+    "Git Branch: main"
+   ],
+   "within": 5000
+  },
+  {
+   "git": [
+    "rebase",
+    "other"
+   ],
+   "contains": "CONFLICT"
+  },
+  {
+   "toolbar": "MainToolbarVCSGroup",
+   "items": [
+    "Resolve Conflicts…",
+    "Continue Rebase",
+    "Abort Rebase"
+   ],
+   "part": true,
+   "within": 5000
+  },
+  {
+   "file": "conflict.txt",
+   "text": "resolved\n"
+  },
+  {
+   "git": [
+    "add",
+    "conflict.txt"
+   ]
+  },
+  {
+   "toolbar": "MainToolbarVCSGroup",
+   "items": [
+    "Continue Rebase",
+    "Abort Rebase"
+   ],
+   "part": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Continue Rebase",
+   "role": "AXButton"
+  },
+  {
+   "git": [
+    "status"
+   ],
+   "lacks": "rebase"
+  },
+  {
+   "git": [
+    "log",
+    "-1",
+    "--format=%s"
+   ],
+   "is": "mine"
+  },
+  {
+   "toolbar": "MainToolbarVCSGroup",
+   "items": [
+    "Update Project",
+    "Push…",
+    "Git Branch: main"
+   ],
+   "within": 5000
+  }
+ ]
+}

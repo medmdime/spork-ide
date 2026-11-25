@@ -1,0 +1,53 @@
+{
+ "id": "branches-open-worktree",
+ "covers": [
+  "action:GitOpenExistingWorkingTreeForLocalBranchAction"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "find": {
+    "label": "Search for branches and actions"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "r e l e a s e"
+  },
+  {
+   "find": {
+    "label": "release/2026.1",
+    "role": "AXRow",
+    "in": "Branches Tree"
+   }
+  },
+  {
+   "do": "click",
+   "label": "release/2026.1",
+   "role": "AXRow",
+   "in": "Branches Tree"
+  },
+  {
+   "find": {
+    "label": "Open Worktree…",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Open Worktree…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Git Branch: release/2026.1",
+    "role": "AXButton"
+   },
+   "within": 10000
+  }
+ ]
+}

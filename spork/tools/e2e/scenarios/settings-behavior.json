@@ -1,0 +1,705 @@
+{
+ "id": "settings-behavior",
+ "covers": [
+  "settings:Appearance & Behavior",
+  "settings:Appearance & Behavior › Accessibility",
+  "settings:Appearance & Behavior › Menus and Toolbars",
+  "settings:Appearance & Behavior › File Colors",
+  "settings:Appearance & Behavior › Scopes",
+  "settings:Appearance & Behavior › Quick Lists",
+  "settings:Appearance & Behavior › Required Plugins",
+  "settings:Appearance & Behavior › Trusted Locations",
+  "settings:Appearance & Behavior › Path Variables",
+  "settings:Appearance & Behavior › Presentation Assistant"
+ ],
+ "reference-app": [
+  "screenshots/settings/appearance-behavior.jpg",
+  "screenshots/settings/appearance-behavior-accessibility.jpg",
+  "screenshots/settings/appearance-behavior-menus-and-toolbars.jpg",
+  "screenshots/settings/appearance-behavior-file-colors.jpg",
+  "screenshots/settings/appearance-behavior-scopes.jpg",
+  "screenshots/settings/appearance-behavior-notifications.jpg",
+  "screenshots/settings/appearance-behavior-quick-lists.jpg",
+  "screenshots/settings/appearance-behavior-required-plugins.jpg",
+  "screenshots/settings/appearance-behavior-trusted-locations.jpg",
+  "screenshots/settings/appearance-behavior-path-variables.jpg",
+  "screenshots/settings/appearance-behavior-presentation-assistant.jpg"
+ ],
+ "steps": [
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Appearance & Behavior"
+  },
+  {
+   "expect": {
+    "settings": "Appearance & Behavior"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXLink",
+     "label": "Appearance"
+    },
+    {
+     "role": "AXLink",
+     "label": "Accessibility"
+    },
+    {
+     "role": "AXLink",
+     "label": "Menus and Toolbars"
+    },
+    {
+     "role": "AXLink",
+     "label": "System Settings"
+    },
+    {
+     "role": "AXLink",
+     "label": "File Colors"
+    },
+    {
+     "role": "AXLink",
+     "label": "Scopes"
+    },
+    {
+     "role": "AXLink",
+     "label": "Notifications"
+    },
+    {
+     "role": "AXLink",
+     "label": "Quick Lists"
+    },
+    {
+     "role": "AXLink",
+     "label": "Required Plugins"
+    },
+    {
+     "role": "AXLink",
+     "label": "Trusted Locations"
+    },
+    {
+     "role": "AXLink",
+     "label": "Path Variables"
+    },
+    {
+     "role": "AXLink",
+     "label": "Presentation Assistant"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "appearance-behavior",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Appearance & Behavior/Accessibility"
+  },
+  {
+   "expect": {
+    "settings": "Appearance & Behavior/Accessibility"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXPopUpButton",
+     "value": "100%"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Use contrast scrollbars",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Adjust colors for red-green vision deficiency",
+     "value": "0"
+    },
+    {
+     "role": "AXLink",
+     "label": "How it works"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Support screen readers",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Announce notifications with screen reader",
+     "value": "1",
+     "enabled": false
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "With medium priority",
+     "enabled": false
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Events",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Breakpoint hit",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Status bar progress",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Code highlighting",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Error on current line",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Error under caret",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Warning on current line",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Warning under caret",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Diff view",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Line added",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Line removed above",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Line changed",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Conflict",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Editor gutter",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Breakpoint on current line",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Line added",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Line removed above",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Line changed",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Editor code folding",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Folded code on current line",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Folded code under caret",
+     "value": "0"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "appearance-behavior-accessibility",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Appearance & Behavior/Menus and Toolbars"
+  },
+  {
+   "expect": {
+    "settings": "Appearance & Behavior/Menus and Toolbars"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXRow",
+     "label": "Main Menu"
+    },
+    {
+     "role": "AXRow",
+     "label": "Main Toolbar"
+    },
+    {
+     "role": "AXRow",
+     "label": "Editor Popup Menu"
+    },
+    {
+     "role": "AXRow",
+     "label": "Editor Gutter Popup Menu"
+    },
+    {
+     "role": "AXRow",
+     "label": "Editor Tab Popup Menu"
+    },
+    {
+     "role": "AXRow",
+     "label": "Project View Popup Menu"
+    },
+    {
+     "role": "AXRow",
+     "label": "Scope View Popup Menu"
+    },
+    {
+     "role": "AXRow",
+     "label": "Navigation Bar Popup Menu"
+    },
+    {
+     "role": "AXRow",
+     "label": "Navigation Bar Toolbar"
+    },
+    {
+     "role": "AXRow",
+     "label": "Debug Header More Popup"
+    },
+    {
+     "role": "AXRow",
+     "label": "Debug Header Toolbar"
+    },
+    {
+     "role": "AXRow",
+     "label": "Debug Watches Toolbar"
+    },
+    {
+     "role": "AXRow",
+     "label": "File History Toolbar"
+    },
+    {
+     "role": "AXRow",
+     "label": "Floating Code Toolbar"
+    },
+    {
+     "role": "AXRow",
+     "label": "Run Tool Window Header More Popup"
+    },
+    {
+     "role": "AXRow",
+     "label": "Run Tool Window Header Toolbar"
+    },
+    {
+     "role": "AXRow",
+     "label": "VCS Local Changes Toolbar"
+    },
+    {
+     "role": "AXRow",
+     "label": "VCS Log Changes Browser Toolbar"
+    },
+    {
+     "role": "AXRow",
+     "label": "VCS Log Toolbar"
+    },
+    {
+     "role": "AXRow",
+     "label": "VCS Operations Popup"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "appearance-behavior-menus-and-toolbars",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Appearance & Behavior/File Colors"
+  },
+  {
+   "expect": {
+    "settings": "Appearance & Behavior/File Colors"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Enable file colors",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Use in editor tabs",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Use in project view",
+     "value": "1"
+    },
+    {
+     "role": "AXLink",
+     "label": "Manage scopes…"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ]
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "appearance-behavior-file-colors",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Appearance & Behavior/Scopes"
+  },
+  {
+   "expect": {
+    "settings": "Appearance & Behavior/Scopes"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ]
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "appearance-behavior-scopes",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Appearance & Behavior/Notifications"
+  },
+  {
+   "expect": {
+    "settings": "Appearance & Behavior/Notifications"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Display balloon notifications",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Enable system notifications",
+     "value": "1"
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "Bottom Right"
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "Balloon"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show in tool window",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Play sound",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Read aloud",
+     "value": "0"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "appearance-behavior-notifications",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Appearance & Behavior/Quick Lists"
+  },
+  {
+   "expect": {
+    "settings": "Appearance & Behavior/Quick Lists"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "appearance-behavior-quick-lists",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Appearance & Behavior/Required Plugins"
+  },
+  {
+   "expect": {
+    "settings": "Appearance & Behavior/Required Plugins"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ]
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "appearance-behavior-required-plugins",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Appearance & Behavior/Trusted Locations"
+  },
+  {
+   "expect": {
+    "settings": "Appearance & Behavior/Trusted Locations"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "appearance-behavior-trusted-locations",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Appearance & Behavior/Path Variables"
+  },
+  {
+   "expect": {
+    "settings": "Appearance & Behavior/Path Variables"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ]
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "appearance-behavior-path-variables",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Appearance & Behavior/Presentation Assistant"
+  },
+  {
+   "expect": {
+    "settings": "Appearance & Behavior/Presentation Assistant"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Show action names and shortcuts in popup",
+     "value": "0"
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "Medium"
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "Bottom Center"
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "macOS"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Additional:",
+     "value": "0"
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "Windows",
+     "enabled": false
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "appearance-behavior-presentation-assistant",
+   "window": "smallest"
+  }
+ ]
+}

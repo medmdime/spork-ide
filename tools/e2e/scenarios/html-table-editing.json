@@ -1,0 +1,187 @@
+{
+ "id": "html-table-editing",
+ "covers": [
+  "action:HtmlAddTableColumnAfter",
+  "action:HtmlAddTableColumnBefore"
+ ],
+ "steps": [
+  {
+   "file": "table.html",
+   "text": "<table>\n    <thead>\n    <tr>\n        <th>A</th>\n        <th>B</th>\n    </tr>\n    </thead>\n    <tr>\n        <td>1</td>\n        <td>2</td>\n    </tr>\n    <tr>\n        <td colspan=\"2\">3</td>\n    </tr>\n</table>\nhello\n"
+  },
+  {
+   "do": "open",
+   "path": "table.html"
+  },
+  {
+   "expect": {
+    "active": "table.html"
+   }
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "do": "keys",
+   "keys": "down down down down down down down down end left left left left left"
+  },
+  {
+   "do": "action",
+   "name": "code::NavigateToNextTableColumn"
+  },
+  {
+   "do": "type",
+   "text": "X"
+  },
+  {
+   "do": "action",
+   "name": "code::NavigateToNextTableRow"
+  },
+  {
+   "do": "type",
+   "text": "Y"
+  },
+  {
+   "do": "action",
+   "name": "code::NavigateToPreviousTableRow"
+  },
+  {
+   "do": "type",
+   "text": "Z"
+  },
+  {
+   "do": "action",
+   "name": "code::NavigateToPreviousTableColumn"
+  },
+  {
+   "do": "type",
+   "text": "V"
+  },
+  {
+   "do": "action",
+   "name": "code::NavigateToPreviousTableRow"
+  },
+  {
+   "do": "type",
+   "text": "W"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-n"
+  },
+  {
+   "menu": "action:HtmlAddTableColumnAfter",
+   "items": [
+    "Add a New Column to the Table Before the Current One",
+    "Add a New Column to the Table After the Current One"
+   ],
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Add a New Column to the Table After the Current One",
+   "role": "AXMenuItem"
+  },
+  {
+   "do": "type",
+   "text": "N"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "sh": "cat table.html",
+   "contains": "        <th>AW</th>\n        <th>N</th>\n        <th>B</th>",
+   "within": 5000
+  },
+  {
+   "sh": "cat table.html",
+   "contains": "        <td>1ZV</td>\n        <td></td>\n        <td>2X</td>"
+  },
+  {
+   "sh": "cat table.html",
+   "contains": "<td colspan=\"3\">3Y</td>"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-n"
+  },
+  {
+   "find": {
+    "label": "Add a New Column to the Table Before the Current One",
+    "role": "AXMenuItem"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Add a New Column to the Table Before the Current One",
+   "role": "AXMenuItem"
+  },
+  {
+   "do": "type",
+   "text": "P"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "sh": "cat table.html",
+   "contains": "        <th>AW</th>\n        <th>P</th>\n        <th>N</th>",
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "do": "type",
+   "text": "20:1"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "do": "keys",
+   "keys": "shift-end"
+  },
+  {
+   "do": "action",
+   "name": "code::SurroundWithTag"
+  },
+  {
+   "do": "type",
+   "text": "em"
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "sh": "cat table.html",
+   "contains": "\n<em>hello</em>\n",
+   "within": 5000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "table"
+  }
+ ]
+}

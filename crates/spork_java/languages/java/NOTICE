@@ -1,0 +1,4 @@
+The query files in this folder (*.scm) and config.toml come from Zed's Java extension
+(https://github.com/zed-extensions/java, languages/java at 6.8.30), licensed under the
+Apache License 2.0 (LICENSE-Apache-2.0 beside this file), by the Java Extension Contributors.
+Modified for Spork IDE: config.toml has no prettier or debugger keys and sets tab_size.

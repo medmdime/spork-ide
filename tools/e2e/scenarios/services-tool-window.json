@@ -1,0 +1,536 @@
+{
+ "id": "services-tool-window",
+ "covers": [
+  "action:ActivateServicesToolWindow",
+  "action:RunDashboard.AddConfiguration",
+  "action:RunDashboard.GroupByType",
+  "action:RunDashboard.GroupByStatus",
+  "action:ShowLiveRunConfigurations",
+  "action:ServiceView.GroupByContributor"
+ ],
+ "reference-app": [],
+ "settings": {
+  "dap": {
+   "CodeLLDB": {
+    "binary": "/usr/bin/python3",
+    "args": [
+     "$E2E/dap_fixture.py"
+    ]
+   }
+  },
+  "languages": {
+   "JSON": {
+    "prettier": {
+     "allowed": false
+    }
+   },
+   "JSONC": {
+    "prettier": {
+     "allowed": false
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "sh": "mkdir -p .zed"
+  },
+  {
+   "file": ".zed/tasks.json",
+   "text": "[{\"label\": \"hello\", \"command\": \"echo hello\"}, {\"label\": \"sleepy\", \"command\": \"sleep 30\"}]"
+  },
+  {
+   "sh": "mkdir -p .zed && printf '[{\"label\": \"debug fixture\", \"adapter\": \"CodeLLDB\", \"request\": \"launch\", \"program\": \"$FIXTURE/target/debug/fixture\", \"cwd\": \"$FIXTURE\", \"requestLog\": \"$FIXTURE/../dap-requests.log\"}]' > .zed/debug.json"
+  },
+  {
+   "do": "open",
+   "path": "README.md"
+  },
+  {
+   "find": {
+    "label": "hello, Run / Debug Configurations",
+    "role": "AXButton"
+   },
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-8"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "Services"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Services",
+     "role": "AXCheckBox",
+     "value": "1",
+     "in": "Left stripe"
+    },
+    {
+     "label": "ServiceViewTreeToolbar",
+     "role": "AXToolbar"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "toolbar": "ServiceViewTreeToolbar",
+   "items": [
+    "Add Service",
+    "View Options",
+    "Expand All (disabled)",
+    "Collapse All (disabled)"
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "Add service",
+     "role": "AXLink"
+    }
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "empty"
+  },
+  {
+   "do": "click",
+   "label": "Add Service",
+   "role": "AXButton"
+  },
+  {
+   "menu": "ServiceView.AddService",
+   "items": [
+    "Run Configuration…",
+    "Restore Hidden Configurations (disabled)",
+    "Docker Connection"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Run Configuration…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "Add Configuration",
+     "role": "AXWindow"
+    },
+    {
+     "label": "Shell Script",
+     "role": "AXMenuItem"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "type",
+   "text": "shell"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "run.services.types": [
+     "Shell Script"
+    ],
+    "run.services.services.hello.status": "Not Started",
+    "run.services.services.sleepy.status": "Not Started"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Add Service",
+   "role": "AXButton"
+  },
+  {
+   "do": "click",
+   "label": "Run Configuration…",
+   "role": "AXMenuItem"
+  },
+  {
+   "do": "type",
+   "text": "native"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "run.services.services.debug fixture.type": "Native Application"
+   },
+   "within": 5000
+  },
+  {
+   "find": [
+    {
+     "label": "Native Application",
+     "in": "Services"
+    },
+    {
+     "label": "debug fixture",
+     "in": "Services"
+    },
+    {
+     "label": "Shell Script",
+     "in": "Services"
+    },
+    {
+     "label": "hello",
+     "in": "Services"
+    },
+    {
+     "label": "sleepy",
+     "in": "Services"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "hello",
+   "in": "Services"
+  },
+  {
+   "expect": {
+    "run.services.selected": "hello",
+    "run.services.console": null
+   }
+  },
+  {
+   "find": {
+    "label": "No content available"
+   }
+  },
+  {
+   "toolbar": "ServiceViewItemToolbar",
+   "items": [
+    "Run 'hello'",
+    "Debug 'hello'",
+    "Stop 'hello' (disabled)",
+    "Scroll to End (disabled)",
+    "Clear All (disabled)"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Run 'hello'",
+   "role": "AXButton",
+   "in": "ServiceViewItemToolbar"
+  },
+  {
+   "expect": {
+    "run.services.services.hello.status": "Finished",
+    "run.services.console.run": "hello",
+    "docks.bottom.panel": "Services"
+   },
+   "within": 15000
+  },
+  {
+   "expect": {
+    "run.tabs.0.output": "hello\n\nProcess finished with exit code 0"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "hello",
+   "in": "Services",
+   "hover": true
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "console"
+  },
+  {
+   "do": "click",
+   "label": "debug fixture",
+   "in": "Services"
+  },
+  {
+   "do": "click",
+   "label": "Debug 'debug fixture'",
+   "role": "AXButton",
+   "in": "ServiceViewItemToolbar"
+  },
+  {
+   "expect": {
+    "run.debug.terminated": true
+   },
+   "within": 15000
+  },
+  {
+   "do": "action",
+   "name": "services_panel::ToggleFocus"
+  },
+  {
+   "expect": {
+    "docks.bottom.panel": "Services",
+    "run.services.services.debug fixture.status": "Finished",
+    "run.services.console.debug": "debug fixture"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "View Options",
+   "role": "AXButton"
+  },
+  {
+   "do": "click",
+   "label": "Run Configurations",
+   "role": "AXMenuItem",
+   "hover": true
+  },
+  {
+   "menu": "RunDashboard.ViewOptions",
+   "items": [
+    "Group (disabled)",
+    "Type",
+    "Status"
+   ],
+   "checked": [
+    "Type"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Status",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "run.services.group_by_status": true
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Finished",
+     "in": "Services"
+    },
+    {
+     "label": "hello",
+     "in": "Services"
+    },
+    {
+     "label": "debug fixture",
+     "in": "Services"
+    },
+    {
+     "label": "Not Started",
+     "in": "Services"
+    },
+    {
+     "label": "sleepy",
+     "in": "Services"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "Collapse All",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "hello",
+    "in": "Services"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Expand All",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "hello",
+    "in": "Services"
+   }
+  },
+  {
+   "do": "click",
+   "label": "sleepy",
+   "in": "Services"
+  },
+  {
+   "do": "click",
+   "label": "Run 'sleepy'",
+   "role": "AXButton",
+   "in": "ServiceViewItemToolbar"
+  },
+  {
+   "expect": {
+    "run.services.services.sleepy.status": "Running"
+   },
+   "within": 10000
+  },
+  {
+   "find": {
+    "label": "Running",
+    "in": "Services"
+   }
+  },
+  {
+   "menu": "RunMenu",
+   "path": [
+    "Run"
+   ],
+   "items": [
+    "Run",
+    "Debug",
+    "Run…",
+    "Debug…",
+    "Attach to Process…",
+    "Edit Configurations…",
+    "Stop",
+    "Stop Background Processes… (disabled)",
+    "Show Running List",
+    "Debugging Actions",
+    "Toggle Breakpoint",
+    "View Breakpoints…"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "action",
+   "name": "run::ShowRunningList"
+  },
+  {
+   "find": [
+    {
+     "label": "Running List",
+     "role": "AXWindow"
+    },
+    {
+     "label": "sleepy",
+     "role": "AXLink"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "sleepy",
+   "in": "Services",
+   "hover": true
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "running-list"
+  },
+  {
+   "do": "click",
+   "label": "sleepy",
+   "role": "AXLink"
+  },
+  {
+   "expect": {
+    "docks.bottom.panel": "Services",
+    "run.services.selected": "sleepy"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Stop 'sleepy'",
+   "role": "AXButton",
+   "in": "ServiceViewItemToolbar"
+  },
+  {
+   "expect": {
+    "run.services.services.sleepy.status": "Failed"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "View Options",
+   "role": "AXButton"
+  },
+  {
+   "menu": "ServiceView.ViewOptions",
+   "items": [
+    "Group Services by Type",
+    "Run Configurations"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Group Services by Type",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "run.services.group_by_contributor": true
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Run Configurations",
+     "in": "Services"
+    },
+    {
+     "label": "Failed",
+     "in": "Services"
+    },
+    {
+     "label": "sleepy",
+     "in": "Services"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "sleepy",
+   "in": "Services"
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-t"
+  },
+  {
+   "expect": {
+    "run.services.group_by_contributor": false
+   }
+  },
+  {
+   "find": {
+    "label": "Run Configurations",
+    "in": "Services"
+   },
+   "absent": true
+  }
+ ]
+}

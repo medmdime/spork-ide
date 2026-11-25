@@ -1,0 +1,261 @@
+{
+ "id": "frame-project-tool-window",
+ "covers": [
+  "action:ActivateProjectToolWindow",
+  "action:SelectInProjectView"
+ ],
+ "reference-app": [
+  "screenshots/toolwindows/project.jpg"
+ ],
+ "steps": [
+  {
+   "expect": {
+    "docks.left.open": true,
+    "docks.left.panel": "Project Panel"
+   }
+  },
+  {
+   "toolbar": "Project",
+   "items": [
+    "Project",
+    "Select Opened File",
+    "Expand All",
+    "Collapse All",
+    "Options",
+    "Hide"
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "fixture",
+     "role": "AXRow",
+     "in": "Project Panel"
+    },
+    {
+     "label": "$FIXTURE",
+     "role": "AXStaticText",
+     "in": "Project Panel"
+    },
+    {
+     "label": "src",
+     "role": "AXRow",
+     "in": "Project Panel"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "find": {
+    "label": "main.rs",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Expand All",
+   "in": "Project"
+  },
+  {
+   "find": [
+    {
+     "label": "fixture",
+     "role": "AXRow",
+     "in": "Project Panel"
+    },
+    {
+     "label": "src",
+     "role": "AXRow",
+     "in": "Project Panel"
+    },
+    {
+     "label": "greeting.rs",
+     "role": "AXRow",
+     "in": "Project Panel"
+    },
+    {
+     "label": "main.rs",
+     "role": "AXRow",
+     "in": "Project Panel"
+    },
+    {
+     "label": "Cargo.toml",
+     "role": "AXRow",
+     "in": "Project Panel"
+    },
+    {
+     "label": "README.md",
+     "role": "AXRow",
+     "in": "Project Panel"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "at": [
+    800,
+    450
+   ],
+   "hover": true
+  },
+  {
+   "shot": "expanded"
+  },
+  {
+   "do": "click",
+   "label": "Collapse All",
+   "in": "Project"
+  },
+  {
+   "find": [
+    {
+     "label": "main.rs",
+     "role": "AXRow",
+     "in": "Project Panel"
+    },
+    {
+     "label": "greeting.rs",
+     "role": "AXRow",
+     "in": "Project Panel"
+    }
+   ],
+   "absent": true
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "greeting.rs",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Select Opened File",
+   "in": "Project"
+  },
+  {
+   "find": {
+    "label": "greeting.rs",
+    "role": "AXRow",
+    "in": "Project Panel",
+    "selected": true
+   }
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Dock",
+     "ProjectPanel"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-1"
+  },
+  {
+   "expect": {
+    "docks.left.open": false,
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-1"
+  },
+  {
+   "expect": {
+    "docks.left.open": true,
+    "docks.left.panel": "Project Panel",
+    "focused": [
+     "Workspace",
+     "Dock",
+     "ProjectPanel"
+    ]
+   }
+  },
+  {
+   "do": "click",
+   "label": "Project",
+   "role": "AXCheckBox",
+   "nth": 1
+  },
+  {
+   "find": {
+    "label": "Project",
+    "role": "AXMenuItem",
+    "value": "1"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "click",
+   "label": "Options",
+   "in": "Project"
+  },
+  {
+   "find": [
+    {
+     "label": "Left",
+     "role": "AXMenuItem",
+     "value": "1"
+    },
+    {
+     "label": "Right",
+     "role": "AXMenuItem"
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "click",
+   "label": "Hide",
+   "in": "Project"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   }
+  },
+  {
+   "find": {
+    "label": "Project",
+    "role": "AXCheckBox",
+    "value": "0",
+    "in": "Left stripe"
+   }
+  }
+ ]
+}

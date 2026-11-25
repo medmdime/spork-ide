@@ -1,0 +1,229 @@
+{
+ "id": "log-panes-changes",
+ "covers": [
+  "context-menu:Vcs.Log.ChangesBrowser.Toolbar",
+  "toolbar:Vcs.Log.ChangesBrowser.Toolbar",
+  "toolbar:Vcs.RepositoryChangesBrowserToolbar",
+  "context-menu:Vcs.RepositoryChangesBrowserToolbar",
+  "toolbar:RepositoryChangesBrowserToolbar",
+  "context-menu:Vcs.Log.ChangesBrowser.Popup",
+  "context-menu:Vcs.RepositoryChangesBrowserMenu",
+  "action:Vcs.ApplySelectedChanges",
+  "action:Vcs.RevertSelectedChanges",
+  "action:Vcs.GetVersion"
+ ],
+ "reference-app": [
+  "screenshots/menus/vcs-log-changesbrowser-toolbar.png",
+  "screenshots/menus/vcs-log-changesbrowser-popup.png",
+  "screenshots/menus/vcs-repositorychangesbrowsermenu.png"
+ ],
+ "steps": [
+  {
+   "expect": {
+    "view": "History",
+    "commits": 7
+   }
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "action",
+   "name": "spork::SelectNextCommit"
+  },
+  {
+   "expect": {
+    "selected": 0
+   }
+  },
+  {
+   "toolbar": "VCS Log Changes Browser Toolbar",
+   "items": [
+    "Revert Selected Changes (disabled)",
+    "View Options ▸"
+   ],
+   "id": "context-menu:Vcs.Log.ChangesBrowser.Toolbar"
+  },
+  {
+   "do": "click",
+   "label": "typo.txt",
+   "role": "AXRow"
+  },
+  {
+   "toolbar": "VCS Log Changes Browser Toolbar",
+   "items": [
+    "Revert Selected Changes",
+    "History Up to Here",
+    "View Options ▸"
+   ],
+   "id": "toolbar:Vcs.Log.ChangesBrowser.Toolbar"
+  },
+  {
+   "toolbar": "VCS Log Changes Browser Toolbar",
+   "items": [
+    "Revert Selected Changes",
+    "History Up to Here"
+   ],
+   "part": true,
+   "id": "toolbar:Vcs.RepositoryChangesBrowserToolbar"
+  },
+  {
+   "toolbar": "VCS Log Changes Browser Toolbar",
+   "items": [
+    "Revert Selected Changes",
+    "History Up to Here"
+   ],
+   "part": true,
+   "id": "context-menu:Vcs.RepositoryChangesBrowserToolbar"
+  },
+  {
+   "toolbar": "VCS Log Changes Browser Toolbar",
+   "items": [
+    "History Up to Here"
+   ],
+   "part": true,
+   "id": "toolbar:RepositoryChangesBrowserToolbar"
+  },
+  {
+   "do": "click",
+   "label": "typo.txt",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "menu": "context-menu:Vcs.Log.ChangesBrowser.Popup",
+   "items": [
+    "Compare with Local",
+    "Compare Before with Local",
+    "Edit Source",
+    "Open Repository Version",
+    "Revert Selected Changes",
+    "Cherry-Pick Selected Changes",
+    "Extract Selected Changes to Separate Commit… (disabled)",
+    "Drop Selected Changes (disabled)",
+    "Create Patch…",
+    "Get",
+    "History Up to Here"
+   ]
+  },
+  {
+   "menu": "context-menu:Vcs.RepositoryChangesBrowserMenu",
+   "items": [
+    "Compare with Local",
+    "Compare Before with Local",
+    "Edit Source",
+    "Open Repository Version",
+    "Revert Selected Changes",
+    "Cherry-Pick Selected Changes",
+    "Extract Selected Changes to Separate Commit… (disabled)",
+    "Drop Selected Changes (disabled)",
+    "Create Patch…",
+    "Get",
+    "History Up to Here"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Cherry-Pick Selected Changes",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "log.uncommitted": 3
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "typo.txt",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "menu": "context-menu:Vcs.Log.ChangesBrowser.Popup",
+   "items": [
+    "Revert Selected Changes"
+   ],
+   "part": true,
+   "within": 5000
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "Revert Selected Changes",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "log.uncommitted": 2
+   },
+   "within": 8000
+  },
+  {
+   "do": "action",
+   "name": "spork::SelectNextCommit"
+  },
+  {
+   "do": "action",
+   "name": "spork::SelectNextCommit"
+  },
+  {
+   "do": "action",
+   "name": "spork::SelectNextCommit"
+  },
+  {
+   "do": "action",
+   "name": "spork::SelectNextCommit"
+  },
+  {
+   "expect": {
+    "selected": 4
+   }
+  },
+  {
+   "wait": 800
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "login.rs",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "menu": "context-menu:Vcs.Log.ChangesBrowser.Popup",
+   "items": [
+    "Get"
+   ],
+   "part": true,
+   "within": 5000
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "Get",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "log.uncommitted": 3
+   },
+   "within": 8000
+  }
+ ]
+}

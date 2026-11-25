@@ -1,0 +1,78 @@
+{
+ "id": "stash-shelf-rename",
+ "covers": [
+  "action:ShelvedChanges.Rename",
+  "action:Frontend.ChangesView.Shelf.Rename"
+ ],
+ "note": "Rename… edits the changelist's name in the Shelf tab's tree, as the reference app's tree does: Enter keeps the name typed, Escape leaves the old one.",
+ "reference-app": [],
+ "steps": [
+  {
+   "sh": "mkdir -p src .idea/shelf/Fix_readme && echo 'fn a() {}' > src/a.rs && git add -N src/a.rs && printf '/shelf/\\n' > .idea/.gitignore && git diff README.md src/a.rs > .idea/shelf/Fix_readme/shelved.patch && printf '<changelist name=\"Fix_readme\" date=\"1767261600000\" recycled=\"false\" deleted=\"false\">\\n  <option name=\"DESCRIPTION\" value=\"Fix readme\" />\\n</changelist>\\n' > .idea/shelf/Fix_readme.xml && git checkout -- README.md && git rm -q --cached src/a.rs && rm -rf src"
+  },
+  {
+   "do": "action",
+   "name": "spork::ShowShelf"
+  },
+  {
+   "find": [{"role": "AXRow", "label": "Fix readme"}]
+  },
+  {
+   "do": "click",
+   "label": "Fix readme",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "find": [{"role": "AXMenuItem", "label": "Rename…"}]
+  },
+  {
+   "do": "click",
+   "label": "Rename…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [{"label": "Shelved changelist name", "value": "Fix readme"}]
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a r e n a m e d enter"
+  },
+  {
+   "sh": "grep -c 'value=\"renamed\"' .idea/shelf/Fix_readme.xml",
+   "is": "1"
+  },
+  {
+   "find": [{"role": "AXRow", "label": "renamed"}]
+  },
+  {
+   "missing": [{"label": "Shelved changelist name"}]
+  },
+  {
+   "do": "click",
+   "label": "renamed",
+   "role": "AXRow"
+  },
+  {
+   "do": "keys",
+   "keys": "f2"
+  },
+  {
+   "find": [{"label": "Shelved changelist name", "value": "renamed"}]
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a x escape"
+  },
+  {
+   "missing": [{"label": "Shelved changelist name"}]
+  },
+  {
+   "sh": "grep -c 'value=\"renamed\"' .idea/shelf/Fix_readme.xml",
+   "is": "1"
+  },
+  {
+   "find": [{"role": "AXRow", "label": "renamed"}]
+  }
+ ]
+}

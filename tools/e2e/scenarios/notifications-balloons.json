@@ -1,0 +1,184 @@
+{
+ "id": "notifications-balloons",
+ "covers": [],
+ "steps": [
+  {
+   "toolbar": "Right stripe",
+   "items": [
+    "Notifications",
+    "AI Chat"
+   ],
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   },
+   "within": 3000
+  },
+  {
+   "do": "notify",
+   "type": "info",
+   "title": "Project opened",
+   "text": "Indexing finished, the project's files are ready to search.",
+   "sticky": true
+  },
+  {
+   "do": "notify",
+   "type": "warning",
+   "title": "Low memory",
+   "text": "The IDE is running low on memory and might slow down. Increase the heap size to keep it working well, or close projects you don't need. The memory indicator in the status bar shows how much is used.",
+   "sticky": true
+  },
+  {
+   "do": "notify",
+   "type": "error",
+   "title": "Push rejected",
+   "text": "Push to origin/main was rejected: the remote has commits the local branch doesn't.",
+   "sticky": true
+  },
+  {
+   "expect": {
+    "notifications.balloons": [
+     "Project opened",
+     "Low memory",
+     "Push rejected"
+    ],
+    "notifications.more": 0,
+    "notifications.badge": "error",
+    "notifications.count": 3
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Project opened",
+     "role": "AXGroup"
+    },
+    {
+     "label": "Low memory",
+     "role": "AXGroup"
+    },
+    {
+     "label": "Push rejected",
+     "role": "AXGroup"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "find": {
+    "label": "Expand",
+    "in": "Low memory"
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "types"
+  },
+  {
+   "do": "click",
+   "label": "Expand",
+   "in": "Low memory"
+  },
+  {
+   "find": {
+    "label": "Collapse",
+    "in": "Low memory"
+   },
+   "within": 3000
+  },
+  {
+   "do": "notify",
+   "type": "info",
+   "title": "Fourth",
+   "text": "The fourth notification.",
+   "sticky": true
+  },
+  {
+   "do": "notify",
+   "type": "info",
+   "title": "Fifth",
+   "text": "The fifth notification.",
+   "sticky": true
+  },
+  {
+   "expect": {
+    "notifications.balloons": [
+     "Push rejected",
+     "Fourth",
+     "Fifth"
+    ],
+    "notifications.more": 2,
+    "notifications.count": 5
+   }
+  },
+  {
+   "find": {
+    "label": "2 more notifications",
+    "role": "AXLink"
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "stack"
+  },
+  {
+   "do": "click",
+   "label": "2 more notifications"
+  },
+  {
+   "expect": {
+    "notifications.balloons": [],
+    "notifications.more": 0,
+    "docks.right.open": true,
+    "docks.right.panel": "Notifications",
+    "notifications.count": 5
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "The fifth notification.",
+     "in": "Notifications"
+    },
+    {
+     "label": "Indexing finished, the project's files are ready to search.",
+     "in": "Notifications"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleRightDock"
+  },
+  {
+   "expect": {
+    "docks.right.open": false,
+    "notifications.unread": 0,
+    "notifications.badge": null
+   }
+  }
+ ]
+}

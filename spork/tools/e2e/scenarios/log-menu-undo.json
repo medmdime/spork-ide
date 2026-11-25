@@ -1,0 +1,41 @@
+{
+ "id": "log-menu-undo",
+ "covers": [],
+ "reference-app": [],
+ "steps": [
+  {
+   "sh": "git commit -q -m tip README.md"
+  },
+  {
+   "find": {
+    "text": "tip",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "tip",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "find": {
+    "text": "Undo Commit…",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Undo Commit…",
+   "role": "AXMenuItem"
+  },
+  {
+   "sh": "git log -1 --format=%s",
+   "is": "Merge branch 'feature/login'"
+  },
+  {
+   "sh": "git status --porcelain README.md",
+   "is": "M  README.md"
+  }
+ ]
+}

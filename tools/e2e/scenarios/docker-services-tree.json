@@ -1,0 +1,619 @@
+{
+ "id": "docker-services-tree",
+ "covers": [],
+ "reference-app": [],
+ "steps": [
+  {
+   "sh": "(nohup python3 \"$E2E/docker_engine.py\" ../home/.docker/run/docker.sock ../docker-calls.log 600 > /dev/null 2>&1 &) && for i in $(seq 50); do [ -S ../home/.docker/run/docker.sock ] && break; sleep 0.1; done && [ -S ../home/.docker/run/docker.sock ]"
+  },
+  {
+   "do": "open",
+   "path": "README.md"
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-8"
+  },
+  {
+   "expect": {
+    "run.services.docker.servers.Docker.status": "Disconnected"
+   }
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "find": {
+    "label": "Docker",
+    "role": "AXRow"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Docker",
+   "role": "AXRow",
+   "count": 2
+  },
+  {
+   "expect": {
+    "run.services.docker.servers.Docker.status": "Connected"
+   },
+   "within": 8000
+  },
+  {
+   "expect": {
+    "run.services.docker.servers.Docker.containers": [
+     {
+      "name": "nginx-demo",
+      "state": "running"
+     },
+     {
+      "name": "redis-cache",
+      "state": "exited"
+     }
+    ],
+    "run.services.docker.servers.Docker.compose": {
+     "shop": {
+      "api": [
+       "shop-api-1"
+      ],
+      "db": [
+       "shop-db-1"
+      ]
+     }
+    },
+    "run.services.docker.servers.Docker.images": [
+     "5555eeee0000",
+     "nginx:latest",
+     "postgres:16",
+     "redis:7",
+     "shop-api:latest"
+    ],
+    "run.services.docker.servers.Docker.networks": [
+     "bridge",
+     "host",
+     "shop_default"
+    ],
+    "run.services.docker.servers.Docker.volumes": [
+     "shop_db-data",
+     "unused-data",
+     "web-data"
+    ]
+   }
+  },
+  {
+   "do": "click",
+   "label": "shop",
+   "role": "AXRow",
+   "count": 2
+  },
+  {
+   "do": "click",
+   "label": "api",
+   "role": "AXRow",
+   "count": 2
+  },
+  {
+   "find": [
+    {
+     "label": "shop",
+     "role": "AXRow"
+    },
+    {
+     "label": "api",
+     "role": "AXRow"
+    },
+    {
+     "label": "shop-api-1",
+     "role": "AXRow"
+    },
+    {
+     "label": "db",
+     "role": "AXRow"
+    },
+    {
+     "label": "Containers",
+     "role": "AXRow"
+    }
+   ],
+   "ordered": true,
+   "within": 3000
+  },
+  {
+   "find": {
+    "label": "Running: (1/1)"
+   }
+  },
+  {
+   "do": "click",
+   "label": "shop",
+   "role": "AXRow"
+  },
+  {
+   "find": {
+    "label": "Running: (2/2)"
+   }
+  },
+  {
+   "toolbar": "ServiceViewItemToolbar",
+   "items": [
+    "Start All (disabled)",
+    "Stop (disabled)",
+    "Down (disabled)"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "shop",
+   "role": "AXRow",
+   "count": 2
+  },
+  {
+   "do": "click",
+   "label": "Containers",
+   "role": "AXRow",
+   "count": 2
+  },
+  {
+   "find": [
+    {
+     "label": "Containers",
+     "role": "AXRow"
+    },
+    {
+     "label": "nginx-demo",
+     "role": "AXRow"
+    },
+    {
+     "label": "Up 2 hours"
+    },
+    {
+     "label": "redis-cache",
+     "role": "AXRow"
+    },
+    {
+     "label": "Exited (0) 3 hours ago"
+    },
+    {
+     "label": "Images",
+     "role": "AXRow"
+    }
+   ],
+   "ordered": true,
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "nginx-demo",
+   "role": "AXRow"
+  },
+  {
+   "expect": {
+    "run.services.docker.selected": "Container(\"Docker\", \"c0ffee0001aa0000000000000000000000000000000000000000000000000001\")",
+    "run.services.docker.tabs": [
+     "Dashboard",
+     "Log",
+     "Files"
+    ],
+    "run.services.docker.tab": "Dashboard"
+   }
+  },
+  {
+   "toolbar": "ServiceViewItemToolbar",
+   "items": [
+    "Restart Container",
+    "Pause Container",
+    "Stop Container",
+    "Delete Container"
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "Dashboard",
+     "role": "AXRadioButton",
+     "value": "1"
+    },
+    {
+     "label": "Log",
+     "role": "AXRadioButton",
+     "value": "0"
+    },
+    {
+     "label": "Files",
+     "role": "AXRadioButton",
+     "value": "0"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "find": [
+    {
+     "label": "Start",
+     "role": "AXButton",
+     "enabled": false
+    },
+    {
+     "label": "Restart",
+     "role": "AXButton"
+    },
+    {
+     "label": "Stop",
+     "role": "AXButton"
+    },
+    {
+     "label": "Terminal",
+     "role": "AXButton"
+    },
+    {
+     "label": "Environment variables",
+     "role": "AXGroup"
+    },
+    {
+     "label": "Ports",
+     "role": "AXGroup"
+    },
+    {
+     "label": "Volumes",
+     "role": "AXGroup"
+    }
+   ],
+   "ordered": true,
+   "within": 3000
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "dashboard"
+  },
+  {
+   "do": "click",
+   "label": "Log",
+   "role": "AXRadioButton"
+  },
+  {
+   "expect": {
+    "run.services.docker.tab": "Log",
+    "run.services.docker.text": "/docker-entrypoint.sh: Configuration complete; ready for start up\n172.17.0.1 - - \"GET / HTTP/1.1\" 200 615\nnginx: [warn] the \"user\" directive makes sense only as root"
+   },
+   "within": 5000
+  },
+  {
+   "sh": "cat ../docker-calls.log",
+   "contains": "GET /v1.45/containers/c0ffee0001aa0000000000000000000000000000000000000000000000000001/logs?stdout=1&stderr=1&follow=1"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "log"
+  },
+  {
+   "do": "click",
+   "label": "Files",
+   "role": "AXRadioButton"
+  },
+  {
+   "expect": {
+    "run.services.docker.tab": "Files",
+    "run.services.docker.text": "bin/\netc/\nusr/\ndocker-entrypoint.sh"
+   },
+   "within": 5000
+  },
+  {
+   "find": [
+    {
+     "label": "/",
+     "role": "AXStaticText"
+    },
+    {
+     "label": "bin",
+     "role": "AXStaticText"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "etc",
+   "count": 2
+  },
+  {
+   "expect": {
+    "run.services.docker.text": "hostname\nnginx/\npasswd"
+   },
+   "within": 5000
+  },
+  {
+   "find": [
+    {
+     "label": "/etc/"
+    },
+    {
+     "label": ".."
+    },
+    {
+     "label": "hostname"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "nginx-demo",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "menu": "Docker.RemoteServersViewPopup",
+   "items": [
+    "Restart Container",
+    "Pause Container",
+    "Stop Container",
+    "Delete Container",
+    "Show Files",
+    "Copy Image ID",
+    "Copy Container ID",
+    "Inspect",
+    "Attach",
+    "Create Terminal"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Inspect",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "run.services.docker.tabs": [
+     "Dashboard",
+     "Log",
+     "Files",
+     "Inspection"
+    ],
+    "run.services.docker.tab": "Inspection"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "redis-cache",
+   "role": "AXRow"
+  },
+  {
+   "toolbar": "ServiceViewItemToolbar",
+   "items": [
+    "Start Container",
+    "Delete Container"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Files",
+   "role": "AXRadioButton"
+  },
+  {
+   "find": {
+    "label": "Start container to browse files"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Containers",
+   "role": "AXRow",
+   "count": 2
+  },
+  {
+   "do": "click",
+   "label": "Images",
+   "role": "AXRow",
+   "count": 2
+  },
+  {
+   "do": "click",
+   "label": "nginx:latest",
+   "role": "AXRow",
+   "within": 3000
+  },
+  {
+   "expect": {
+    "run.services.docker.tabs": [
+     "Dashboard"
+    ]
+   }
+  },
+  {
+   "toolbar": "ServiceViewItemToolbar",
+   "items": [
+    "Create Container",
+    "Delete Image",
+    "Show Layers"
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "Create Container",
+     "role": "AXButton"
+    },
+    {
+     "label": "Properties",
+     "role": "AXGroup"
+    },
+    {
+     "label": "Tags",
+     "role": "AXGroup"
+    },
+    {
+     "label": "Containers",
+     "role": "AXGroup"
+    }
+   ],
+   "ordered": true,
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Show Layers",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "run.services.docker.tabs": [
+     "Dashboard",
+     "Layers"
+    ],
+    "run.services.docker.tab": "Layers",
+    "run.services.docker.text": "CMD [\"nginx\" \"-g\" \"daemon off;\"]\nCOPY docker-entrypoint.sh / # buildkit\nADD rootfs.tar.xz / # buildkit"
+   },
+   "within": 5000
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "layers"
+  },
+  {
+   "do": "click",
+   "label": "nginx:latest",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "menu": "Docker.RemoteServersViewPopup",
+   "items": [
+    "Create Container",
+    "Delete Image",
+    "Show Layers",
+    "Copy Image ID",
+    "Inspect",
+    "Show Labels"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Show Labels",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "run.services.docker.tabs": [
+     "Dashboard",
+     "Layers",
+     "Labels"
+    ],
+    "run.services.docker.tab": "Labels",
+    "run.services.docker.text": "maintainer=NGINX Docker Maintainers"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Images",
+   "role": "AXRow",
+   "count": 2
+  },
+  {
+   "do": "click",
+   "label": "Networks",
+   "role": "AXRow",
+   "count": 2
+  },
+  {
+   "do": "click",
+   "label": "bridge",
+   "role": "AXRow",
+   "within": 3000
+  },
+  {
+   "toolbar": "ServiceViewItemToolbar",
+   "items": [
+    "Delete Network"
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "Properties",
+     "role": "AXGroup"
+    },
+    {
+     "label": "Containers",
+     "role": "AXGroup"
+    },
+    {
+     "label": "IPAM",
+     "role": "AXGroup"
+    }
+   ],
+   "ordered": true,
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Networks",
+   "role": "AXRow",
+   "count": 2
+  },
+  {
+   "do": "click",
+   "label": "Volumes",
+   "role": "AXRow",
+   "count": 2
+  },
+  {
+   "do": "click",
+   "label": "web-data",
+   "role": "AXRow",
+   "within": 3000
+  },
+  {
+   "toolbar": "ServiceViewItemToolbar",
+   "items": [
+    "Delete Volume"
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "Properties",
+     "role": "AXGroup"
+    },
+    {
+     "label": "In Use",
+     "role": "AXGroup"
+    }
+   ],
+   "ordered": true,
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Volumes",
+   "role": "AXRow"
+  },
+  {
+   "toolbar": "ServiceViewItemToolbar",
+   "items": [
+    "Clean Up"
+   ]
+  },
+  {
+   "sh": "cat ../docker-calls.log",
+   "contains": "GET /v1.45/volumes/web-data"
+  },
+  {
+   "sh": "cat ../docker-calls.log",
+   "contains": "GET /v1.45/networks/n1bridge"
+  }
+ ]
+}

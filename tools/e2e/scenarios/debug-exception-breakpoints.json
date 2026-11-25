@@ -1,0 +1,263 @@
+{
+ "id": "debug-exception-breakpoints",
+ "covers": [
+  "action:EditBreakpoint"
+ ],
+ "reference-app": [],
+ "settings": {
+  "dap": {
+   "CodeLLDB": {
+    "binary": "/usr/bin/python3",
+    "args": [
+     "$E2E/dap_fixture.py"
+    ]
+   }
+  },
+  "languages": {
+   "JSON": {
+    "prettier": {
+     "allowed": false
+    }
+   },
+   "JSONC": {
+    "prettier": {
+     "allowed": false
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "sh": "mkdir -p .zed && printf '[{\"label\": \"debug fixture\", \"adapter\": \"CodeLLDB\", \"request\": \"launch\", \"program\": \"$FIXTURE/target/debug/fixture\", \"cwd\": \"$FIXTURE\", \"requestLog\": \"$FIXTURE/../dap-requests.log\"}]' > .zed/debug.json"
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "find": {
+    "label": "debug fixture, Run / Debug Configurations",
+    "role": "AXButton"
+   },
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "do": "keys",
+   "keys": "down down down"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-d"
+  },
+  {
+   "expect": {
+    "docks.bottom.panel": "DebugPanel",
+    "run.debug.status": "Stopped"
+   },
+   "within": 15000
+  },
+  {
+   "find": {
+    "label": "fixture::main:4, main.rs",
+    "role": "AXGroup",
+    "in": "Frames"
+   },
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-f8"
+  },
+  {
+   "find": {
+    "label": "Breakpoint",
+    "role": "AXWindow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-f8"
+  },
+  {
+   "find": [
+    {
+     "label": "Line Breakpoints",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "main.rs:4",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "CodeLLDB Exception Breakpoints",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "C++: on catch",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "C++: on throw",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "Rust: on panic",
+     "role": "AXCheckBox",
+     "value": "0"
+    }
+   ],
+   "ordered": true,
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Rust: on panic",
+   "role": "AXCheckBox"
+  },
+  {
+   "expect": {
+    "run.exceptions.CodeLLDB.Rust: on panic": true
+   }
+  },
+  {
+   "find": {
+    "label": "Rust: on panic",
+    "role": "AXCheckBox",
+    "value": "1"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Rust: on panic"
+  },
+  {
+   "find": [
+    {
+     "label": "Rust: on panic",
+     "in": "Properties"
+    },
+    {
+     "label": "Enabled",
+     "role": "AXCheckBox",
+     "value": "1"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "dialog",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Done",
+   "role": "AXButton"
+  },
+  {
+   "sh": "grep '\"setExceptionBreakpoints\"' ../dap-requests.log | tail -1",
+   "contains": "rust_panic"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "f9"
+  },
+  {
+   "find": {
+    "label": "fixture::greeting::hello:3, greeting.rs",
+    "role": "AXGroup",
+    "in": "Frames"
+   },
+   "within": 10000
+  },
+  {
+   "expect": {
+    "run.debug.status": "Stopped"
+   }
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "f9"
+  },
+  {
+   "expect": {
+    "run.debug.terminated": true
+   },
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-d"
+  },
+  {
+   "expect": {
+    "docks.bottom.panel": "DebugPanel",
+    "run.debug.status": "Stopped"
+   },
+   "within": 15000
+  },
+  {
+   "find": {
+    "label": "fixture::main:4, main.rs",
+    "role": "AXGroup",
+    "in": "Frames"
+   },
+   "within": 10000
+  },
+  {
+   "expect": {
+    "run.exceptions.CodeLLDB.Rust: on panic": true
+   },
+   "within": 5000
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "f9"
+  },
+  {
+   "find": {
+    "label": "fixture::greeting::hello:3, greeting.rs",
+    "role": "AXGroup",
+    "in": "Frames"
+   },
+   "within": 10000
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "f9"
+  },
+  {
+   "expect": {
+    "run.debug.terminated": true
+   },
+   "within": 10000
+  }
+ ]
+}

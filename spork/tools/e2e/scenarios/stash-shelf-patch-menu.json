@@ -1,0 +1,19 @@
+{
+ "id": "stash-shelf-patch-menu",
+ "covers": [
+  "context-menu:Patch.MainMenu"
+ ],
+ "note": "Apply Patch from Clipboard… is greyed while the clipboard holds no patch, as in the reference app's capture; the run reads the system clipboard and leaves it alone.",
+ "reference-app": [
+  "screenshots/menus/patch-mainmenu.png"
+ ],
+ "steps": [
+  {
+   "do": "menubar",
+   "path": ["Git", "Patch"]
+  },
+  {
+   "menu": "context-menu:Patch.MainMenu"
+  }
+ ]
+}

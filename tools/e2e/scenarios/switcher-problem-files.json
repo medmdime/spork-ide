@@ -1,0 +1,232 @@
+{
+ "id": "switcher-problem-files",
+ "covers": [
+  "action:SwitcherNextProblem",
+  "action:SwitcherNextProblemFallback",
+  "action:SwitcherPreviousProblem",
+  "action:SwitcherPreviousProblemFallback"
+ ],
+ "reference-app": [],
+ "settings": {
+  "enable_language_server": true,
+  "lsp": {
+   "rust-analyzer": {
+    "binary": {
+     "path": "$RUST_ANALYZER"
+    },
+    "initialization_options": {
+     "checkOnSave": false,
+     "cargo": {
+      "buildScripts": {
+       "enable": false
+      }
+     },
+     "procMacro": {
+      "enable": false
+     }
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "file": "src/main.rs",
+   "text": "mod greeting;\n\nfn main() {\n    let total: u32 = \"three\";\n    println!(\"{total} {}\", greeting::hello(\"world\"));\n}\n"
+  },
+  {
+   "file": "src/greeting.rs",
+   "text": "pub fn hello(name: &str) -> String {\n    let count: u8 = \"one\";\n    format!(\"Hello, {name}! {count}\")\n}\n"
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   },
+   "within": 3000
+  },
+  {
+   "find": {
+    "label": "1 error",
+    "role": "AXButton"
+   },
+   "within": 90000
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "find": {
+    "label": "1 error",
+    "role": "AXButton"
+   },
+   "within": 30000
+  },
+  {
+   "do": "open",
+   "path": "README.md"
+  },
+  {
+   "expect": {
+    "active": "README.md"
+   }
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::RecentFiles"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Switcher"
+    ]
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "main.rs",
+     "role": "AXStaticText",
+     "in": "Files"
+    },
+    {
+     "label": "README.md",
+     "role": "AXStaticText",
+     "selected": true,
+     "in": "Files"
+    },
+    {
+     "label": "greeting.rs",
+     "role": "AXStaticText",
+     "in": "Files"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "keys",
+   "keys": "f2"
+  },
+  {
+   "find": {
+    "label": "greeting.rs",
+    "role": "AXStaticText",
+    "selected": true,
+    "in": "Files"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "f2"
+  },
+  {
+   "find": {
+    "label": "main.rs",
+    "role": "AXStaticText",
+    "selected": true,
+    "in": "Files"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "shift-f2"
+  },
+  {
+   "find": {
+    "label": "greeting.rs",
+    "role": "AXStaticText",
+    "selected": true,
+    "in": "Files"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "shift-f2"
+  },
+  {
+   "find": {
+    "label": "main.rs",
+    "role": "AXStaticText",
+    "selected": true,
+    "in": "Files"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "left"
+  },
+  {
+   "find": {
+    "label": "AI Chat",
+    "role": "AXStaticText",
+    "selected": true,
+    "in": "Tool windows"
+   }
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "problem-files"
+  },
+  {
+   "do": "keys",
+   "keys": "f2"
+  },
+  {
+   "find": {
+    "label": "main.rs",
+    "role": "AXStaticText",
+    "selected": true,
+    "in": "Files"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  }
+ ]
+}

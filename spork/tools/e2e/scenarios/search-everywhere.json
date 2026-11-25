@@ -1,0 +1,33 @@
+{
+ "id": "search-everywhere",
+ "covers": [
+  "action:SearchEverywhere"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "action",
+   "name": "spork::QuickLaunch"
+  },
+  {
+   "expect": {
+    "search_everywhere": true
+   }
+  },
+  {
+   "wait": 800
+  },
+  {
+   "shot": "open"
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "expect": {
+    "search_everywhere": false
+   }
+  }
+ ]
+}

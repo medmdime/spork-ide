@@ -1,0 +1,264 @@
+{
+ "id": "markdown-preview-layout",
+ "covers": [
+  "action:TextEditorWithPreview.Layout.EditorOnly",
+  "action:TextEditorWithPreview.Layout.EditorAndPreview",
+  "action:TextEditorWithPreview.Layout.PreviewOnly",
+  "action:Markdown.Preview.IncreaseFontSize",
+  "action:Markdown.Preview.DecreaseFontSize",
+  "action:Markdown.Preview.ResetFontSize"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "file": "notes.md",
+   "text": "# Notes\n\nSome *text*.\n"
+  },
+  {
+   "do": "open",
+   "path": "notes.md"
+  },
+  {
+   "expect": {
+    "active": "notes.md",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "action",
+   "name": "workspace::CloseAllDocks"
+  },
+  {
+   "find": [
+    {
+     "label": "Editor",
+     "role": "AXButton",
+     "in": "Markdown Editor Layout Actions"
+    },
+    {
+     "label": "Editor and Preview",
+     "role": "AXButton",
+     "in": "Markdown Editor Layout Actions"
+    },
+    {
+     "label": "Preview",
+     "role": "AXButton",
+     "in": "Markdown Editor Layout Actions"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "shot": "editor"
+  },
+  {
+   "do": "click",
+   "label": "Editor and Preview",
+   "role": "AXButton",
+   "in": "Markdown Editor Layout Actions"
+  },
+  {
+   "expect": {
+    "split": "horizontal",
+    "items": [
+     "notes.md",
+     "Preview notes.md"
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "find": [
+    {
+     "label": "Editor",
+     "role": "AXButton",
+     "in": "Markdown Editor Layout Actions"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "shot": "editor-and-preview"
+  },
+  {
+   "do": "click",
+   "label": "Editor",
+   "role": "AXButton",
+   "in": "Markdown Editor Layout Actions"
+  },
+  {
+   "expect": {
+    "split": null,
+    "items": [
+     "notes.md"
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "find": {
+    "label": "Preview",
+    "role": "AXButton",
+    "in": "Markdown Editor Layout Actions"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Preview",
+   "role": "AXButton",
+   "in": "Markdown Editor Layout Actions"
+  },
+  {
+   "expect": {
+    "split": null,
+    "active": "Preview notes.md"
+   },
+   "within": 5000
+  },
+  {
+   "find": {
+    "label": "Editor",
+    "role": "AXButton",
+    "in": "Markdown Editor Layout Actions"
+   },
+   "within": 5000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "shot": "preview"
+  },
+  {
+   "do": "click",
+   "label": "Editor",
+   "role": "AXButton",
+   "in": "Markdown Editor Layout Actions"
+  },
+  {
+   "expect": {
+    "active": "notes.md",
+    "items": [
+     "notes.md"
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "find": {
+    "label": "Preview",
+    "role": "AXButton",
+    "in": "Markdown Editor Layout Actions"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Preview",
+   "role": "AXButton",
+   "in": "Markdown Editor Layout Actions"
+  },
+  {
+   "expect": {
+    "active": "Preview notes.md"
+   },
+   "within": 5000
+  },
+  {
+   "find": {
+    "label": "Editor and Preview",
+    "role": "AXButton",
+    "in": "Markdown Editor Layout Actions"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Editor and Preview",
+   "role": "AXButton",
+   "in": "Markdown Editor Layout Actions"
+  },
+  {
+   "expect": {
+    "split": "horizontal",
+    "items": [
+     "notes.md",
+     "Preview notes.md"
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Preview",
+   "role": "AXButton",
+   "in": "Markdown Editor Layout Actions"
+  },
+  {
+   "expect": {
+    "active": "Preview notes.md"
+   },
+   "within": 5000
+  },
+  {
+   "expect": {
+    "look.markdown_preview_font_size": 14.86
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-="
+  },
+  {
+   "expect": {
+    "look.markdown_preview_font_size": 15.86
+   },
+   "within": 3000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd--"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd--"
+  },
+  {
+   "expect": {
+    "look.markdown_preview_font_size": 13.86
+   },
+   "within": 3000
+  },
+  {
+   "do": "action",
+   "name": "zed::ResetBufferFontSize"
+  },
+  {
+   "expect": {
+    "look.markdown_preview_font_size": 14.86
+   },
+   "within": 3000
+  }
+ ]
+}

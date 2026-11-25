@@ -1,0 +1,51 @@
+{
+ "id": "log-menu-new-tag",
+ "covers": [
+  "action:Git.CreateNewTag"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "find": {
+    "text": "docs: a second line",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "docs: a second line",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "find": {
+    "text": "New Tag…",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "New Tag…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "text": "Create New Tag On 1cf6d449",
+    "role": "AXGroup"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "v 0 . 9"
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "sh": "test \"$(git rev-parse v0.9)\" = \"$(git rev-parse main~1)\" && echo same",
+   "is": "same"
+  }
+ ]
+}

@@ -1,0 +1,297 @@
+{
+ "id": "docker-services-connections",
+ "covers": [],
+ "reference-app": [],
+ "steps": [
+  {
+   "sh": "(nohup python3 \"$E2E/docker_engine.py\" ../home/.docker/run/docker.sock ../docker-calls.log 600 > /dev/null 2>&1 &) && for i in $(seq 50); do [ -S ../home/.docker/run/docker.sock ] && break; sleep 0.1; done && [ -S ../home/.docker/run/docker.sock ]"
+  },
+  {
+   "do": "open",
+   "path": "README.md"
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-8"
+  },
+  {
+   "expect": {
+    "docks.bottom.panel": "Services",
+    "run.services.docker.servers.Docker.status": "Disconnected"
+   }
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "find": {
+    "label": "Docker",
+    "role": "AXRow"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Docker",
+   "role": "AXRow"
+  },
+  {
+   "find": {
+    "label": "Double-click on the server node to connect"
+   }
+  },
+  {
+   "toolbar": "ServiceViewItemToolbar",
+   "items": [
+    "Connect",
+    "Edit Configuration",
+    "Delete Connections",
+    "Pull Image… (disabled)",
+    "Clean Up (disabled)"
+   ]
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "disconnected"
+  },
+  {
+   "do": "click",
+   "label": "Docker",
+   "role": "AXRow",
+   "count": 2
+  },
+  {
+   "expect": {
+    "run.services.docker.servers.Docker.status": "Connected"
+   },
+   "within": 8000
+  },
+  {
+   "find": [
+    {
+     "label": "Docker",
+     "role": "AXRow"
+    },
+    {
+     "label": "shop",
+     "role": "AXRow"
+    },
+    {
+     "label": "Containers",
+     "role": "AXRow"
+    },
+    {
+     "label": "Images",
+     "role": "AXRow"
+    },
+    {
+     "label": "Networks",
+     "role": "AXRow"
+    },
+    {
+     "label": "Volumes",
+     "role": "AXRow"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "toolbar": "ServiceViewItemToolbar",
+   "items": [
+    "Disconnect",
+    "Edit Configuration",
+    "Delete Connections",
+    "Pull Image…",
+    "Clean Up"
+   ]
+  },
+  {
+   "find": {
+    "label": "Connected"
+   }
+  },
+  {
+   "sh": "cat ../docker-calls.log",
+   "contains": "GET /_ping"
+  },
+  {
+   "sh": "cat ../docker-calls.log",
+   "contains": "GET /v1.45/containers/json?all=1"
+  },
+  {
+   "do": "click",
+   "label": "Add Service",
+   "role": "AXButton"
+  },
+  {
+   "menu": "ServiceView.AddService",
+   "items": [
+    "Run Configuration…",
+    "Restore Hidden Configurations (disabled)",
+    "Docker Connection"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Docker Connection",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "windows.1.title": "New Docker Connection"
+   },
+   "within": 5000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "find": [
+    {
+     "label": "Name",
+     "role": "AXTextField",
+     "value": "Docker2"
+    },
+    {
+     "label": "Docker for Mac",
+     "role": "AXRadioButton",
+     "value": "1"
+    },
+    {
+     "label": "Colima",
+     "role": "AXRadioButton",
+     "value": "0"
+    },
+    {
+     "label": "Unix socket:",
+     "role": "AXRadioButton",
+     "value": "0"
+    },
+    {
+     "label": "TCP socket",
+     "role": "AXRadioButton",
+     "value": "0"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "find": {
+    "label": "Connection successful"
+   },
+   "within": 5000
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "new-connection",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "TCP socket",
+   "role": "AXRadioButton"
+  },
+  {
+   "find": {
+    "text": "Cannot connect: cannot connect to localhost:2375: Connection refused (os error 61)"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Unix socket:",
+   "role": "AXRadioButton"
+  },
+  {
+   "do": "click",
+   "label": "Unix socket",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a",
+   "window": "New Docker Connection"
+  },
+  {
+   "do": "type",
+   "text": "$FIXTURE/../home/.docker/run/docker.sock",
+   "window": "New Docker Connection"
+  },
+  {
+   "find": {
+    "label": "Connection successful"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton",
+   "in": "New Docker Connection"
+  },
+  {
+   "expect": {
+    "run.services.docker.servers.Docker2.status": "Connected"
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Docker2",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "menu": "Docker.RemoteServersViewPopup",
+   "items": [
+    "Disconnect",
+    "Edit Configuration",
+    "Delete Connections",
+    "Pull Image…",
+    "Clean Up"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Delete Connections",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "run.services.docker.servers.Docker2": null
+   }
+  },
+  {
+   "do": "click",
+   "label": "Docker",
+   "role": "AXRow"
+  },
+  {
+   "do": "click",
+   "label": "Disconnect",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "run.services.docker.servers.Docker.status": "Disconnected"
+   }
+  },
+  {
+   "missing": [
+    {
+     "label": "Containers",
+     "role": "AXRow"
+    }
+   ]
+  }
+ ]
+}

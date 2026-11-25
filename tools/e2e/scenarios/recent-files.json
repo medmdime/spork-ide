@@ -1,0 +1,337 @@
+{
+ "id": "recent-files",
+ "covers": [
+  "action:RecentFiles",
+  "action:SwitcherRecentEditedChangedToggleCheckBox",
+  "action:RecentChangedFiles"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "x"
+  },
+  {
+   "do": "open",
+   "path": "README.md"
+  },
+  {
+   "expect": {
+    "active": "README.md"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-e"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Switcher"
+    ]
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Recent Files",
+     "role": "AXWindow"
+    },
+    {
+     "label": "Show edited only",
+     "role": "AXCheckBox",
+     "value": "0"
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "AI Chat",
+     "role": "AXStaticText",
+     "in": "Tool windows"
+    },
+    {
+     "label": "Bookmarks",
+     "role": "AXStaticText",
+     "in": "Tool windows"
+    },
+    {
+     "label": "Commit",
+     "role": "AXStaticText",
+     "in": "Tool windows"
+    },
+    {
+     "label": "Debug",
+     "role": "AXStaticText",
+     "in": "Tool windows"
+    },
+    {
+     "label": "Git",
+     "role": "AXStaticText",
+     "in": "Tool windows"
+    },
+    {
+     "label": "Notifications",
+     "role": "AXStaticText",
+     "in": "Tool windows"
+    },
+    {
+     "label": "Problems",
+     "role": "AXStaticText",
+     "in": "Tool windows"
+    },
+    {
+     "label": "Project",
+     "role": "AXStaticText",
+     "in": "Tool windows"
+    },
+    {
+     "label": "Run",
+     "role": "AXStaticText",
+     "in": "Tool windows"
+    },
+    {
+     "label": "Services",
+     "role": "AXStaticText",
+     "in": "Tool windows"
+    },
+    {
+     "label": "Structure",
+     "role": "AXStaticText",
+     "in": "Tool windows"
+    },
+    {
+     "label": "Terminal",
+     "role": "AXStaticText",
+     "in": "Tool windows"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXStaticText",
+     "in": "Files"
+    },
+    {
+     "label": "main.rs",
+     "role": "AXStaticText",
+     "selected": true,
+     "in": "Files"
+    },
+    {
+     "label": "greeting.rs",
+     "role": "AXStaticText",
+     "in": "Files"
+    }
+   ]
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "recent-files"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-e"
+  },
+  {
+   "find": [
+    {
+     "label": "Show edited only",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "main.rs",
+     "role": "AXStaticText",
+     "selected": true,
+     "in": "Files"
+    }
+   ]
+  },
+  {
+   "find": {
+    "label": "greeting.rs",
+    "role": "AXStaticText",
+    "in": "Files"
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-e"
+  },
+  {
+   "find": {
+    "label": "greeting.rs",
+    "role": "AXStaticText",
+    "in": "Files"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "g r"
+  },
+  {
+   "find": [
+    {
+     "label": "Search",
+     "role": "AXTextField"
+    },
+    {
+     "label": "greeting.rs",
+     "role": "AXStaticText",
+     "selected": true,
+     "in": "Files"
+    }
+   ]
+  },
+  {
+   "find": {
+    "label": "main.rs",
+    "role": "AXStaticText",
+    "in": "Files"
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "menu": "View",
+   "path": [
+    "View"
+   ],
+   "items": [
+    "Recent Files",
+    "Recently Changed Files",
+    "Recent Locations"
+   ],
+   "part": true
+  },
+  {
+   "do": "action",
+   "name": "navigate::RecentFiles"
+  },
+  {
+   "find": {
+    "label": "Recent Files",
+    "role": "AXWindow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "left"
+  },
+  {
+   "find": {
+    "label": "Bookmarks",
+    "role": "AXStaticText",
+    "selected": true,
+    "in": "Tool windows"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "down down down down down down down down down"
+  },
+  {
+   "find": {
+    "label": "Structure",
+    "role": "AXStaticText",
+    "selected": true,
+    "in": "Tool windows"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "docks.left.open": true,
+    "docks.left.panel": "Outline Panel",
+    "focused": [
+     "Workspace",
+     "Dock",
+     "OutlinePanel",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "action",
+   "name": "navigate::RecentlyChangedFiles"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Switcher"
+    ]
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Recent Files",
+     "role": "AXWindow"
+    },
+    {
+     "label": "Show edited only",
+     "role": "AXCheckBox",
+     "value": "1"
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": {
+    "label": "Recent Files",
+    "role": "AXWindow"
+   },
+   "absent": true
+  }
+ ]
+}

@@ -1,0 +1,7 @@
+id = "fixture-icons"
+name = "Fixture Icons"
+version = "1.0.0"
+schema_version = 1
+authors = ["Spork IDE Tests"]
+description = "File icons for the tests."
+repository = "https://example.com/fixture-icons"

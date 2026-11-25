@@ -1,0 +1,257 @@
+{
+ "id": "navigate-navigation-bar",
+ "covers": [
+  "action:ShowNavBar"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "file": "src/greeting.rs",
+   "text": "pub fn hello(name: &str) -> String {\n    format!(\"Hello, {name}!\")\n}\n\npub fn bye() {}\n"
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-f12"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "fixture",
+     "role": "AXButton",
+     "in": "Navigation Bar"
+    },
+    {
+     "label": "src",
+     "role": "AXButton",
+     "in": "Navigation Bar"
+    },
+    {
+     "label": "greeting.rs",
+     "role": "AXButton",
+     "in": "Navigation Bar"
+    },
+    {
+     "label": "pub fn hello",
+     "role": "AXButton",
+     "in": "Navigation Bar"
+    }
+   ],
+   "ordered": true,
+   "within": 8000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-up"
+  },
+  {
+   "find": [
+    {
+     "label": "Navigation Bar Popup",
+     "role": "AXMenu"
+    },
+    {
+     "label": "hello",
+     "role": "AXMenuItem",
+     "selected": true,
+     "in": "Navigation Bar Popup"
+    },
+    {
+     "label": "bye",
+     "role": "AXMenuItem",
+     "in": "Navigation Bar Popup"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "members"
+  },
+  {
+   "do": "keys",
+   "keys": "down enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 5, column 8",
+    "role": "AXButton"
+   }
+  },
+  {
+   "find": {
+    "label": "pub fn bye",
+    "role": "AXButton",
+    "in": "Navigation Bar"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-up"
+  },
+  {
+   "find": {
+    "label": "bye",
+    "role": "AXMenuItem",
+    "selected": true,
+    "in": "Navigation Bar Popup"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "left"
+  },
+  {
+   "find": [
+    {
+     "label": "greeting.rs",
+     "role": "AXMenuItem",
+     "selected": true,
+     "in": "Navigation Bar Popup"
+    },
+    {
+     "label": "main.rs",
+     "role": "AXMenuItem",
+     "in": "Navigation Bar Popup"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "keys",
+   "keys": "left"
+  },
+  {
+   "find": [
+    {
+     "label": "src",
+     "role": "AXMenuItem",
+     "selected": true,
+     "in": "Navigation Bar Popup"
+    },
+    {
+     "label": "Cargo.toml",
+     "role": "AXMenuItem",
+     "in": "Navigation Bar Popup"
+    },
+    {
+     "label": "README.md",
+     "role": "AXMenuItem",
+     "in": "Navigation Bar Popup"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "folder"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "find": [
+    {
+     "label": "greeting.rs",
+     "role": "AXMenuItem",
+     "selected": true,
+     "in": "Navigation Bar Popup"
+    },
+    {
+     "label": "main.rs",
+     "role": "AXMenuItem",
+     "in": "Navigation Bar Popup"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "keys",
+   "keys": "down enter"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-up"
+  },
+  {
+   "find": {
+    "label": "Navigation Bar Popup",
+    "role": "AXMenu"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": {
+    "label": "Navigation Bar Popup",
+    "role": "AXMenu"
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  }
+ ]
+}

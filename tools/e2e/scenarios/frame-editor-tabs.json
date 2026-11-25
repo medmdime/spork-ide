@@ -1,0 +1,330 @@
+{
+ "id": "frame-editor-tabs",
+ "covers": [],
+ "reference-app": [
+  "screenshots/frame/main-window.jpg"
+ ],
+ "steps": [
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "do": "open",
+   "path": "README.md"
+  },
+  {
+   "expect": {
+    "items": [
+     "src/main.rs",
+     "src/greeting.rs",
+     "README.md"
+    ],
+    "active": "README.md"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "main.rs",
+     "role": "AXRadioButton",
+     "value": "0",
+     "in": "Editor"
+    },
+    {
+     "label": "greeting.rs",
+     "role": "AXRadioButton",
+     "value": "0",
+     "in": "Editor"
+    },
+    {
+     "label": "README.md",
+     "role": "AXRadioButton",
+     "value": "1",
+     "in": "Editor"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "find": {
+    "label": "Close Tab",
+    "in": "README.md"
+   }
+  },
+  {
+   "missing": [
+    {
+     "label": "Show Hidden Tabs"
+    },
+    {
+     "label": "Split Pane"
+    },
+    {
+     "label": "Zoom In"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "main.rs",
+   "role": "AXRadioButton"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "main.rs",
+     "role": "AXRadioButton",
+     "value": "1",
+     "in": "Editor"
+    },
+    {
+     "label": "README.md",
+     "role": "AXRadioButton",
+     "value": "0",
+     "in": "Editor"
+    }
+   ]
+  },
+  {
+   "find": {
+    "label": "Modified"
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "x"
+  },
+  {
+   "find": {
+    "label": "Modified",
+    "role": "AXImage",
+    "in": "main.rs"
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "at": [
+    800,
+    450
+   ],
+   "hover": true
+  },
+  {
+   "shot": "modified"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-z"
+  },
+  {
+   "find": {
+    "label": "Modified"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "README.md",
+   "role": "AXRadioButton"
+  },
+  {
+   "expect": {
+    "active": "README.md"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Close Tab",
+   "in": "README.md"
+  },
+  {
+   "expect": {
+    "items": [
+     "src/main.rs",
+     "src/greeting.rs"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "README.md",
+    "role": "AXRadioButton"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "main.rs",
+   "role": "AXRadioButton",
+   "button": "right"
+  },
+  {
+   "do": "click",
+   "label": "Close Others",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "items": [
+     "src/main.rs"
+    ],
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "main.rs",
+     "role": "AXRadioButton",
+     "value": "1",
+     "in": "Editor"
+    }
+   ],
+   "missing": [
+    {
+     "label": "greeting.rs",
+     "role": "AXRadioButton"
+    }
+   ]
+  },
+  {
+   "file": "a-first-long-file-name.txt",
+   "text": "overflow\n"
+  },
+  {
+   "file": "a-second-long-file-name.txt",
+   "text": "overflow\n"
+  },
+  {
+   "file": "a-third-long-file-name.txt",
+   "text": "overflow\n"
+  },
+  {
+   "file": "a-fourth-long-file-name.txt",
+   "text": "overflow\n"
+  },
+  {
+   "file": "a-fifth-long-file-name.txt",
+   "text": "overflow\n"
+  },
+  {
+   "do": "open",
+   "path": "a-first-long-file-name.txt"
+  },
+  {
+   "expect": {
+    "active": "a-first-long-file-name.txt"
+   }
+  },
+  {
+   "do": "open",
+   "path": "a-second-long-file-name.txt"
+  },
+  {
+   "expect": {
+    "active": "a-second-long-file-name.txt"
+   }
+  },
+  {
+   "do": "open",
+   "path": "a-third-long-file-name.txt"
+  },
+  {
+   "expect": {
+    "active": "a-third-long-file-name.txt"
+   }
+  },
+  {
+   "do": "open",
+   "path": "a-fourth-long-file-name.txt"
+  },
+  {
+   "expect": {
+    "active": "a-fourth-long-file-name.txt"
+   }
+  },
+  {
+   "do": "open",
+   "path": "a-fifth-long-file-name.txt"
+  },
+  {
+   "expect": {
+    "active": "a-fifth-long-file-name.txt"
+   }
+  },
+  {
+   "find": {
+    "label": "Show Hidden Tabs",
+    "role": "AXCheckBox",
+    "in": "Editor"
+   }
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "do": "click",
+   "label": "Show Hidden Tabs",
+   "in": "Editor"
+  },
+  {
+   "find": {
+    "label": "main.rs",
+    "role": "AXMenuItem"
+   },
+   "missing": [
+    {
+     "label": "a-fifth-long-file-name.txt",
+     "role": "AXMenuItem"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "main.rs",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "find": {
+    "label": "main.rs",
+    "role": "AXRadioButton",
+    "value": "1",
+    "in": "Editor"
+   }
+  }
+ ]
+}

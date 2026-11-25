@@ -1,0 +1,126 @@
+{
+ "id": "vcs-annotate",
+ "covers": [
+  "action:Annotate"
+ ],
+ "steps": [
+  {
+   "sh": "printf 'mod greeting;\\n\\nfn main() {\\n    println!(\"{}\", greeting::hello(\"Ada\"));\\n}\\n' > src/main.rs && GIT_AUTHOR_DATE=2026-01-05T10:00:00Z GIT_COMMITTER_DATE=2026-01-05T10:00:00Z git -c user.name='Grace Hopper' -c user.email=grace@example.com commit -qam 'feat: greet Ada'"
+  },
+  {
+   "find": [
+    {
+     "label": "Git",
+     "role": "AXCheckBox",
+     "in": "Left stripe"
+    },
+    {
+     "label": "Commit",
+     "role": "AXCheckBox",
+     "in": "Left stripe"
+    }
+   ],
+   "within": 10000
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs",
+    "focused.2": "Editor"
+   }
+  },
+  {
+   "menu": "context-menu:Git.MainMenu.FileActions",
+   "path": [
+    "Git",
+    "Current File"
+   ],
+   "items": [
+    "Commit… (disabled)",
+    "Add (disabled)",
+    "Annotate with Git Blame",
+    "Show Diff (disabled)",
+    "Compare with Revision… (disabled)",
+    "Compare with Branch or Tag… (disabled)",
+    "Show History (disabled)"
+   ]
+  },
+  {
+   "do": "click",
+   "at": [
+    300,
+    105
+   ],
+   "button": "right"
+  },
+  {
+   "find": {
+    "label": "Annotate with Git Blame"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Annotate with Git Blame"
+  },
+  {
+   "wait": 2500
+  },
+  {
+   "do": "click",
+   "at": [
+    900,
+    400
+   ]
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   },
+   "within": 3000
+  },
+  {
+   "shot": "annotations"
+  },
+  {
+   "do": "click",
+   "at": [
+    330,
+    105
+   ],
+   "button": "right"
+  },
+  {
+   "find": [
+    "Close Annotations",
+    "View",
+    "Show Diff",
+    "Copy Revision Number"
+   ],
+   "within": 3000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "menu"
+  },
+  {
+   "do": "click",
+   "label": "Show Diff"
+  },
+  {
+   "expect": {
+    "active": "Repository Diff: main.rs"
+   },
+   "within": 8000
+  }
+ ]
+}

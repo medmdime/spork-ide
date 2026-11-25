@@ -1,0 +1,194 @@
+{
+ "id": "editor-split-and-soft-wrap",
+ "covers": [
+  "action:EditorToggleUseSoftWraps",
+  "action:SplitVertically",
+  "action:SplitHorizontally",
+  "action:UnsplitAll",
+  "action:NextSplitter",
+  "action:PrevSplitter"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "file": "src/wrap.rs",
+   "text": "// word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word\nsecond\nthird\n"
+  },
+  {
+   "do": "open",
+   "path": "src/wrap.rs"
+  },
+  {
+   "expect": {
+    "active": "src/wrap.rs",
+    "items": [
+     "src/wrap.rs"
+    ],
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "find": {
+    "label": "Line 2, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "editor::ToggleSoftWrap"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down"
+  },
+  {
+   "find": {
+    "label": "Line 1, column 1",
+    "role": "AXButton"
+   },
+   "absent": true
+  },
+  {
+   "find": {
+    "label": "Line 2, column 1",
+    "role": "AXButton"
+   },
+   "absent": true
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "soft-wrap"
+  },
+  {
+   "do": "action",
+   "name": "editor::ToggleSoftWrap"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down"
+  },
+  {
+   "find": {
+    "label": "Line 2, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "pane::SplitRight"
+  },
+  {
+   "expect": {
+    "items": [
+     "src/wrap.rs",
+     "src/wrap.rs"
+    ],
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down down"
+  },
+  {
+   "find": {
+    "label": "Line 3, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-shift-tab"
+  },
+  {
+   "find": {
+    "label": "Line 2, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-tab"
+  },
+  {
+   "find": {
+    "label": "Line 3, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "split-right"
+  },
+  {
+   "do": "action",
+   "name": "pane::JoinAll"
+  },
+  {
+   "expect": {
+    "items": [
+     "src/wrap.rs"
+    ]
+   }
+  },
+  {
+   "do": "action",
+   "name": "pane::SplitDown"
+  },
+  {
+   "expect": {
+    "items": [
+     "src/wrap.rs",
+     "src/wrap.rs"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home"
+  },
+  {
+   "find": {
+    "label": "Line 1, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-tab"
+  },
+  {
+   "find": {
+    "label": "Line 3, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "pane::JoinAll"
+  },
+  {
+   "expect": {
+    "items": [
+     "src/wrap.rs"
+    ]
+   }
+  }
+ ]
+}

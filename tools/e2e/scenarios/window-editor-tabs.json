@@ -1,0 +1,679 @@
+{
+ "id": "window-editor-tabs",
+ "covers": [
+  "action:GoToTab1",
+  "action:GoToTab2",
+  "action:GoToTab3",
+  "action:GoToTab4",
+  "action:GoToTab5",
+  "action:GoToTab6",
+  "action:GoToTab7",
+  "action:GoToTab8",
+  "action:GoToTab9",
+  "action:GoToLastTab",
+  "action:NextTab",
+  "action:PreviousTab",
+  "action:CloseEditor",
+  "action:CloseContent",
+  "action:CloseAllToTheLeft",
+  "action:CloseAllToTheRight",
+  "action:CloseAllEditorsButActive",
+  "action:CloseAllUnmodifiedEditors",
+  "action:PinActiveEditorTab",
+  "action:PinActiveTab",
+  "action:PinActiveTabToggle",
+  "action:CloseAllUnpinnedEditors",
+  "action:CloseAllEditors",
+  "action:ResizeToolWindowLeft",
+  "action:ResizeToolWindowRight",
+  "action:ResizeToolWindowUp",
+  "action:ResizeToolWindowDown"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "file": "t1.txt",
+   "text": "tab 1\n"
+  },
+  {
+   "file": "t2.txt",
+   "text": "tab 2\n"
+  },
+  {
+   "file": "t3.txt",
+   "text": "tab 3\n"
+  },
+  {
+   "file": "t4.txt",
+   "text": "tab 4\n"
+  },
+  {
+   "file": "t5.txt",
+   "text": "tab 5\n"
+  },
+  {
+   "file": "t6.txt",
+   "text": "tab 6\n"
+  },
+  {
+   "file": "t7.txt",
+   "text": "tab 7\n"
+  },
+  {
+   "file": "t8.txt",
+   "text": "tab 8\n"
+  },
+  {
+   "file": "t9.txt",
+   "text": "tab 9\n"
+  },
+  {
+   "do": "open",
+   "path": "t1.txt"
+  },
+  {
+   "expect": {
+    "active": "t1.txt"
+   }
+  },
+  {
+   "do": "open",
+   "path": "t2.txt"
+  },
+  {
+   "expect": {
+    "active": "t2.txt"
+   }
+  },
+  {
+   "do": "open",
+   "path": "t3.txt"
+  },
+  {
+   "expect": {
+    "active": "t3.txt"
+   }
+  },
+  {
+   "do": "open",
+   "path": "t4.txt"
+  },
+  {
+   "expect": {
+    "active": "t4.txt"
+   }
+  },
+  {
+   "do": "open",
+   "path": "t5.txt"
+  },
+  {
+   "expect": {
+    "active": "t5.txt"
+   }
+  },
+  {
+   "do": "open",
+   "path": "t6.txt"
+  },
+  {
+   "expect": {
+    "active": "t6.txt"
+   }
+  },
+  {
+   "do": "open",
+   "path": "t7.txt"
+  },
+  {
+   "expect": {
+    "active": "t7.txt"
+   }
+  },
+  {
+   "do": "open",
+   "path": "t8.txt"
+  },
+  {
+   "expect": {
+    "active": "t8.txt"
+   }
+  },
+  {
+   "do": "open",
+   "path": "t9.txt"
+  },
+  {
+   "expect": {
+    "active": "t9.txt"
+   }
+  },
+  {
+   "expect": {
+    "items": [
+     "t1.txt",
+     "t2.txt",
+     "t3.txt",
+     "t4.txt",
+     "t5.txt",
+     "t6.txt",
+     "t7.txt",
+     "t8.txt",
+     "t9.txt"
+    ]
+   }
+  },
+  {
+   "do": "action",
+   "name": "pane::ActivateItem",
+   "args": 0
+  },
+  {
+   "expect": {
+    "active": "t1.txt"
+   }
+  },
+  {
+   "do": "action",
+   "name": "pane::ActivateItem",
+   "args": 1
+  },
+  {
+   "expect": {
+    "active": "t2.txt"
+   }
+  },
+  {
+   "do": "action",
+   "name": "pane::ActivateItem",
+   "args": 2
+  },
+  {
+   "expect": {
+    "active": "t3.txt"
+   }
+  },
+  {
+   "do": "action",
+   "name": "pane::ActivateItem",
+   "args": 3
+  },
+  {
+   "expect": {
+    "active": "t4.txt"
+   }
+  },
+  {
+   "do": "action",
+   "name": "pane::ActivateItem",
+   "args": 4
+  },
+  {
+   "expect": {
+    "active": "t5.txt"
+   }
+  },
+  {
+   "do": "action",
+   "name": "pane::ActivateItem",
+   "args": 5
+  },
+  {
+   "expect": {
+    "active": "t6.txt"
+   }
+  },
+  {
+   "do": "action",
+   "name": "pane::ActivateItem",
+   "args": 6
+  },
+  {
+   "expect": {
+    "active": "t7.txt"
+   }
+  },
+  {
+   "do": "action",
+   "name": "pane::ActivateItem",
+   "args": 7
+  },
+  {
+   "expect": {
+    "active": "t8.txt"
+   }
+  },
+  {
+   "do": "action",
+   "name": "pane::ActivateItem",
+   "args": 8
+  },
+  {
+   "expect": {
+    "active": "t9.txt"
+   }
+  },
+  {
+   "do": "action",
+   "name": "pane::ActivateItem",
+   "args": 0
+  },
+  {
+   "expect": {
+    "active": "t1.txt"
+   }
+  },
+  {
+   "do": "action",
+   "name": "pane::ActivateLastItem"
+  },
+  {
+   "expect": {
+    "active": "t9.txt"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-right"
+  },
+  {
+   "expect": {
+    "active": "t1.txt"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-left"
+  },
+  {
+   "expect": {
+    "active": "t9.txt"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-left"
+  },
+  {
+   "expect": {
+    "active": "t8.txt"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-}"
+  },
+  {
+   "expect": {
+    "active": "t9.txt"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-{"
+  },
+  {
+   "expect": {
+    "active": "t8.txt"
+   }
+  },
+  {
+   "do": "action",
+   "name": "pane::ActivateLastItem"
+  },
+  {
+   "do": "action",
+   "name": "pane::CloseActiveItem"
+  },
+  {
+   "expect": {
+    "items": [
+     "t1.txt",
+     "t2.txt",
+     "t3.txt",
+     "t4.txt",
+     "t5.txt",
+     "t6.txt",
+     "t7.txt",
+     "t8.txt"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-w"
+  },
+  {
+   "expect": {
+    "items": [
+     "t1.txt",
+     "t2.txt",
+     "t3.txt",
+     "t4.txt",
+     "t5.txt",
+     "t6.txt",
+     "t7.txt"
+    ]
+   }
+  },
+  {
+   "do": "action",
+   "name": "pane::ActivateItem",
+   "args": 3
+  },
+  {
+   "expect": {
+    "active": "t4.txt"
+   }
+  },
+  {
+   "do": "action",
+   "name": "pane::CloseItemsToTheLeft"
+  },
+  {
+   "expect": {
+    "items": [
+     "t4.txt",
+     "t5.txt",
+     "t6.txt",
+     "t7.txt"
+    ]
+   }
+  },
+  {
+   "do": "action",
+   "name": "pane::ActivateItem",
+   "args": 0
+  },
+  {
+   "do": "action",
+   "name": "pane::CloseItemsToTheRight"
+  },
+  {
+   "expect": {
+    "items": [
+     "t4.txt"
+    ]
+   }
+  },
+  {
+   "do": "open",
+   "path": "t1.txt"
+  },
+  {
+   "expect": {
+    "active": "t1.txt"
+   }
+  },
+  {
+   "do": "open",
+   "path": "t2.txt"
+  },
+  {
+   "expect": {
+    "active": "t2.txt"
+   }
+  },
+  {
+   "expect": {
+    "items": [
+     "t4.txt",
+     "t1.txt",
+     "t2.txt"
+    ]
+   }
+  },
+  {
+   "do": "action",
+   "name": "pane::ActivateItem",
+   "args": 1
+  },
+  {
+   "expect": {
+    "active": "t1.txt"
+   }
+  },
+  {
+   "do": "action",
+   "name": "pane::CloseOtherItems"
+  },
+  {
+   "expect": {
+    "items": [
+     "t1.txt"
+    ]
+   }
+  },
+  {
+   "do": "open",
+   "path": "t2.txt"
+  },
+  {
+   "expect": {
+    "active": "t2.txt"
+   }
+  },
+  {
+   "do": "open",
+   "path": "t3.txt"
+  },
+  {
+   "expect": {
+    "active": "t3.txt"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "x"
+  },
+  {
+   "do": "action",
+   "name": "pane::CloseCleanItems"
+  },
+  {
+   "expect": {
+    "items": [
+     "t3.txt"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "sh": "cat t3.txt",
+   "is": "xtab 3"
+  },
+  {
+   "do": "open",
+   "path": "t1.txt"
+  },
+  {
+   "expect": {
+    "active": "t1.txt"
+   }
+  },
+  {
+   "expect": {
+    "items": [
+     "t3.txt",
+     "t1.txt"
+    ]
+   }
+  },
+  {
+   "do": "action",
+   "name": "pane::TogglePinTab"
+  },
+  {
+   "expect": {
+    "items": [
+     "t1.txt",
+     "t3.txt"
+    ]
+   }
+  },
+  {
+   "do": "action",
+   "name": "pane::CloseAllItems",
+   "args": {
+    "close_pinned": false
+   }
+  },
+  {
+   "expect": {
+    "items": [
+     "t1.txt"
+    ]
+   }
+  },
+  {
+   "do": "open",
+   "path": "t2.txt"
+  },
+  {
+   "expect": {
+    "active": "t2.txt"
+   }
+  },
+  {
+   "expect": {
+    "items": [
+     "t1.txt",
+     "t2.txt"
+    ]
+   }
+  },
+  {
+   "do": "action",
+   "name": "pane::CloseAllItems",
+   "args": {
+    "close_pinned": true
+   }
+  },
+  {
+   "expect": {
+    "items": []
+   }
+  },
+  {
+   "menu": "Editor Tabs",
+   "path": [
+    "Window",
+    "Editor Tabs"
+   ],
+   "items": [
+    "Select Next Tab",
+    "Select Previous Tab",
+    "Pin Active Tab",
+    "Close Tab",
+    "Close Other Tabs",
+    "Close All Tabs",
+    "Close Unmodified Tabs",
+    "Close All but Pinned",
+    "Close Tabs to the Left",
+    "Close Tabs to the Right"
+   ],
+   "part": true
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-2"
+  },
+  {
+   "expect": {
+    "docks.left.open": true,
+    "docks.left.size": 285.0
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-alt-right"
+  },
+  {
+   "expect": {
+    "docks.left.size": 338.0
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-alt-right"
+  },
+  {
+   "expect": {
+    "docks.left.size": 391.0
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-alt-left"
+  },
+  {
+   "expect": {
+    "docks.left.size": 338.0
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-alt-up"
+  },
+  {
+   "expect": {
+    "docks.left.size": 338.0
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-6"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "Problems",
+    "docks.bottom.size": 300.0
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-alt-up"
+  },
+  {
+   "expect": {
+    "docks.bottom.size": 393.0
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-alt-down"
+  },
+  {
+   "expect": {
+    "docks.bottom.size": 300.0
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-alt-left"
+  },
+  {
+   "expect": {
+    "docks.bottom.size": 300.0
+   }
+  },
+  {
+   "menu": "Resize",
+   "path": [
+    "Window",
+    "Active Tool Window",
+    "Resize"
+   ],
+   "items": [
+    "Stretch to Left",
+    "Stretch to Right",
+    "Stretch to Top",
+    "Stretch to Bottom"
+   ]
+  }
+ ]
+}

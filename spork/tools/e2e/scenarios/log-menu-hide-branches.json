@@ -1,0 +1,48 @@
+{
+ "id": "log-menu-hide-branches",
+ "covers": [
+  "action:Git.Log.Hide.Branches"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "find": {
+    "text": "Branch or tag"
+   }
+  },
+  {
+   "do": "action",
+   "name": "spork::CommandPalette"
+  },
+  {
+   "expect": {
+    "search_everywhere": true
+   }
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "keys",
+   "keys": "H i d e space G i t space B r a n c h e s"
+  },
+  {
+   "find": {
+    "text": "Hide Git Branches"
+   }
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "find": {
+    "text": "Branch or tag"
+   },
+   "absent": true
+  }
+ ]
+}

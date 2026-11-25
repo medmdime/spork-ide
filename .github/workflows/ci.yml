@@ -1,0 +1,107 @@
+name: CI
+
+on:
+  push:
+    branches: [spork, main]
+  pull_request:
+    branches: [spork, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# a newer push to a pull request makes the checks of the one before moot
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+  RUST_BACKTRACE: "1"
+
+# The root workspace's checks run on three runners: each gets a disk of its own for its build.
+jobs:
+  lint:
+    name: fmt and clippy
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Rust toolchain of rust-toolchain.toml
+        run: rustup toolchain install
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          # the repository's 10 GB of caches hold the branches' builds, not each pull request's
+          save-if: ${{ github.event_name == 'push' }}
+      - run: cargo fmt --all -- --check
+      - run: ./script/clippy
+
+  test:
+    name: tests
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Rust toolchain of rust-toolchain.toml
+        run: rustup toolchain install
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          save-if: ${{ github.event_name == 'push' }}
+      - uses: taiki-e/install-action@25f51f6b1bf4e18876107cece836f4f77ac17c8c # v2.90.7
+        with:
+          tool: nextest
+      # extension_host's test builds the test extension's grammar with it
+      - run: ./script/download-wasi-sdk
+      - name: cargo nextest, in a throwaway home
+        run: |
+          export CARGO_HOME="${CARGO_HOME:-$HOME/.cargo}" RUSTUP_HOME="${RUSTUP_HOME:-$HOME/.rustup}"
+          export HOME="$RUNNER_TEMP/home"
+          mkdir -p "$HOME"
+          cargo nextest run --workspace --no-fail-fast
+
+  # the end-to-end jobs compare screenshots with goldens that aren't committed: started by hand only
+  e2e:
+    name: end-to-end
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Rust toolchain of rust-toolchain.toml
+        run: rustup toolchain install
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          save-if: ${{ github.event_name == 'push' }}
+      - run: cargo build -p zed
+      - run: python3 tools/e2e/run.py --no-build
+      - if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e2e-spork-ide
+          path: tools/e2e/out/
+
+  # Spork, the git client, as its own app; the jobs above check its crates with the rest
+  spork:
+    name: spork end-to-end
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Rust toolchain of rust-toolchain.toml
+        run: rustup toolchain install
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          save-if: ${{ github.event_name == 'push' }}
+      - run: cargo build -p spork
+      - run: python3 spork/tools/e2e/run.py --no-build
+      - if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e2e-spork
+          path: spork/tools/e2e/out/

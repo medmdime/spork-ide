@@ -1,0 +1,218 @@
+{
+ "id": "toolbar-search-settings",
+ "covers": [],
+ "reference-app": [
+  "screenshots/frame/main-window.jpg"
+ ],
+ "steps": [
+  {
+   "toolbar": "Title bar",
+   "items": [
+    "Search Everywhere",
+    "IDE and Project Settings"
+   ],
+   "part": true,
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Search Everywhere",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "SearchEverywhere",
+     "Input"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane"
+    ]
+   }
+  },
+  {
+   "do": "click",
+   "label": "IDE and Project Settings",
+   "role": "AXButton"
+  },
+  {
+   "menu": "IDE and Project Settings",
+   "items": [
+    "Run Anything",
+    "Settings…",
+    "Plugins…",
+    "Theme",
+    "Keymap",
+    "View Mode"
+   ]
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "settings-menu"
+  },
+  {
+   "do": "click",
+   "label": "Theme",
+   "role": "AXMenuItem",
+   "hover": true
+  },
+  {
+   "menu": "Theme",
+   "items": [
+    "Darcula",
+    "Dark",
+    "High Contrast",
+    "IntelliJ Light",
+    "Islands Darcula",
+    "Islands Dark",
+    "Islands Light",
+    "Light",
+    "Light with Light Header"
+   ],
+   "checked": [
+    "Islands Dark"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Darcula",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "look.theme": "Darcula"
+   }
+  },
+  {
+   "sh": "cat ../home/.config/spork-ide/settings.json",
+   "contains": "Darcula"
+  },
+  {
+   "do": "click",
+   "label": "IDE and Project Settings",
+   "role": "AXButton"
+  },
+  {
+   "do": "click",
+   "label": "Keymap",
+   "role": "AXMenuItem",
+   "hover": true
+  },
+  {
+   "menu": "Keymap",
+   "items": [
+    "macOS",
+    "Zed",
+    "VS Code",
+    "Atom",
+    "Sublime Text",
+    "Emacs (beta)",
+    "TextMate",
+    "Cursor"
+   ],
+   "checked": [
+    "macOS"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "VS Code",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "look.base_keymap": "VS Code"
+   }
+  },
+  {
+   "do": "click",
+   "label": "IDE and Project Settings",
+   "role": "AXButton"
+  },
+  {
+   "do": "click",
+   "label": "View Mode",
+   "role": "AXMenuItem",
+   "hover": true
+  },
+  {
+   "menu": "View Mode",
+   "items": [
+    "Enter Full Screen"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "click",
+   "label": "IDE and Project Settings",
+   "role": "AXButton"
+  },
+  {
+   "do": "click",
+   "label": "Run Anything",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Spawn",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "click",
+   "label": "IDE and Project Settings",
+   "role": "AXButton"
+  },
+  {
+   "do": "click",
+   "label": "Plugins…",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture",
+    "settings.page": "Plugins"
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "IDE and Project Settings",
+   "role": "AXButton"
+  },
+  {
+   "do": "click",
+   "label": "Settings…",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture"
+   },
+   "within": 8000
+  }
+ ]
+}

@@ -1,0 +1,389 @@
+{
+ "id": "java-new-class",
+ "fixture": "maven",
+ "covers": [
+  "action:NewClass",
+  "action:NewPackageInfo",
+  "action:NewModuleInfo"
+ ],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "find": {
+    "label": "Load Maven Project",
+    "role": "AXLink"
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "Load Maven Project",
+   "role": "AXLink"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 300000
+  },
+  {
+   "find": {
+    "label": "src",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "src",
+   "role": "AXRow",
+   "in": "Project Panel"
+  },
+  {
+   "find": {
+    "label": "main",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "main",
+   "role": "AXRow",
+   "in": "Project Panel"
+  },
+  {
+   "find": {
+    "label": "java",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "java",
+   "role": "AXRow",
+   "in": "Project Panel"
+  },
+  {
+   "find": {
+    "label": "com.example",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "com.example",
+   "role": "AXRow",
+   "in": "Project Panel"
+  },
+  {
+   "find": {
+    "label": "Main.java",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Main.java",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Project Panel"
+  },
+  {
+   "find": "New",
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "New",
+   "hover": true
+  },
+  {
+   "wait": 600
+  },
+  {
+   "find": [
+    "Java Class",
+    "File",
+    "Scratch File",
+    "Directory",
+    "package-info.java"
+   ],
+   "ordered": true,
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Java Class"
+  },
+  {
+   "find": [
+    "New Java Class",
+    {
+     "label": "Name",
+     "role": "AXTextField"
+    },
+    "Class",
+    "Interface",
+    "Record",
+    "Enum",
+    "Annotation",
+    "Exception"
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "find": {
+    "label": "Class",
+    "selected": true
+   }
+  },
+  {
+   "do": "type",
+   "text": "Shape"
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "find": {
+    "label": "Interface",
+    "selected": true
+   }
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   }
+  },
+  {
+   "find": [
+    "New Java Class",
+    {
+     "label": "Interface",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "shot": "new-java-class"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "sh": "cat src/main/java/com/example/Shape.java",
+   "is": "package com.example;\n\npublic interface Shape {\n}",
+   "within": 5000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "docks.left.open": true
+   },
+   "within": 5000
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/Shape.java"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Shape.java",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Project Panel"
+  },
+  {
+   "find": "New",
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "New",
+   "hover": true
+  },
+  {
+   "wait": 600
+  },
+  {
+   "do": "click",
+   "label": "Java Class"
+  },
+  {
+   "find": "New Java Class",
+   "within": 5000
+  },
+  {
+   "do": "type",
+   "text": "class"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "find": "This is not a valid Java qualified name",
+   "within": 3000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a"
+  },
+  {
+   "do": "type",
+   "text": "model.Point"
+  },
+  {
+   "do": "keys",
+   "keys": "down down"
+  },
+  {
+   "find": {
+    "label": "Record",
+    "selected": true
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "sh": "cat src/main/java/com/example/model/Point.java",
+   "is": "package com.example.model;\n\npublic record Point() {\n}",
+   "within": 5000
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/model/Point.java"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Main.java",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Project Panel"
+  },
+  {
+   "find": "New",
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "New",
+   "hover": true
+  },
+  {
+   "wait": 600
+  },
+  {
+   "do": "click",
+   "label": "package-info.java"
+  },
+  {
+   "sh": "cat src/main/java/com/example/package-info.java",
+   "is": "package com.example;",
+   "within": 5000
+  },
+  {
+   "find": {
+    "label": "java",
+    "role": "AXRow",
+    "in": "Project Panel"
+   }
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "do": "click",
+   "label": "java",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Project Panel"
+  },
+  {
+   "find": "New",
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "New",
+   "hover": true
+  },
+  {
+   "wait": 600
+  },
+  {
+   "find": [
+    "Java Class",
+    "File",
+    "Scratch File",
+    "Directory",
+    "module-info.java"
+   ],
+   "ordered": true,
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "module-info.java"
+  },
+  {
+   "sh": "cat src/main/java/module-info.java",
+   "is": "module fixture {\n}",
+   "within": 5000
+  }
+ ]
+}

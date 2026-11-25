@@ -1,0 +1,271 @@
+{
+ "id": "search-everywhere",
+ "covers": [
+  "action:SearchEverywhere",
+  "action:SearchEverywhereNewToolbarAction",
+  "action:SearchEverywhere.NextTab",
+  "action:SearchEverywhere.PrevTab"
+ ],
+ "reference-app": [
+  "screenshots/dialogs/gotofile.jpg"
+ ],
+ "steps": [
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "do": "modifiers",
+   "held": [
+    "shift"
+   ]
+  },
+  {
+   "do": "modifiers",
+   "held": []
+  },
+  {
+   "do": "modifiers",
+   "held": [
+    "shift"
+   ]
+  },
+  {
+   "do": "modifiers",
+   "held": []
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "SearchEverywhere",
+     "Input"
+    ]
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "All",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "Classes",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "Files",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "Symbols",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "Actions",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "Text",
+     "role": "AXRadioButton"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "find": [
+    {
+     "label": "All",
+     "role": "AXRadioButton",
+     "value": "1",
+     "in": "Search Everywhere"
+    },
+    {
+     "label": "Include non-project items",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "Preview",
+     "role": "AXButton"
+    },
+    {
+     "label": "Search Everywhere",
+     "role": "AXTextField"
+    }
+   ]
+  },
+  {
+   "find": {
+    "label": "main.rs",
+    "role": "AXStaticText",
+    "selected": true,
+    "in": "Search Everywhere"
+   }
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "all"
+  },
+  {
+   "do": "keys",
+   "keys": "tab"
+  },
+  {
+   "find": {
+    "label": "Classes",
+    "role": "AXRadioButton",
+    "value": "1",
+    "in": "Search Everywhere"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "shift-tab shift-tab"
+  },
+  {
+   "find": {
+    "label": "Text",
+    "role": "AXRadioButton",
+    "value": "1",
+    "in": "Search Everywhere"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "tab"
+  },
+  {
+   "find": {
+    "label": "All",
+    "role": "AXRadioButton",
+    "value": "1",
+    "in": "Search Everywhere"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "g r e e"
+  },
+  {
+   "find": {
+    "label": "greeting.rs",
+    "role": "AXStaticText",
+    "selected": true,
+    "in": "Search Everywhere"
+   }
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "all-files"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Search Everywhere",
+    "role": "AXWindow"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Search Everywhere",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "SearchEverywhere",
+     "Input"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "All",
+    "role": "AXRadioButton",
+    "value": "1",
+    "in": "Search Everywhere"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Search Everywhere",
+    "role": "AXWindow"
+   },
+   "absent": true
+  },
+  {
+   "menu": "Navigate",
+   "path": [
+    "Navigate"
+   ],
+   "items": [
+    "Search Everywhere"
+   ],
+   "part": true
+  },
+  {
+   "do": "action",
+   "name": "navigate::SearchEverywhere"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "SearchEverywhere",
+     "Input"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  }
+ ]
+}

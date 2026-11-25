@@ -1,0 +1,287 @@
+{
+ "id": "commit-conflicts",
+ "covers": [
+  "context-menu:Git.ChangesView.Conflicts",
+  "action:Git.ChangesView.Merge",
+  "action:Git.ChangesView.AcceptTheirs",
+  "action:Git.ChangesView.AcceptYours",
+  "action:Git.RevertResolved",
+  "action:Git.ResolveConflicts"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "sh": "git checkout -q -b c1 && echo theirs > c.txt && git add c.txt && git commit -qm theirs && git checkout -q main && echo ours > c.txt && git add c.txt && git commit -qm ours && (git merge c1 >/dev/null 2>&1 || true) && git diff --name-only --diff-filter=U | grep -qx c.txt"
+  },
+  {
+   "do": "action",
+   "name": "spork::ToggleCommit"
+  },
+  {
+   "expect": {
+    "left": "[Commit, Project]"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Merge Conflicts",
+     "role": "AXRow"
+    },
+    {
+     "label": "Resolve",
+     "role": "AXLink"
+    },
+    {
+     "label": "c.txt",
+     "role": "AXCheckBox"
+    }
+   ],
+   "within": 6000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "c.txt",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "menu": "context-menu:Git.ChangesView.Conflicts",
+   "items": [
+    "Merge…",
+    "Accept Theirs",
+    "Accept Yours",
+    "Commit File…",
+    "Rollback…",
+    "Show Diff",
+    "Jump to Source",
+    "Copy Path/Reference… ▸",
+    "Delete…",
+    "Add to VCS (disabled)",
+    "Create Patch from Local Changes…",
+    "Copy as Patch to Clipboard",
+    "Shelve Changes…",
+    "Refresh",
+    "Commit File…",
+    "Add",
+    "Show Diff",
+    "Compare with Revision…",
+    "Compare with Branch or Tag…",
+    "Show History",
+    "Show Current Revision",
+    "Rollback…",
+    "Resolve Conflicts…"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Merge…",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "view": "Changes"
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "c.txt",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "find": [
+    {
+     "label": "Accept Theirs",
+     "role": "AXMenuItem"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Accept Theirs",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "Merge Conflicts",
+     "role": "AXRow"
+    }
+   ],
+   "absent": true,
+   "within": 5000
+  },
+  {
+   "sh": "test -z \"$(git diff --name-only --diff-filter=U)\" && grep -qx theirs c.txt"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "c.txt",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "find": [
+    {
+     "label": "Revert Resolved",
+     "role": "AXMenuItem"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Revert Resolved",
+   "role": "AXMenuItem",
+   "nth": 0
+  },
+  {
+   "find": [
+    {
+     "label": "Revert",
+     "role": "AXButton"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Revert",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "Merge Conflicts",
+     "role": "AXRow"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "sh": "git diff --name-only --diff-filter=U | grep -qx c.txt"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "c.txt",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "find": [
+    {
+     "label": "Accept Yours",
+     "role": "AXMenuItem"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Accept Yours",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "Merge Conflicts",
+     "role": "AXRow"
+    }
+   ],
+   "absent": true,
+   "within": 5000
+  },
+  {
+   "sh": "test -z \"$(git diff --name-only --diff-filter=U)\" && grep -qx ours c.txt && git checkout -m -- c.txt"
+  },
+  {
+   "find": [
+    {
+     "label": "Resolve",
+     "role": "AXLink"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "Resolve",
+   "role": "AXLink"
+  },
+  {
+   "find": [
+    {
+     "label": "Conflicts",
+     "role": "AXGroup"
+    },
+    {
+     "label": "c.txt",
+     "role": "AXRow"
+    },
+    {
+     "label": "Accept Yours",
+     "role": "AXButton"
+    },
+    {
+     "label": "Accept Theirs",
+     "role": "AXButton"
+    },
+    {
+     "label": "Merge…",
+     "role": "AXButton"
+    },
+    {
+     "label": "Group by directory",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "Close",
+     "role": "AXButton"
+    }
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "Accept Theirs",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "Merge Conflicts",
+     "role": "AXRow"
+    }
+   ],
+   "absent": true,
+   "within": 5000
+  },
+  {
+   "sh": "test -z \"$(git diff --name-only --diff-filter=U)\" && grep -qx theirs c.txt"
+  }
+ ]
+}

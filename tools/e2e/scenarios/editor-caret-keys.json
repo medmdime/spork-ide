@@ -1,0 +1,498 @@
+{
+ "id": "editor-caret-keys",
+ "covers": [
+  "action:EditorRight",
+  "action:EditorLeft",
+  "action:EditorUp",
+  "action:EditorDown",
+  "action:EditorNextWord",
+  "action:EditorPreviousWord",
+  "action:EditorLineEnd",
+  "action:EditorLineStart",
+  "action:EditorTextEnd",
+  "action:EditorTextStart",
+  "action:EditorRightWithSelection",
+  "action:EditorLeftWithSelection",
+  "action:EditorUpWithSelection",
+  "action:EditorDownWithSelection",
+  "action:EditorNextWordWithSelection",
+  "action:EditorPreviousWordWithSelection",
+  "action:EditorLineEndWithSelection",
+  "action:EditorLineStartWithSelection",
+  "action:EditorTextEndWithSelection",
+  "action:EditorTextStartWithSelection"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "file": "src/keys.txt",
+   "text": "alpha beta gamma\n    delta epsilon\nzeta\n"
+  },
+  {
+   "do": "open",
+   "path": "src/keys.txt"
+  },
+  {
+   "expect": {
+    "active": "src/keys.txt",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 1, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "right right"
+  },
+  {
+   "find": {
+    "label": "Line 1, column 3",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "left"
+  },
+  {
+   "find": {
+    "label": "Line 1, column 2",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "find": {
+    "label": "Line 2, column 2",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "up"
+  },
+  {
+   "find": {
+    "label": "Line 1, column 2",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-f ctrl-f"
+  },
+  {
+   "find": {
+    "label": "Line 1, column 4",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-b"
+  },
+  {
+   "find": {
+    "label": "Line 1, column 3",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-n"
+  },
+  {
+   "find": {
+    "label": "Line 2, column 3",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-p"
+  },
+  {
+   "find": {
+    "label": "Line 1, column 3",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-right"
+  },
+  {
+   "find": {
+    "label": "Line 1, column 6",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-right"
+  },
+  {
+   "find": {
+    "label": "Line 1, column 11",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-left"
+  },
+  {
+   "find": {
+    "label": "Line 1, column 7",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-alt-f"
+  },
+  {
+   "find": {
+    "label": "Line 1, column 11",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-alt-b"
+  },
+  {
+   "find": {
+    "label": "Line 1, column 7",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-right"
+  },
+  {
+   "find": {
+    "label": "Line 1, column 17",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-left"
+  },
+  {
+   "find": {
+    "label": "Line 1, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "down cmd-left"
+  },
+  {
+   "find": {
+    "label": "Line 2, column 5",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-left"
+  },
+  {
+   "find": {
+    "label": "Line 2, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-e"
+  },
+  {
+   "find": {
+    "label": "Line 2, column 18",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-a"
+  },
+  {
+   "find": {
+    "label": "Line 2, column 5",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "end"
+  },
+  {
+   "find": {
+    "label": "Line 2, column 18",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "home"
+  },
+  {
+   "find": {
+    "label": "Line 2, column 5",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-end"
+  },
+  {
+   "find": {
+    "label": "Line 4, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home"
+  },
+  {
+   "find": {
+    "label": "Line 1, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "shift-right shift-right shift-right"
+  },
+  {
+   "do": "type",
+   "text": "X"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "sed -n 1p src/keys.txt",
+   "is": "Xha beta gamma"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-end up end shift-left shift-left"
+  },
+  {
+   "do": "type",
+   "text": "Y"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "sed -n 3p src/keys.txt",
+   "is": "zeY"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home alt-shift-right"
+  },
+  {
+   "do": "type",
+   "text": "A"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "sed -n 1p src/keys.txt",
+   "is": "A beta gamma"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-right"
+  },
+  {
+   "do": "type",
+   "text": "B"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "sed -n 1p src/keys.txt",
+   "is": "AB"
+  },
+  {
+   "do": "keys",
+   "keys": "alt-shift-left"
+  },
+  {
+   "do": "type",
+   "text": "C"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "sed -n 1p src/keys.txt",
+   "is": "C"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-left"
+  },
+  {
+   "do": "type",
+   "text": "D"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "sed -n 1p src/keys.txt",
+   "is": "D"
+  },
+  {
+   "do": "keys",
+   "keys": "shift-down"
+  },
+  {
+   "do": "type",
+   "text": "E"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "sed -n 1p src/keys.txt",
+   "is": "DE   delta epsilon"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-z"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "sed -n 1,2p src/keys.txt",
+   "is": "D\n    delta epsilon"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down shift-up"
+  },
+  {
+   "do": "type",
+   "text": "F"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "sed -n 1p src/keys.txt",
+   "is": "F    delta epsilon"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-z"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down end cmd-shift-end"
+  },
+  {
+   "do": "type",
+   "text": "G"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "cat src/keys.txt",
+   "is": "D\n    delta epsilonG"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-home"
+  },
+  {
+   "do": "type",
+   "text": "H"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "cat src/keys.txt",
+   "is": "H"
+  }
+ ]
+}

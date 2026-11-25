@@ -1,0 +1,211 @@
+{
+ "id": "settings-ui-options",
+ "covers": [],
+ "reference-app": [
+  "screenshots/settings/appearance-behavior-appearance.jpg"
+ ],
+ "steps": [
+  {
+   "do": "keys",
+   "keys": "cmd-,"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture",
+    "settings.page": "Appearance & Behavior/Appearance"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "Always show full path in window header",
+   "role": "AXCheckBox",
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Use project colors in main toolbar",
+   "role": "AXCheckBox"
+  },
+  {
+   "do": "click",
+   "label": "Display icons in menu items",
+   "role": "AXCheckBox"
+  },
+  {
+   "do": "click",
+   "label": "Use smaller indents",
+   "role": "AXCheckBox"
+  },
+  {
+   "do": "click",
+   "label": "Sync with OS",
+   "role": "AXCheckBox"
+  },
+  {
+   "do": "click",
+   "label": "Preferred Theme",
+   "role": "AXButton"
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "IntelliJ Light",
+   "within": 8000
+  },
+  {
+   "expect": {
+    "settings.apply": true,
+    "settings.modified": [
+     "Appearance & Behavior/Appearance",
+     "Editor/Color Scheme"
+    ]
+   }
+  },
+  {
+   "expect": {
+    "value": true
+   },
+   "of": {
+    "do": "setting",
+    "path": "/ui_options/show_icons_in_menus"
+   }
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings": null
+   },
+   "within": 8000
+  },
+  {
+   "expect": {
+    "value": false
+   },
+   "of": {
+    "do": "setting",
+    "path": "/ui_options/show_icons_in_menus"
+   },
+   "within": 8000
+  },
+  {
+   "expect": {
+    "value": false
+   },
+   "of": {
+    "do": "setting",
+    "path": "/ui_options/use_project_colors_in_toolbar"
+   }
+  },
+  {
+   "expect": {
+    "value": "${projectName}${separator}${filePath}"
+   },
+   "of": {
+    "do": "setting",
+    "path": "/window_title_format"
+   }
+  },
+  {
+   "expect": {
+    "value": 12
+   },
+   "of": {
+    "do": "setting",
+    "path": "/project_panel/indent_size"
+   }
+  },
+  {
+   "expect": {
+    "value": "system"
+   },
+   "of": {
+    "do": "setting",
+    "path": "/theme/mode"
+   }
+  },
+  {
+   "expect": {
+    "value": "IntelliJ Light"
+   },
+   "of": {
+    "do": "setting",
+    "path": "/theme/light"
+   }
+  },
+  {
+   "sh": "cat ../home/.config/spork-ide/settings.json",
+   "contains": "\"show_icons_in_menus\":false"
+  },
+  {
+   "sh": "cat ../home/.config/spork-ide/settings.json",
+   "contains": "\"use_project_colors_in_toolbar\":false"
+  },
+  {
+   "sh": "cat ../home/.config/spork-ide/settings.json",
+   "contains": "${filePath}"
+  },
+  {
+   "sh": "cat ../home/.config/spork-ide/settings.json",
+   "contains": "\"indent_size\":12"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-,"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture",
+    "settings.page": "Appearance & Behavior/Appearance"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "Display icons in menu items",
+   "role": "AXCheckBox",
+   "within": 8000
+  },
+  {
+   "expect": {
+    "settings.apply": true
+   }
+  },
+  {
+   "do": "click",
+   "label": "Cancel",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings": null
+   },
+   "within": 8000
+  },
+  {
+   "expect": {
+    "value": false
+   },
+   "of": {
+    "do": "setting",
+    "path": "/ui_options/show_icons_in_menus"
+   }
+  },
+  {
+   "sh": "cat ../home/.config/spork-ide/settings.json",
+   "contains": "\"show_icons_in_menus\":false"
+  }
+ ]
+}

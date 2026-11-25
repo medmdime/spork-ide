@@ -1,0 +1,21 @@
+{
+  "$schema": "https://zed.dev/schema/icon_themes/v0.3.0.json",
+  "name": "Fixture Icons",
+  "author": "Spork IDE Tests",
+  "themes": [
+    {
+      "name": "Fixture Icons",
+      "appearance": "dark",
+      "directory_icons": {
+        "collapsed": "./icons/folder.svg",
+        "expanded": "./icons/folder.svg"
+      },
+      "file_suffixes": { "rs": "rust", "toml": "toml" },
+      "file_icons": {
+        "rust": { "path": "./icons/rust.svg" },
+        "toml": { "path": "./icons/toml.svg" },
+        "default": { "path": "./icons/file.svg" }
+      }
+    }
+  ]
+}

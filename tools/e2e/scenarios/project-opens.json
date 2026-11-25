@@ -1,0 +1,47 @@
+{
+ "id": "project-opens",
+ "covers": [],
+ "reference-app": [],
+ "steps": [
+  {
+   "expect": {
+    "roots": [
+     "$FIXTURE"
+    ],
+    "docks.left.open": true,
+    "docks.left.panel": "Project Panel",
+    "active": null
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Title bar",
+     "role": "AXToolbar"
+    },
+    {
+     "label": "Editor",
+     "role": "AXGroup"
+    },
+    {
+     "label": "Project Panel",
+     "role": "AXOutline"
+    },
+    {
+     "label": "Status bar",
+     "role": "AXToolbar"
+    }
+   ]
+  },
+  {
+   "find": {
+    "label": "fixture",
+    "role": "AXButton",
+    "in": "Title bar"
+   }
+  },
+  {
+   "shot": "opened"
+  }
+ ]
+}

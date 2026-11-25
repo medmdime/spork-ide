@@ -1,0 +1,214 @@
+{
+ "id": "branches-new-worktree",
+ "covers": [
+  "dialog:Git.CreateNewWorkingTree",
+  "action:Git.CreateNewWorkingTree"
+ ],
+ "reference-app": [
+  "screenshots/dialogs/git-createnewworkingtree.jpg"
+ ],
+ "steps": [
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "find": {
+    "label": "Search for branches and actions"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "t y p o"
+  },
+  {
+   "find": {
+    "label": "fix/typo",
+    "role": "AXRow",
+    "in": "Branches Tree"
+   }
+  },
+  {
+   "do": "click",
+   "label": "fix/typo",
+   "role": "AXRow",
+   "in": "Branches Tree"
+  },
+  {
+   "find": {
+    "label": "New Worktree from 'fix/typo'…",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "New Worktree from 'fix/typo'…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "role": "AXPopUpButton",
+     "value": "fix/typo"
+    },
+    {
+     "label": "Project name:",
+     "role": "AXTextField",
+     "value": "repo-typo"
+    }
+   ]
+  },
+  {
+   "find": {
+    "label": "Selected branch is already checked out in another worktree"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Cancel",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Create and Open Worktree",
+    "role": "AXButton"
+   },
+   "absent": true
+  },
+  {
+   "do": "action",
+   "name": "spork::NewWorktree"
+  },
+  {
+   "find": [
+    {
+     "label": "From branch:"
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "main repo"
+    },
+    {
+     "label": "Selected branch is already checked out in another worktree"
+    },
+    {
+     "label": "New branch:",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "Project name:",
+     "role": "AXTextField",
+     "value": "repo-main"
+    },
+    {
+     "label": "Location:",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Browse…",
+     "role": "AXButton"
+    },
+    {
+     "label": "Copy local project setup"
+    },
+    {
+     "label": "0 of 2 settings on"
+    },
+    {
+     "label": "Show help contents",
+     "role": "AXButton"
+    },
+    {
+     "label": "Cancel",
+     "role": "AXButton"
+    },
+    {
+     "label": "Create and Open Worktree",
+     "role": "AXButton"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "New branch:",
+   "role": "AXCheckBox"
+  },
+  {
+   "find": {
+    "label": "A name for the branch in the worktree must be provided explicitly"
+   }
+  },
+  {
+   "do": "click",
+   "label": "New branch:",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "s p a r e"
+  },
+  {
+   "find": {
+    "label": "Selected branch is already checked out in another worktree"
+   },
+   "absent": true
+  },
+  {
+   "find": {
+    "label": "Project name:",
+    "role": "AXTextField",
+    "value": "repo-spare"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Copy local project setup",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "Copy files listed in .worktreeinclude",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "Create",
+     "role": "AXButton"
+    },
+    {
+     "label": "Run setup script",
+     "role": "AXCheckBox",
+     "value": "0"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Create and Open Worktree",
+   "role": "AXButton"
+  },
+  {
+   "git": [
+    "worktree",
+    "list"
+   ],
+   "contains": "repo-spare"
+  },
+  {
+   "git": [
+    "log",
+    "-1",
+    "--format=%s",
+    "spare"
+   ],
+   "is": "Merge branch 'feature/login'"
+  },
+  {
+   "sh": "git -C ../repo-spare branch --show-current",
+   "is": "spare"
+  }
+ ]
+}

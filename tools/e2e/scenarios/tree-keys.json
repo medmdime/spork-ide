@@ -1,0 +1,981 @@
+{
+ "id": "tree-keys",
+ "covers": [
+  "action:Tree-selectNext",
+  "action:Tree-selectPrevious",
+  "action:Tree-selectParent",
+  "action:Tree-selectChild",
+  "action:Tree-selectParentNoCollapse",
+  "action:Tree-selectNextSibling",
+  "action:Tree-selectPreviousSibling",
+  "action:Tree-selectFirst",
+  "action:Tree-selectLast",
+  "action:Tree-scrollDownChangeSelection",
+  "action:Tree-scrollUpChangeSelection",
+  "action:Tree-selectNextExtendSelection",
+  "action:Tree-selectPreviousExtendSelection",
+  "action:Tree-selectFirstExtendSelection",
+  "action:Tree-selectLastExtendSelection",
+  "action:Tree-scrollDownExtendSelection",
+  "action:Tree-scrollUpExtendSelection",
+  "action:Tree-selectParentExtendSelection",
+  "action:Tree-selectChildExtendSelection",
+  "action:Tree-selectAll",
+  "action:SpeedSearch"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "file": "a.txt",
+   "text": "alpha\nbeta\n"
+  },
+  {
+   "file": "b.txt",
+   "text": "gamma\n"
+  },
+  {
+   "do": "open",
+   "path": "a.txt"
+  },
+  {
+   "expect": {
+    "active": "a.txt"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "f3"
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "do": "keys",
+   "keys": "f3"
+  },
+  {
+   "do": "open",
+   "path": "b.txt"
+  },
+  {
+   "expect": {
+    "active": "b.txt"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "f3"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-2"
+  },
+  {
+   "expect": {
+    "docks.left.open": true,
+    "docks.left.panel": "Bookmarks"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "fixture",
+     "role": "AXRow",
+     "in": "Bookmarks"
+    },
+    {
+     "label": "a.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks"
+    },
+    {
+     "label": "a.txt:2",
+     "role": "AXRow",
+     "in": "Bookmarks"
+    },
+    {
+     "label": "b.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "find": [
+    {
+     "label": "a.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "find": [
+    {
+     "label": "a.txt:2",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "up"
+  },
+  {
+   "find": [
+    {
+     "label": "a.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "up"
+  },
+  {
+   "find": [
+    {
+     "label": "fixture",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "up"
+  },
+  {
+   "find": [
+    {
+     "label": "b.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "find": [
+    {
+     "label": "fixture",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "down down"
+  },
+  {
+   "find": [
+    {
+     "label": "a.txt:2",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "left"
+  },
+  {
+   "find": [
+    {
+     "label": "fixture",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "find": {
+    "label": "a.txt:1",
+    "role": "AXRow",
+    "in": "Bookmarks"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "left"
+  },
+  {
+   "find": {
+    "label": "a.txt:1",
+    "role": "AXRow",
+    "in": "Bookmarks"
+   },
+   "absent": true
+  },
+  {
+   "find": [
+    {
+     "label": "fixture",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "right"
+  },
+  {
+   "find": {
+    "label": "a.txt:1",
+    "role": "AXRow",
+    "in": "Bookmarks"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "fixture",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "right"
+  },
+  {
+   "find": [
+    {
+     "label": "a.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "action",
+   "name": "tree::SelectNextSibling"
+  },
+  {
+   "find": [
+    {
+     "label": "a.txt:2",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "action",
+   "name": "tree::SelectPreviousSibling"
+  },
+  {
+   "find": [
+    {
+     "label": "a.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "action",
+   "name": "tree::SelectParentNoCollapse"
+  },
+  {
+   "find": [
+    {
+     "label": "fixture",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "action",
+   "name": "tree::SelectParentNoCollapse"
+  },
+  {
+   "find": [
+    {
+     "label": "fixture",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "find": {
+    "label": "a.txt:1",
+    "role": "AXRow",
+    "in": "Bookmarks"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-end"
+  },
+  {
+   "find": [
+    {
+     "label": "b.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home"
+  },
+  {
+   "find": [
+    {
+     "label": "fixture",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "end"
+  },
+  {
+   "find": [
+    {
+     "label": "b.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "home"
+  },
+  {
+   "find": [
+    {
+     "label": "fixture",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "pagedown"
+  },
+  {
+   "find": [
+    {
+     "label": "b.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "pageup"
+  },
+  {
+   "find": [
+    {
+     "label": "fixture",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "find": [
+    {
+     "label": "a.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "shift-down"
+  },
+  {
+   "find": [
+    {
+     "label": "a.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    },
+    {
+     "label": "a.txt:2",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "shift-down"
+  },
+  {
+   "find": [
+    {
+     "label": "a.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    },
+    {
+     "label": "a.txt:2",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    },
+    {
+     "label": "b.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "shift-up"
+  },
+  {
+   "find": [
+    {
+     "label": "a.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    },
+    {
+     "label": "a.txt:2",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "b.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ],
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "shift-cmd-end"
+  },
+  {
+   "find": [
+    {
+     "label": "a.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    },
+    {
+     "label": "a.txt:2",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    },
+    {
+     "label": "b.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "shift-cmd-home"
+  },
+  {
+   "find": [
+    {
+     "label": "fixture",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    },
+    {
+     "label": "a.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "a.txt:2",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ],
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "find": [
+    {
+     "label": "a.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "fixture",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ],
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "shift-pagedown"
+  },
+  {
+   "find": [
+    {
+     "label": "a.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    },
+    {
+     "label": "a.txt:2",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    },
+    {
+     "label": "b.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "shift-pageup"
+  },
+  {
+   "find": [
+    {
+     "label": "fixture",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    },
+    {
+     "label": "a.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "down down"
+  },
+  {
+   "find": [
+    {
+     "label": "a.txt:2",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "a.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ],
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "shift-left"
+  },
+  {
+   "find": [
+    {
+     "label": "fixture",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    },
+    {
+     "label": "a.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    },
+    {
+     "label": "a.txt:2",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "find": [
+    {
+     "label": "a.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "shift-right"
+  },
+  {
+   "find": [
+    {
+     "label": "a.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    },
+    {
+     "label": "a.txt:2",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a"
+  },
+  {
+   "find": [
+    {
+     "label": "fixture",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    },
+    {
+     "label": "a.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    },
+    {
+     "label": "a.txt:2",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    },
+    {
+     "label": "b.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "up"
+  },
+  {
+   "find": [
+    {
+     "label": "a.txt:2",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "fixture",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ],
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "b"
+  },
+  {
+   "find": {
+    "role": "AXTextField",
+    "label": "Speed search",
+    "value": "b"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "b.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": {
+    "label": "Speed search"
+   },
+   "absent": true
+  },
+  {
+   "expect": {
+    "docks.left.open": true
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "a"
+  },
+  {
+   "find": [
+    {
+     "label": "a.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "find": [
+    {
+     "label": "a.txt:2",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "find": [
+    {
+     "label": "a.txt:1",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "up"
+  },
+  {
+   "find": [
+    {
+     "label": "a.txt:2",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "x"
+  },
+  {
+   "find": {
+    "label": "Speed search",
+    "value": "ax"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "a.txt:2",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "backspace"
+  },
+  {
+   "find": {
+    "label": "Speed search",
+    "value": "a"
+   }
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "speed-search"
+  },
+  {
+   "do": "keys",
+   "keys": "left"
+  },
+  {
+   "find": {
+    "label": "Speed search"
+   },
+   "absent": true
+  },
+  {
+   "find": [
+    {
+     "label": "fixture",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f"
+  },
+  {
+   "find": {
+    "role": "AXTextField",
+    "label": "Speed search"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "g"
+  },
+  {
+   "find": [
+    {
+     "label": "fixture",
+     "role": "AXRow",
+     "in": "Bookmarks",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": {
+    "label": "Speed search"
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  }
+ ]
+}

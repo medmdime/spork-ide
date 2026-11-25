@@ -1,0 +1,177 @@
+{
+ "id": "navigate-file-colors",
+ "covers": [],
+ "note": "File names in their version control status's colour in Search Everywhere, Recent Files and the Switcher, as IntelliJ's (`FileStatusManager` colours), from the function the Project tool window and the editor tabs draw them with (vcs-file-colors checks its colours). Recent Locations keeps its titles in the scheme's foreground, as IntelliJ's RecentLocationsRenderer does.",
+ "reference-app": [],
+ "steps": [
+  {
+   "file": "README.md",
+   "text": "# Fixture\n\nChanged.\n"
+  },
+  {
+   "file": "notes.txt",
+   "text": "not tracked yet\n"
+  },
+  {
+   "sh": "echo staged > staged.txt && git add staged.txt"
+  },
+  {
+   "find": [
+    {
+     "label": "Git",
+     "role": "AXCheckBox",
+     "in": "Left stripe"
+    }
+   ],
+   "within": 10000
+  },
+  {
+   "expect": {
+    "name": "Modified"
+   },
+   "of": {
+    "do": "file_color",
+    "path": "README.md"
+   },
+   "within": 8000
+  },
+  {
+   "expect": {
+    "name": "VersionControlUntracked"
+   },
+   "of": {
+    "do": "file_color",
+    "path": "notes.txt"
+   },
+   "within": 8000
+  },
+  {
+   "expect": {
+    "name": "Created"
+   },
+   "of": {
+    "do": "file_color",
+    "path": "staged.txt"
+   },
+   "within": 8000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   }
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   },
+   "within": 5000
+  },
+  {
+   "do": "open",
+   "path": "notes.txt"
+  },
+  {
+   "expect": {
+    "active": "notes.txt"
+   },
+   "within": 5000
+  },
+  {
+   "do": "open",
+   "path": "staged.txt"
+  },
+  {
+   "expect": {
+    "active": "staged.txt"
+   },
+   "within": 5000
+  },
+  {
+   "do": "open",
+   "path": "README.md"
+  },
+  {
+   "expect": {
+    "active": "README.md"
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-o"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "SearchEverywhere",
+     "Input"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "t"
+  },
+  {
+   "find": [
+    {
+     "label": "notes.txt",
+     "role": "AXStaticText",
+     "in": "Search Everywhere"
+    },
+    {
+     "label": "staged.txt",
+     "role": "AXStaticText",
+     "in": "Search Everywhere"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-e"
+  },
+  {
+   "find": [
+    {
+     "label": "notes.txt",
+     "role": "AXStaticText",
+     "in": "Recent Files"
+    },
+    {
+     "label": "staged.txt",
+     "role": "AXStaticText",
+     "in": "Recent Files"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "left"
+  },
+  {
+   "wait": 800
+  },
+  {
+   "shot": "recent-files"
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  }
+ ]
+}

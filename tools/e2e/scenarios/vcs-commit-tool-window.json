@@ -1,0 +1,154 @@
+{
+ "id": "vcs-commit-tool-window",
+ "covers": [
+  "action:ActivateCommitToolWindow",
+  "tool-window:Commit"
+ ],
+ "reference-app": [
+  "screenshots/toolwindows/commit.jpg"
+ ],
+ "steps": [
+  {
+   "file": "README.md",
+   "text": "# Fixture\n\nA greeting, then a farewell.\n"
+  },
+  {
+   "find": [
+    {
+     "label": "Git",
+     "role": "AXCheckBox",
+     "in": "Left stripe"
+    },
+    {
+     "label": "Commit",
+     "role": "AXCheckBox",
+     "in": "Left stripe"
+    }
+   ],
+   "within": 10000
+  },
+  {
+   "expect": {
+    "docks.left.open": true,
+    "docks.left.panel": "Project Panel"
+   }
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-0"
+  },
+  {
+   "expect": {
+    "docks.left.open": true,
+    "docks.left.panel": "Commit",
+    "focused": [
+     "Workspace",
+     "Dock",
+     "Spork",
+     "ChangesView"
+    ]
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXCheckBox"
+    },
+    {
+     "label": "Amend",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "Commit",
+     "role": "AXButton"
+    }
+   ],
+   "within": 8000
+  },
+  {
+   "wait": 800
+  },
+  {
+   "shot": "changes"
+  },
+  {
+   "do": "click",
+   "label": "README.md",
+   "role": "AXCheckBox"
+  },
+  {
+   "find": {
+    "label": "README.md",
+    "role": "AXCheckBox",
+    "value": "1"
+   }
+  },
+  {
+   "do": "click",
+   "role": "AXTextArea"
+  },
+  {
+   "do": "keys",
+   "keys": "d e s c r i b e space t h e space f i x t u r e"
+  },
+  {
+   "find": {
+    "role": "AXTextArea",
+    "value": "describe the fixture"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Commit",
+   "role": "AXButton",
+   "in": "Commit"
+  },
+  {
+   "find": {
+    "label": "README.md",
+    "role": "AXCheckBox"
+   },
+   "absent": true,
+   "within": 8000
+  },
+  {
+   "git": [
+    "log",
+    "-1",
+    "--format=%s"
+   ],
+   "is": "describe the fixture"
+  },
+  {
+   "sh": "git diff --quiet HEAD -- README.md"
+  },
+  {
+   "do": "click",
+   "label": "Commit",
+   "role": "AXCheckBox",
+   "in": "Left stripe"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   }
+  },
+  {
+   "do": "click",
+   "label": "Commit",
+   "role": "AXCheckBox",
+   "in": "Left stripe"
+  },
+  {
+   "expect": {
+    "docks.left.open": true,
+    "docks.left.panel": "Commit"
+   }
+  }
+ ]
+}

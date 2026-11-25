@@ -1,0 +1,320 @@
+{
+ "id": "welcome-project-groups",
+ "covers": [
+  "action:WelcomeScreen.NewGroup",
+  "action:WelcomeScreen.EditGroup"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "action",
+   "name": "workspace::CloseProject"
+  },
+  {
+   "expect": {
+    "roots": [],
+    "windows.0.title": "Welcome to Spork IDE"
+   },
+   "within": 10000
+  },
+  {
+   "find": {
+    "label": "fixture",
+    "role": "AXButton"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "More Actions",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    "Open Selected",
+    "Reveal in Finder",
+    "Copy Path",
+    "New Project Group",
+    {
+     "label": "Move to Group",
+     "enabled": false
+    },
+    "Remove from Recent Projects…"
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "New Project Group"
+  },
+  {
+   "find": [
+    {
+     "text": "Create New Project Group"
+    },
+    {
+     "label": "Project group name",
+     "role": "AXTextField"
+    },
+    {
+     "label": "OK",
+     "role": "AXButton"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "type",
+   "text": "Work"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "find": [
+    {
+     "label": "Work",
+     "role": "AXButton"
+    },
+    {
+     "label": "fixture",
+     "role": "AXButton"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "More Actions",
+   "role": "AXButton",
+   "nth": 1
+  },
+  {
+   "do": "click",
+   "label": "New Project Group"
+  },
+  {
+   "do": "type",
+   "text": "Work"
+  },
+  {
+   "find": {
+    "label": "OK",
+    "role": "AXButton",
+    "enabled": false
+   },
+   "within": 3000
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "click",
+   "label": "More Actions",
+   "role": "AXButton",
+   "nth": 1
+  },
+  {
+   "find": {
+    "label": "Move to Group"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Move to Group"
+  },
+  {
+   "do": "click",
+   "label": "Work",
+   "role": "AXMenuItem",
+   "within": 3000
+  },
+  {
+   "find": [
+    {
+     "label": "Work",
+     "role": "AXButton"
+    },
+    {
+     "label": "fixture",
+     "role": "AXButton"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "do": "click",
+   "label": "Work",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "fixture",
+    "role": "AXButton"
+   },
+   "absent": true,
+   "within": 3000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "do": "click",
+   "label": "Work",
+   "role": "AXButton",
+   "hover": true
+  },
+  {
+   "do": "click",
+   "label": "More Actions",
+   "role": "AXButton",
+   "nth": 0
+  },
+  {
+   "find": [
+    "Open All Projects in Group",
+    {
+     "label": "Copy Path",
+     "enabled": false
+    },
+    "New Project Group",
+    "Edit…",
+    "Remove from Recent Projects…"
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "Edit…"
+  },
+  {
+   "find": [
+    {
+     "text": "Change Group Name"
+    },
+    {
+     "label": "Enter group name:",
+     "role": "AXTextField"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a backspace"
+  },
+  {
+   "find": {
+    "label": "Name cannot be empty"
+   },
+   "within": 3000
+  },
+  {
+   "do": "type",
+   "text": "Clients"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "find": {
+    "label": "Clients",
+    "role": "AXButton"
+   },
+   "within": 5000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "do": "click",
+   "label": "Clients",
+   "role": "AXButton"
+  },
+  {
+   "wait": 800
+  },
+  {
+   "find": {
+    "label": "fixture",
+    "role": "AXButton"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "fixture",
+   "role": "AXButton",
+   "hover": true
+  },
+  {
+   "do": "click",
+   "label": "More Actions",
+   "role": "AXButton",
+   "nth": 1
+  },
+  {
+   "find": {
+    "label": "Move to Group"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Move to Group"
+  },
+  {
+   "do": "click",
+   "label": "Remove from Groups",
+   "within": 3000
+  },
+  {
+   "find": [
+    {
+     "label": "Clients",
+     "role": "AXButton"
+    },
+    {
+     "label": "fixture",
+     "role": "AXButton"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "fixture",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "roots": [
+     "$FIXTURE"
+    ]
+   },
+   "within": 15000
+  }
+ ]
+}

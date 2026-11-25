@@ -1,0 +1,114 @@
+{
+ "id": "vcs-file-colors",
+ "covers": [],
+ "steps": [
+  {
+   "sh": "printf 'target\\n' > .gitignore && git add .gitignore && git commit -qm 'chore: ignore the build' && mkdir -p target && echo built > target/out.txt"
+  },
+  {
+   "file": "README.md",
+   "text": "# Fixture\n\nChanged.\n"
+  },
+  {
+   "file": "notes.txt",
+   "text": "not tracked yet\n"
+  },
+  {
+   "sh": "echo staged > staged.txt && git add staged.txt && echo again >> staged.txt"
+  },
+  {
+   "find": [
+    {
+     "label": "Git",
+     "role": "AXCheckBox",
+     "in": "Left stripe"
+    },
+    {
+     "label": "Commit",
+     "role": "AXCheckBox",
+     "in": "Left stripe"
+    }
+   ],
+   "within": 10000
+  },
+  {
+   "expect": {
+    "name": "Modified",
+    "hex": "#70aeff"
+   },
+   "of": {
+    "do": "file_color",
+    "path": "README.md"
+   },
+   "within": 8000
+  },
+  {
+   "expect": {
+    "name": "Created",
+    "hex": "#73bd79"
+   },
+   "of": {
+    "do": "file_color",
+    "path": "staged.txt"
+   },
+   "within": 8000
+  },
+  {
+   "expect": {
+    "name": "VersionControlUntracked",
+    "hex": "#e88f89"
+   },
+   "of": {
+    "do": "file_color",
+    "path": "notes.txt"
+   },
+   "within": 8000
+  },
+  {
+   "expect": {
+    "name": "Ignored",
+    "hex": "#d69a6b"
+   },
+   "of": {
+    "do": "file_color",
+    "path": "target"
+   },
+   "within": 8000
+  },
+  {
+   "expect": {
+    "name": "Muted",
+    "hex": "#73767c"
+   },
+   "of": {
+    "do": "file_color",
+    "path": "Cargo.toml"
+   },
+   "within": 8000
+  },
+  {
+   "do": "open",
+   "path": "README.md"
+  },
+  {
+   "expect": {
+    "active": "README.md"
+   }
+  },
+  {
+   "do": "open",
+   "path": "notes.txt"
+  },
+  {
+   "expect": {
+    "active": "notes.txt"
+   }
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "colors"
+  }
+ ]
+}

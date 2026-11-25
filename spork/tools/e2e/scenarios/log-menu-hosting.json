@@ -1,0 +1,43 @@
+{
+ "id": "log-menu-hosting",
+ "covers": [],
+ "reference-app": [
+  "screenshots/menus/git-hosting-open-in-browser-group.png"
+ ],
+ "steps": [
+  {
+   "do": "git",
+   "args": [
+    "remote",
+    "add",
+    "github",
+    "https://github.e2e.invalid/spork/fixture.git"
+   ]
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "find": {
+    "text": "github",
+    "role": "AXRow"
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "docs: a second line",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "menu": "context-menu:Git.Hosting.Open.In.Browser.Group",
+   "items": [
+    "Go to Child Commit",
+    "Go to Parent Commit",
+    "View in browser"
+   ],
+   "part": true
+  }
+ ]
+}

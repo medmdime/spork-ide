@@ -1,0 +1,10 @@
+{
+  "type": "object",
+  "properties": {
+    "request": { "type": "string", "enum": ["launch", "attach"] },
+    "program": { "type": "string", "description": "The program the fixture adapter plays" },
+    "cwd": { "type": "string" },
+    "requestLog": { "type": "string", "description": "A file to log each request to" }
+  },
+  "required": ["request"]
+}

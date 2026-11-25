@@ -1,0 +1,128 @@
+{
+ "id": "plugins-context-server",
+ "covers": [],
+ "reference-app": [],
+ "steps": [
+  {
+   "sh": "(nohup python3 \"$E2E/extensions_http.py\" ../registry-port 600 > ../registry.log 2>&1 &) && for i in $(seq 1800); do [ -s ../registry-port ] && break; sleep 0.1; done && python3 -c \"import json; p='../home/.config/spork-ide/settings.json'; s=json.load(open(p)); url='http://127.0.0.1:'+open('../registry-port').read().strip(); s['server_url']=url; s.setdefault('lsp', {})['fixture-ls']={'settings': {'download_url': url+'/files/lsp_fixture.py'}}; json.dump(s, open(p, 'w'))\""
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-,"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "Plugins",
+   "role": "AXRow",
+   "in": "Settings categories",
+   "within": 8000
+  },
+  {
+   "expect": {
+    "settings.page": "Plugins",
+    "settings.plugins.marketplace": [
+     "Fixture Theme",
+     "Fixture Language",
+     "Fixture Snippets",
+     "Fixture Icons",
+     "Fixture MCP",
+     "Fixture Debugger"
+    ]
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Search plugins",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "m c p",
+   "window": "Settings – fixture"
+  },
+  {
+   "expect": {
+    "settings.plugins.marketplace": [
+     "Fixture MCP"
+    ]
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Fixture MCP",
+   "in": "Plugins"
+  },
+  {
+   "do": "click",
+   "label": "Install",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings.plugins.installed": [
+     "Fixture MCP"
+    ]
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "context_servers": {
+     "fixture-mcp": "running"
+    }
+   },
+   "within": 20000
+  },
+  {
+   "sh": "cat '../home/Library/Application Support/Spork IDE/extensions/work/fixture-mcp/mcp-requests.log'",
+   "contains": "tools/list",
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Installed",
+   "role": "AXRadioButton"
+  },
+  {
+   "expect": {
+    "settings.plugins.tab": "Installed"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Fixture MCP",
+   "in": "Plugins"
+  },
+  {
+   "do": "click",
+   "label": "Uninstall",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings.plugins.installed": []
+   },
+   "within": 15000
+  },
+  {
+   "expect": {
+    "context_servers": {}
+   },
+   "within": 10000
+  }
+ ]
+}

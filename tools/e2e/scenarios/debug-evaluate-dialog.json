@@ -1,0 +1,257 @@
+{
+ "id": "debug-evaluate-dialog",
+ "covers": [
+  "dialog:EvaluateExpression",
+  "action:EvaluateExpression"
+ ],
+ "reference-app": [],
+ "settings": {
+  "dap": {
+   "CodeLLDB": {
+    "binary": "/usr/bin/python3",
+    "args": [
+     "$E2E/dap_fixture.py"
+    ]
+   }
+  },
+  "languages": {
+   "JSON": {
+    "prettier": {
+     "allowed": false
+    }
+   },
+   "JSONC": {
+    "prettier": {
+     "allowed": false
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "sh": "mkdir -p .zed && printf '[{\"label\": \"debug fixture\", \"adapter\": \"CodeLLDB\", \"request\": \"launch\", \"program\": \"$FIXTURE/target/debug/fixture\", \"cwd\": \"$FIXTURE\", \"requestLog\": \"$FIXTURE/../dap-requests.log\"}]' > .zed/debug.json"
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "find": {
+    "label": "debug fixture, Run / Debug Configurations",
+    "role": "AXButton"
+   },
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "expect": {
+    "run.breakpoints.0.at": "greeting.rs:2"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-d"
+  },
+  {
+   "expect": {
+    "docks.bottom.panel": "DebugPanel",
+    "run.debug.status": "Stopped"
+   },
+   "within": 15000
+  },
+  {
+   "find": {
+    "label": "fixture::greeting::hello:2, greeting.rs",
+    "role": "AXGroup",
+    "in": "Frames"
+   },
+   "within": 10000
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "alt-f8"
+  },
+  {
+   "find": [
+    {
+     "label": "Expression",
+     "role": "AXTextField"
+    },
+    {
+     "label": "History",
+     "role": "AXButton"
+    },
+    {
+     "label": "Use ⇧⌘⏎ to add to Watches"
+    },
+    {
+     "label": "Result"
+    },
+    {
+     "label": "Close",
+     "role": "AXButton"
+    },
+    {
+     "label": "Evaluate",
+     "role": "AXButton",
+     "enabled": false
+    }
+   ],
+   "ordered": true,
+   "within": 8000
+  },
+  {
+   "do": "type",
+   "text": "name",
+   "window": "Evaluate"
+  },
+  {
+   "do": "keys",
+   "keys": "enter",
+   "window": "Evaluate"
+  },
+  {
+   "expect": {
+    "run.evaluate.result": "\"world\""
+   },
+   "within": 5000
+  },
+  {
+   "find": {
+    "label": "result = \"world\""
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a",
+   "window": "Evaluate"
+  },
+  {
+   "do": "type",
+   "text": "greeting",
+   "window": "Evaluate"
+  },
+  {
+   "do": "keys",
+   "keys": "enter",
+   "window": "Evaluate"
+  },
+  {
+   "find": [
+    {
+     "label": "result = Greeting { name: \"world\", len: 5 }"
+    },
+    {
+     "label": "name = \"world\"",
+     "in": "Result"
+    },
+    {
+     "label": "len = 5"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "evaluate",
+   "window": "smallest"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a",
+   "window": "Evaluate"
+  },
+  {
+   "do": "type",
+   "text": "nope",
+   "window": "Evaluate"
+  },
+  {
+   "do": "keys",
+   "keys": "enter",
+   "window": "Evaluate"
+  },
+  {
+   "expect": {
+    "run.evaluate.error": "use of undeclared variable `nope`"
+   },
+   "within": 5000
+  },
+  {
+   "find": {
+    "label": "use of undeclared variable `nope`"
+   }
+  },
+  {
+   "do": "click",
+   "label": "History",
+   "role": "AXButton"
+  },
+  {
+   "menu": "evaluate-history",
+   "items": [
+    "nope",
+    "greeting",
+    "name"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "name",
+   "role": "AXMenuItem"
+  },
+  {
+   "do": "keys",
+   "keys": "shift-cmd-enter",
+   "window": "Evaluate"
+  },
+  {
+   "expect": {
+    "run.debug.watches.name": "\"world\""
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "escape",
+   "window": "Evaluate"
+  },
+  {
+   "find": {
+    "label": "Expression",
+    "role": "AXTextField"
+   },
+   "absent": true
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "f9"
+  },
+  {
+   "expect": {
+    "run.debug.terminated": true
+   },
+   "within": 10000
+  }
+ ]
+}

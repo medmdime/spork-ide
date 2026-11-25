@@ -1,0 +1,338 @@
+{
+ "id": "settings-pages",
+ "covers": [],
+ "reference-app": [
+  "screenshots/settings/appearance-behavior-appearance.jpg",
+  "screenshots/settings/editor-font.jpg",
+  "screenshots/settings/editor-code-style.jpg"
+ ],
+ "steps": [
+  {
+   "do": "action",
+   "name": "zed::OpenSettings"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture",
+    "settings.page": "Appearance & Behavior/Appearance"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "find": [
+    {
+     "value": "Islands Dark",
+     "role": "AXPopUpButton"
+    },
+    {
+     "label": "Sync with OS",
+     "role": "AXCheckBox"
+    },
+    {
+     "label": "Use custom font:",
+     "role": "AXCheckBox"
+    },
+    {
+     "label": "Show indent guides",
+     "role": "AXCheckBox"
+    }
+   ],
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "value": "Islands Dark",
+   "role": "AXPopUpButton"
+  },
+  {
+   "do": "click",
+   "label": "Darcula",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "settings.apply": true,
+    "settings.modified": [
+     "Appearance & Behavior/Appearance",
+     "Editor/Color Scheme"
+    ],
+    "look.theme": "Islands Dark"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Accessibility",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Appearance & Behavior/Accessibility"
+   }
+  },
+  {
+   "find": {
+    "value": "100%",
+    "role": "AXPopUpButton"
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "value": "100%",
+   "role": "AXPopUpButton"
+  },
+  {
+   "do": "click",
+   "label": "125%",
+   "role": "AXMenuItem"
+  },
+  {
+   "do": "click",
+   "label": "Appearance",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Appearance & Behavior/Appearance"
+   }
+  },
+  {
+   "find": {
+    "label": "Size",
+    "role": "AXTextField",
+    "value": "16"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Apply",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings.apply": false,
+    "look.theme": "Darcula",
+    "look.ui_font_size": 18.57
+   },
+   "within": 8000
+  },
+  {
+   "sh": "cat ../home/.config/spork-ide/settings.json",
+   "contains": "Darcula"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "appearance-darcula",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Font",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Editor/Font"
+   }
+  },
+  {
+   "find": [
+    {
+     "value": "JetBrains Mono",
+     "role": "AXPopUpButton"
+    },
+    {
+     "label": "Size",
+     "role": "AXTextField",
+     "value": "13.0"
+    },
+    {
+     "label": "Line height",
+     "role": "AXTextField",
+     "value": "1.2"
+    },
+    {
+     "label": "Enable ligatures",
+     "role": "AXCheckBox"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Size",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a 1 6",
+   "window": "Settings – fixture"
+  },
+  {
+   "do": "click",
+   "label": "Enable ligatures",
+   "role": "AXCheckBox"
+  },
+  {
+   "expect": {
+    "settings.modified": [
+     "Editor/Font"
+    ],
+    "look.buffer_font_size": 13.0
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "font",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Apply",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "look.buffer_font_size": 16.0
+   },
+   "within": 8000
+  },
+  {
+   "expect": {
+    "value": 1
+   },
+   "of": {
+    "do": "setting",
+    "path": "/buffer_font_features/calt"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Code Style",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Editor/Code Style"
+   }
+  },
+  {
+   "find": [
+    {
+     "value": "System-Dependent",
+     "role": "AXPopUpButton"
+    },
+    {
+     "label": "Hard wrap at",
+     "role": "AXTextField",
+     "value": "120"
+    },
+    {
+     "label": "Visual guides",
+     "role": "AXTextField"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Hard wrap at",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a 1 0 0",
+   "window": "Settings – fixture"
+  },
+  {
+   "do": "click",
+   "label": "Tools",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "do": "click",
+   "label": "Terminal",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Tools/Terminal",
+    "settings.modified": [
+     "Editor/Code Style"
+    ]
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Start directory",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Shell path",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Copy to clipboard on selection",
+     "role": "AXCheckBox"
+    },
+    {
+     "label": "Use Option as Meta key",
+     "role": "AXCheckBox"
+    },
+    {
+     "value": "Block",
+     "role": "AXPopUpButton"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Copy to clipboard on selection",
+   "role": "AXCheckBox"
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings": null
+   }
+  },
+  {
+   "expect": {
+    "value": true
+   },
+   "of": {
+    "do": "setting",
+    "path": "/terminal/copy_on_select"
+   }
+  },
+  {
+   "expect": {
+    "value": 100
+   },
+   "of": {
+    "do": "setting",
+    "path": "/preferred_line_length"
+   }
+  },
+  {
+   "sh": "cat ../home/.config/spork-ide/settings.json",
+   "contains": "copy_on_select"
+  }
+ ]
+}

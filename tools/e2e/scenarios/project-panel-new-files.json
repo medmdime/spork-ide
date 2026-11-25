@@ -1,0 +1,178 @@
+{
+ "id": "project-panel-new-files",
+ "covers": [
+  "action:NewHtmlFile",
+  "action:NewElementSamePlace",
+  "action:NewScratchBuffer"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "find": {
+    "label": "src",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "src",
+   "role": "AXRow",
+   "in": "Project Panel"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-n"
+  },
+  {
+   "find": [
+    "New",
+    {
+     "label": "File",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Scratch File",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Directory",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "HTML File",
+     "role": "AXMenuItem"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "keys",
+   "keys": "down down down enter"
+  },
+  {
+   "find": "New HTML File"
+  },
+  {
+   "do": "type",
+   "text": "page"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "active": "src/page.html"
+   },
+   "within": 10000
+  },
+  {
+   "sh": "tr '\\n' '|' < src/page.html",
+   "is": "<!DOCTYPE html>|<html lang=\"en\">|<head>|    <meta charset=\"UTF-8\">|    <title>Title</title>|</head>|<body>||</body>|</html>|"
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-alt-n"
+  },
+  {
+   "find": [
+    "New",
+    {
+     "label": "File",
+     "role": "AXMenuItem"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "find": "New File"
+  },
+  {
+   "do": "type",
+   "text": "near.txt"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "sh": "test -f src/near.txt && echo ok",
+   "is": "ok"
+  },
+  {
+   "expect": {
+    "active": "src/near.txt"
+   },
+   "within": 10000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "action",
+   "name": "project_panel::NewScratchBuffer"
+  },
+  {
+   "expect": {
+    "active": "scratches/buffer1.txt"
+   },
+   "within": 10000
+  },
+  {
+   "do": "type",
+   "text": "kept"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "action",
+   "name": "project_panel::NewScratchBuffer"
+  },
+  {
+   "expect": {
+    "active": "scratches/buffer2.txt"
+   },
+   "within": 10000
+  },
+  {
+   "find": {
+    "label": "Scratches and Consoles",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 5000
+  }
+ ]
+}

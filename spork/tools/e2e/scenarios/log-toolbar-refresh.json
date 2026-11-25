@@ -1,0 +1,52 @@
+{
+ "id": "log-toolbar-refresh",
+ "covers": [
+  "action:Vcs.Log.Refresh"
+ ],
+ "reference-app": [
+  "screenshots/menus/vcs-log-toolbar-rightcorner.png"
+ ],
+ "steps": [
+  {
+   "expect": {
+    "commits": 7
+   }
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "sh": "git commit -q --allow-empty -m refreshed"
+  },
+  {
+   "do": "click",
+   "label": "Refresh",
+   "in": "VCS Log Toolbar"
+  },
+  {
+   "expect": {
+    "commits": 8
+   },
+   "within": 8000
+  },
+  {
+   "find": {
+    "text": "refreshed",
+    "role": "AXRow"
+   }
+  },
+  {
+   "sh": "git commit -q --allow-empty -m again"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-r"
+  },
+  {
+   "expect": {
+    "commits": 9
+   },
+   "within": 8000
+  }
+ ]
+}

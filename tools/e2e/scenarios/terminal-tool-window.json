@@ -1,0 +1,360 @@
+{
+ "id": "terminal-tool-window",
+ "covers": [
+  "action:Terminal.NewTab",
+  "action:Terminal.RenameSession",
+  "action:Terminal.SplitVertically",
+  "action:Terminal.SplitHorizontally",
+  "action:TerminalIncreaseFontSize",
+  "action:TerminalDecreaseFontSize",
+  "action:TerminalResetFontSize"
+ ],
+ "steps": [
+  {
+   "find": {
+    "label": "Terminal",
+    "role": "AXCheckBox"
+   },
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "alt-f12"
+  },
+  {
+   "expect": {
+    "terminal.sessions": [
+     "Local"
+    ],
+    "terminal.active": "Local"
+   },
+   "within": 8000
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-t"
+  },
+  {
+   "expect": {
+    "terminal.sessions": [
+     "Local",
+     "Local (2)"
+    ],
+    "terminal.active": "Local (2)"
+   },
+   "within": 8000
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "do": "click",
+   "label": "New Tab",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "terminal.sessions": [
+     "Local",
+     "Local (2)",
+     "Local (3)"
+    ],
+    "terminal.active": "Local (3)"
+   },
+   "within": 8000
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "find": {
+    "label": "Local (2)",
+    "role": "AXRadioButton"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Local (2)",
+   "role": "AXRadioButton",
+   "button": "right"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "menu": "Terminal.RenameSession",
+   "items": [
+    "Rename Session",
+    "Close Tab",
+    "Close All Tabs",
+    "Close Other Tabs",
+    "Split Right",
+    "Split Down"
+   ]
+  },
+  {
+   "find": {
+    "label": "Rename Session",
+    "role": "AXMenuItem"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Rename Session",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "terminal.renaming": true
+   }
+  },
+  {
+   "find": {
+    "label": "Session name:"
+   }
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Dock",
+     "Editor"
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "do": "type",
+   "text": "build"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "terminal.sessions": [
+     "Local",
+     "build",
+     "Local (3)"
+    ],
+    "terminal.renaming": false
+   },
+   "within": 3000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "find": {
+    "label": "Local (3)",
+    "role": "AXRadioButton"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Local (3)",
+   "role": "AXRadioButton",
+   "button": "right"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "find": {
+    "label": "Close Tab",
+    "role": "AXMenuItem"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Close Tab",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "terminal.sessions": [
+     "Local",
+     "build"
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-t"
+  },
+  {
+   "expect": {
+    "terminal.sessions": [
+     "Local",
+     "build",
+     "Local (2)"
+    ]
+   },
+   "within": 8000
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "do": "action",
+   "name": "terminal::IncreaseFontSize"
+  },
+  {
+   "expect": {
+    "terminal.font_size": 14.0
+   }
+  },
+  {
+   "do": "action",
+   "name": "terminal::DecreaseFontSize"
+  },
+  {
+   "do": "action",
+   "name": "terminal::DecreaseFontSize"
+  },
+  {
+   "expect": {
+    "terminal.font_size": 12.0
+   }
+  },
+  {
+   "do": "action",
+   "name": "terminal::ResetFontSize"
+  },
+  {
+   "expect": {
+    "terminal.font_size": 13.0
+   }
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "find": {
+    "label": "Local",
+    "role": "AXRadioButton"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Local",
+   "role": "AXRadioButton",
+   "button": "right"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "find": {
+    "label": "Split Right",
+    "role": "AXMenuItem"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Split Right",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "terminal.panes": 2
+   },
+   "within": 8000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "find": {
+    "label": "Local (3)",
+    "role": "AXRadioButton"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Local (3)",
+   "role": "AXRadioButton",
+   "button": "right"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "find": {
+    "label": "Split Down",
+    "role": "AXMenuItem"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Split Down",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "terminal.panes": 3
+   },
+   "within": 8000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "do": "click",
+   "label": "New Predefined Session"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "menu": "TerminalNewPredefinedSession",
+   "items": [
+    "bash",
+    "zsh"
+   ]
+  },
+  {
+   "find": {
+    "label": "bash",
+    "role": "AXMenuItem"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "bash",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "terminal.active": "bash"
+   },
+   "within": 8000
+  }
+ ]
+}

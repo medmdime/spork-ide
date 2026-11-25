@@ -1,0 +1,8 @@
+id = "fixture-snippets"
+name = "Fixture Snippets"
+version = "1.0.0"
+schema_version = 1
+authors = ["Spork IDE Tests"]
+description = "Snippets for the tests."
+repository = "https://example.com/fixture-snippets"
+snippets = ["snippets/rust.json"]

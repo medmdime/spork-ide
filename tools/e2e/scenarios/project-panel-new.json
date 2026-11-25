@@ -1,0 +1,151 @@
+{
+ "id": "project-panel-new",
+ "covers": [
+  "action:NewElement",
+  "action:NewFile",
+  "action:NewDir"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "find": {
+    "label": "src",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "src",
+   "role": "AXRow",
+   "in": "Project Panel"
+  },
+  {
+   "find": {
+    "label": "main.rs",
+    "role": "AXRow",
+    "in": "Project Panel"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-n"
+  },
+  {
+   "find": [
+    "New",
+    {
+     "label": "File",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Scratch File",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Directory",
+     "role": "AXMenuItem"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 400
+  },
+  {
+   "shot": "new-popup"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "find": "New File"
+  },
+  {
+   "do": "type",
+   "text": "main.rs"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "find": "A file with the name 'main.rs' already exists"
+  },
+  {
+   "wait": 400
+  },
+  {
+   "shot": "new-file-error"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a backspace"
+  },
+  {
+   "do": "type",
+   "text": "notes/todo.txt"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "sh": "test -f src/notes/todo.txt && echo ok",
+   "is": "ok"
+  },
+  {
+   "expect": {
+    "active": "src/notes/todo.txt"
+   }
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "click",
+   "label": "src",
+   "role": "AXRow",
+   "in": "Project Panel"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-n"
+  },
+  {
+   "find": {
+    "label": "Directory",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "down down enter"
+  },
+  {
+   "find": "New Directory"
+  },
+  {
+   "do": "type",
+   "text": "docs"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "sh": "test -d src/docs && echo ok",
+   "is": "ok",
+   "within": 5000
+  },
+  {
+   "find": {
+    "label": "docs",
+    "role": "AXRow",
+    "in": "Project Panel"
+   }
+  }
+ ]
+}

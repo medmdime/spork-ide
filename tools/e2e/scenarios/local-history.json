@@ -1,0 +1,118 @@
+{
+ "id": "local-history",
+ "covers": [
+  "action:LocalHistory.ShowHistory",
+  "action:LocalHistory.PutLabel",
+  "dialog:LocalHistory.PutLabel"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "open",
+   "path": "README.md"
+  },
+  {
+   "expect": {
+    "active": "README.md",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "type",
+   "text": "Edited "
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "sh": "cat README.md",
+   "is": "Edited # Fixture"
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "do": "action",
+   "name": "local_history::ShowHistory"
+  },
+  {
+   "find": [
+    "Local History: README.md",
+    "Revert Selected and Later Changes",
+    {
+     "role": "AXRow",
+     "in": "Changes"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 800
+  },
+  {
+   "shot": "show-history"
+  },
+  {
+   "do": "click",
+   "label": "Revert Selected and Later Changes",
+   "role": "AXButton"
+  },
+  {
+   "sh": "cat README.md",
+   "is": "# Fixture"
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "action",
+   "name": "local_history::PutLabel"
+  },
+  {
+   "find": [
+    "Put Label",
+    "Label name:",
+    {
+     "label": "OK",
+     "enabled": false
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 400
+  },
+  {
+   "shot": "put-label"
+  },
+  {
+   "do": "type",
+   "text": "before release"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "find": "Put Label",
+   "absent": true
+  },
+  {
+   "do": "action",
+   "name": "local_history::ShowHistory"
+  },
+  {
+   "find": {
+    "label": "before release",
+    "role": "AXRow",
+    "in": "Changes"
+   }
+  }
+ ]
+}

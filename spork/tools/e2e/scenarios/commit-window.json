@@ -1,0 +1,27 @@
+{
+ "id": "commit-window",
+ "covers": [
+  "action:ActivateCommitToolWindow",
+  "tool-window:Commit"
+ ],
+ "reference-app": [
+  "screenshots/toolwindows/commit.jpg"
+ ],
+ "steps": [
+  {
+   "do": "action",
+   "name": "spork::ToggleCommit"
+  },
+  {
+   "expect": {
+    "left": "[Commit, Project]"
+   }
+  },
+  {
+   "wait": 800
+  },
+  {
+   "shot": "open"
+  }
+ ]
+}

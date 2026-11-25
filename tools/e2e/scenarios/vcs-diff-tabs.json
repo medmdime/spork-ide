@@ -1,0 +1,154 @@
+{
+ "id": "vcs-diff-tabs",
+ "covers": [],
+ "steps": [
+  {
+   "file": "src/greeting.rs",
+   "text": "pub fn hello(name: &str) -> String {\n    format!(\"Hi, {name}!\")\n}\n"
+  },
+  {
+   "find": [
+    {
+     "label": "Git",
+     "role": "AXCheckBox",
+     "in": "Left stripe"
+    },
+    {
+     "label": "Commit",
+     "role": "AXCheckBox",
+     "in": "Left stripe"
+    }
+   ],
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-0"
+  },
+  {
+   "find": {
+    "label": "greeting.rs",
+    "role": "AXCheckBox"
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "at": [
+    160,
+    158
+   ],
+   "count": 2
+  },
+  {
+   "expect": {
+    "active": "Commit: greeting.rs",
+    "docks.bottom.open": false
+   },
+   "within": 8000
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "commit-diff"
+  },
+  {
+   "do": "click",
+   "label": "Commit",
+   "role": "AXCheckBox",
+   "in": "Left stripe"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-9"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "Git"
+   }
+  },
+  {
+   "find": {
+    "label": "feat: greet the world",
+    "role": "AXRow"
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "feat: greet the world",
+   "role": "AXRow"
+  },
+  {
+   "find": {
+    "label": "greeting.rs",
+    "role": "AXRow"
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "greeting.rs",
+   "role": "AXRow",
+   "count": 2
+  },
+  {
+   "expect": {
+    "active": "Repository Diff: greeting.rs"
+   },
+   "within": 8000
+  },
+  {
+   "find": {
+    "label": "feat: greet the world",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "greeting.rs",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "find": {
+    "label": "Open Repository Version",
+    "role": "AXMenuItem"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Open Repository Version",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "active": "greeting.rs (1cd56d94)"
+   },
+   "within": 8000
+  },
+  {
+   "expect": {
+    "items": [
+     "Commit: greeting.rs",
+     "Repository Diff: greeting.rs",
+     "greeting.rs (1cd56d94)"
+    ]
+   }
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "revision"
+  }
+ ]
+}

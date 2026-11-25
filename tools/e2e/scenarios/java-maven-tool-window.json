@@ -1,0 +1,311 @@
+{
+ "id": "java-maven-tool-window",
+ "fixture": "maven",
+ "covers": [
+  "action:Maven.ToggleOffline"
+ ],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "find": {
+    "label": "Load Maven Project",
+    "role": "AXLink"
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "Load Maven Project",
+   "role": "AXLink"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 300000
+  },
+  {
+   "do": "action",
+   "name": "maven_tool_window::ToggleFocus"
+  },
+  {
+   "expect": {
+    "docks.right.open": true,
+    "docks.right.panel": "Maven"
+   }
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "find": [
+    {
+     "label": "fixture",
+     "role": "AXRow"
+    },
+    {
+     "label": "Lifecycle",
+     "role": "AXRow"
+    },
+    {
+     "label": "Plugins",
+     "role": "AXRow"
+    },
+    {
+     "label": "Dependencies",
+     "role": "AXRow"
+    }
+   ],
+   "ordered": true,
+   "within": 10000
+  },
+  {
+   "toolbar": "Maven Toolbar",
+   "items": [
+    "Sync/Reload All Maven Projects",
+    "Generate Sources and Update Folders For All Projects",
+    "Download Sources and/or Documentation",
+    "Add Maven Projects (disabled)",
+    "Unlink Maven Projects (disabled)",
+    "Run Maven Build (disabled)",
+    "Execute Maven Goal",
+    "Toggle Offline Mode",
+    "Toggle 'Skip Tests' Mode",
+    "Analyze Dependencies… (disabled)",
+    "Expand All",
+    "Collapse All",
+    "Build Tools Settings (disabled)"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Expand All",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "Lifecycle",
+     "role": "AXRow"
+    },
+    {
+     "label": "clean",
+     "role": "AXRow"
+    },
+    {
+     "label": "validate",
+     "role": "AXRow"
+    },
+    {
+     "label": "compile",
+     "role": "AXRow"
+    },
+    {
+     "label": "test",
+     "role": "AXRow"
+    },
+    {
+     "label": "package",
+     "role": "AXRow"
+    },
+    {
+     "label": "verify",
+     "role": "AXRow"
+    },
+    {
+     "label": "install",
+     "role": "AXRow"
+    },
+    {
+     "label": "site",
+     "role": "AXRow"
+    },
+    {
+     "label": "deploy",
+     "role": "AXRow"
+    },
+    {
+     "label": "Plugins",
+     "role": "AXRow"
+    },
+    {
+     "label": "clean",
+     "role": "AXRow"
+    },
+    {
+     "label": "clean:clean",
+     "role": "AXRow"
+    },
+    {
+     "label": "compiler",
+     "role": "AXRow"
+    },
+    {
+     "label": "compiler:compile",
+     "role": "AXRow"
+    },
+    {
+     "label": "surefire",
+     "role": "AXRow"
+    },
+    {
+     "label": "surefire:test",
+     "role": "AXRow"
+    },
+    {
+     "label": "Dependencies",
+     "role": "AXRow"
+    },
+    {
+     "label": "junit:junit:4.13.2",
+     "role": "AXRow"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "Collapse All",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "compile",
+    "role": "AXRow"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "fixture",
+   "role": "AXRow",
+   "count": 2
+  },
+  {
+   "do": "click",
+   "label": "Lifecycle",
+   "role": "AXRow",
+   "count": 2
+  },
+  {
+   "do": "click",
+   "label": "compile",
+   "role": "AXRow"
+  },
+  {
+   "expect": {
+    "java.selected": "phase:compile"
+   }
+  },
+  {
+   "find": {
+    "label": "Run Maven Build",
+    "role": "AXButton",
+    "enabled": true
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 60000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "shot": "tool-window"
+  },
+  {
+   "do": "click",
+   "label": "Run Maven Build",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "run.tabs.0.title": "fixture [compile]",
+    "run.tabs.0.running": false,
+    "run.tabs.0.last_line": "Process finished with exit code 0"
+   },
+   "within": 240000
+  },
+  {
+   "do": "click",
+   "label": "Toggle Offline Mode",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "java.offline": true
+   }
+  },
+  {
+   "do": "click",
+   "label": "Execute Maven Goal",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Run Anything",
+    "role": "AXTextField",
+    "value": "mvn "
+   }
+  },
+  {
+   "do": "type",
+   "text": "validate"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "run.tabs.1.title": "fixture [validate]",
+    "run.tabs.1.running": false,
+    "run.tabs.1.last_line": "Process finished with exit code 0"
+   },
+   "within": 120000
+  },
+  {
+   "do": "click",
+   "label": "package",
+   "role": "AXRow",
+   "count": 2
+  },
+  {
+   "expect": {
+    "run.tabs.2.title": "fixture [package]",
+    "run.tabs.2.running": false
+   },
+   "within": 240000
+  }
+ ]
+}

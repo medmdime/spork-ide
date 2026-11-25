@@ -1,0 +1,549 @@
+{
+ "id": "hosting-settings-merge-requests",
+ "covers": [
+  "context-menu:GitLab.Merge.Request.List.Actions",
+  "action:GitLab.Merge.Request.CheckoutBranch",
+  "action:GitLab.Merge.Request.Copy.Link",
+  "action:GitLab.Merge.Request.Open.Link",
+  "action:GitLab.Merge.Request.List.Refresh",
+  "context-menu:GitLab.Merge.Request.Details.Popup",
+  "action:GitLab.Merge.Request.Refresh",
+  "context-menu:GitLab.Merge.Request.Details.Commit.Tree.ViewOptions",
+  "context-menu:GitLab.Merge.Request.Timeline.Popup",
+  "context-menu:GitLab.Merge.Request.Timeline.Error.Popup",
+  "action:GitLab.Merge.Request.OpenInWorktree"
+ ],
+ "reference-app": [
+  "screenshots/menus/gitlab-merge-request-list-actions.png",
+  "screenshots/menus/gitlab-merge-request-changes-popup.png",
+  "screenshots/menus/gitlab-merge-request-details-popup.png"
+ ],
+ "steps": [
+  {
+   "sh": "git config url.\"$(cd ../repo.origin && pwd)\".insteadOf https://gitlab.e2e.invalid/spork/fixture.git"
+  },
+  {
+   "sh": "git --git-dir=../repo.origin branch feature/readme fix/typo && git --git-dir=../repo.origin update-ref refs/merge-requests/1/head refs/heads/feature/readme"
+  },
+  {
+   "do": "git",
+   "args": [
+    "remote",
+    "add",
+    "gitlab",
+    "https://gitlab.e2e.invalid/spork/fixture.git"
+   ]
+  },
+  {
+   "menu": "context-menu:GitLab.Main.Group",
+   "path": [
+    "Git",
+    "GitLab"
+   ],
+   "within": 8000,
+   "part": true,
+   "items": [
+    "Create Merge Request…",
+    "View Merge Requests"
+   ]
+  },
+  {
+   "do": "pulls",
+   "pulls": [
+    {
+     "iid": 1,
+     "title": "Fix the typo in the readme",
+     "author": {
+      "username": "ann"
+     },
+     "source_branch": "feature/readme",
+     "target_branch": "main",
+     "web_url": "https://gitlab.e2e.invalid/spork/fixture/-/merge_requests/1",
+     "source_project_id": 7,
+     "target_project_id": 7,
+     "description": "Fixes the readme's typo."
+    }
+   ]
+  },
+  {
+   "do": "action",
+   "name": "spork::ViewMergeRequests"
+  },
+  {
+   "within": 6000,
+   "find": [
+    {
+     "label": "Fix the typo in the readme",
+     "role": "AXRow",
+     "in": "Merge Requests List"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Fix the typo in the readme",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Merge Requests List"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "menu": "context-menu:GitLab.Merge.Request.List.Actions",
+   "items": [
+    "Show Merge Request",
+    "Checkout Branch",
+    "Open in Worktree",
+    "View Merge Request in Browser",
+    "Copy Merge Request URL",
+    "Refresh List"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Copy Merge Request URL",
+   "role": "AXMenuItem"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "pbpaste",
+   "is": "https://gitlab.e2e.invalid/spork/fixture/-/merge_requests/1"
+  },
+  {
+   "do": "click",
+   "label": "Fix the typo in the readme",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Merge Requests List"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "View Merge Request in Browser",
+   "role": "AXMenuItem"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "expect": {
+    "opened": "https://gitlab.e2e.invalid/spork/fixture/-/merge_requests/1"
+   }
+  },
+  {
+   "do": "pulls",
+   "pulls": [
+    {
+     "iid": 1,
+     "title": "Fix the typo in the readme",
+     "author": {
+      "username": "ann"
+     },
+     "source_branch": "feature/readme",
+     "target_branch": "main",
+     "web_url": "https://gitlab.e2e.invalid/spork/fixture/-/merge_requests/1",
+     "source_project_id": 7,
+     "target_project_id": 7,
+     "description": "Fixes the readme's typo."
+    },
+    {
+     "iid": 2,
+     "title": "Second request",
+     "author": {
+      "username": "ann"
+     },
+     "source_branch": "fix/typo",
+     "target_branch": "main",
+     "web_url": "https://gitlab.e2e.invalid/spork/fixture/-/merge_requests/2",
+     "source_project_id": 7,
+     "target_project_id": 7
+    }
+   ],
+   "listed": false
+  },
+  {
+   "find": [],
+   "missing": [
+    {
+     "label": "Second request",
+     "role": "AXRow"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Fix the typo in the readme",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Merge Requests List"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "Refresh List",
+   "role": "AXMenuItem"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "within": 6000,
+   "find": [
+    {
+     "label": "Second request",
+     "role": "AXRow",
+     "in": "Merge Requests List"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Fix the typo in the readme",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Merge Requests List"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "Show Merge Request",
+   "role": "AXMenuItem"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "within": 8000,
+   "find": [
+    {
+     "label": "!1",
+     "role": "AXRadioButton",
+     "value": "1"
+    },
+    {
+     "label": "Merge Request Details"
+    },
+    {
+     "text": "main ← feature/readme"
+    },
+    {
+     "label": "typo.txt",
+     "role": "AXRow",
+     "in": "Merge Request Changes"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "typo.txt",
+   "role": "AXRow",
+   "in": "Merge Request Changes"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "git": [
+    "rev-parse",
+    "--verify",
+    "--quiet",
+    "refs/remotes/gitlab/main"
+   ],
+   "within": 8000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "details"
+  },
+  {
+   "do": "click",
+   "label": "typo.txt",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Merge Request Changes"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "menu": "context-menu:GitLab.Merge.Request.Changes.Popup",
+   "items": [
+    "Show Diff",
+    "Show Diff in a New Tab or Window",
+    "Jump to Source",
+    "Mark as Viewed (disabled)",
+    "Mark as Not Viewed (disabled)",
+    "View Options",
+    "Expand All",
+    "Collapse All",
+    "Refresh Merge Request",
+    "View Merge Request in Browser",
+    "Copy Merge Request URL"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "View Options",
+   "role": "AXMenuItem",
+   "hover": true
+  },
+  {
+   "wait": 500
+  },
+  {
+   "menu": "context-menu:GitLab.Merge.Request.Details.Commit.Tree.ViewOptions",
+   "items": [
+    "Group By"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "Merge Request Details",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "menu": "context-menu:GitLab.Merge.Request.Details.Popup",
+   "items": [
+    "Refresh Merge Request",
+    "View Merge Request in Browser",
+    "Copy Merge Request URL"
+   ]
+  },
+  {
+   "sh": "git checkout -q -b more fix/typo && echo more > more.txt && git add more.txt && git commit -q -m 'docs: more' && git push -q -f ../repo.origin more:refs/merge-requests/1/head && git checkout -q main"
+  },
+  {
+   "do": "click",
+   "label": "Refresh Merge Request",
+   "role": "AXMenuItem"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "within": 8000,
+   "find": [
+    {
+     "label": "more.txt",
+     "role": "AXRow",
+     "in": "Merge Request Changes"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "View Timeline",
+   "role": "AXLink"
+  },
+  {
+   "within": 6000,
+   "find": [
+    {
+     "label": "Timeline for !1",
+     "role": "AXRadioButton",
+     "value": "1"
+    },
+    {
+     "text": "Fixes the readme's typo."
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Merge Request Timeline",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "menu": "context-menu:GitLab.Merge.Request.Timeline.Popup",
+   "items": [
+    "Show Merge Request Events",
+    "Refresh Merge Request",
+    "View Merge Request in Browser",
+    "Copy Merge Request URL"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "click",
+   "label": "spork/fixture",
+   "role": "AXRadioButton"
+  },
+  {
+   "do": "click",
+   "label": "Second request",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Merge Requests List"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "Show Merge Request",
+   "role": "AXMenuItem"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "View Timeline",
+   "role": "AXLink"
+  },
+  {
+   "within": 8000,
+   "find": [
+    {
+     "text": "Failed to load timeline"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Merge Request Timeline",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "menu": "context-menu:GitLab.Merge.Request.Timeline.Error.Popup",
+   "items": [
+    "View Merge Request in Browser",
+    "Copy Merge Request URL"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "click",
+   "label": "spork/fixture",
+   "role": "AXRadioButton"
+  },
+  {
+   "within": 4000,
+   "find": [
+    {
+     "label": "Fix the typo in the readme",
+     "role": "AXRow",
+     "in": "Merge Requests List"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Fix the typo in the readme",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Merge Requests List"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "Checkout Branch",
+   "role": "AXMenuItem"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "git": [
+    "branch",
+    "--show-current"
+   ],
+   "is": "feature/readme",
+   "within": 8000
+  },
+  {
+   "git": [
+    "rev-parse",
+    "--abbrev-ref",
+    "feature/readme@{upstream}"
+   ],
+   "is": "gitlab/feature/readme"
+  },
+  {
+   "do": "click",
+   "label": "Second request",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Merge Requests List"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "Open in Worktree",
+   "role": "AXMenuItem"
+  },
+  {
+   "git": [
+    "worktree",
+    "list"
+   ],
+   "contains": "reviewWorktrees/repo-typo",
+   "within": 8000
+  },
+  {
+   "git": [
+    "worktree",
+    "list"
+   ],
+   "contains": "[fix/typo]"
+  },
+  {
+   "within": 8000,
+   "find": [
+    {
+     "label": "Git Branch: fix/typo",
+     "role": "AXButton"
+    },
+    {
+     "label": "!2",
+     "role": "AXRadioButton",
+     "value": "1"
+    },
+    {
+     "text": "main ← fix/typo"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,182 @@
+{
+ "id": "branches-new-branch",
+ "covers": [
+  "dialog:Git.CreateNewBranch",
+  "action:Git.CreateNewBranch",
+  "action:GitCheckoutAsNewBranch"
+ ],
+ "reference-app": [
+  "screenshots/dialogs/git-createnewbranch.png"
+ ],
+ "steps": [
+  {
+   "do": "keys",
+   "keys": "alt-cmd-n"
+  },
+  {
+   "find": {
+    "label": "Branch Name:",
+    "role": "AXTextField",
+    "value": "main"
+   }
+  },
+  {
+   "find": {
+    "label": "Checkout branch",
+    "role": "AXCheckBox",
+    "value": "1"
+   }
+  },
+  {
+   "find": {
+    "label": "Overwrite existing branch",
+    "role": "AXCheckBox",
+    "value": "0"
+   }
+  },
+  {
+   "find": {
+    "label": "Cancel",
+    "role": "AXButton"
+   }
+  },
+  {
+   "find": {
+    "label": "Create",
+    "role": "AXButton"
+   }
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "dialog"
+  },
+  {
+   "do": "click",
+   "label": "Create",
+   "role": "AXButton"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "find": {
+    "label": "Branch Name:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Branch Name:",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a backspace f e a t u r e / n e w"
+  },
+  {
+   "find": {
+    "label": "Branch Name:",
+    "role": "AXTextField",
+    "value": "feature/new"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Create",
+   "role": "AXButton"
+  },
+  {
+   "git": [
+    "branch",
+    "--show-current"
+   ],
+   "contains": "feature/new"
+  },
+  {
+   "find": {
+    "label": "Branch Name:",
+    "role": "AXTextField"
+   },
+   "absent": true
+  },
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "find": {
+    "label": "fix/typo",
+    "role": "AXRow",
+    "in": "Branches Tree"
+   }
+  },
+  {
+   "do": "click",
+   "label": "fix/typo",
+   "role": "AXRow",
+   "in": "Branches Tree"
+  },
+  {
+   "find": {
+    "label": "New Branch from 'fix/typo'…",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "New Branch from 'fix/typo'…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Branch Name:",
+    "role": "AXTextField",
+    "value": "fix/typo"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Checkout branch",
+   "role": "AXCheckBox"
+  },
+  {
+   "find": {
+    "label": "Checkout branch",
+    "role": "AXCheckBox",
+    "value": "0"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Branch Name:",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a backspace t y p o 2"
+  },
+  {
+   "do": "click",
+   "label": "Create",
+   "role": "AXButton"
+  },
+  {
+   "git": [
+    "log",
+    "-1",
+    "--format=%s",
+    "typo2"
+   ],
+   "contains": "fix: a typo"
+  },
+  {
+   "git": [
+    "branch",
+    "--show-current"
+   ],
+   "contains": "feature/new"
+  }
+ ]
+}

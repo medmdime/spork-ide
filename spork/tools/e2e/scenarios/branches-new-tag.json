@@ -1,0 +1,128 @@
+{
+ "id": "branches-new-tag",
+ "covers": [
+  "dialog:Git.Tag",
+  "action:Git.Tag"
+ ],
+ "reference-app": [
+  "screenshots/dialogs/git-tag.jpg"
+ ],
+ "steps": [
+  {
+   "do": "action",
+   "name": "spork::NewTag"
+  },
+  {
+   "find": {
+    "label": "Tag Name:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "find": {
+    "label": "Force",
+    "role": "AXCheckBox",
+    "value": "0"
+   }
+  },
+  {
+   "find": {
+    "label": "Commit:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "find": {
+    "label": "Message:"
+   }
+  },
+  {
+   "find": {
+    "label": "Validate",
+    "role": "AXButton"
+   }
+  },
+  {
+   "find": {
+    "label": "Cancel",
+    "role": "AXButton"
+   }
+  },
+  {
+   "find": {
+    "label": "Create Tag",
+    "role": "AXButton"
+   }
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "dialog"
+  },
+  {
+   "do": "click",
+   "label": "Tag Name:",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "v 2"
+  },
+  {
+   "find": {
+    "label": "Tag Name:",
+    "role": "AXTextField",
+    "value": "v2"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Commit:",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "f i x / t y p o"
+  },
+  {
+   "do": "click",
+   "label": "Message:"
+  },
+  {
+   "do": "keys",
+   "keys": "s e c o n d"
+  },
+  {
+   "do": "click",
+   "label": "Create Tag",
+   "role": "AXButton"
+  },
+  {
+   "git": [
+    "cat-file",
+    "-t",
+    "v2"
+   ],
+   "contains": "tag"
+  },
+  {
+   "git": [
+    "log",
+    "-1",
+    "--format=%s",
+    "v2"
+   ],
+   "contains": "fix: a typo"
+  },
+  {
+   "git": [
+    "tag",
+    "-n",
+    "--list",
+    "v2"
+   ],
+   "contains": "second"
+  }
+ ]
+}

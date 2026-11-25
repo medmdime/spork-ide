@@ -1,0 +1,149 @@
+{
+ "id": "scratch-files-popup",
+ "covers": [],
+ "reference-app": [],
+ "steps": [
+  {
+   "find": {
+    "label": "src",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "navigate::ShowScratchFiles"
+  },
+  {
+   "find": [
+    {
+     "label": "Scratch Files",
+     "role": "AXWindow"
+    },
+    {
+     "text": "No scratch files found"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-n"
+  },
+  {
+   "find": {
+    "label": "Plain text",
+    "role": "AXMenuItem"
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "sh": "test -f ../home/.config/spork-ide/scratches/scratch.txt && echo ok",
+   "is": "ok",
+   "within": 8000
+  },
+  {
+   "expect": {
+    "items": [
+     "scratches/scratch.txt"
+    ]
+   },
+   "within": 8000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-n"
+  },
+  {
+   "find": "New Scratch File",
+   "within": 5000
+  },
+  {
+   "do": "type",
+   "text": "json"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "sh": "test -f ../home/.config/spork-ide/scratches/scratch.json && echo ok",
+   "is": "ok",
+   "within": 8000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "action",
+   "name": "workspace::CloseAllItemsAndPanes"
+  },
+  {
+   "do": "action",
+   "name": "workspace::CloseAllDocks"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   },
+   "within": 3000
+  },
+  {
+   "do": "action",
+   "name": "navigate::ShowScratchFiles"
+  },
+  {
+   "find": [
+    {
+     "label": "scratch.json 1",
+     "in": "Scratch Files"
+    },
+    {
+     "label": "scratch.txt 1",
+     "in": "Scratch Files"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "scratch-files"
+  },
+  {
+   "do": "type",
+   "text": "txt"
+  },
+  {
+   "find": {
+    "label": "scratch.json 1",
+    "in": "Scratch Files"
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "active": "scratches/scratch.txt"
+   },
+   "within": 5000
+  }
+ ]
+}

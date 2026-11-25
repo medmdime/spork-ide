@@ -1,0 +1,76 @@
+{
+ "id": "vcs-git-menu-merge",
+ "covers": [
+  "action:Git.Merge.Abort"
+ ],
+ "steps": [
+  {
+   "sh": "git checkout -q -b clash && printf '# Clash\\n' > README.md && git commit -qam 'docs: clash' && git checkout -q main && printf '# Main\\n' > README.md && git commit -qam 'docs: main' && (git merge clash > /dev/null 2>&1 || true) && test -f .git/MERGE_HEAD"
+  },
+  {
+   "find": [
+    {
+     "label": "Git",
+     "role": "AXCheckBox",
+     "in": "Left stripe"
+    },
+    {
+     "label": "Commit",
+     "role": "AXCheckBox",
+     "in": "Left stripe"
+    }
+   ],
+   "within": 10000
+  },
+  {
+   "menu": "menu:VcsGroups",
+   "path": [
+    "Git"
+   ],
+   "part": true,
+   "items": [
+    "Merge…",
+    "Commit merge",
+    "Abort Merge",
+    "Rebase…",
+    "Resolve Conflicts…"
+   ],
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "spork::AbortMerge"
+  },
+  {
+   "find": {
+    "label": "Abort",
+    "role": "AXButton"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Abort",
+   "role": "AXButton"
+  },
+  {
+   "sh": "test -f .git/MERGE_HEAD && echo merging || echo done",
+   "is": "done",
+   "within": 8000
+  },
+  {
+   "menu": "menu:VcsGroups",
+   "path": [
+    "Git"
+   ],
+   "part": true,
+   "items": [
+    "Fetch",
+    "Merge…",
+    "Rebase…",
+    "Branches…"
+   ],
+   "within": 10000
+  }
+ ]
+}

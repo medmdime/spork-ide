@@ -1,0 +1,126 @@
+{
+ "id": "log-menu-new-branch",
+ "covers": [
+  "action:Git.CreateNewBranch.FromCommit"
+ ],
+ "reference-app": [
+  "screenshots/dialogs/git-createnewbranch.png"
+ ],
+ "steps": [
+  {
+   "do": "ui"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "docs: a second line",
+   "role": "AXRow"
+  },
+  {
+   "expect": {
+    "selected": 2
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-cmd-n"
+  },
+  {
+   "find": {
+    "label": "Branch Name:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Branch Name:",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "f r o m l o g"
+  },
+  {
+   "find": {
+    "label": "Branch Name:",
+    "role": "AXTextField",
+    "value": "fromlog"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Create",
+   "role": "AXButton"
+  },
+  {
+   "git": [
+    "rev-parse",
+    "--short",
+    "fromlog"
+   ],
+   "is": "1cf6d44"
+  },
+  {
+   "find": {
+    "label": "feat: an empty program",
+    "role": "AXRow"
+   },
+   "within": 8000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "click",
+   "label": "feat: an empty program",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "find": {
+    "label": "New Branch…",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "New Branch…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Branch Name:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Branch Name:",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "f r o m m e n u"
+  },
+  {
+   "do": "click",
+   "label": "Checkout branch",
+   "role": "AXCheckBox"
+  },
+  {
+   "do": "click",
+   "label": "Create",
+   "role": "AXButton"
+  },
+  {
+   "git": [
+    "rev-parse",
+    "--short",
+    "frommenu"
+   ],
+   "is": "dd65753"
+  }
+ ]
+}

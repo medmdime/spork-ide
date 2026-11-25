@@ -1,0 +1,151 @@
+{
+ "id": "commit-stage-conflicts",
+ "covers": [
+  "action:Git.Stage.Merge",
+  "action:Git.Stage.AcceptTheirs",
+  "action:Git.Stage.AcceptYours"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "sh": "git checkout -q -b c1 && for f in c d e; do echo theirs > $f.txt; done && git add c.txt d.txt e.txt && git commit -qm theirs && git checkout -q main && for f in c d e; do echo ours > $f.txt; done && git add c.txt d.txt e.txt && git commit -qm ours && (git merge c1 >/dev/null 2>&1 || true) && test \"$(git diff --name-only --diff-filter=U | wc -l | tr -d ' ')\" = 3"
+  },
+  {
+   "do": "action",
+   "name": "changes::UseStagingArea"
+  },
+  {
+   "do": "action",
+   "name": "spork::ToggleCommit"
+  },
+  {
+   "expect": {
+    "left": "[Commit, Project]"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Unmerged",
+     "role": "AXRow"
+    },
+    {
+     "label": "c.txt",
+     "role": "AXRow"
+    },
+    {
+     "label": "d.txt",
+     "role": "AXRow"
+    },
+    {
+     "label": "e.txt",
+     "role": "AXRow"
+    }
+   ],
+   "within": 6000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "c.txt",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "menu": "context-menu:Git.Stage.Tree.Menu",
+   "items": [
+    "Merge…",
+    "Accept Theirs",
+    "Accept Yours"
+   ],
+   "part": true
+  },
+  {
+   "do": "click",
+   "label": "Accept Theirs",
+   "role": "AXMenuItem"
+  },
+  {
+   "git": [
+    "diff",
+    "--name-only",
+    "--diff-filter=U"
+   ],
+   "lacks": "c.txt"
+  },
+  {
+   "sh": "test \"$(cat c.txt)\" = theirs && git diff --cached --name-only | grep -qx c.txt"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "d.txt",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "find": [
+    {
+     "label": "Accept Yours",
+     "role": "AXMenuItem"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Accept Yours",
+   "role": "AXMenuItem"
+  },
+  {
+   "git": [
+    "diff",
+    "--name-only",
+    "--diff-filter=U"
+   ],
+   "lacks": "d.txt"
+  },
+  {
+   "sh": "test \"$(cat d.txt)\" = ours"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "e.txt",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "find": [
+    {
+     "label": "Merge…",
+     "role": "AXMenuItem"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Merge…",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "view": "Changes"
+   }
+  }
+ ]
+}

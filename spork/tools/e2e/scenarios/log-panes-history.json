@@ -1,0 +1,132 @@
+{
+ "id": "log-panes-history",
+ "covers": [
+  "action:Vcs.ShowHistoryForRevision"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "expect": {
+    "view": "History",
+    "commits": 7
+   }
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "action",
+   "name": "spork::SelectNextCommit"
+  },
+  {
+   "do": "action",
+   "name": "spork::SelectNextCommit"
+  },
+  {
+   "do": "action",
+   "name": "spork::SelectNextCommit"
+  },
+  {
+   "expect": {
+    "selected": 2
+   }
+  },
+  {
+   "wait": 800
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "README.md",
+   "role": "AXRow"
+  },
+  {
+   "find": {
+    "label": "History Up to Here",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "click",
+   "label": "History Up to Here",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "view": "File",
+    "log.file_history": 2
+   },
+   "within": 8000
+  },
+  {
+   "do": "action",
+   "name": "spork::ShowHistory"
+  },
+  {
+   "expect": {
+    "view": "History"
+   }
+  },
+  {
+   "do": "action",
+   "name": "spork::SelectNextCommit"
+  },
+  {
+   "do": "action",
+   "name": "spork::SelectNextCommit"
+  },
+  {
+   "do": "action",
+   "name": "spork::SelectNextCommit"
+  },
+  {
+   "do": "action",
+   "name": "spork::SelectNextCommit"
+  },
+  {
+   "expect": {
+    "selected": 6
+   }
+  },
+  {
+   "wait": 800
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "README.md",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "menu": "context-menu:Vcs.Log.ChangesBrowser.Popup",
+   "items": [
+    "History Up to Here"
+   ],
+   "part": true,
+   "within": 5000
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "History Up to Here",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "view": "File",
+    "log.file_history": 1
+   },
+   "within": 8000
+  }
+ ]
+}

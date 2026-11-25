@@ -1,0 +1,28 @@
+{
+ "id": "settings-appearance",
+ "covers": [
+  "settings:Appearance & Behavior › Appearance"
+ ],
+ "reference-app": [
+  "screenshots/settings/appearance-behavior-appearance.jpg"
+ ],
+ "steps": [
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Appearance & Behavior/Appearance"
+  },
+  {
+   "expect": {
+    "settings": "Appearance & Behavior/Appearance"
+   }
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "open",
+   "window": "smallest"
+  }
+ ]
+}

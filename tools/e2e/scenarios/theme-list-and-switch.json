@@ -1,0 +1,166 @@
+{
+ "id": "theme-list-and-switch",
+ "covers": [],
+ "reference-app": [],
+ "steps": [
+  {
+   "expect": {
+    "look.theme": "Islands Dark",
+    "look.appearance": "dark"
+   }
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "action",
+   "name": "theme_selector::Toggle"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "find": [
+    {
+     "label": "Darcula",
+     "role": "AXStaticText"
+    },
+    {
+     "label": "Dark",
+     "role": "AXStaticText"
+    },
+    {
+     "label": "High Contrast",
+     "role": "AXStaticText"
+    },
+    {
+     "label": "IntelliJ Light",
+     "role": "AXStaticText"
+    },
+    {
+     "label": "Islands Darcula",
+     "role": "AXStaticText"
+    },
+    {
+     "label": "Islands Dark",
+     "role": "AXStaticText"
+    },
+    {
+     "label": "Islands Light",
+     "role": "AXStaticText"
+    },
+    {
+     "label": "Light",
+     "role": "AXStaticText"
+    },
+    {
+     "label": "Light with Light Header",
+     "role": "AXStaticText"
+    }
+   ],
+   "missing": [
+    {
+     "label": "One Dark"
+    },
+    {
+     "label": "One Light"
+    },
+    {
+     "label": "Ayu Dark"
+    },
+    {
+     "label": "Gruvbox Dark"
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "d a r c u l a"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "find": {
+    "label": "Darcula",
+    "role": "AXStaticText",
+    "selected": true
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "expect": {
+    "look.theme": "Darcula",
+    "look.appearance": "dark"
+   }
+  },
+  {
+   "sh": "cat ../home/.config/spork-ide/settings.json",
+   "contains": "Darcula"
+  },
+  {
+   "shot": "darcula"
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "action",
+   "name": "theme_selector::Toggle"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "i s l a n d s space l i g h t"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "find": {
+    "label": "Islands Light",
+    "role": "AXStaticText",
+    "selected": true
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "expect": {
+    "look.theme": "Islands Light",
+    "look.appearance": "light"
+   }
+  },
+  {
+   "shot": "islands-light"
+  }
+ ]
+}

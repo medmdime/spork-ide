@@ -1,0 +1,141 @@
+{
+ "id": "search-everywhere-add-shortcut",
+ "covers": [
+  "action:SetShortcutAction"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   },
+   "within": 3000
+  },
+  {
+   "do": "action",
+   "name": "navigate::FindAction"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "SearchEverywhere",
+     "Input"
+    ]
+   }
+  },
+  {
+   "do": "type",
+   "text": "select all"
+  },
+  {
+   "find": {
+    "label": "Select All",
+    "role": "AXStaticText",
+    "selected": true,
+    "in": "Search Everywhere"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-enter"
+  },
+  {
+   "find": {
+    "label": "Search Everywhere",
+    "role": "AXWindow"
+   },
+   "absent": true
+  },
+  {
+   "find": [
+    {
+     "label": "First stroke",
+     "role": "AXTextField",
+     "in": "Keyboard Shortcut"
+    },
+    {
+     "label": "Second stroke:",
+     "role": "AXCheckBox",
+     "in": "Keyboard Shortcut"
+    },
+    {
+     "label": "OK",
+     "role": "AXButton",
+     "enabled": false,
+     "in": "Keyboard Shortcut"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-alt-shift-k"
+  },
+  {
+   "find": {
+    "label": "First stroke",
+    "role": "AXTextField",
+    "value": "⌥⇧⌘K"
+   }
+  },
+  {
+   "find": {
+    "label": "OK",
+    "role": "AXButton",
+    "enabled": true,
+    "in": "Keyboard Shortcut"
+   }
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "keyboard-shortcut"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "find": {
+    "label": "Keyboard Shortcut",
+    "role": "AXGroup"
+   },
+   "absent": true
+  },
+  {
+   "sh": "cat ../home/.config/spork-ide/keymap.json",
+   "contains": "\"alt-cmd-shift-k\": \"editor::SelectAll\"",
+   "within": 8000
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  }
+ ]
+}

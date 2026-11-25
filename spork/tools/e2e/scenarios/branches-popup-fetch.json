@@ -1,0 +1,73 @@
+{
+ "id": "branches-popup-fetch",
+ "covers": [
+  "action:Git.Branches.Popup.Fetch"
+ ],
+ "reference-app": [
+  "screenshots/dialogs/git-branches.png"
+ ],
+ "steps": [
+  {
+   "file": "../repo-worktree/fetched.txt",
+   "text": "fetched\n"
+  },
+  {
+   "git": [
+    "-C",
+    "../repo-worktree",
+    "add",
+    "fetched.txt"
+   ]
+  },
+  {
+   "git": [
+    "-C",
+    "../repo-worktree",
+    "commit",
+    "-q",
+    "-m",
+    "fetched"
+   ]
+  },
+  {
+   "git": [
+    "-C",
+    "../repo-worktree",
+    "push",
+    "-q",
+    "../repo.origin",
+    "HEAD:refs/heads/fetched"
+   ]
+  },
+  {
+   "git": [
+    "branch",
+    "-r"
+   ],
+   "lacks": "origin/fetched"
+  },
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "find": {
+    "label": "Fetch",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Fetch",
+   "role": "AXButton"
+  },
+  {
+   "git": [
+    "branch",
+    "-r"
+   ],
+   "contains": "origin/fetched",
+   "within": 10000
+  }
+ ]
+}

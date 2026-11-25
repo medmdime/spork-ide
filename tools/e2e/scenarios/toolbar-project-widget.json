@@ -1,0 +1,146 @@
+{
+ "id": "toolbar-project-widget",
+ "covers": [],
+ "reference-app": [
+  "screenshots/frame/main-window.jpg"
+ ],
+ "steps": [
+  {
+   "toolbar": "Title bar",
+   "items": [
+    "fixture",
+    "Update Project",
+    "Push…",
+    "Git Branch: main",
+    "Current File, Run / Debug Configurations",
+    "Run",
+    "Debug",
+    "More Actions",
+    "Search Everywhere",
+    "IDE and Project Settings"
+   ],
+   "within": 10000
+  },
+  {
+   "find": {
+    "label": "Sign In",
+    "in": "Title bar"
+   },
+   "absent": true
+  },
+  {
+   "wait": 800
+  },
+  {
+   "shot": "main-toolbar"
+  },
+  {
+   "do": "click",
+   "label": "fixture",
+   "role": "AXButton",
+   "in": "Title bar"
+  },
+  {
+   "find": [
+    {
+     "label": "New Project…",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Open…",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Clone Repository…",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "fixture",
+     "role": "AXMenuItem"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane"
+    ]
+   }
+  },
+  {
+   "sh": "mkdir -p ../second && git -C ../second init -q -b trunk"
+  },
+  {
+   "do": "open_project",
+   "path": "$FIXTURE/../second"
+  },
+  {
+   "find": {
+    "label": "second",
+    "role": "AXButton",
+    "in": "Title bar"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "second",
+   "role": "AXButton",
+   "in": "Title bar"
+  },
+  {
+   "find": [
+    {
+     "label": "New Project…",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Open…",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Clone Repository…",
+     "role": "AXMenuItem"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "keys",
+   "keys": "f i x t u r e"
+  },
+  {
+   "find": {
+    "label": "Search projects",
+    "value": "fixture"
+   }
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "roots": [
+     "$FIXTURE"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "fixture",
+    "role": "AXButton",
+    "in": "Title bar"
+   }
+  }
+ ]
+}

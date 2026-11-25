@@ -1,0 +1,94 @@
+{
+ "id": "hosting-settings-menus",
+ "covers": [
+  "context-menu:GitHub.MainMenu",
+  "context-menu:GitLab.Main.Group",
+  "action:Github.Open.Settings",
+  "dialog:Github.Open.Settings",
+  "action:GitLab.Open.Settings",
+  "dialog:GitLab.Open.Settings"
+ ],
+ "reference-app": [
+  "screenshots/menus/github-mainmenu.png",
+  "screenshots/menus/gitlab-main-group.png",
+  "screenshots/settings/version-control-github.jpg",
+  "screenshots/settings/version-control-gitlab.jpg"
+ ],
+ "steps": [
+  {
+   "menu": "context-menu:GitHub.MainMenu",
+   "path": [
+    "Git",
+    "GitHub"
+   ]
+  },
+  {
+   "menu": "context-menu:GitLab.Main.Group",
+   "path": [
+    "Git",
+    "GitLab"
+   ]
+  },
+  {
+   "do": "action",
+   "name": "spork::ManageGitHubAccounts"
+  },
+  {
+   "expect": {
+    "settings": "Version Control/GitHub"
+   }
+  },
+  {
+   "within": 6000,
+   "find": [
+    {
+     "role": "AXButton",
+     "label": "Add"
+    },
+    {
+     "role": "AXLink",
+     "label": "Add account…"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Clone git repositories using ssh",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Enable unread markers on Pull Requests in the list",
+     "value": "1"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "action",
+   "name": "spork::ManageGitLabAccounts"
+  },
+  {
+   "expect": {
+    "settings": "Version Control/GitLab"
+   }
+  },
+  {
+   "within": 6000,
+   "find": [
+    {
+     "role": "AXButton",
+     "label": "Add"
+    },
+    {
+     "role": "AXLink",
+     "label": "Add account…"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Clone using SSH",
+     "value": "0"
+    }
+   ],
+   "ordered": true
+  }
+ ]
+}

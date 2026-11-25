@@ -1,0 +1,181 @@
+{
+ "id": "git-menu-rebase",
+ "covers": [
+  "action:Git.Rebase",
+  "dialog:Git.Rebase",
+  "context-menu:Git.MainMenu.RebaseActions"
+ ],
+ "reference-app": [
+  "screenshots/dialogs/git-rebase.png",
+  "screenshots/menus/git-mainmenu-rebaseactions.png"
+ ],
+ "steps": [
+  {
+   "do": "action",
+   "name": "spork::GitRebase"
+  },
+  {
+   "find": [
+    {
+     "text": "Rebase"
+    },
+    {
+     "text": "git rebase"
+    },
+    {
+     "text": "branch or hash"
+    },
+    {
+     "text": "Show help contents"
+    },
+    {
+     "text": "Modify options"
+    },
+    {
+     "text": "Cancel"
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "text": "Rebase",
+     "enabled": false,
+     "role": "AXButton"
+    }
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "open"
+  },
+  {
+   "do": "click",
+   "label": "Modify options"
+  },
+  {
+   "menu": "dialog:Git.Rebase",
+   "items": [
+    "Add Rebase Options (disabled)",
+    "--rebase-merges  Recreate commits topology",
+    "--keep-empty  Do not remove empty commits during rebase",
+    "--update-refs  Auto-update branches pointing to rebased commits"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "branch or hash",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "f i x / t y p o"
+  },
+  {
+   "find": [
+    {
+     "text": "Rebase",
+     "enabled": true,
+     "role": "AXButton"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Rebase",
+   "role": "AXButton"
+  },
+  {
+   "git": [
+    "log",
+    "-1",
+    "--format=%s"
+   ],
+   "is": "fix: a typo"
+  },
+  {
+   "git": [
+    "-c",
+    "sequence.editor=sed -i.bak -e s/^pick/edit/",
+    "rebase",
+    "-q",
+    "-i",
+    "--autostash",
+    "HEAD~1"
+   ]
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "do": "menubar",
+   "path": [
+    "Git"
+   ]
+  },
+  {
+   "menu": "context-menu:Git.MainMenu",
+   "items": [
+    "Commit…",
+    "Push…",
+    "Update Project...",
+    "Pull…",
+    "Fetch",
+    "Merge…",
+    "Rebase…",
+    "Rebase ▸",
+    "Branches…",
+    "New Branch…",
+    "New Tag…",
+    "Reset HEAD…",
+    "New Worktree…",
+    "Worktrees…",
+    "Show Git Log",
+    "Patch ▸",
+    "Uncommitted Changes ▸",
+    "Current File ▸",
+    "GitLab ▸",
+    "GitHub ▸",
+    "Manage Remotes…",
+    "Clone…",
+    "VCS Operations Popup…"
+   ]
+  },
+  {
+   "do": "menubar",
+   "path": [
+    "Git",
+    "Rebase"
+   ]
+  },
+  {
+   "menu": "context-menu:Git.MainMenu.RebaseActions",
+   "items": [
+    "Abort Rebase",
+    "Continue Rebase",
+    "Skip Commit"
+   ]
+  },
+  {
+   "do": "action",
+   "name": "spork::ContinueRebase"
+  },
+  {
+   "git": [
+    "rev-parse",
+    "--abbrev-ref",
+    "HEAD"
+   ],
+   "is": "main"
+  }
+ ]
+}

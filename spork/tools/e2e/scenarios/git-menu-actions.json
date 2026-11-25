@@ -1,0 +1,64 @@
+{
+ "id": "git-menu-actions",
+ "covers": [
+  "action:Git.Fetch",
+  "action:Vcs.Show.Local.Changes",
+  "action:Vcs.ShowConsoleTab",
+  "action:Git.CheckoutRevision"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "git": ["push", "-q", "origin", "fix/typo:refs/heads/fresh"]
+  },
+  {
+   "git": ["update-ref", "-d", "refs/remotes/origin/fresh"]
+  },
+  {
+   "do": "action",
+   "name": "spork::Fetch"
+  },
+  {
+   "git": ["log", "-1", "--format=%s", "origin/fresh"],
+   "is": "fix: a typo"
+  },
+  {
+   "do": "action",
+   "name": "spork::ShowLocalChanges"
+  },
+  {
+   "expect": {
+    "left": "[Commit, Project]"
+   }
+  },
+  {
+   "do": "action",
+   "name": "spork::ShowConsoleTab"
+  },
+  {
+   "expect": {
+    "console": true
+   }
+  },
+  {
+   "do": "action",
+   "name": "spork::SelectNextCommit"
+  },
+  {
+   "expect": {
+    "selected": 0
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "action",
+   "name": "spork::CheckoutRevision"
+  },
+  {
+   "git": ["rev-parse", "--abbrev-ref", "HEAD"],
+   "is": "HEAD"
+  }
+ ]
+}

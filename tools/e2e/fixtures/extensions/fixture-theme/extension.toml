@@ -1,0 +1,7 @@
+id = "fixture-theme"
+name = "Fixture Theme"
+version = "1.0.0"
+schema_version = 1
+authors = ["Spork IDE Tests"]
+description = "A dark theme for the tests."
+repository = "https://example.com/fixture-theme"

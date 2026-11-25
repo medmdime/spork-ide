@@ -1,0 +1,911 @@
+{
+ "id": "editor-popups",
+ "covers": [
+  "action:EditorChooseLookupItem",
+  "action:EditorChooseLookupItemReplace",
+  "action:EditorChooseLookupItemDot",
+  "action:ParameterInfo",
+  "action:CodeCompletion",
+  "action:QuickJavaDoc",
+  "action:ShowIntentionActions"
+ ],
+ "reference-app": [],
+ "settings": {
+  "enable_language_server": true,
+  "lsp": {
+   "rust-analyzer": {
+    "binary": {
+     "path": "$RUST_ANALYZER"
+    },
+    "initialization_options": {
+     "checkOnSave": false,
+     "cargo": {
+      "buildScripts": {
+       "enable": false
+      }
+     },
+     "procMacro": {
+      "enable": false
+     }
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "file": "src/main.rs",
+   "text": "mod greeting;\n\nfn main() {\n    let total_count = 1;\n    let total_sum: u32 = \"three\";\n    println!(\"{}\", greeting::hello(\"world\"));\n    println!(\"{}\", total_sum);\n}\n"
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "action",
+   "name": "workspace::CloseAllDocks"
+  },
+  {
+   "expect": {
+    "docks.left.open": false,
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "1 error",
+    "role": "AXButton"
+   },
+   "within": 90000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down down down down down down end left left left left left"
+  },
+  {
+   "find": {
+    "label": "Line 7, column 26",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "type",
+   "text": "c"
+  },
+  {
+   "find": {
+    "label": "total_count",
+    "role": "AXStaticText",
+    "selected": true
+   },
+   "within": 30000
+  },
+  {
+   "find": {
+    "label": "total_sum",
+    "role": "AXStaticText"
+   },
+   "absent": true
+  },
+  {
+   "shot": "completion"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "sed -n 7p src/main.rs",
+   "is": "println!(\"{}\", total_countsum);"
+  },
+  {
+   "file": "src/main.rs",
+   "text": "mod greeting;\n\nfn main() {\n    let total_count = 1;\n    let total_sum: u32 = \"three\";\n    println!(\"{}\", greeting::hello(\"world\"));\n    println!(\"{}\", total_sum);\n}\n"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down down down down down down end left left left left left"
+  },
+  {
+   "find": {
+    "label": "Line 7, column 26",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "type",
+   "text": "c"
+  },
+  {
+   "find": {
+    "label": "total_count",
+    "role": "AXStaticText",
+    "selected": true
+   },
+   "within": 30000
+  },
+  {
+   "do": "keys",
+   "keys": "tab"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "sed -n 7p src/main.rs",
+   "is": "println!(\"{}\", total_count);"
+  },
+  {
+   "file": "src/main.rs",
+   "text": "mod greeting;\n\nfn main() {\n    let total_count = 1;\n    let total_sum: u32 = \"three\";\n    println!(\"{}\", greeting::hello(\"world\"));\n    println!(\"{}\", total_sum);\n}\n"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down down down down down down end left left left left left"
+  },
+  {
+   "find": {
+    "label": "Line 7, column 26",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "type",
+   "text": "c"
+  },
+  {
+   "find": {
+    "label": "total_count",
+    "role": "AXStaticText",
+    "selected": true
+   },
+   "within": 30000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-."
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "sed -n 7p src/main.rs",
+   "is": "println!(\"{}\", total_count.sum);"
+  },
+  {
+   "file": "src/main.rs",
+   "text": "mod greeting;\n\nfn main() {\n    let total_count = 1;\n    let total_sum: u32 = \"three\";\n    println!(\"{}\", greeting::hello(\"world\"));\n    println!(\"{}\", total_sum);\n}\n"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down down down down down down end left left left left left"
+  },
+  {
+   "find": {
+    "label": "Line 7, column 26",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-space"
+  },
+  {
+   "find": [
+    {
+     "label": "total_count",
+     "role": "AXStaticText",
+     "selected": true
+    },
+    {
+     "label": "total_sum",
+     "role": "AXStaticText"
+    }
+   ],
+   "within": 30000
+  },
+  {
+   "shot": "basic-completion"
+  },
+  {
+   "do": "click",
+   "label": "More",
+   "role": "AXButton",
+   "nth": 1
+  },
+  {
+   "menu": "action:CodeCompletion",
+   "items": [
+    "Sort by Name",
+    "Quick Documentation",
+    "Code Completion Settings"
+   ],
+   "checked": []
+  },
+  {
+   "shot": "completion-menu"
+  },
+  {
+   "do": "click",
+   "label": "Code Completion Settings",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "settings.page": "Editor/General/Code Completion"
+   },
+   "within": 5000
+  },
+  {
+   "find": [
+    {
+     "label": "Sort suggestions alphabetically"
+    },
+    {
+     "label": "Show suggestions as you type"
+    },
+    {
+     "label": "Insert selected suggestion by pressing space, dot, or other context-dependent keys"
+    },
+    {
+     "label": "Show the documentation popup in"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Cancel",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings": null
+   },
+   "within": 5000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "do": "keys",
+   "keys": "escape cmd-home down down down down down end left left left left left left left left left left"
+  },
+  {
+   "find": {
+    "label": "Line 6, column 36",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-p"
+  },
+  {
+   "wait": 2000
+  },
+  {
+   "find": {
+    "label": "fn hello(name: &str) -> String"
+   }
+  },
+  {
+   "shot": "parameter-info"
+  },
+  {
+   "do": "keys",
+   "keys": "escape left left left"
+  },
+  {
+   "do": "keys",
+   "keys": "f1"
+  },
+  {
+   "wait": 3000
+  },
+  {
+   "find": {
+    "label": "Documentation"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "`hello` on docs.rs",
+     "role": "AXLink"
+    },
+    {
+     "label": "fixture",
+     "role": "AXStaticText",
+     "in": "Documentation"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "shot": "documentation"
+  },
+  {
+   "do": "click",
+   "label": "More",
+   "in": "Documentation"
+  },
+  {
+   "menu": "action:QuickJavaDoc",
+   "items": [
+    "Open in Documentation Tool Window",
+    "Show Documentation Popup First",
+    "Show on Mouse Move",
+    "Show Automatically During Completion",
+    "Adjust Font Size…",
+    "Restore Size (disabled)",
+    "Copy Quick Doc",
+    "Back (disabled)",
+    "Forward (disabled)",
+    "View External Documentation"
+   ],
+   "checked": [
+    "Show Documentation Popup First",
+    "Show on Mouse Move"
+   ]
+  },
+  {
+   "shot": "documentation-menu"
+  },
+  {
+   "do": "click",
+   "label": "Adjust Font Size…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Font size",
+    "role": "AXSlider",
+    "value": "13"
+   }
+  },
+  {
+   "do": "click",
+   "label": "16",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "value": 16
+   },
+   "of": {
+    "do": "setting",
+    "path": "/documentation_font_size"
+   }
+  },
+  {
+   "find": {
+    "label": "Font size",
+    "role": "AXSlider",
+    "value": "16"
+   },
+   "within": 5000
+  },
+  {
+   "wait": 400
+  },
+  {
+   "shot": "documentation-font-size"
+  },
+  {
+   "do": "click",
+   "label": "13",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "value": 13
+   },
+   "of": {
+    "do": "setting",
+    "path": "/documentation_font_size"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Jump to Source",
+   "in": "Documentation"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   },
+   "within": 10000
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "escape cmd-home down down down down end left left"
+  },
+  {
+   "do": "keys",
+   "keys": "alt-enter"
+  },
+  {
+   "wait": 3000
+  },
+  {
+   "find": {
+    "label": "Rewrite as raw string",
+    "role": "AXStaticText",
+    "selected": true
+   }
+  },
+  {
+   "find": {
+    "label": "Intention Preview",
+    "role": "AXGroup"
+   },
+   "within": 10000
+  },
+  {
+   "shot": "intentions"
+  },
+  {
+   "do": "click",
+   "label": "Options",
+   "role": "AXButton",
+   "nth": 0
+  },
+  {
+   "menu": "action:ShowIntentionActions",
+   "items": [
+    "Edit intention settings",
+    "Disable 'Rewrite as raw string'"
+   ]
+  },
+  {
+   "shot": "intention-options"
+  },
+  {
+   "do": "click",
+   "label": "Disable 'Rewrite as raw string'",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "value": [
+     "Rewrite as raw string"
+    ]
+   },
+   "of": {
+    "do": "setting",
+    "path": "/disabled_code_actions"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "escape cmd-home down down down down end left left"
+  },
+  {
+   "do": "keys",
+   "keys": "alt-enter"
+  },
+  {
+   "find": {
+    "label": "Extract into variable",
+    "role": "AXStaticText",
+    "selected": true
+   },
+   "within": 10000
+  },
+  {
+   "find": {
+    "label": "Rewrite as raw string",
+    "role": "AXStaticText"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Options",
+   "role": "AXButton",
+   "nth": 0
+  },
+  {
+   "do": "click",
+   "label": "Edit intention settings",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "settings.page": "Editor/Intentions"
+   },
+   "within": 5000
+  },
+  {
+   "find": {
+    "label": "Rewrite as raw string",
+    "role": "AXCheckBox",
+    "value": "0"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Rewrite as raw string",
+   "role": "AXCheckBox"
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings": null
+   },
+   "within": 5000
+  },
+  {
+   "expect": {
+    "value": []
+   },
+   "of": {
+    "do": "setting",
+    "path": "/disabled_code_actions"
+   }
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "do": "keys",
+   "keys": "escape cmd-home down down down down end left left"
+  },
+  {
+   "do": "keys",
+   "keys": "alt-enter"
+  },
+  {
+   "find": {
+    "label": "Rewrite as raw string",
+    "role": "AXStaticText",
+    "selected": true
+   },
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "escape cmd-home f2"
+  },
+  {
+   "wait": 2000
+  },
+  {
+   "find": {
+    "label": "Problem"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 5, column 26",
+    "role": "AXButton"
+   }
+  },
+  {
+   "shot": "problem"
+  },
+  {
+   "file": "src/main.rs",
+   "text": "fn main() {\n    let zqx_total = 1;\n    let a_zqx = 2;\n    println!(\"{}\", zqx);\n}\n"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "keys",
+   "keys": "escape cmd-home down down down end left left"
+  },
+  {
+   "find": {
+    "label": "Line 4, column 23",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-space"
+  },
+  {
+   "find": [
+    {
+     "label": "zqx_total",
+     "role": "AXStaticText",
+     "selected": true
+    },
+    {
+     "label": "a_zqx",
+     "role": "AXStaticText"
+    }
+   ],
+   "ordered": true,
+   "within": 30000
+  },
+  {
+   "do": "click",
+   "label": "More",
+   "role": "AXButton",
+   "nth": 1
+  },
+  {
+   "do": "click",
+   "label": "Sort by Name",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "value": true
+   },
+   "of": {
+    "do": "setting",
+    "path": "/completion_sort_alphabetically"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "a_zqx",
+     "role": "AXStaticText",
+     "selected": true
+    },
+    {
+     "label": "zqx_total",
+     "role": "AXStaticText"
+    }
+   ],
+   "ordered": true,
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "More",
+   "role": "AXButton",
+   "nth": 1
+  },
+  {
+   "menu": "action:CodeCompletion",
+   "items": [
+    "Sort by Name",
+    "Quick Documentation",
+    "Code Completion Settings"
+   ],
+   "checked": [
+    "Sort by Name"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Code Completion Settings",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "settings.page": "Editor/General/Code Completion"
+   },
+   "within": 5000
+  },
+  {
+   "find": {
+    "label": "Insert selected suggestion by pressing space, dot, or other context-dependent keys"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Insert selected suggestion by pressing space, dot, or other context-dependent keys"
+  },
+  {
+   "do": "click",
+   "label": "OK"
+  },
+  {
+   "expect": {
+    "settings": null
+   },
+   "within": 5000
+  },
+  {
+   "expect": {
+    "value": true
+   },
+   "of": {
+    "do": "setting",
+    "path": "/completion_insert_on_characters"
+   }
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-space"
+  },
+  {
+   "find": {
+    "label": "a_zqx",
+    "role": "AXStaticText",
+    "selected": true
+   },
+   "within": 30000
+  },
+  {
+   "do": "type",
+   "text": "."
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "sed -n 4p src/main.rs",
+   "is": "println!(\"{}\", a_zqx.);"
+  },
+  {
+   "file": "src/main.rs",
+   "text": "fn main() {\n    let s = String::new;\n}\n"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "keys",
+   "keys": "escape cmd-home down end left"
+  },
+  {
+   "find": {
+    "label": "Line 2, column 24",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-space"
+  },
+  {
+   "find": {
+    "label": "new",
+    "role": "AXStaticText"
+   },
+   "within": 30000
+  },
+  {
+   "do": "click",
+   "label": "More",
+   "role": "AXButton",
+   "nth": 1
+  },
+  {
+   "do": "click",
+   "label": "Quick Documentation",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Documentation",
+    "role": "AXGroup"
+   },
+   "within": 10000
+  },
+  {
+   "wait": 400
+  },
+  {
+   "shot": "completion-documentation"
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": {
+    "label": "Documentation",
+    "role": "AXGroup"
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down end left f1"
+  },
+  {
+   "find": {
+    "label": "Documentation",
+    "role": "AXGroup"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "More",
+   "in": "Documentation"
+  },
+  {
+   "do": "click",
+   "label": "Show Automatically During Completion",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "value": true
+   },
+   "of": {
+    "do": "setting",
+    "path": "/show_completion_documentation"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-space"
+  },
+  {
+   "find": {
+    "label": "Documentation",
+    "role": "AXGroup"
+   },
+   "within": 10000
+  }
+ ]
+}

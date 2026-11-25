@@ -1,0 +1,182 @@
+{
+ "id": "git-menu-worktrees",
+ "covers": [
+  "action:Git.Show.WorkingTrees",
+  "dialog:Git.Show.WorkingTrees",
+  "context-menu:Git.WorkingTrees.ToolwindowGroup.Toolbar",
+  "toolbar:Git.WorkingTrees.ToolwindowGroup.Toolbar",
+  "context-menu:Git.WorkingTrees.ToolwindowGroup.Popup",
+  "action:Git.WorkingTrees.ToggleLock",
+  "action:Git.WorkingTrees.Remove"
+ ],
+ "reference-app": [
+  "screenshots/menus/git-workingtrees-toolwindowgroup-toolbar.png",
+  "screenshots/menus/git-workingtrees-toolwindowgroup-popup.png"
+ ],
+ "steps": [
+  {
+   "do": "action",
+   "name": "spork::ShowWorktrees"
+  },
+  {
+   "expect": {
+    "console": true
+   }
+  },
+  {
+   "toolbar": "Worktrees",
+   "id": "context-menu:Git.WorkingTrees.ToolwindowGroup.Toolbar"
+  },
+  {
+   "toolbar": "Worktrees",
+   "items": [
+    "New Worktree…",
+    "Refresh",
+    "Delete… (disabled)",
+    "Prune (disabled)",
+    "Help"
+   ],
+   "id": "toolbar:Git.WorkingTrees.ToolwindowGroup.Toolbar"
+  },
+  {
+   "find": [
+    {
+     "text": "main",
+     "role": "AXRow"
+    },
+    {
+     "text": "release/2026.1",
+     "role": "AXRow"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "main",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Worktree List"
+  },
+  {
+   "wait": 400
+  },
+  {
+   "menu": "context-menu:Git.WorkingTrees.ToolwindowGroup.Popup"
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "click",
+   "label": "release/2026.1",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Worktree List"
+  },
+  {
+   "wait": 400
+  },
+  {
+   "menu": "context-menu:Git.WorkingTrees.ToolwindowGroup.Popup",
+   "items": [
+    "Open Worktree",
+    "Lock",
+    "Delete…"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Lock",
+   "role": "AXMenuItem"
+  },
+  {
+   "wait": 400
+  },
+  {
+   "git": [
+    "worktree",
+    "list"
+   ],
+   "contains": "locked"
+  },
+  {
+   "do": "click",
+   "label": "release/2026.1",
+   "role": "AXRow",
+   "in": "Worktree List"
+  },
+  {
+   "wait": 400
+  },
+  {
+   "toolbar": "Worktrees",
+   "items": [
+    "New Worktree…",
+    "Refresh",
+    "Delete…",
+    "Prune (disabled)",
+    "Help"
+   ],
+   "id": "toolbar:Git.WorkingTrees.ToolwindowGroup.Toolbar"
+  },
+  {
+   "do": "click",
+   "label": "release/2026.1",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Worktree List"
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "click",
+   "label": "Lock",
+   "role": "AXMenuItem"
+  },
+  {
+   "wait": 400
+  },
+  {
+   "git": [
+    "worktree",
+    "list"
+   ],
+   "lacks": "locked"
+  },
+  {
+   "do": "click",
+   "label": "Delete…",
+   "role": "AXButton"
+  },
+  {
+   "wait": 400
+  },
+  {
+   "find": [
+    {
+     "text": "Delete Worktree"
+    },
+    {
+     "text": "Cancel"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Delete Worktree",
+   "role": "AXButton"
+  },
+  {
+   "wait": 400
+  },
+  {
+   "git": [
+    "worktree",
+    "list"
+   ],
+   "lacks": "release/2026.1"
+  }
+ ]
+}

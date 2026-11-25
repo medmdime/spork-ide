@@ -1,0 +1,35 @@
+{
+ "id": "git-menu-vcs-operations",
+ "covers": [
+  "action:Vcs.QuickListPopupAction",
+  "context-menu:Vcs.Operations.Popup",
+  "dialog:Vcs.QuickListPopupAction"
+ ],
+ "reference-app": [
+  "screenshots/dialogs/vcs-quicklistpopupaction.png"
+ ],
+ "steps": [
+  {
+   "do": "keys",
+   "keys": "ctrl-v"
+  },
+  {
+   "menu": "context-menu:Vcs.Operations.Popup"
+  },
+  {
+   "wait": 400
+  },
+  {
+   "shot": "open"
+  },
+  {
+   "do": "keys",
+   "keys": "6"
+  },
+  {
+   "expect": {
+    "branches_popup": true
+   }
+  }
+ ]
+}

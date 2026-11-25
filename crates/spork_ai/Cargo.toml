@@ -1,0 +1,18 @@
+[package]
+name = "spork_ai"
+description = "Spork's optional AI features (commit messages) with the user's own provider"
+version = "0.0.1"
+edition.workspace = true
+publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
+
+[lib]
+path = "src/spork_ai.rs"
+doctest = false
+
+[dependencies]
+serde_json.workspace = true
+ureq.workspace = true

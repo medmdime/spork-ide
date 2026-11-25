@@ -1,0 +1,237 @@
+{
+ "id": "java-build",
+ "fixture": "maven",
+ "covers": [
+  "context-menu:Java.BuildMenu",
+  "action:CompileDirty",
+  "action:MakeModule",
+  "action:CompileProject"
+ ],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "find": {
+    "label": "Load Maven Project",
+    "role": "AXLink"
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "Load Maven Project",
+   "role": "AXLink"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 300000
+  },
+  {
+   "do": "action",
+   "name": "workspace::CloseAllItemsAndPanes"
+  },
+  {
+   "menu": "context-menu:Java.BuildMenu",
+   "path": [
+    "Build"
+   ],
+   "items": [
+    "Build Project",
+    "Build Module (disabled)",
+    "Rebuild Project"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f9"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "Build"
+   },
+   "within": 5000
+  },
+  {
+   "expect": {
+    "java.build.status": "build finished",
+    "java.build.running": false,
+    "java.build.errors": 0
+   },
+   "within": 120000
+  },
+  {
+   "find": [
+    {
+     "label": "Build Output",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "fixture: build finished",
+     "role": "AXRow"
+    }
+   ]
+  },
+  {
+   "file": "src/main/java/com/example/Main.java",
+   "text": "package com.example;\n\n/** Prints the greeting. */\npublic class Main {\n    public static void main(String[] args) {\n        System.out.println(Greeting.helo(\"world\"));\n    }\n}\n"
+  },
+  {
+   "wait": 2000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f9"
+  },
+  {
+   "expect": {
+    "java.build.status": "build failed",
+    "java.build.running": false,
+    "java.build.errors": 1,
+    "java.build.messages": [
+     "Main.java:6 error: The method helo(String) is undefined for the type Greeting"
+    ]
+   },
+   "within": 120000
+  },
+  {
+   "find": [
+    {
+     "label": "fixture: build failed",
+     "role": "AXRow"
+    },
+    {
+     "label": "Main.java",
+     "role": "AXRow"
+    },
+    {
+     "label": "The method helo(String) is undefined for the type Greeting",
+     "role": "AXRow"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   }
+  },
+  {
+   "do": "front"
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "build-failed"
+  },
+  {
+   "do": "click",
+   "label": "The method helo(String) is undefined for the type Greeting",
+   "role": "AXRow"
+  },
+  {
+   "expect": {
+    "java.build.console": "$FIXTURE/src/main/java/com/example/Main.java:6:37\njava: The method helo(String) is undefined for the type Greeting"
+   }
+  },
+  {
+   "do": "click",
+   "label": "The method helo(String) is undefined for the type Greeting",
+   "role": "AXRow",
+   "count": 2
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/Main.java"
+   },
+   "within": 5000
+  },
+  {
+   "menu": "menu:BuildMenu",
+   "path": [
+    "Build"
+   ],
+   "items": [
+    "Build Project",
+    "Build Module",
+    "Rebuild Project"
+   ]
+  },
+  {
+   "do": "action",
+   "name": "workspace::CloseAllItemsAndPanes"
+  },
+  {
+   "expect": {
+    "items": []
+   },
+   "within": 5000
+  },
+  {
+   "file": "src/main/java/com/example/Main.java",
+   "text": "package com.example;\n\n/** Prints the greeting. */\npublic class Main {\n    public static void main(String[] args) {\n        System.out.println(Greeting.hello(\"world\"));\n    }\n}\n"
+  },
+  {
+   "wait": 2000
+  },
+  {
+   "do": "action",
+   "name": "build::RebuildProject"
+  },
+  {
+   "expect": {
+    "java.build.status": "rebuild finished",
+    "java.build.running": false,
+    "java.build.errors": 0
+   },
+   "within": 180000
+  },
+  {
+   "find": {
+    "label": "fixture: rebuild finished",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Rerun 'Rebuild'",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "java.build.status": "rebuild finished",
+    "java.build.running": false
+   },
+   "within": 180000
+  }
+ ]
+}

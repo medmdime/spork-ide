@@ -1,0 +1,127 @@
+{
+ "id": "git-menu-worktree-ops",
+ "covers": [
+  "action:Git.WorkingTrees.Refresh",
+  "action:Git.WorkingTrees.Prune",
+  "action:Git.WorkingTrees.Open"
+ ],
+ "reference-app": [
+  "screenshots/menus/git-workingtrees-toolwindowgroup-toolbar.png"
+ ],
+ "steps": [
+  {
+   "do": "action",
+   "name": "spork::ShowWorktrees"
+  },
+  {
+   "git": ["worktree", "add", "-q", "../repo-extra", "fix/typo"]
+  },
+  {
+   "find": {
+    "text": "fix/typo",
+    "role": "AXRow",
+    "in": "Worktree List"
+   },
+   "within": 5000
+  },
+  {
+   "toolbar": "Worktrees",
+   "items": [
+    "New Worktree…",
+    "Refresh",
+    "Delete… (disabled)",
+    "Prune (disabled)",
+    "Help"
+   ]
+  },
+  {
+   "sh": "rm -rf ../repo-extra"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "toolbar": "Worktrees",
+   "items": [
+    "New Worktree…",
+    "Refresh",
+    "Delete… (disabled)",
+    "Prune (disabled)",
+    "Help"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-alt-y"
+  },
+  {
+   "toolbar": "Worktrees",
+   "items": [
+    "New Worktree…",
+    "Refresh",
+    "Delete… (disabled)",
+    "Prune",
+    "Help"
+   ],
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Prune",
+   "role": "AXButton",
+   "in": "Worktrees"
+  },
+  {
+   "find": [
+    {
+     "text": "Prune Worktrees",
+     "role": "AXButton"
+    },
+    {
+     "text": "Cancel",
+     "role": "AXButton"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Prune Worktrees",
+   "role": "AXButton"
+  },
+  {
+   "git": ["worktree", "list"],
+   "lacks": "repo-extra"
+  },
+  {
+   "find": {
+    "text": "fix/typo",
+    "role": "AXRow",
+    "in": "Worktree List"
+   },
+   "absent": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "release/2026.1",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Worktree List"
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "click",
+   "label": "Open Worktree",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Git Branch: release/2026.1",
+    "role": "AXButton"
+   },
+   "within": 15000
+  }
+ ]
+}

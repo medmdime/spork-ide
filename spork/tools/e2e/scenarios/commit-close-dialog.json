@@ -1,0 +1,135 @@
+{
+ "id": "commit-close-dialog",
+ "covers": [
+  "action:Vcs.Commit.CloseDialog"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "action",
+   "name": "spork::ToggleCommit"
+  },
+  {
+   "expect": {
+    "left": "[Commit, Project]"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXCheckBox"
+    }
+   ],
+   "within": 6000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "README.md",
+   "button": "right"
+  },
+  {
+   "wait": 800
+  },
+  {
+   "do": "click",
+   "label": "Shelve Changes…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "role": "AXTextArea",
+     "in": "Shelve Changes"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "role": "AXTextArea",
+   "in": "Shelve Changes"
+  },
+  {
+   "do": "keys",
+   "keys": "w i p"
+  },
+  {
+   "find": [
+    {
+     "role": "AXTextArea",
+     "value": "wip",
+     "in": "Shelve Changes"
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": [
+    {
+     "label": "Shelve Changes",
+     "role": "AXButton"
+    }
+   ],
+   "absent": true,
+   "within": 3000
+  },
+  {
+   "sh": "! git diff --quiet HEAD -- README.md && test ! -d .idea/shelf"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "README.md",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "Create Patch from Local Changes…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "role": "AXTextArea",
+     "in": "Create Patch"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "role": "AXTextArea",
+   "in": "Create Patch"
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": [
+    {
+     "label": "Create Patch…",
+     "role": "AXButton"
+    }
+   ],
+   "absent": true,
+   "within": 3000
+  }
+ ]
+}

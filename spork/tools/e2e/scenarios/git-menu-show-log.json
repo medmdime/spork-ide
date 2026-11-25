@@ -1,0 +1,37 @@
+{
+ "id": "git-menu-show-log",
+ "covers": [
+  "action:Vcs.Show.Log"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "open",
+   "what": "change",
+   "path": "README.md"
+  },
+  {
+   "expect": {
+    "view": "Changes"
+   }
+  },
+  {
+   "do": "menubar",
+   "path": ["Git"]
+  },
+  {
+   "menu": "context-menu:Git.MainMenu",
+   "items": ["Worktrees…", "Show Git Log", "Patch ▸"],
+   "part": true
+  },
+  {
+   "do": "action",
+   "name": "spork::ShowHistory"
+  },
+  {
+   "expect": {
+    "view": "History"
+   }
+  }
+ ]
+}

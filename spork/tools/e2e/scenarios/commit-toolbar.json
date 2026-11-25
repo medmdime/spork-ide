@@ -1,0 +1,184 @@
+{
+ "id": "commit-toolbar",
+ "covers": [
+  "toolbar:ChangesViewToolbar.Shared",
+  "toolbar:ChangesViewToolbar",
+  "context-menu:ChangesView.ViewOptions",
+  "action:ChangesView.Refresh",
+  "action:Diff.ShowDiff",
+  "action:ExpandAll",
+  "action:CollapseAll",
+  "action:ChangesView.ShowIgnored",
+  "action:ChangesView.ShelveSilently"
+ ],
+ "reference-app": [
+  "screenshots/toolwindows/commit.jpg",
+  "screenshots/menus/changesviewtoolbar-shared.png"
+ ],
+ "steps": [
+  {
+   "do": "action",
+   "name": "spork::ToggleCommit"
+  },
+  {
+   "expect": {
+    "left": "[Commit, Project]"
+   }
+  },
+  {
+   "wait": 600
+  },
+  {
+   "toolbar": "ChangesViewToolbar",
+   "items": [
+    "Refresh",
+    "Rollback…",
+    "Show Diff (disabled)",
+    "Shelve Silently (disabled)",
+    "View Options ▸",
+    "Expand All",
+    "Collapse All"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "View Options"
+  },
+  {
+   "menu": "context-menu:ChangesView.ViewOptions",
+   "items": [
+    "Group By ▸",
+    "Ignored Files"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "click",
+   "label": "Collapse All"
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXCheckBox"
+    }
+   ],
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Expand All"
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXCheckBox"
+    },
+    {
+     "label": "notes.txt",
+     "role": "AXCheckBox"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "README.md"
+  },
+  {
+   "toolbar": "ChangesViewToolbar",
+   "items": [
+    "Refresh",
+    "Rollback…",
+    "Show Diff",
+    "Shelve Silently",
+    "View Options ▸",
+    "Expand All",
+    "Collapse All"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Show Diff",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "view": "Changes"
+   }
+  },
+  {
+   "sh": "echo more >> main.rs"
+  },
+  {
+   "do": "click",
+   "label": "Refresh"
+  },
+  {
+   "find": [
+    {
+     "label": "main.rs",
+     "role": "AXCheckBox"
+    }
+   ]
+  },
+  {
+   "sh": "echo build.log > .git/info/exclude && echo log > build.log"
+  },
+  {
+   "do": "click",
+   "label": "View Options"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "find": [
+    {
+     "label": "Ignored Files",
+     "role": "AXMenuItem"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Ignored Files",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "Ignored Files",
+     "role": "AXRow"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "README.md"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "Shelve Silently"
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXCheckBox"
+    }
+   ],
+   "absent": true,
+   "within": 5000
+  },
+  {
+   "sh": "grep -q 'DESCRIPTION\" value=\"Changes' .idea/shelf/Changes.xml && grep -q '+changed' .idea/shelf/Changes/shelved.patch && git diff --quiet HEAD -- README.md"
+  }
+ ]
+}

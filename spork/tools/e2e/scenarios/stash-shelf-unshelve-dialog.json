@@ -1,0 +1,123 @@
+{
+ "id": "stash-shelf-unshelve-dialog",
+ "covers": [],
+ "note": "Unshelve… lists the changelist's files, each checked; only the checked ones are unshelved, and 'Remove successfully applied files from the shelf' takes them out of it. Not in covers: the reference app's dialog also has a changelist chooser, and no capture of it confirms its layout and button.",
+ "reference-app": [],
+ "steps": [
+  {
+   "sh": "git checkout -- README.md && mkdir -p .idea/shelf/Fix_readme && printf '/shelf/\\n' > .idea/.gitignore"
+  },
+  {
+   "file": ".idea/shelf/Fix_readme/shelved.patch",
+   "text": "diff --git a/README.md b/README.md\n--- a/README.md\n+++ b/README.md\n@@ -1,2 +1,3 @@\n # Fixture\n two\n+changed\ndiff --git a/src/a.rs b/src/a.rs\nnew file mode 100644\n--- /dev/null\n+++ b/src/a.rs\n@@ -0,0 +1 @@\n+fn a() {}\n"
+  },
+  {
+   "file": ".idea/shelf/Fix_readme.xml",
+   "text": "<changelist name=\"Fix_readme\" date=\"1767261600000\" recycled=\"false\" deleted=\"false\">\n  <option name=\"DESCRIPTION\" value=\"Fix readme\" />\n</changelist>\n"
+  },
+  {
+   "do": "action",
+   "name": "spork::ShowShelf"
+  },
+  {
+   "find": [
+    {
+     "role": "AXRow",
+     "label": "Fix readme"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Fix readme",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "find": [
+    {
+     "role": "AXMenuItem",
+     "label": "Unshelve…"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Unshelve…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "README.md",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "src/a.rs",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Remove successfully applied files from the shelf",
+     "value": "0"
+    },
+    {
+     "role": "AXButton",
+     "label": "Cancel"
+    },
+    {
+     "role": "AXButton",
+     "label": "Unshelve Changes"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "src/a.rs",
+   "role": "AXCheckBox"
+  },
+  {
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "src/a.rs",
+     "value": "0"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Remove successfully applied files from the shelf",
+   "role": "AXCheckBox"
+  },
+  {
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Remove successfully applied files from the shelf",
+     "value": "1"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Unshelve Changes",
+   "role": "AXButton"
+  },
+  {
+   "sh": "git status --porcelain README.md src",
+   "is": "M README.md"
+  },
+  {
+   "sh": "grep -c 'diff --git' .idea/shelf/Fix_readme/shelved.patch",
+   "is": "1"
+  },
+  {
+   "sh": "grep -c 'src/a.rs' .idea/shelf/Fix_readme/shelved.patch",
+   "is": "2"
+  }
+ ]
+}

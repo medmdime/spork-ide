@@ -1,0 +1,52 @@
+{
+ "id": "log-menu-items",
+ "covers": [
+  "context-menu:Vcs.Log.ContextMenu",
+  "context-menu:Git.Log.ContextMenu",
+  "context-menu:Git.Log.ContextMenu.CheckoutBrowse",
+  "context-menu:Dvcs.Log.ContextMenu"
+ ],
+ "reference-app": [
+  "screenshots/menus/vcs-log-contextmenu.png"
+ ],
+ "steps": [
+  {
+   "do": "ui"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "docs: a second line",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "menu": "context-menu:Vcs.Log.ContextMenu"
+  },
+  {
+   "menu": "context-menu:Git.Log.ContextMenu",
+   "part": true
+  },
+  {
+   "menu": "context-menu:Git.Log.ContextMenu.CheckoutBrowse",
+   "part": true
+  },
+  {
+   "items": [
+    "Cherry-Pick"
+   ],
+   "menu": "context-menu:Dvcs.Log.ContextMenu",
+   "part": true
+  },
+  {
+   "expect": {
+    "selected": 2
+   }
+  },
+  {
+   "shot": "menu"
+  }
+ ]
+}

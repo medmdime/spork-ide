@@ -1,0 +1,61 @@
+{
+ "id": "command-palette-runs-action",
+ "covers": [],
+ "reference-app": [],
+ "steps": [
+  {
+   "expect": {
+    "docks.left.open": true
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-p"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "CommandPalette",
+     "Picker",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "t o g g l e space l e f t space d o c k"
+  },
+  {
+   "find": {
+    "label": "workspace: toggle left dock",
+    "role": "AXStaticText",
+    "selected": true
+   }
+  },
+  {
+   "shot": "palette"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "workspace: toggle left dock"
+    },
+    {
+     "label": "Project Panel",
+     "role": "AXOutline"
+    }
+   ],
+   "absent": true
+  }
+ ]
+}

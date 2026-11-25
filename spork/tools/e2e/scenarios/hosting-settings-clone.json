@@ -1,0 +1,175 @@
+{
+ "id": "hosting-settings-clone",
+ "covers": [
+  "action:Github.Clone",
+  "dialog:Github.Clone",
+  "action:GitLab.Clone",
+  "dialog:GitLab.Clone"
+ ],
+ "reference-app": [
+  "screenshots/dialogs/github-clone.jpg",
+  "screenshots/dialogs/gitlab-clone.jpg"
+ ],
+ "steps": [
+  {
+   "do": "action",
+   "name": "spork::CloneFromGitHub"
+  },
+  {
+   "within": 6000,
+   "find": [
+    {
+     "role": "Heading",
+     "label": "Log In to GitHub"
+    },
+    {
+     "role": "AXButton",
+     "label": "Log In via GitHub…"
+    },
+    {
+     "text": "or"
+    },
+    {
+     "role": "AXLink",
+     "label": "Use token…"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "find": [
+    {
+     "label": "Repository URL"
+    },
+    {
+     "label": "GitHub"
+    },
+    {
+     "label": "GitHub Enterprise"
+    },
+    {
+     "label": "GitLab"
+    },
+    {
+     "text": "No accounts"
+    },
+    {
+     "role": "AXButton",
+     "label": "Cancel"
+    },
+    {
+     "role": "AXButton",
+     "label": "Clone",
+     "enabled": false
+    }
+   ],
+   "missing": [
+    {
+     "text": "URL:"
+    }
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "github"
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": [],
+   "missing": [
+    {
+     "label": "Log In to GitHub"
+    }
+   ]
+  },
+  {
+   "do": "action",
+   "name": "spork::CloneFromGitLab"
+  },
+  {
+   "within": 6000,
+   "find": [
+    {
+     "role": "Heading",
+     "label": "Log In to GitLab"
+    },
+    {
+     "role": "AXButton",
+     "label": "Log In to gitlab.com…"
+    },
+    {
+     "role": "AXButton",
+     "label": "Show drop-down menu"
+    },
+    {
+     "text": "or"
+    },
+    {
+     "role": "AXLink",
+     "label": "Use token…"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "find": [
+    {
+     "role": "AXButton",
+     "label": "Cancel"
+    },
+    {
+     "role": "AXButton",
+     "label": "Clone",
+     "enabled": true
+    }
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "gitlab"
+  },
+  {
+   "do": "click",
+   "label": "Repository URL"
+  },
+  {
+   "find": [
+    {
+     "text": "URL:"
+    },
+    {
+     "text": "Clone into:"
+    },
+    {
+     "role": "AXButton",
+     "label": "Clone",
+     "enabled": false
+    }
+   ],
+   "missing": [
+    {
+     "label": "Log In to GitLab"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "GitHub"
+  },
+  {
+   "find": [
+    {
+     "role": "Heading",
+     "label": "Log In to GitHub"
+    }
+   ]
+  }
+ ]
+}

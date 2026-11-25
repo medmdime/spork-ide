@@ -1,0 +1,126 @@
+{
+ "id": "vcs-console",
+ "covers": [
+  "action:Vcs.ShowConsoleTab"
+ ],
+ "steps": [
+  {
+   "file": "README.md",
+   "text": "# Fixture\n\nA greeting, then a farewell.\n"
+  },
+  {
+   "find": [
+    {
+     "label": "Git",
+     "role": "AXCheckBox",
+     "in": "Left stripe"
+    },
+    {
+     "label": "Commit",
+     "role": "AXCheckBox",
+     "in": "Left stripe"
+    }
+   ],
+   "within": 10000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-0"
+  },
+  {
+   "find": {
+    "label": "README.md",
+    "role": "AXCheckBox"
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "README.md",
+   "role": "AXCheckBox"
+  },
+  {
+   "find": {
+    "label": "README.md",
+    "role": "AXCheckBox",
+    "value": "1"
+   }
+  },
+  {
+   "do": "click",
+   "role": "AXTextArea"
+  },
+  {
+   "do": "keys",
+   "keys": "d e s c r i b e space t h e space f i x t u r e"
+  },
+  {
+   "do": "click",
+   "label": "Commit",
+   "role": "AXButton",
+   "in": "Commit"
+  },
+  {
+   "git": [
+    "log",
+    "-1",
+    "--format=%s"
+   ],
+   "is": "describe the fixture"
+  },
+  {
+   "do": "action",
+   "name": "spork::ShowConsoleTab"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "Git"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Console",
+     "role": "AXRadioButton",
+     "value": "1"
+    },
+    {
+     "label": "Log",
+     "role": "AXRadioButton",
+     "value": "0"
+    }
+   ]
+  },
+  {
+   "expect": {
+    "last": "git commit --cleanup=strip -F -"
+   },
+   "of": {
+    "do": "vcs_console"
+   },
+   "within": 5000
+  },
+  {
+   "wait": 800
+  },
+  {
+   "shot": "console"
+  },
+  {
+   "do": "click",
+   "label": "Log",
+   "role": "AXRadioButton"
+  },
+  {
+   "find": {
+    "label": "describe the fixture",
+    "role": "AXRow"
+   },
+   "within": 8000
+  }
+ ]
+}

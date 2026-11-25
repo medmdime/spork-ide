@@ -1,0 +1,26 @@
+id = "fixture-language"
+name = "Fixture Language"
+version = "1.0.0"
+schema_version = 1
+authors = ["Spork IDE Tests"]
+description = "Highlighting and a language server for the fixture language."
+repository = "https://example.com/fixture-language"
+
+# tools/e2e/extension_fixtures.py compiles tree-sitter-json's parser as this grammar
+[grammars.fixture]
+repository = "https://github.com/tree-sitter/tree-sitter-json"
+rev = "v0.24.8"
+
+[language_servers.fixture-ls]
+name = "Fixture Language Server"
+languages = ["Fixture"]
+
+[[capabilities]]
+kind = "process:exec"
+command = "python3"
+args = ["--version"]
+
+[[capabilities]]
+kind = "download_file"
+host = "127.0.0.1"
+path = ["**"]

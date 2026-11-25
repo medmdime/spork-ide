@@ -1,0 +1,225 @@
+{
+ "id": "plugins-theme-extension",
+ "covers": [],
+ "reference-app": [],
+ "steps": [
+  {
+   "sh": "(nohup python3 \"$E2E/extensions_http.py\" ../registry-port 600 > ../registry.log 2>&1 &) && for i in $(seq 1800); do [ -s ../registry-port ] && break; sleep 0.1; done && python3 -c \"import json; p='../home/.config/spork-ide/settings.json'; s=json.load(open(p)); url='http://127.0.0.1:'+open('../registry-port').read().strip(); s['server_url']=url; s.setdefault('lsp', {})['fixture-ls']={'settings': {'download_url': url+'/files/lsp_fixture.py'}}; json.dump(s, open(p, 'w'))\""
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-,"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "Plugins",
+   "role": "AXRow",
+   "in": "Settings categories",
+   "within": 8000
+  },
+  {
+   "expect": {
+    "settings.page": "Plugins",
+    "settings.plugins.marketplace": [
+     "Fixture Theme",
+     "Fixture Language",
+     "Fixture Snippets",
+     "Fixture Icons",
+     "Fixture MCP",
+     "Fixture Debugger"
+    ]
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Search plugins",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "t h e m e",
+   "window": "Settings – fixture"
+  },
+  {
+   "expect": {
+    "settings.plugins.marketplace": [
+     "Fixture Theme"
+    ]
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Fixture Theme",
+   "in": "Plugins"
+  },
+  {
+   "do": "click",
+   "label": "Install",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings.plugins.installed": [
+     "Fixture Theme"
+    ]
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "look.theme": "Fixture Dark",
+    "look.selection": "Fixture Dark"
+   },
+   "within": 8000
+  },
+  {
+   "sh": "cat ../home/.config/spork-ide/settings.json",
+   "contains": "\"theme\": \"Fixture Dark\""
+  },
+  {
+   "do": "click",
+   "label": "Appearance",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Appearance & Behavior/Appearance",
+    "settings.apply": false
+   }
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "Theme",
+   "within": 5000
+  },
+  {
+   "menu": "Theme",
+   "items": [
+    "Fixture Dark"
+   ],
+   "part": true,
+   "checked": [
+    "Fixture Dark"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape",
+   "window": "Settings – fixture"
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings": null
+   },
+   "within": 8000
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   },
+   "within": 8000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "editor"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-,"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "Plugins",
+   "role": "AXRow",
+   "in": "Settings categories",
+   "within": 8000
+  },
+  {
+   "expect": {
+    "settings.page": "Plugins"
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Installed",
+   "role": "AXRadioButton"
+  },
+  {
+   "expect": {
+    "settings.plugins.tab": "Installed"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Fixture Theme",
+   "in": "Plugins"
+  },
+  {
+   "do": "click",
+   "label": "Uninstall",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings.plugins.installed": []
+   },
+   "within": 15000
+  },
+  {
+   "expect": {
+    "look.theme": "Islands Dark",
+    "look.selection": "Islands Dark"
+   },
+   "within": 8000
+  },
+  {
+   "sh": "cat ../home/.config/spork-ide/settings.json",
+   "lacks": "Fixture Dark"
+  }
+ ]
+}

@@ -1,0 +1,189 @@
+{
+ "id": "frame-geometry",
+ "covers": [],
+ "reference-app": [
+  "screenshots/frame/main-window.jpg"
+ ],
+ "steps": [
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Title bar",
+     "frame": [
+      0,
+      0,
+      1400,
+      40
+     ]
+    },
+    {
+     "label": "fixture",
+     "role": "AXButton",
+     "in": "Title bar",
+     "frame": [
+      80,
+      5,
+      null,
+      30
+     ]
+    },
+    {
+     "label": "Search Everywhere",
+     "frame": [
+      1324,
+      5,
+      30,
+      30
+     ]
+    },
+    {
+     "label": "IDE and Project Settings",
+     "frame": [
+      1364,
+      5,
+      30,
+      30
+     ]
+    },
+    {
+     "label": "Left stripe",
+     "frame": [
+      0,
+      40,
+      41,
+      832
+     ]
+    },
+    {
+     "label": "Project",
+     "role": "AXCheckBox",
+     "in": "Left stripe",
+     "frame": [
+      0,
+      40,
+      41,
+      40
+     ]
+    },
+    {
+     "label": "Commit",
+     "in": "Left stripe",
+     "frame": [
+      0,
+      80,
+      41,
+      40
+     ]
+    },
+    {
+     "label": "Structure",
+     "in": "Left stripe",
+     "frame": [
+      0,
+      130,
+      41,
+      40
+     ]
+    },
+    {
+     "label": "More",
+     "in": "Left stripe",
+     "frame": [
+      0,
+      170,
+      41,
+      40
+     ]
+    },
+    {
+     "label": "Git",
+     "in": "Left stripe",
+     "frame": [
+      0,
+      832,
+      41,
+      40
+     ]
+    },
+    {
+     "label": "Right stripe",
+     "frame": [
+      1359,
+      40,
+      41,
+      832
+     ]
+    },
+    {
+     "label": "Notifications",
+     "in": "Right stripe",
+     "frame": [
+      1359,
+      40,
+      41,
+      40
+     ]
+    },
+    {
+     "label": "Project",
+     "role": "AXToolbar",
+     "frame": [
+      41,
+      40,
+      null,
+      41
+     ]
+    },
+    {
+     "label": "main.rs",
+     "role": "AXRadioButton",
+     "frame": [
+      287.5,
+      46,
+      null,
+      28
+     ]
+    },
+    {
+     "label": "Status bar",
+     "frame": [
+      0,
+      872,
+      1400,
+      28
+     ]
+    },
+    {
+     "label": "Navigation Bar",
+     "frame": [
+      11,
+      null,
+      null,
+      null
+     ]
+    }
+   ],
+   "missing": [
+    {
+     "label": "Open threads sidebar"
+    }
+   ],
+   "within": 10000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "main-rs"
+  }
+ ]
+}

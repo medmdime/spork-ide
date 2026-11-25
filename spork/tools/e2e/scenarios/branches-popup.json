@@ -1,0 +1,37 @@
+{
+ "id": "branches-popup",
+ "covers": [
+  "action:Git.Branches",
+  "action:main.toolbar.git.Branches",
+  "dialog:Git.Branches"
+ ],
+ "reference-app": [
+  "screenshots/dialogs/git-branches.png"
+ ],
+ "steps": [
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "expect": {
+    "branches_popup": true
+   }
+  },
+  {
+   "wait": 600
+  },
+  {
+   "shot": "open"
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "expect": {
+    "branches_popup": false
+   }
+  }
+ ]
+}

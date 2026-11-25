@@ -1,0 +1,329 @@
+{
+ "id": "settings-editor-pages",
+ "covers": [],
+ "reference-app": [
+  "screenshots/settings/editor-font.jpg",
+  "screenshots/settings/editor-code-editing.jpg"
+ ],
+ "steps": [
+  {
+   "do": "keys",
+   "keys": "cmd-,"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture",
+    "settings.page": "Appearance & Behavior/Appearance"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "Code Editing",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Editor/Code Editing"
+   },
+   "within": 8000
+  },
+  {
+   "toolbar": "Settings page",
+   "items": [
+    "Show quick documentation on hover"
+   ],
+   "within": 8000
+  },
+  {
+   "find": {
+    "label": "Tooltip delay",
+    "role": "AXTextField",
+    "value": "300"
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "code-editing",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Tooltip delay",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a 5 0 0",
+   "window": "Settings – fixture"
+  },
+  {
+   "expect": {
+    "settings.modified": [
+     "Editor/Code Editing"
+    ]
+   }
+  },
+  {
+   "do": "click",
+   "label": "Font",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Editor/Font"
+   }
+  },
+  {
+   "toolbar": "Settings page",
+   "items": [
+    "Font",
+    "Enable ligatures",
+    "Typography Settings"
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "Size",
+     "role": "AXTextField",
+     "value": "13.0"
+    },
+    {
+     "label": "Line height",
+     "role": "AXTextField",
+     "value": "1.2"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Typography Settings",
+   "role": "AXButton"
+  },
+  {
+   "toolbar": "Settings page",
+   "items": [
+    "Font",
+    "Enable ligatures",
+    "Typography Settings",
+    "Main weight",
+    "Fallback font"
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "Main weight",
+     "value": "Regular",
+     "role": "AXPopUpButton"
+    },
+    {
+     "label": "Fallback font",
+     "value": "None",
+     "role": "AXPopUpButton"
+    }
+   ]
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "font",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Main weight",
+   "role": "AXPopUpButton"
+  },
+  {
+   "do": "click",
+   "label": "Medium",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "settings.modified": [
+     "Editor/Code Editing",
+     "Editor/Font"
+    ]
+   }
+  },
+  {
+   "do": "click",
+   "label": "Apply",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings.apply": false
+   },
+   "within": 8000
+  },
+  {
+   "expect": {
+    "value": 500.0
+   },
+   "of": {
+    "do": "setting",
+    "path": "/buffer_font_weight"
+   },
+   "within": 8000
+  },
+  {
+   "expect": {
+    "value": 500
+   },
+   "of": {
+    "do": "setting",
+    "path": "/hover_popover_delay"
+   },
+   "within": 8000
+  },
+  {
+   "sh": "cat ../home/.config/spork-ide/settings.json",
+   "contains": "\"buffer_font_weight\": 500.0"
+  },
+  {
+   "do": "click",
+   "label": "Color Scheme",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Editor/Color Scheme"
+   }
+  },
+  {
+   "toolbar": "Settings page",
+   "items": [
+    "Scheme",
+    "Change IDE Theme…"
+   ]
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "color-scheme",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Change IDE Theme…",
+   "role": "AXLink"
+  },
+  {
+   "expect": {
+    "settings.page": "Appearance & Behavior/Appearance"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Code Style",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Editor/Code Style"
+   }
+  },
+  {
+   "toolbar": "Settings page",
+   "items": [
+    "Line separator"
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "Hard wrap at",
+     "role": "AXTextField",
+     "value": "120"
+    },
+    {
+     "label": "Visual guides",
+     "role": "AXTextField",
+     "value": "120"
+    }
+   ]
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "code-style",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Other File Types",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Editor/Code Style/Other File Types"
+   }
+  },
+  {
+   "toolbar": "Settings page",
+   "items": [
+    "Use tab character"
+   ]
+  },
+  {
+   "find": {
+    "label": "Tab size",
+    "role": "AXTextField",
+    "value": "4"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Use tab character",
+   "role": "AXCheckBox"
+  },
+  {
+   "expect": {
+    "settings.apply": true,
+    "settings.modified": [
+     "Editor/Code Style/Other File Types"
+    ]
+   }
+  },
+  {
+   "do": "click",
+   "label": "Cancel",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings": null
+   }
+  },
+  {
+   "expect": {
+    "value": false
+   },
+   "of": {
+    "do": "setting",
+    "path": "/hard_tabs"
+   }
+  },
+  {
+   "sh": "cat ../home/.config/spork-ide/settings.json",
+   "lacks": "hard_tabs"
+  }
+ ]
+}

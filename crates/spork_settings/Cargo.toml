@@ -1,0 +1,42 @@
+[package]
+name = "spork_settings"
+version = "0.1.0"
+edition.workspace = true
+publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
+
+[lib]
+path = "src/spork_settings.rs"
+doctest = false
+
+[dependencies]
+anyhow.workspace = true
+async_zip.workspace = true
+cloud_api_types.workspace = true
+collections.workspace = true
+extension_host.workspace = true
+extension_suggest.workspace = true
+fs.workspace = true
+futures.workspace = true
+gpui.workspace = true
+gpui_base.workspace = true
+gpui_kit.workspace = true
+log.workspace = true
+paths.workspace = true
+serde_json.workspace = true
+settings.workspace = true
+smol.workspace = true
+spork.workspace = true
+spork_docker.workspace = true
+spork_local_history.workspace = true
+spork_vcs.workspace = true
+spork_workbench.workspace = true
+tempfile.workspace = true
+theme.workspace = true
+theme_settings.workspace = true
+util.workspace = true
+workspace.workspace = true
+zed_actions.workspace = true

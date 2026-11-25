@@ -1,0 +1,98 @@
+{
+ "id": "log-menu-navigate",
+ "covers": [
+  "action:Vcs.Log.GoToChild",
+  "action:Vcs.Log.GoToParent"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "find": {
+    "text": "docs: a second line",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "docs: a second line",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "find": {
+    "text": "Go to Child Commit",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Go to Child Commit",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "selected": 1
+   }
+  },
+  {
+   "find": {
+    "text": "Merge branch 'feature/login'",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Merge branch 'feature/login'",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "find": {
+    "text": "Go to Parent Commit",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Go to Parent Commit",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "selected": 2
+   }
+  },
+  {
+   "wait": 600
+  },
+  {
+   "find": {
+    "text": "docs: a second line",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "docs: a second line",
+   "role": "AXRow"
+  },
+  {
+   "do": "keys",
+   "keys": "right"
+  },
+  {
+   "expect": {
+    "selected": 5
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "left"
+  },
+  {
+   "expect": {
+    "selected": 2
+   }
+  }
+ ]
+}

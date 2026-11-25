@@ -1,0 +1,254 @@
+{
+ "id": "vcs-stash",
+ "covers": [
+  "action:Git.Stash",
+  "dialog:Git.Stash",
+  "action:Git.Unstash",
+  "action:Git.Show.Stash",
+  "context-menu:Vcs.SavedPatches.ContextMenu",
+  "context-menu:Git.Stash.Operations.ContextMenu",
+  "action:Git.Stash.Pop"
+ ],
+ "reference-app": [
+  "screenshots/dialogs/git-stash.jpg",
+  "screenshots/menus/vcs-savedpatches-contextmenu.png"
+ ],
+ "steps": [
+  {
+   "find": [
+    {
+     "label": "Commit",
+     "role": "AXCheckBox",
+     "in": "Left stripe"
+    }
+   ],
+   "within": 10000
+  },
+  {
+   "file": "README.md",
+   "text": "# Fixture\n\nA greeting, then a farewell.\n"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "menu": "context-menu:Git.MainMenu.LocalChanges",
+   "path": [
+    "Git",
+    "Uncommitted Changes"
+   ],
+   "items": [
+    "Shelve Changes…",
+    "Show Shelf",
+    "Stash Changes…",
+    "Unstash Changes… (disabled)",
+    "Rollback…"
+   ]
+  },
+  {
+   "do": "action",
+   "name": "spork::Stash"
+  },
+  {
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Keep index",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Include untracked",
+     "value": "0"
+    },
+    {
+     "role": "AXButton",
+     "label": "Cancel"
+    },
+    {
+     "role": "AXButton",
+     "label": "Create Stash"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "role": "AXTextArea"
+  },
+  {
+   "do": "type",
+   "text": "readme wording"
+  },
+  {
+   "do": "click",
+   "label": "Create Stash",
+   "role": "AXButton"
+  },
+  {
+   "sh": "git stash list",
+   "contains": "readme wording"
+  },
+  {
+   "sh": "git status --porcelain README.md",
+   "is": ""
+  },
+  {
+   "menu": "context-menu:Git.MainMenu.LocalChanges",
+   "path": [
+    "Git",
+    "Uncommitted Changes"
+   ],
+   "items": [
+    "Shelve Changes…",
+    "Show Shelf",
+    "Show Git Stash",
+    "Stash Changes…",
+    "Unstash Changes…",
+    "Rollback…"
+   ],
+   "within": 8000
+  },
+  {
+   "do": "action",
+   "name": "spork::Unstash"
+  },
+  {
+   "expect": {
+    "docks.left.open": true,
+    "docks.left.panel": "Commit"
+   }
+  },
+  {
+   "find": [
+    {
+     "role": "AXRadioButton",
+     "label": "Commit",
+     "value": "0"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Stash",
+     "value": "1"
+    },
+    {
+     "role": "AXRow",
+     "label": "readme wording"
+    },
+    {
+     "role": "AXButton",
+     "label": "Apply"
+    },
+    {
+     "role": "AXButton",
+     "label": "Pop"
+    }
+   ],
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Commit",
+   "role": "AXRadioButton"
+  },
+  {
+   "find": {
+    "label": "Commit",
+    "role": "AXRadioButton",
+    "value": "1"
+   }
+  },
+  {
+   "do": "action",
+   "name": "spork::ShowStash"
+  },
+  {
+   "find": {
+    "label": "Stash",
+    "role": "AXRadioButton",
+    "value": "1"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "readme wording",
+   "role": "AXRow"
+  },
+  {
+   "expect": {
+    "active": "Stash@{0}: README.md"
+   },
+   "within": 8000
+  },
+  {
+   "expect": {
+    "docks.bottom.open": false
+   }
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "click",
+   "at": [
+    700,
+    600
+   ],
+   "hover": true
+  },
+  {
+   "shot": "stash-diff"
+  },
+  {
+   "do": "click",
+   "label": "readme wording",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "menu": "context-menu:Vcs.SavedPatches.ContextMenu",
+   "items": [
+    "Pop",
+    "Apply",
+    "Unstash…",
+    "Drop",
+    "Clear",
+    "Show Diff",
+    "Show Diff in a New Tab or Window",
+    "Compare with Local"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Pop",
+   "role": "AXMenuItem"
+  },
+  {
+   "sh": "git stash list | wc -l | tr -d ' '",
+   "is": "0"
+  },
+  {
+   "sh": "git status --porcelain README.md",
+   "is": "M README.md"
+  },
+  {
+   "find": {
+    "role": "AXRadioButton",
+    "label": "Stash"
+   },
+   "absent": true,
+   "within": 8000
+  },
+  {
+   "do": "action",
+   "name": "spork::ShowStash"
+  },
+  {
+   "find": {
+    "label": "README.md",
+    "role": "AXCheckBox"
+   },
+   "within": 5000
+  }
+ ]
+}

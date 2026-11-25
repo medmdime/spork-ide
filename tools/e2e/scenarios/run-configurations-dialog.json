@@ -1,0 +1,441 @@
+{
+ "id": "run-configurations-dialog",
+ "covers": [
+  "action:editRunConfigurations"
+ ],
+ "reference-app": [],
+ "settings": {
+  "languages": {
+   "JSON": {
+    "prettier": {
+     "allowed": false
+    }
+   },
+   "JSONC": {
+    "prettier": {
+     "allowed": false
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "sh": "mkdir -p .zed && printf '[{\"label\": \"hello\", \"command\": \"echo hello > ran.txt\"}]' > .zed/tasks.json && printf '[{\"label\": \"debug fixture\", \"adapter\": \"CodeLLDB\", \"request\": \"launch\", \"program\": \"target/debug/fixture\"}]' > .zed/debug.json"
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "find": {
+    "label": "hello, Run / Debug Configurations",
+    "role": "AXButton"
+   },
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "run::EditConfigurations"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Run/Debug Configurations"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "find": [
+    {
+     "label": "Run/Debug Configurations Toolbar",
+     "role": "AXToolbar"
+    },
+    {
+     "label": "Native Application",
+     "role": "AXRow"
+    },
+    {
+     "label": "debug fixture",
+     "role": "AXRow"
+    },
+    {
+     "label": "Shell Script",
+     "role": "AXRow"
+    },
+    {
+     "label": "hello",
+     "role": "AXRow",
+     "selected": true
+    },
+    {
+     "label": "Edit configuration templates…",
+     "role": "AXLink"
+    },
+    {
+     "label": "Name:",
+     "role": "AXTextField",
+     "value": "hello"
+    },
+    {
+     "label": "Allow multiple instances",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "Store as project file",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "Script text:",
+     "role": "AXTextField",
+     "value": "echo hello > ran.txt"
+    },
+    {
+     "label": "Script options:",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Working directory:",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Environment variables:",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Run",
+     "role": "AXButton"
+    },
+    {
+     "label": "Cancel",
+     "role": "AXButton"
+    },
+    {
+     "label": "Apply",
+     "role": "AXButton",
+     "enabled": false
+    },
+    {
+     "label": "OK",
+     "role": "AXButton"
+    }
+   ],
+   "ordered": true,
+   "within": 8000
+  },
+  {
+   "toolbar": "Run/Debug Configurations Toolbar",
+   "items": [
+    "Add New Configuration",
+    "Remove Configuration",
+    "Copy Configuration",
+    "Move into New Folder",
+    "Sort Configurations"
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "dialog",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Add New Configuration",
+   "role": "AXButton"
+  },
+  {
+   "menu": "Add New Configuration",
+   "items": [
+    "Add New Configuration (disabled)",
+    "Shell Script",
+    "Application",
+    "GDB",
+    "Go Build",
+    "Native Application",
+    "Node.js",
+    "Python"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Shell Script",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "Unnamed",
+     "role": "AXRow",
+     "selected": true
+    },
+    {
+     "label": "Name:",
+     "role": "AXTextField",
+     "value": "Unnamed"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "Name:",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "do": "type",
+   "text": "greet",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "do": "click",
+   "label": "Script text:",
+   "role": "AXTextField"
+  },
+  {
+   "do": "type",
+   "text": "echo greet > ran.txt",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "find": [
+    {
+     "label": "greet",
+     "role": "AXRow",
+     "selected": true
+    },
+    {
+     "label": "Apply",
+     "role": "AXButton",
+     "enabled": true
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "Apply",
+   "role": "AXButton"
+  },
+  {
+   "sh": "cat .zed/tasks.json",
+   "contains": "\"label\": \"greet\"",
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Copy Configuration",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "greet (1)",
+    "role": "AXRow",
+    "selected": true
+   }
+  },
+  {
+   "do": "click",
+   "label": "Remove Configuration",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "greet (1)",
+    "role": "AXRow"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "greet",
+   "role": "AXRow"
+  },
+  {
+   "do": "click",
+   "label": "Move into New Folder",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "Shell Script",
+     "role": "AXRow"
+    },
+    {
+     "label": "New Folder",
+     "role": "AXRow",
+     "selected": true
+    },
+    {
+     "label": "greet",
+     "role": "AXRow"
+    },
+    {
+     "label": "hello",
+     "role": "AXRow"
+    },
+    {
+     "label": "Name:",
+     "role": "AXTextField",
+     "value": "New Folder"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "greet",
+   "role": "AXRow"
+  },
+  {
+   "do": "click",
+   "label": "Store as project file",
+   "role": "AXCheckBox"
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "windows.1": null
+   },
+   "within": 5000
+  },
+  {
+   "sh": "cat ../home/.config/spork-ide/tasks.json",
+   "contains": "\"folder\": \"New Folder\"",
+   "within": 8000
+  },
+  {
+   "sh": "cat .zed/tasks.json",
+   "lacks": "greet"
+  },
+  {
+   "expect": {
+    "run.configurations.names": [
+     "hello",
+     "debug fixture",
+     "greet"
+    ]
+   },
+   "within": 8000
+  },
+  {
+   "do": "action",
+   "name": "run::EditConfigurations"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Run/Debug Configurations"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "debug fixture",
+   "role": "AXRow"
+  },
+  {
+   "find": [
+    {
+     "label": "Name:",
+     "role": "AXTextField",
+     "value": "debug fixture"
+    },
+    {
+     "label": "Executable:",
+     "role": "AXTextField",
+     "value": "target/debug/fixture"
+    },
+    {
+     "label": "Program arguments:",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Before launch",
+     "role": "AXToolbar"
+    },
+    {
+     "label": "There are no tasks to run before launch"
+    },
+    {
+     "label": "Debug",
+     "role": "AXButton"
+    }
+   ],
+   "ordered": true,
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Edit configuration templates…",
+   "role": "AXLink"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Run/Debug Configuration Templates"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Shell Script",
+     "role": "AXRow",
+     "selected": true
+    },
+    {
+     "label": "Script text:",
+     "role": "AXTextField"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "Cancel",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Run/Debug Configurations"
+   }
+  },
+  {
+   "do": "click",
+   "label": "hello",
+   "role": "AXRow"
+  },
+  {
+   "do": "click",
+   "label": "Run",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "windows.1": null,
+    "run.tabs.0.title": "hello"
+   },
+   "within": 10000
+  },
+  {
+   "sh": "cat ran.txt",
+   "is": "hello",
+   "within": 10000
+  }
+ ]
+}

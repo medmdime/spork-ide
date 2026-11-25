@@ -1,0 +1,141 @@
+{
+ "id": "notifications-balloons",
+ "covers": [],
+ "reference-app": [],
+ "steps": [
+  {
+   "find": {
+    "label": "Notifications",
+    "role": "AXButton"
+   },
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "spork::ToggleProject"
+  },
+  {
+   "expect": {
+    "left": "[]"
+   }
+  },
+  {
+   "do": "notify",
+   "type": "info",
+   "title": "Project opened",
+   "text": "Indexing finished, the project's files are ready to search.",
+   "sticky": true
+  },
+  {
+   "do": "notify",
+   "type": "warning",
+   "title": "Low memory",
+   "text": "Spork is running low on memory and might slow down. Increase the heap size to keep it working well, or close projects you don't need. The memory indicator shows how much is used.",
+   "sticky": true
+  },
+  {
+   "do": "notify",
+   "type": "error",
+   "title": "Push rejected",
+   "text": "Push to origin/main was rejected: the remote has commits the local branch doesn't.",
+   "sticky": true
+  },
+  {
+   "expect": {
+    "balloons.0.title": "Project opened",
+    "balloons.1.title": "Low memory",
+    "balloons.2.title": "Push rejected",
+    "balloons.3": null,
+    "more": 0
+   },
+   "of": {
+    "do": "balloons"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Project opened",
+     "role": "AXGroup"
+    },
+    {
+     "label": "Low memory",
+     "role": "AXGroup"
+    },
+    {
+     "label": "Push rejected",
+     "role": "AXGroup"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "find": {
+    "label": "Expand",
+    "in": "Low memory"
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "types"
+  },
+  {
+   "do": "notify",
+   "type": "info",
+   "title": "Fourth",
+   "text": "The fourth notification.",
+   "sticky": true
+  },
+  {
+   "do": "notify",
+   "type": "info",
+   "title": "Fifth",
+   "text": "The fifth notification.",
+   "sticky": true
+  },
+  {
+   "expect": {
+    "balloons.0.title": "Push rejected",
+    "balloons.1.title": "Fourth",
+    "balloons.2.title": "Fifth",
+    "balloons.3": null,
+    "more": 2
+   },
+   "of": {
+    "do": "balloons"
+   }
+  },
+  {
+   "find": {
+    "label": "2 more notifications",
+    "role": "AXLink"
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "stack"
+  },
+  {
+   "do": "click",
+   "label": "2 more notifications"
+  },
+  {
+   "expect": {
+    "notifications": true
+   }
+  },
+  {
+   "expect": {
+    "balloons.0": null,
+    "more": 0
+   },
+   "of": {
+    "do": "balloons"
+   }
+  }
+ ]
+}

@@ -1,0 +1,220 @@
+{
+ "id": "stash-shelf-stash-tab",
+ "covers": [
+  "action:Git.Show.Stash",
+  "action:Git.Stash.Refresh",
+  "action:Git.Stash.Toggle.Split.Preview",
+  "context-menu:Vcs.SavedPatches.ContextMenu",
+  "context-menu:Git.Stash.Operations.ContextMenu",
+  "context-menu:Vcs.SavedPatches.ChangesBrowser.ContextMenu",
+  "context-menu:Git.Stash.ChangesBrowser.ContextMenu",
+  "toolbar:Vcs.SavedPatches.ChangesBrowser.Toolbar"
+ ],
+ "reference-app": [
+  "screenshots/menus/vcs-savedpatches-contextmenu.png",
+  "screenshots/menus/git-stash-operations-contextmenu.png",
+  "screenshots/menus/vcs-savedpatches-changesbrowser-contextmenu.png"
+ ],
+ "steps": [
+  {
+   "sh": "git stash push -q -m 'wip readme' README.md"
+  },
+  {
+   "do": "action",
+   "name": "spork::RefreshStashes"
+  },
+  {
+   "do": "action",
+   "name": "spork::ShowStash"
+  },
+  {
+   "find": [
+    {
+     "role": "AXRadioButton",
+     "label": "Commit",
+     "value": "0"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Stash",
+     "value": "1"
+    },
+    {
+     "role": "AXRow",
+     "label": "wip readme"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Preview Diff",
+     "value": "1"
+    },
+    {
+     "role": "AXButton",
+     "label": "Apply"
+    },
+    {
+     "role": "AXButton",
+     "label": "Pop"
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "wip readme"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "wip readme",
+   "button": "right"
+  },
+  {
+   "menu": "context-menu:Vcs.SavedPatches.ContextMenu",
+   "items": [
+    "Pop",
+    "Apply",
+    "Unstash…",
+    "Drop",
+    "Clear",
+    "Show Diff",
+    "Show Diff in a New Tab or Window",
+    "Compare with Local"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "expect": {
+    "view": "Stash"
+   }
+  },
+  {
+   "find": [
+    {
+     "role": "AXRow",
+     "label": "README.md"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "README.md",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "menu": "context-menu:Vcs.SavedPatches.ChangesBrowser.ContextMenu",
+   "items": [
+    "Compare with Local",
+    "Compare Before with Local",
+    "Edit Source",
+    "Open Repository Version",
+    "Cherry-Pick Selected Changes"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": [
+    {
+     "label": "Preview Diff"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Preview Diff"
+  },
+  {
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Preview Diff",
+     "value": "0"
+    }
+   ]
+  },
+  {
+   "do": "action",
+   "name": "spork::ShowHistory"
+  },
+  {
+   "find": [
+    {
+     "role": "AXRow",
+     "label": "README.md"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "README.md",
+   "role": "AXRow"
+  },
+  {
+   "wait": 600
+  },
+  {
+   "expect": {
+    "view": "History"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Preview Diff"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Preview Diff"
+  },
+  {
+   "find": [
+    {
+     "role": "AXRow",
+     "label": "README.md"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "README.md",
+   "role": "AXRow"
+  },
+  {
+   "expect": {
+    "view": "Stash"
+   }
+  },
+  {
+   "sh": "git stash push -q -m 'second' notes.txt -u"
+  },
+  {
+   "do": "action",
+   "name": "spork::RefreshStashes"
+  },
+  {
+   "find": [
+    {
+     "role": "AXRow",
+     "label": "second"
+    },
+    {
+     "role": "AXRow",
+     "label": "wip readme"
+    }
+   ]
+  },
+  {
+   "shot": "stash-tab"
+  }
+ ]
+}

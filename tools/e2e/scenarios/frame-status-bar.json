@@ -1,0 +1,294 @@
+{
+ "id": "frame-status-bar",
+ "covers": [],
+ "reference-app": [
+  "screenshots/frame/main-window.jpg"
+ ],
+ "steps": [
+  {
+   "find": [],
+   "missing": [
+    {
+     "label": "Line 1, column 1"
+    },
+    {
+     "label": "Project",
+     "in": "Status bar"
+    },
+    {
+     "label": "Git",
+     "in": "Status bar"
+    }
+   ]
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "fixture",
+     "role": "AXButton",
+     "in": "Navigation Bar"
+    },
+    {
+     "label": "src",
+     "role": "AXButton",
+     "in": "Navigation Bar"
+    },
+    {
+     "label": "main.rs",
+     "role": "AXButton",
+     "in": "Navigation Bar"
+    },
+    {
+     "label": "mod greeting",
+     "role": "AXButton",
+     "in": "Navigation Bar"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "find": [
+    {
+     "label": "Line 1, column 1",
+     "role": "AXButton",
+     "in": "Status bar"
+    },
+    {
+     "label": "LF",
+     "role": "AXButton",
+     "in": "Status bar"
+    },
+    {
+     "label": "UTF-8",
+     "role": "AXButton",
+     "in": "Status bar"
+    },
+    {
+     "label": "4 spaces",
+     "role": "AXButton",
+     "in": "Status bar"
+    },
+    {
+     "label": "Make file read-only",
+     "role": "AXButton",
+     "in": "Status bar"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "main-rs"
+  },
+  {
+   "do": "keys",
+   "keys": "down down"
+  },
+  {
+   "find": {
+    "label": "Line 3, column 1",
+    "role": "AXButton",
+    "in": "Status bar"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Line 3, column 1",
+   "in": "Status bar"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "GoToLine",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "click",
+   "label": "UTF-8",
+   "in": "Status bar"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "EncodingSelector",
+     "Picker",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "keys",
+   "keys": "up up"
+  },
+  {
+   "do": "click",
+   "label": "mod greeting",
+   "in": "Navigation Bar"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Picker",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "click",
+   "label": "src",
+   "in": "Navigation Bar"
+  },
+  {
+   "find": {
+    "label": "src",
+    "role": "AXRow",
+    "selected": true,
+    "in": "Project Panel"
+   }
+  },
+  {
+   "find": {
+    "label": "main.rs",
+    "role": "AXRow",
+    "in": "Project Panel"
+   }
+  },
+  {
+   "do": "click",
+   "label": "main.rs",
+   "role": "AXRadioButton"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "click",
+   "label": "Make file read-only",
+   "in": "Status bar"
+  },
+  {
+   "find": {
+    "label": "Make file writable",
+    "role": "AXButton",
+    "in": "Status bar"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "x"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "find": {
+    "label": "Modified"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Make file writable",
+   "in": "Status bar"
+  },
+  {
+   "find": {
+    "label": "Make file read-only",
+    "role": "AXButton",
+    "in": "Status bar"
+   }
+  },
+  {
+   "do": "click",
+   "label": "LF",
+   "in": "Status bar"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Picker"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "down enter"
+  },
+  {
+   "find": {
+    "label": "CRLF",
+    "role": "AXButton",
+    "in": "Status bar"
+   }
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "click",
+   "label": "4 spaces",
+   "in": "Status bar"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture"
+   },
+   "within": 8000
+  }
+ ]
+}

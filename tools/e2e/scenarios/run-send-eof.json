@@ -1,0 +1,65 @@
+{
+ "id": "run-send-eof",
+ "covers": [
+  "action:SendEOF"
+ ],
+ "steps": [
+  {
+   "sh": "mkdir -p .zed"
+  },
+  {
+   "file": ".zed/tasks.json",
+   "text": "[{\"label\": \"read\", \"command\": \"cat > got.txt\"}]"
+  },
+  {
+   "do": "open",
+   "path": "README.md"
+  },
+  {
+   "find": {
+    "label": "read, Run / Debug Configurations",
+    "role": "AXButton"
+   },
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-r"
+  },
+  {
+   "expect": {
+    "docks.bottom.panel": "Run",
+    "run.tabs.0.running": true
+   },
+   "within": 15000
+  },
+  {
+   "do": "click",
+   "label": "Console",
+   "role": "AXGroup"
+  },
+  {
+   "do": "type",
+   "text": "hello"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-d"
+  },
+  {
+   "expect": {
+    "run.tabs.0.running": false,
+    "run.tabs.0.last_line": "Process finished with exit code 0"
+   },
+   "within": 10000
+  },
+  {
+   "sh": "cat got.txt",
+   "is": "hello"
+  }
+ ]
+}

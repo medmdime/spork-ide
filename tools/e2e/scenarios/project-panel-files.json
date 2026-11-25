@@ -1,0 +1,84 @@
+{
+ "id": "project-panel-files",
+ "covers": [],
+ "reference-app": [],
+ "steps": [
+  {
+   "find": [
+    {
+     "label": "fixture",
+     "role": "AXRow",
+     "in": "Project Panel"
+    },
+    {
+     "label": "src",
+     "role": "AXRow",
+     "in": "Project Panel"
+    },
+    {
+     "label": "Cargo.toml",
+     "role": "AXRow",
+     "in": "Project Panel"
+    },
+    {
+     "label": "README.md",
+     "role": "AXRow",
+     "in": "Project Panel"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "find": {
+    "label": "main.rs",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "src",
+   "role": "AXRow",
+   "in": "Project Panel"
+  },
+  {
+   "find": [
+    {
+     "label": "fixture",
+     "role": "AXRow",
+     "in": "Project Panel"
+    },
+    {
+     "label": "src",
+     "role": "AXRow",
+     "in": "Project Panel"
+    },
+    {
+     "label": "greeting.rs",
+     "role": "AXRow",
+     "in": "Project Panel"
+    },
+    {
+     "label": "main.rs",
+     "role": "AXRow",
+     "in": "Project Panel"
+    },
+    {
+     "label": "Cargo.toml",
+     "role": "AXRow",
+     "in": "Project Panel"
+    },
+    {
+     "label": "README.md",
+     "role": "AXRow",
+     "in": "Project Panel"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "shot": "src-expanded"
+  }
+ ]
+}

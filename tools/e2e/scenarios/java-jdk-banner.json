@@ -1,0 +1,90 @@
+{
+ "id": "java-jdk-banner",
+ "fixture": "maven",
+ "covers": [],
+ "env": {
+  "SPORK_IDE_JDKS": ""
+ },
+ "steps": [
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": null
+   },
+   "within": 20000
+  },
+  {
+   "do": "open",
+   "path": "src/main/java/com/example/Main.java"
+  },
+  {
+   "find": [
+    {
+     "label": "Project JDK is not defined"
+    },
+    {
+     "label": "Setup SDK",
+     "role": "AXLink"
+    }
+   ],
+   "ordered": true,
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Setup SDK",
+   "role": "AXLink"
+  },
+  {
+   "menu": "action:AddJdkAction",
+   "items": [
+    "Download JDK… (disabled)",
+    "Add JDK from Disk…"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "action",
+   "name": "workspace::ClearAllNotifications"
+  },
+  {
+   "do": "open",
+   "path": "README.md"
+  },
+  {
+   "missing": [
+    {
+     "label": "Project JDK is not defined"
+    }
+   ],
+   "within": 3000
+  },
+  {
+   "do": "open",
+   "path": "src/main/java/com/example/Main.java"
+  },
+  {
+   "find": {
+    "label": "Project JDK is not defined"
+   },
+   "within": 3000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "banner"
+  }
+ ]
+}

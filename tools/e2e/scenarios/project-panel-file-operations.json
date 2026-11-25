@@ -1,0 +1,443 @@
+{
+ "id": "project-panel-file-operations",
+ "covers": [],
+ "reference-app": [],
+ "steps": [
+  {
+   "find": {
+    "label": "README.md",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 10000
+  },
+  {
+   "find": {
+    "label": "src",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 8000
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "click",
+   "label": "src",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Project Panel"
+  },
+  {
+   "wait": 400
+  },
+  {
+   "find": [
+    "New",
+    "Cut",
+    "Copy",
+    "Copy Paths",
+    "Copy Path/Reference…",
+    "Paste",
+    "Rename…",
+    "Refactor",
+    "Delete…",
+    "Open In",
+    "Local History"
+   ],
+   "ordered": true
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": {
+    "label": "README.md",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 8000
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "click",
+   "label": "README.md",
+   "role": "AXRow",
+   "in": "Project Panel"
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "keys",
+   "keys": "shift-f6"
+  },
+  {
+   "find": [
+    "Rename",
+    "Rename file 'README.md' to:"
+   ]
+  },
+  {
+   "wait": 400
+  },
+  {
+   "shot": "rename"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a backspace"
+  },
+  {
+   "do": "type",
+   "text": "NOTES.md"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "sh": "test -f NOTES.md && test ! -e README.md && echo ok",
+   "is": "ok"
+  },
+  {
+   "find": {
+    "label": "NOTES.md",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 8000
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "click",
+   "label": "NOTES.md",
+   "role": "AXRow",
+   "in": "Project Panel"
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "keys",
+   "keys": "f5"
+  },
+  {
+   "find": [
+    "Copy",
+    "New name:",
+    "To directory:",
+    "Open copy in editor"
+   ],
+   "ordered": true
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a backspace"
+  },
+  {
+   "do": "type",
+   "text": "COPY.md"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "sh": "test -f COPY.md && test -f NOTES.md && echo ok",
+   "is": "ok"
+  },
+  {
+   "expect": {
+    "active": "COPY.md"
+   }
+  },
+  {
+   "find": {
+    "label": "COPY.md",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 8000
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "click",
+   "label": "COPY.md",
+   "role": "AXRow",
+   "in": "Project Panel"
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "keys",
+   "keys": "f6"
+  },
+  {
+   "find": [
+    "Move",
+    "To directory:",
+    "Open in editor"
+   ],
+   "ordered": true
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a backspace"
+  },
+  {
+   "do": "type",
+   "text": "$FIXTURE/src"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "sh": "test -f src/COPY.md && test ! -e COPY.md && echo ok",
+   "is": "ok"
+  },
+  {
+   "find": {
+    "label": "NOTES.md",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 8000
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "click",
+   "label": "NOTES.md",
+   "role": "AXRow",
+   "in": "Project Panel"
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-alt-backspace"
+  },
+  {
+   "find": "Delete file \"NOTES.md\"?"
+  },
+  {
+   "wait": 400
+  },
+  {
+   "shot": "delete"
+  },
+  {
+   "do": "click",
+   "label": "Delete",
+   "role": "AXButton"
+  },
+  {
+   "sh": "test ! -e NOTES.md && echo ok",
+   "is": "ok"
+  },
+  {
+   "find": {
+    "label": "Cargo.toml",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 8000
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "click",
+   "label": "Cargo.toml",
+   "role": "AXRow",
+   "in": "Project Panel"
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-x"
+  },
+  {
+   "find": {
+    "label": "src",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 8000
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "click",
+   "label": "src",
+   "role": "AXRow",
+   "in": "Project Panel"
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-v"
+  },
+  {
+   "sh": "test -f src/Cargo.toml && test ! -e Cargo.toml && echo ok",
+   "is": "ok"
+  },
+  {
+   "find": {
+    "label": "greeting.rs",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 8000
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "click",
+   "label": "greeting.rs",
+   "role": "AXRow",
+   "in": "Project Panel"
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-c"
+  },
+  {
+   "find": {
+    "label": "fixture",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 8000
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "click",
+   "label": "fixture",
+   "role": "AXRow",
+   "in": "Project Panel"
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-v"
+  },
+  {
+   "find": [
+    "Copy",
+    "New name:",
+    "To directory:"
+   ],
+   "ordered": true
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "sh": "test -f greeting.rs && test -f src/greeting.rs && echo ok",
+   "is": "ok"
+  },
+  {
+   "do": "click",
+   "label": "fixture",
+   "role": "AXRow",
+   "in": "Project Panel"
+  },
+  {
+   "wait": 400
+  },
+  {
+   "find": {
+    "label": "greeting.rs",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 8000
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "click",
+   "label": "greeting.rs",
+   "role": "AXRow",
+   "nth": 0,
+   "in": "Project Panel"
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "action",
+   "name": "project_panel::CopyPathReference"
+  },
+  {
+   "find": [
+    {
+     "label": "Absolute Path",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "File Name",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Path From Content Root",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Path From Repository Root",
+     "role": "AXMenuItem"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "copy-path-reference"
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "action",
+   "name": "workspace::OpenInTerminal"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "TerminalPanel"
+   }
+  }
+ ]
+}

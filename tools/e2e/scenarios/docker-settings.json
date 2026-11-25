@@ -1,0 +1,253 @@
+{
+ "id": "docker-settings",
+ "covers": [],
+ "reference-app": [],
+ "steps": [
+  {
+   "sh": "(nohup python3 \"$E2E/docker_engine.py\" ../docker.sock ../docker-calls.log 600 > /dev/null 2>&1 &) && for i in $(seq 50); do [ -S ../docker.sock ] && break; sleep 0.1; done && [ -S ../docker.sock ]"
+  },
+  {
+   "do": "open",
+   "path": "README.md"
+  },
+  {
+   "do": "action",
+   "name": "zed::OpenSettings"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "Search settings",
+   "role": "AXTextField",
+   "within": 8000
+  },
+  {
+   "do": "keys",
+   "keys": "d o c k e r",
+   "window": "Settings – fixture"
+  },
+  {
+   "find": [
+    {
+     "label": "Build, Execution, Deployment",
+     "role": "AXRow",
+     "in": "Settings categories"
+    },
+    {
+     "label": "Docker",
+     "role": "AXRow",
+     "in": "Settings categories"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "Docker",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Build, Execution, Deployment/Docker",
+    "settings.docker.connections": [],
+    "settings.docker.form": null
+   }
+  },
+  {
+   "toolbar": "Docker connections",
+   "items": [
+    "Add",
+    "Remove (disabled)"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Add",
+   "role": "AXButton",
+   "in": "Docker connections"
+  },
+  {
+   "expect": {
+    "settings.docker.connections": [
+     "Docker"
+    ],
+    "settings.docker.form.name": "Docker",
+    "settings.docker.form.kind": "Docker for Mac"
+   }
+  },
+  {
+   "find": {
+    "text": "Cannot connect: cannot connect to /var/run/docker.sock: No such file or directory (os error 2)"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Name",
+   "role": "AXTextField",
+   "hover": true
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "docker-page",
+   "window": "smallest"
+  },
+  {
+   "expect": {
+    "settings.apply": true,
+    "settings.modified": [
+     "Build, Execution, Deployment/Docker"
+    ]
+   }
+  },
+  {
+   "do": "click",
+   "label": "Unix socket:",
+   "role": "AXRadioButton"
+  },
+  {
+   "expect": {
+    "settings.docker.form.kind": "Unix socket"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Unix socket",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a",
+   "window": "Settings – fixture"
+  },
+  {
+   "do": "type",
+   "text": "$FIXTURE/../docker.sock",
+   "window": "Settings – fixture"
+  },
+  {
+   "expect": {
+    "settings.docker.form.status": "Connection successful"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Name",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a",
+   "window": "Settings – fixture"
+  },
+  {
+   "do": "type",
+   "text": "Local",
+   "window": "Settings – fixture"
+  },
+  {
+   "expect": {
+    "settings.docker.connections": [
+     "Local"
+    ]
+   }
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "run.services.docker.servers.Local.status": "Disconnected"
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-8"
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "Local",
+   "role": "AXRow",
+   "count": 2,
+   "within": 5000
+  },
+  {
+   "expect": {
+    "run.services.docker.servers.Local.status": "Connected"
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Edit Configuration",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture",
+    "settings.page": "Build, Execution, Deployment/Docker",
+    "settings.docker.connections": [
+     "Local"
+    ],
+    "settings.docker.form.status": "Connection successful"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "find": [
+    {
+     "label": "Local",
+     "role": "AXRow"
+    },
+    {
+     "label": "Unix socket:",
+     "role": "AXRadioButton",
+     "value": "1"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Remove",
+   "role": "AXButton",
+   "in": "Docker connections"
+  },
+  {
+   "expect": {
+    "settings.docker.connections": [],
+    "settings.apply": true
+   }
+  },
+  {
+   "do": "click",
+   "label": "Cancel",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "run.services.docker.servers.Local.status": "Connected"
+   }
+  }
+ ]
+}

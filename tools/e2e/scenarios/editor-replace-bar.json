@@ -1,0 +1,188 @@
+{
+ "id": "editor-replace-bar",
+ "covers": [
+  "action:Replace"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "file": "src/greeting.rs",
+   "text": "pub fn hello(name: &str) -> String {\n    let Name = name;\n    format!(\"Hello, {name} {Name}!\")\n}\n"
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-r"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "BufferSearchBar",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Hide Replace Field",
+     "role": "AXCheckBox",
+     "value": "1",
+     "in": "Find"
+    },
+    {
+     "label": "Replace History",
+     "role": "AXButton",
+     "in": "Replace"
+    },
+    {
+     "label": "Preserve case",
+     "role": "AXCheckBox",
+     "value": "0",
+     "in": "Replace"
+    },
+    {
+     "label": "Replace",
+     "role": "AXButton"
+    },
+    {
+     "label": "Replace All",
+     "role": "AXButton"
+    },
+    {
+     "label": "Exclude",
+     "role": "AXButton"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "Search",
+   "role": "AXGroup"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a n a m e"
+  },
+  {
+   "find": {
+    "label": "1/5",
+    "role": "AXStaticText",
+    "in": "Find"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Replace",
+   "role": "AXGroup"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "BufferSearchBar",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "w h o"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "replace"
+  },
+  {
+   "do": "click",
+   "label": "Exclude",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "2/5",
+    "role": "AXStaticText",
+    "in": "Find"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Replace",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Include",
+    "role": "AXButton"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Preserve case",
+   "role": "AXCheckBox"
+  },
+  {
+   "find": {
+    "label": "Preserve case",
+    "role": "AXCheckBox",
+    "value": "1",
+    "in": "Replace"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Replace All",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "1/1",
+    "role": "AXStaticText",
+    "in": "Find"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "sh": "cat src/greeting.rs",
+   "is": "pub fn hello(name: &str) -> String {\n    let who = who;\n    format!(\"Hello, {who} {Who}!\")\n}"
+  },
+  {
+   "do": "click",
+   "label": "Hide Replace Field",
+   "role": "AXCheckBox"
+  },
+  {
+   "find": {
+    "label": "Show Replace Field",
+    "role": "AXCheckBox",
+    "value": "0",
+    "in": "Find"
+   }
+  },
+  {
+   "find": {
+    "label": "Replace All",
+    "role": "AXButton"
+   },
+   "absent": true
+  }
+ ]
+}

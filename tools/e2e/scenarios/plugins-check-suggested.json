@@ -1,0 +1,134 @@
+{
+ "id": "plugins-check-suggested",
+ "covers": [
+  "action:CheckSuggestedPlugins"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "sh": "(nohup python3 \"$E2E/extensions_http.py\" ../registry-port 300 > /dev/null 2>&1 &) && for i in $(seq 1800); do [ -s ../registry-port ] && break; sleep 0.1; done && python3 -c \"import json; p='../home/.config/spork-ide/settings.json'; s=json.load(open(p)); s['server_url']='http://127.0.0.1:'+open('../registry-port').read().strip(); json.dump(s, open(p, 'w'))\""
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "action",
+   "name": "settings_dialog::CheckSuggestedPlugins"
+  },
+  {
+   "expect": {
+    "notifications.count": 1
+   },
+   "within": 5000
+  },
+  {
+   "do": "action",
+   "name": "notifications_panel::ToggleFocus"
+  },
+  {
+   "find": {
+    "label": "Suggested plugin toml available.",
+    "in": "Notifications"
+   },
+   "within": 5000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleRightDock"
+  },
+  {
+   "file": "app.gleam",
+   "text": "pub fn main() {}\n"
+  },
+  {
+   "find": {
+    "label": "app.gleam",
+    "in": "Project Panel"
+   },
+   "within": 8000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   },
+   "within": 3000
+  },
+  {
+   "do": "action",
+   "name": "settings_dialog::CheckSuggestedPlugins"
+  },
+  {
+   "expect": {
+    "notifications.count": 2
+   },
+   "within": 5000
+  },
+  {
+   "do": "action",
+   "name": "notifications_panel::ToggleFocus"
+  },
+  {
+   "find": {
+    "label": "Suggested plugins toml, gleam available.",
+    "in": "Notifications"
+   },
+   "within": 5000
+  },
+  {
+   "find": {
+    "label": "Configure plugins…",
+    "role": "AXLink"
+   },
+   "within": 5000
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "suggested"
+  },
+  {
+   "do": "click",
+   "label": "Configure plugins…",
+   "role": "AXLink"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture",
+    "settings.page": "Plugins",
+    "settings.plugins.tab": "Marketplace"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "expect": {
+    "settings.plugins.query": "toml"
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Cancel",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings": null
+   },
+   "within": 8000
+  }
+ ]
+}

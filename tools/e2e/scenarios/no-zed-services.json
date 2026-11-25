@@ -1,0 +1,194 @@
+{
+ "id": "no-zed-services",
+ "covers": [],
+ "reference-app": [],
+ "steps": [
+  {
+   "find": [
+    {
+     "label": "Title bar",
+     "role": "AXToolbar"
+    },
+    {
+     "label": "IDE and Project Settings",
+     "in": "Title bar"
+    }
+   ],
+   "missing": [
+    {
+     "label": "Sign In",
+     "in": "Title bar"
+    },
+    {
+     "label": "Sign in",
+     "in": "Title bar"
+    }
+   ]
+  },
+  {
+   "menu": "app-menu:Spork IDE",
+   "path": [
+    "Spork IDE"
+   ],
+   "items": [
+    "About Spork IDE (disabled)",
+    "Settings…",
+    "Hide Spork IDE (disabled)",
+    "Hide Others (disabled)",
+    "Show All (disabled)",
+    "Quit Spork IDE (disabled)"
+   ]
+  },
+  {
+   "menu": "app-menu:Help",
+   "path": [
+    "Help"
+   ],
+   "items": [
+    "Find Action…",
+    "Configure the New UI (disabled)",
+    "Show Log in Finder (disabled)"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "IDE and Project Settings"
+  },
+  {
+   "find": [
+    {
+     "label": "Settings…",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Plugins…",
+     "role": "AXMenuItem"
+    }
+   ],
+   "missing": [
+    {
+     "label": "Sign Out",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Organization"
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-p"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "CommandPalette",
+     "Picker",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "s i g n"
+  },
+  {
+   "find": {
+    "label": "snippets: configure snippets",
+    "role": "AXStaticText"
+   },
+   "missing": [
+    {
+     "label": "client: sign in"
+    },
+    {
+     "label": "client: sign out"
+    },
+    {
+     "label": "client: reconnect"
+    },
+    {
+     "label": "onboarding: sign in"
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane"
+    ]
+   }
+  },
+  {
+   "do": "action",
+   "name": "agent::ToggleFocus"
+  },
+  {
+   "find": {
+    "label": "Select a Model"
+   }
+  },
+  {
+   "do": "action",
+   "name": "agent::ToggleModelSelector"
+  },
+  {
+   "find": {
+    "label": "Configure",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Configure"
+  },
+  {
+   "find": {
+    "label": "Configure LLM Providers",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Configure LLM Providers"
+  },
+  {
+   "find": [
+    {
+     "label": "Anthropic API Key",
+     "role": "AXTextField"
+    },
+    {
+     "label": "OpenAI API Key",
+     "role": "AXTextField"
+    }
+   ],
+   "missing": [
+    {
+     "text": "Zed"
+    },
+    {
+     "text": "Zed AI"
+    }
+   ]
+  }
+ ]
+}

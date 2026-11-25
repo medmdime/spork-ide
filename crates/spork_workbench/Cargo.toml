@@ -1,0 +1,22 @@
+[package]
+name = "spork_workbench"
+description = "IntelliJ-style workbench for GPUI apps: Islands theme, Inter / JetBrains Mono fonts, IntelliJ icons"
+version = "0.0.1"
+edition.workspace = true
+publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
+
+[lib]
+path = "src/spork_workbench.rs"
+doctest = false
+
+[dependencies]
+anyhow.workspace = true
+futures.workspace = true
+gpui_kit.workspace = true
+menu.workspace = true
+rust-embed.workspace = true
+serde_json.workspace = true

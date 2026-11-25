@@ -1,0 +1,11 @@
+# The Rust parts of the end-to-end tests' fixture extensions, built to WebAssembly by
+# tools/e2e/extension_fixtures.py against this repository's extension API.
+[workspace]
+members = ["fixture-language", "fixture-mcp", "fixture-debug"]
+resolver = "2"
+
+[workspace.dependencies]
+zed_extension_api = { path = "../../../../crates/extension_api" }
+
+[profile.release]
+opt-level = "s"

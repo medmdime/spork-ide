@@ -1,0 +1,241 @@
+{
+ "id": "notifications-mark-read",
+ "covers": [
+  "action:MarkNotificationsAsRead"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "toolbar": "Right stripe",
+   "items": [
+    "Notifications",
+    "AI Chat"
+   ],
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   },
+   "within": 3000
+  },
+  {
+   "sh": "git checkout -q -b clash && printf '# Clash\\n' > README.md && git commit -qam 'docs: clash' && git checkout -q main && printf '# Main\\n' > README.md && git commit -qam 'docs: main' && (git merge clash > /dev/null 2>&1 || true) && test -f .git/MERGE_HEAD"
+  },
+  {
+   "find": {
+    "label": "Git",
+    "role": "AXCheckBox",
+    "in": "Left stripe"
+   },
+   "within": 10000
+  },
+  {
+   "menu": "menu:VcsGroups",
+   "path": [
+    "Git"
+   ],
+   "part": true,
+   "items": [
+    "Commit merge",
+    "Abort Merge"
+   ],
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "spork::AbortMerge"
+  },
+  {
+   "find": {
+    "label": "Abort",
+    "role": "AXButton"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Abort",
+   "role": "AXButton"
+  },
+  {
+   "sh": "test -f .git/MERGE_HEAD && echo merging || echo done",
+   "is": "done",
+   "within": 8000
+  },
+  {
+   "expect": {
+    "notifications.count": 1,
+    "notifications.unread": 1,
+    "notifications.expired": 0
+   },
+   "within": 5000
+  },
+  {
+   "do": "action",
+   "name": "notifications_panel::ToggleFocus"
+  },
+  {
+   "expect": {
+    "docks.right.open": true,
+    "docks.right.panel": "Notifications"
+   }
+  },
+  {
+   "find": {
+    "label": "Aborted",
+    "in": "Notifications"
+   },
+   "within": 5000
+  },
+  {
+   "wait": 5500
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "unread"
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleRightDock"
+  },
+  {
+   "expect": {
+    "docks.right.open": false,
+    "notifications.unread": 0
+   }
+  },
+  {
+   "do": "action",
+   "name": "notifications_panel::ToggleFocus"
+  },
+  {
+   "expect": {
+    "docks.right.open": true,
+    "docks.right.panel": "Notifications"
+   }
+  },
+  {
+   "sh": "git checkout -q -b clash2 && printf '# Clash 2\\n' > README.md && git commit -qam 'docs: clash 2' && git checkout -q main && printf '# Main 2\\n' > README.md && git commit -qam 'docs: main 2' && (git merge clash2 > /dev/null 2>&1 || true) && test -f .git/MERGE_HEAD"
+  },
+  {
+   "menu": "menu:VcsGroups",
+   "path": [
+    "Git"
+   ],
+   "part": true,
+   "items": [
+    "Commit merge",
+    "Abort Merge"
+   ],
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "spork::AbortMerge"
+  },
+  {
+   "find": {
+    "label": "Abort",
+    "role": "AXButton"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Abort",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "notifications.count": 2,
+    "notifications.unread": 1
+   },
+   "within": 8000
+  },
+  {
+   "wait": 5500
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "do": "click",
+   "label": "Options",
+   "in": "Notifications"
+  },
+  {
+   "menu": "Notifications options",
+   "items": [
+    "Clear All Notifications",
+    "Mark All Notifications as Read"
+   ],
+   "part": true,
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Mark All Notifications as Read",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "notifications.count": 2,
+    "notifications.unread": 0,
+    "notifications.expired": 2
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "read"
+  },
+  {
+   "wait": 5500
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "do": "click",
+   "label": "Options",
+   "in": "Notifications"
+  },
+  {
+   "do": "click",
+   "label": "Clear All Notifications",
+   "role": "AXMenuItem",
+   "within": 3000
+  },
+  {
+   "expect": {
+    "notifications.count": 0
+   }
+  },
+  {
+   "find": {
+    "text": "Suggestions, events,"
+   },
+   "within": 3000
+  }
+ ]
+}

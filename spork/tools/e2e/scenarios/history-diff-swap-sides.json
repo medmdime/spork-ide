@@ -1,0 +1,29 @@
+{
+ "id": "history-diff-swap-sides",
+ "covers": [
+  "action:SwapSidesInDiffWindow"
+ ],
+ "reference-app": [],
+ "steps": [
+  {"do": "open", "what": "file-history", "path": "README.md"},
+  {"expect": {"view": "File", "selected": "docs: a second line"}, "of": {"do": "history"}},
+  {"find": {"label": "Swap Sides"}, "absent": true},
+  {"sh": "printf '# Fixture\\n' | pbcopy"},
+  {"wait": 800},
+  {"do": "ui"},
+  {"do": "click", "label": "Diff for README.md", "button": "right"},
+  {"wait": 500},
+  {"do": "click", "label": "Compare with Clipboard", "role": "AXMenuItem"},
+  {"expect": {"comparison": "Clipboard vs Local", "preview_changes": ["+two", "+changed"]}, "of": {"do": "history"}},
+  {"toolbar": "Diff.ViewerToolbar", "items": ["Swap Sides"]},
+  {"do": "click", "label": "Swap Sides"},
+  {"expect": {"comparison": "Local vs Clipboard", "preview_changes": ["-two", "-changed"]}, "of": {"do": "history"}},
+  {"wait": 500},
+  {"shot": "swapped"},
+  {"do": "click", "label": "Swap Sides"},
+  {"expect": {"comparison": "Clipboard vs Local", "preview_changes": ["+two", "+changed"]}, "of": {"do": "history"}},
+  {"do": "click", "label": "docs: start the readme"},
+  {"expect": {"selected": "docs: start the readme", "comparison": null}, "of": {"do": "history"}},
+  {"find": {"label": "Swap Sides"}, "absent": true}
+ ]
+}

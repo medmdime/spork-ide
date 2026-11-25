@@ -1,0 +1,18 @@
+[package]
+name = "spork_hosting"
+description = "Spork's hosting-service clients (GitHub pull requests and repositories)"
+version = "0.0.1"
+edition.workspace = true
+publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
+
+[lib]
+path = "src/spork_hosting.rs"
+doctest = false
+
+[dependencies]
+serde_json.workspace = true
+ureq.workspace = true

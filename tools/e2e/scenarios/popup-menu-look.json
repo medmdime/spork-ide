@@ -1,0 +1,104 @@
+{
+ "id": "popup-menu-look",
+ "covers": [],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   }
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "click",
+   "at": [
+    700,
+    300
+   ],
+   "button": "right"
+  },
+  {
+   "find": [
+    {
+     "label": "Go to Definition",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Local History",
+     "role": "AXMenuItem"
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "find": {
+    "label": "Go to Declaration",
+    "role": "AXMenuItem",
+    "selected": true
+   }
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "menu"
+  },
+  {
+   "do": "click",
+   "label": "Local History",
+   "role": "AXMenuItem",
+   "hover": true
+  },
+  {
+   "find": [
+    {
+     "label": "Show History…",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Put Label…",
+     "role": "AXMenuItem"
+    }
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "submenu"
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": {
+    "label": "Go to Definition",
+    "role": "AXMenuItem"
+   },
+   "absent": true
+  }
+ ]
+}

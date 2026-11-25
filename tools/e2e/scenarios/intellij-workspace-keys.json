@@ -1,0 +1,230 @@
+{
+ "id": "intellij-workspace-keys",
+ "covers": [
+  "action:GotoFile",
+  "action:SaveAll"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-o"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "SearchEverywhere",
+     "Input"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "g r e e t i n g"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "go-to-file"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-1"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "expect": {
+    "docks.left.open": true,
+    "docks.left.panel": "Project Panel",
+    "focused": [
+     "Workspace",
+     "Dock",
+     "ProjectPanel"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-1"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-1"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "expect": {
+    "docks.left.open": true,
+    "focused": [
+     "Workspace",
+     "Dock",
+     "ProjectPanel"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-f12"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "TerminalPanel",
+    "focused": [
+     "Workspace",
+     "Dock",
+     "Pane",
+     "Terminal"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-f12"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "expect": {
+    "docks.bottom.open": false
+   }
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-a"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "SearchEverywhere",
+     "Input"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "x"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "y"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "git diff --name-only",
+   "is": "src/greeting.rs\nsrc/main.rs"
+  }
+ ]
+}

@@ -1,0 +1,58 @@
+{
+ "id": "close-projects",
+ "covers": [
+  "action:CloseOtherProjects",
+  "action:CloseAllProjects"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "sh": "mkdir -p ../second && git -C ../second init -q -b trunk"
+  },
+  {
+   "do": "open_project",
+   "path": "$FIXTURE/../second",
+   "new_window": true
+  },
+  {
+   "expect": {
+    "windows.1.title": "second"
+   },
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "projects::CloseOtherProjects"
+  },
+  {
+   "expect": {
+    "windows.0.title": "fixture",
+    "windows.1": null
+   },
+   "within": 10000
+  },
+  {
+   "do": "open_project",
+   "path": "$FIXTURE/../second",
+   "new_window": true
+  },
+  {
+   "expect": {
+    "windows.1.title": "second"
+   },
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "projects::CloseAllProjects"
+  },
+  {
+   "expect": {
+    "roots": [],
+    "windows.0.title": "Welcome to Spork IDE",
+    "windows.1": null
+   },
+   "within": 10000
+  }
+ ]
+}

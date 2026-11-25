@@ -1,0 +1,166 @@
+{
+ "id": "file-structure",
+ "covers": [
+  "action:FileStructurePopup"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "file": "src/greeting.rs",
+   "text": "pub struct Greeter {\n    name: String,\n}\n\nimpl Greeter {\n    pub fn hello(&self) -> String {\n        format!(\"Hello, {}!\", self.name)\n    }\n}\n\npub fn hello(name: &str) -> String {\n    format!(\"Hello, {name}!\")\n}\n"
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "down down down down down down"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f12"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "FileStructure"
+    ]
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "File Structure",
+     "role": "AXWindow"
+    },
+    {
+     "label": "greeting.rs",
+     "in": "File Structure"
+    }
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "Greeter",
+     "role": "AXRow",
+     "in": "Structure"
+    },
+    {
+     "label": "name",
+     "role": "AXRow",
+     "in": "Structure"
+    },
+    {
+     "label": "Greeter",
+     "role": "AXRow",
+     "in": "Structure"
+    },
+    {
+     "label": "hello",
+     "role": "AXRow",
+     "selected": true,
+     "in": "Structure"
+    },
+    {
+     "label": "hello",
+     "role": "AXRow",
+     "in": "Structure"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "file-structure"
+  },
+  {
+   "do": "keys",
+   "keys": "n a m"
+  },
+  {
+   "find": [
+    {
+     "label": "Search",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Greeter",
+     "role": "AXRow",
+     "in": "Structure"
+    },
+    {
+     "label": "name",
+     "role": "AXRow",
+     "selected": true,
+     "in": "Structure"
+    }
+   ]
+  },
+  {
+   "find": {
+    "label": "hello",
+    "role": "AXRow"
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 2, column 5",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::FileStructure"
+  },
+  {
+   "find": {
+    "label": "File Structure",
+    "role": "AXWindow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": {
+    "label": "File Structure",
+    "role": "AXWindow"
+   },
+   "absent": true
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  }
+ ]
+}

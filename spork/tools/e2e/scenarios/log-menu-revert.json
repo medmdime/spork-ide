@@ -1,0 +1,40 @@
+{
+ "id": "log-menu-revert",
+ "covers": [
+  "action:Git.Revert.In.Log"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "find": {
+    "text": "feat(login): log out too",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "feat(login): log out too",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "find": {
+    "text": "Revert Commit",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Revert Commit",
+   "role": "AXMenuItem"
+  },
+  {
+   "sh": "git log -1 --format=%s",
+   "is": "Revert \"feat(login): log out too\""
+  },
+  {
+   "sh": "cat login.rs",
+   "is": "login"
+  }
+ ]
+}

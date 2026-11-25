@@ -1,0 +1,312 @@
+{
+ "id": "branches-ref-actions",
+ "covers": [
+  "action:GitCheckoutFromInputAction",
+  "action:GitDeleteRefAction"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "find": {
+    "label": "Checkout Tag or Revision…",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Checkout Tag or Revision…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Enter reference (branch, tag) name or commit hash:",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Enter reference (branch, tag) name or commit hash:",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "v 1 . 0"
+  },
+  {
+   "find": {
+    "label": "OK",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "git": [
+    "status"
+   ],
+   "contains": "HEAD detached at v1.0"
+  },
+  {
+   "git": [
+    "switch",
+    "-q",
+    "main"
+   ]
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "find": {
+    "label": "fix/typo",
+    "role": "AXRow",
+    "in": "Branches Tree"
+   }
+  },
+  {
+   "do": "click",
+   "label": "fix/typo",
+   "role": "AXRow",
+   "in": "Branches Tree"
+  },
+  {
+   "find": {
+    "label": "Compare with 'main'",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Compare with 'main'",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Comparing fix/typo with main",
+    "role": "AXGroup"
+   }
+  },
+  {
+   "find": {
+    "label": "Commits that exist in fix/typo but don't exist in main:",
+    "role": "AXGroup"
+   }
+  },
+  {
+   "find": {
+    "label": "Commits that exist in main but don't exist in fix/typo:",
+    "role": "AXGroup",
+    "value": "No commits"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": {
+    "label": "Comparing fix/typo with main",
+    "role": "AXGroup"
+   },
+   "absent": true
+  },
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "find": {
+    "label": "fix/typo",
+    "role": "AXRow",
+    "in": "Branches Tree"
+   }
+  },
+  {
+   "do": "click",
+   "label": "fix/typo",
+   "role": "AXRow",
+   "in": "Branches Tree"
+  },
+  {
+   "find": {
+    "label": "Show Diff with Working Tree",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Show Diff with Working Tree",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Changes Between fix/typo and Current Working Tree",
+    "role": "AXGroup",
+    "value": "M\tREADME.md\nD\ttypo.txt"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": {
+    "label": "Changes Between fix/typo and Current Working Tree",
+    "role": "AXGroup"
+   },
+   "absent": true
+  },
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "find": {
+    "label": "feature/login",
+    "role": "AXRow",
+    "in": "Branches Tree"
+   }
+  },
+  {
+   "do": "click",
+   "label": "feature/login",
+   "role": "AXRow",
+   "in": "Branches Tree"
+  },
+  {
+   "find": {
+    "label": "Delete",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Delete",
+   "role": "AXMenuItem"
+  },
+  {
+   "git": [
+    "branch",
+    "--list"
+   ],
+   "lacks": "feature/login"
+  },
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "find": {
+    "label": "Search for branches and actions"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "v 1"
+  },
+  {
+   "find": {
+    "label": "v1.0",
+    "role": "AXRow",
+    "in": "Branches Tree"
+   }
+  },
+  {
+   "do": "click",
+   "label": "v1.0",
+   "role": "AXRow",
+   "in": "Branches Tree"
+  },
+  {
+   "find": {
+    "label": "Delete",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Delete",
+   "role": "AXMenuItem"
+  },
+  {
+   "git": [
+    "tag",
+    "--list"
+   ],
+   "lacks": "v1.0"
+  },
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "find": {
+    "label": "Search for branches and actions"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "o r i g i n / f i x"
+  },
+  {
+   "find": {
+    "label": "origin/fix/typo",
+    "role": "AXRow",
+    "in": "Branches Tree"
+   }
+  },
+  {
+   "do": "click",
+   "label": "origin/fix/typo",
+   "role": "AXRow",
+   "in": "Branches Tree"
+  },
+  {
+   "find": {
+    "label": "Delete",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Delete",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Delete",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Delete",
+   "role": "AXButton"
+  },
+  {
+   "git": [
+    "ls-remote",
+    "origin"
+   ],
+   "lacks": "refs/heads/fix/typo"
+  },
+  {
+   "git": [
+    "branch",
+    "--list"
+   ],
+   "contains": "fix/typo"
+  }
+ ]
+}

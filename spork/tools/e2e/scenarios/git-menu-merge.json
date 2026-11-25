@@ -1,0 +1,178 @@
+{
+ "id": "git-menu-merge",
+ "covers": [
+  "action:Git.Merge",
+  "dialog:Git.Merge",
+  "context-menu:Git.MainMenu.MergeActions",
+  "action:Git.Merge.Commit"
+ ],
+ "reference-app": [
+  "screenshots/dialogs/git-merge.png"
+ ],
+ "steps": [
+  {
+   "do": "action",
+   "name": "spork::GitMerge"
+  },
+  {
+   "find": [
+    {
+     "text": "Merge into main"
+    },
+    {
+     "text": "git merge"
+    },
+    {
+     "text": "feature/login"
+    },
+    {
+     "text": "Show help contents"
+    },
+    {
+     "text": "Modify options"
+    },
+    {
+     "text": "Cancel"
+    },
+    {
+     "text": "Merge"
+    }
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "open"
+  },
+  {
+   "do": "click",
+   "label": "Specify branch",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a f i x / t y p o"
+  },
+  {
+   "find": [
+    {
+     "text": "fix/typo"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Modify options"
+  },
+  {
+   "menu": "dialog:Git.Merge",
+   "items": [
+    "Add Merge Options (disabled)",
+    "--no-ff  Create a merge commit even if it can be fast-forwarded",
+    "--ff-only  Merge only if it can be fast-forwarded",
+    "--squash  Create a single commit for all merged changes",
+    "--no-commit  Do not commit the merge result",
+    "--no-verify  Bypass the pre-merge and commit message hooks",
+    "--allow-unrelated-histories  Allow merging histories that do not share a common ancestor."
+   ]
+  },
+  {
+   "do": "click",
+   "label": "--no-ff  Create a merge commit even if it can be fast-forwarded"
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "click",
+   "label": "Modify options"
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "click",
+   "label": "--no-commit  Do not commit the merge result"
+  },
+  {
+   "wait": 400
+  },
+  {
+   "find": [
+    {
+     "text": "--no-ff",
+     "role": "AXButton"
+    },
+    {
+     "text": "--no-commit",
+     "role": "AXButton"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Merge",
+   "role": "AXButton"
+  },
+  {
+   "git": [
+    "log",
+    "-1",
+    "--format=%s",
+    "MERGE_HEAD"
+   ],
+   "is": "fix: a typo"
+  },
+  {
+   "wait": 800
+  },
+  {
+   "do": "menubar",
+   "path": [
+    "Git"
+   ]
+  },
+  {
+   "menu": "context-menu:Git.MainMenu.MergeActions",
+   "items": [
+    "Commit…",
+    "Push…",
+    "Update Project...",
+    "Pull…",
+    "Fetch",
+    "Merge…",
+    "Commit merge",
+    "Abort Merge",
+    "Rebase…",
+    "Branches…",
+    "New Branch…",
+    "New Tag…",
+    "Reset HEAD…",
+    "New Worktree…",
+    "Worktrees…",
+    "Show Git Log",
+    "Patch ▸",
+    "Uncommitted Changes ▸",
+    "Current File ▸",
+    "GitLab ▸",
+    "GitHub ▸",
+    "Manage Remotes…",
+    "Clone…",
+    "VCS Operations Popup…"
+   ]
+  },
+  {
+   "do": "action",
+   "name": "spork::CommitMerge"
+  },
+  {
+   "git": [
+    "log",
+    "-1",
+    "--format=%s"
+   ],
+   "is": "Merge branch 'fix/typo'"
+  }
+ ]
+}

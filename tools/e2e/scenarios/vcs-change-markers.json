@@ -1,0 +1,191 @@
+{
+ "id": "vcs-change-markers",
+ "covers": [
+  "action:VcsShowNextChangeMarker",
+  "action:VcsShowPrevChangeMarker",
+  "action:Vcs.RollbackChangedLines"
+ ],
+ "steps": [
+  {
+   "file": "src/greeting.rs",
+   "text": "pub fn hello(name: &str) -> String {\n    format!(\"Hi, {name}!\")\n}\n\npub fn wave() {}\n"
+  },
+  {
+   "find": [
+    {
+     "label": "Git",
+     "role": "AXCheckBox",
+     "in": "Left stripe"
+    },
+    {
+     "label": "Commit",
+     "role": "AXCheckBox",
+     "in": "Left stripe"
+    }
+   ],
+   "within": 10000
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "wait": 2500
+  },
+  {
+   "shot": "markers"
+  },
+  {
+   "do": "click",
+   "at": [
+    346,
+    104
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "Previous Change",
+     "role": "AXButton",
+     "enabled": false
+    },
+    {
+     "label": "Next Change",
+     "role": "AXButton",
+     "enabled": true
+    },
+    {
+     "label": "Rollback…",
+     "role": "AXButton"
+    },
+    {
+     "label": "Show Diff for Lines",
+     "role": "AXButton"
+    },
+    {
+     "label": "Copy",
+     "role": "AXButton",
+     "enabled": true
+    }
+   ]
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "popup"
+  },
+  {
+   "do": "click",
+   "label": "Next Change",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "Previous Change",
+     "role": "AXButton",
+     "enabled": true
+    },
+    {
+     "label": "Next Change",
+     "role": "AXButton",
+     "enabled": false
+    },
+    {
+     "label": "Copy",
+     "role": "AXButton",
+     "enabled": false
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": {
+    "label": "Rollback…",
+    "role": "AXButton"
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-alt-shift-up"
+  },
+  {
+   "find": [
+    {
+     "label": "Previous Change",
+     "role": "AXButton",
+     "enabled": false
+    },
+    {
+     "label": "Copy",
+     "role": "AXButton",
+     "enabled": true
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Rollback…",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Rollback…",
+    "role": "AXButton"
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "sh": "grep -c 'Hello, {name}' src/greeting.rs",
+   "is": "1"
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-alt-shift-down"
+  },
+  {
+   "find": [
+    {
+     "label": "Previous Change",
+     "role": "AXButton",
+     "enabled": false
+    },
+    {
+     "label": "Copy",
+     "role": "AXButton",
+     "enabled": false
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "keys",
+   "keys": "alt-cmd-z"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "sh": "git diff --quiet -- src/greeting.rs && echo clean",
+   "is": "clean"
+  }
+ ]
+}

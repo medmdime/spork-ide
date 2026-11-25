@@ -1,0 +1,180 @@
+{
+ "id": "branches-branch-menu",
+ "covers": [
+  "context-menu:Git.Branch",
+  "context-menu:Git.Branch.Checkout",
+  "context-menu:Git.Branch.Backend.Checkout",
+  "context-menu:Git.Branch.Placeholder",
+  "context-menu:Git.Branch.Backend"
+ ],
+ "reference-app": [
+  "screenshots/menus/git-branch.png"
+ ],
+ "steps": [
+  {
+   "git": [
+    "branch",
+    "--set-upstream-to=origin/fix/typo",
+    "fix/typo"
+   ]
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "expect": {
+    "branches_popup": true
+   }
+  },
+  {
+   "find": {
+    "label": "main",
+    "role": "AXRow",
+    "in": "Branches Tree"
+   }
+  },
+  {
+   "do": "click",
+   "label": "main",
+   "role": "AXRow",
+   "in": "Branches Tree"
+  },
+  {
+   "menu": "context-menu:Git.Branch",
+   "items": [
+    "New Branch from 'main'…",
+    "Show Diff with Working Tree",
+    "New Worktree…",
+    "Update",
+    "Push…",
+    "Tracked Branch 'origin/main'",
+    "Rename…"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "fix/typo",
+   "role": "AXRow",
+   "in": "Branches Tree"
+  },
+  {
+   "menu": "context-menu:Git.Branch",
+   "items": [
+    "Checkout",
+    "New Branch from 'fix/typo'…",
+    "Checkout and Rebase onto 'main'",
+    "Checkout and Update",
+    "Compare with 'main'",
+    "Show Diff with Working Tree",
+    "Rebase 'main' onto 'fix/typo'",
+    "Merge 'fix/typo' into 'main'",
+    "New Worktree from 'fix/typo'…",
+    "Update",
+    "Push…",
+    "Tracked Branch 'origin/fix/typo'",
+    "Rename…",
+    "Delete"
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "Tracked Branch 'origin/fix/typo'",
+   "role": "AXMenuItem",
+   "hover": true
+  },
+  {
+   "menu": "context-menu:Git.Branch.Placeholder",
+   "items": [
+    "Checkout",
+    "New Branch from 'origin/fix/typo'…",
+    "Checkout and Rebase onto 'main'",
+    "Compare with 'main'",
+    "Show Diff with Working Tree",
+    "Rebase 'main' onto 'origin/fix/typo'",
+    "Merge 'origin/fix/typo' into 'main'",
+    "New Worktree from 'origin/fix/typo'…",
+    "Pull into 'main' Using Rebase",
+    "Pull into 'main' Using Merge",
+    "Delete"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Search for branches and actions"
+  },
+  {
+   "do": "keys",
+   "keys": "r e l e a s e"
+  },
+  {
+   "find": {
+    "label": "release/2026.1",
+    "role": "AXRow",
+    "in": "Branches Tree"
+   }
+  },
+  {
+   "do": "click",
+   "label": "release/2026.1",
+   "role": "AXRow",
+   "in": "Branches Tree"
+  },
+  {
+   "menu": "context-menu:Git.Branch.Backend.Checkout",
+   "items": [
+    "Checkout",
+    "Open Worktree…",
+    "New Branch from 'release/2026.1'…",
+    "Checkout and Rebase onto 'main'",
+    "Compare with 'main'",
+    "Show Diff with Working Tree",
+    "Rebase 'main' onto 'release/2026.1'",
+    "Merge 'release/2026.1' into 'main'",
+    "New Worktree from 'release/2026.1'…",
+    "Update (disabled)",
+    "Push…",
+    "Rename…",
+    "Delete"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Search for branches and actions"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a backspace v 1"
+  },
+  {
+   "find": {
+    "label": "v1.0",
+    "role": "AXRow",
+    "in": "Branches Tree"
+   }
+  },
+  {
+   "do": "click",
+   "label": "v1.0",
+   "role": "AXRow",
+   "in": "Branches Tree"
+  },
+  {
+   "menu": "context-menu:Git.Branch.Backend",
+   "items": [
+    "Checkout",
+    "Show Diff with Working Tree",
+    "Merge 'v1.0' into 'main'",
+    "New Worktree from 'v1.0'…",
+    "Push to origin",
+    "Delete"
+   ]
+  }
+ ]
+}

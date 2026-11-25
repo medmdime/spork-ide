@@ -1,0 +1,216 @@
+{
+ "id": "markdown-insert",
+ "covers": [
+  "action:Markdown.InsertEmptyTable",
+  "action:org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction",
+  "action:org.intellij.plugins.markdown.ui.actions.styling.MarkdownIntroduceLinkReferenceAction"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "file": "notes.md",
+   "text": "See [the docs](https://example.com \"Docs\") first.\n\n"
+  },
+  {
+   "do": "open",
+   "path": "notes.md"
+  },
+  {
+   "expect": {
+    "active": "notes.md",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "action",
+   "name": "workspace::CloseAllDocks"
+  },
+  {
+   "expect": {
+    "docks.left.open": false,
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   },
+   "within": 3000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-end"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-n"
+  },
+  {
+   "menu": "Generate",
+   "items": [
+    "Create Link",
+    "Generate Table Of Contents",
+    "Insert Table",
+    "Insert Image"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Insert Table",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "1×1",
+    "in": "Insert Table"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "right down down"
+  },
+  {
+   "find": {
+    "label": "3×2",
+    "in": "Insert Table"
+   }
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "shot": "table-size"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "do": "type",
+   "text": "Name"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "sh": "tr '\\n' '|' < notes.md",
+   "is": "See [the docs](https://example.com \"Docs\") first.|||Name   |   |||---|---|||   |   |||   |   ||",
+   "within": 3000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home right right right right right right right"
+  },
+  {
+   "do": "action",
+   "name": "spork_editor::ConvertToReference"
+  },
+  {
+   "do": "type",
+   "text": "docs"
+  },
+  {
+   "do": "keys",
+   "keys": "escape cmd-s"
+  },
+  {
+   "sh": "tr '\\n' '|' < notes.md",
+   "is": "See [the docs][docs] first.|||Name   |   |||---|---|||   |   |||   |   ||||[docs]: https://example.com \"Docs\"|",
+   "within": 3000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-u"
+  },
+  {
+   "find": [
+    {
+     "label": "Path:",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Width:",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Height:",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Screen Reader Text",
+     "role": "AXButton"
+    },
+    {
+     "label": "Cancel",
+     "role": "AXButton"
+    },
+    {
+     "label": "Save",
+     "role": "AXButton"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "type",
+   "text": "img/logo.png"
+  },
+  {
+   "do": "click",
+   "label": "Screen Reader Text",
+   "role": "AXButton"
+  },
+  {
+   "do": "click",
+   "label": "Title:",
+   "role": "AXTextField"
+  },
+  {
+   "do": "type",
+   "text": "Logo"
+  },
+  {
+   "do": "click",
+   "label": "Description:",
+   "nth": 1
+  },
+  {
+   "do": "type",
+   "text": "The logo"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "shot": "insert-image"
+  },
+  {
+   "do": "click",
+   "label": "Save",
+   "role": "AXButton"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "sh": "tr '\\n' '|' < notes.md",
+   "is": "See [the docs][docs] first.|![The logo](img/logo.png \"Logo\")||Name   |   |||---|---|||   |   |||   |   ||||[docs]: https://example.com \"Docs\"|",
+   "within": 3000
+  }
+ ]
+}

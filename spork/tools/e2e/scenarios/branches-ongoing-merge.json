@@ -1,0 +1,276 @@
+{
+ "id": "branches-ongoing-merge",
+ "covers": [
+  "context-menu:Git.Ongoing.Rebase.Actions",
+  "action:Git.Merge.Abort",
+  "action:Git.CherryPick.Continue",
+  "action:Git.CherryPick.Abort",
+  "action:Git.Revert.Abort"
+ ],
+ "reference-app": [
+  "screenshots/menus/git-ongoing-rebase-actions.png"
+ ],
+ "steps": [
+  {
+   "file": "conflict.txt",
+   "text": "base\n"
+  },
+  {
+   "git": [
+    "add",
+    "conflict.txt"
+   ]
+  },
+  {
+   "git": [
+    "commit",
+    "-q",
+    "-m",
+    "base"
+   ]
+  },
+  {
+   "git": [
+    "switch",
+    "-q",
+    "-c",
+    "other"
+   ]
+  },
+  {
+   "file": "conflict.txt",
+   "text": "other\n"
+  },
+  {
+   "git": [
+    "add",
+    "conflict.txt"
+   ]
+  },
+  {
+   "git": [
+    "commit",
+    "-q",
+    "-m",
+    "other"
+   ]
+  },
+  {
+   "git": [
+    "switch",
+    "-q",
+    "main"
+   ]
+  },
+  {
+   "file": "conflict.txt",
+   "text": "main\n"
+  },
+  {
+   "git": [
+    "add",
+    "conflict.txt"
+   ]
+  },
+  {
+   "git": [
+    "commit",
+    "-q",
+    "-m",
+    "mine"
+   ]
+  },
+  {
+   "git": [
+    "merge",
+    "other"
+   ],
+   "contains": "CONFLICT"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "menu": "context-menu:Git.Ongoing.Rebase.Actions",
+   "items": [
+    "Commit…",
+    "Abort Merge",
+    "New Branch…",
+    "New Worktree…",
+    "Checkout Tag or Revision…"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Abort Merge",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Abort",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "git": [
+    "status"
+   ],
+   "lacks": "unmerged paths"
+  },
+  {
+   "git": [
+    "status"
+   ],
+   "contains": "On branch main"
+  },
+  {
+   "git": [
+    "cherry-pick",
+    "other"
+   ],
+   "contains": "CONFLICT"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "menu": "context-menu:Git.Ongoing.Rebase.Actions",
+   "items": [
+    "Commit…",
+    "Abort Cherry-Pick",
+    "Continue Cherry-Pick",
+    "New Branch…",
+    "New Worktree…",
+    "Checkout Tag or Revision…"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Abort Cherry-Pick",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Abort",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "git": [
+    "status"
+   ],
+   "lacks": "cherry-pick"
+  },
+  {
+   "git": [
+    "cherry-pick",
+    "other"
+   ],
+   "contains": "CONFLICT"
+  },
+  {
+   "file": "conflict.txt",
+   "text": "resolved\n"
+  },
+  {
+   "git": [
+    "add",
+    "conflict.txt"
+   ]
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "find": {
+    "label": "Continue Cherry-Pick",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Continue Cherry-Pick",
+   "role": "AXMenuItem"
+  },
+  {
+   "git": [
+    "status"
+   ],
+   "lacks": "cherry-pick"
+  },
+  {
+   "git": [
+    "log",
+    "-1",
+    "--format=%s"
+   ],
+   "contains": "other"
+  },
+  {
+   "git": [
+    "revert",
+    "--no-edit",
+    "HEAD~1"
+   ],
+   "contains": "CONFLICT"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "menu": "context-menu:Git.Ongoing.Rebase.Actions",
+   "items": [
+    "Commit…",
+    "Abort Revert",
+    "New Branch…",
+    "New Worktree…",
+    "Checkout Tag or Revision…"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Abort Revert",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Abort",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "git": [
+    "status"
+   ],
+   "lacks": "revert"
+  }
+ ]
+}

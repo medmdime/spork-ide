@@ -1,0 +1,211 @@
+{
+ "id": "vcs-shelf",
+ "covers": [
+  "action:ChangesView.Shelve",
+  "dialog:ChangesView.Shelve",
+  "action:Vcs.Show.Shelf",
+  "toolbar:ShelvedChangesToolbar",
+  "context-menu:ShelvedChangesPopupMenu"
+ ],
+ "reference-app": [
+  "screenshots/dialogs/changesview-shelve.jpg",
+  "screenshots/menus/shelvedchangespopupmenu.png"
+ ],
+ "steps": [
+  {
+   "find": [
+    {
+     "label": "Commit",
+     "role": "AXCheckBox",
+     "in": "Left stripe"
+    }
+   ],
+   "within": 10000
+  },
+  {
+   "file": "README.md",
+   "text": "# Fixture\n\nA greeting, then a farewell.\n"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "action",
+   "name": "changes::Shelve"
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXCheckBox",
+     "value": "1",
+     "in": "Shelve Changes"
+    },
+    {
+     "role": "AXButton",
+     "label": "Shelve Changes"
+    }
+   ],
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "role": "AXTextArea",
+   "in": "Shelve Changes"
+  },
+  {
+   "do": "type",
+   "text": "readme wording"
+  },
+  {
+   "find": {
+    "role": "AXTextArea",
+    "value": "readme wording",
+    "in": "Shelve Changes"
+   }
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "do": "click",
+   "label": "Shelve Changes",
+   "role": "AXButton"
+  },
+  {
+   "sh": "git status --porcelain README.md",
+   "is": "",
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "spork::ShowShelf"
+  },
+  {
+   "expect": {
+    "docks.left.open": true,
+    "docks.left.panel": "Commit"
+   }
+  },
+  {
+   "find": [
+    {
+     "role": "AXRadioButton",
+     "label": "Commit",
+     "value": "0"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Shelf",
+     "value": "1"
+    },
+    {
+     "role": "AXRow",
+     "label": "readme wording"
+    }
+   ],
+   "within": 8000
+  },
+  {
+   "find": [
+    {
+     "role": "AXButton",
+     "label": "Unshelve Silently"
+    },
+    {
+     "role": "AXButton",
+     "label": "Show Diff"
+    },
+    {
+     "role": "AXButton",
+     "label": "View Options"
+    },
+    {
+     "role": "AXButton",
+     "label": "Expand All"
+    },
+    {
+     "role": "AXButton",
+     "label": "Collapse All"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "readme wording",
+   "role": "AXRow"
+  },
+  {
+   "do": "click",
+   "label": "Show Diff",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "active": "Shelved: README.md"
+   },
+   "within": 8000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "click",
+   "at": [
+    700,
+    600
+   ],
+   "hover": true
+  },
+  {
+   "shot": "shelf-diff"
+  },
+  {
+   "do": "click",
+   "label": "readme wording",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "menu": "context-menu:ShelvedChangesPopupMenu",
+   "items": [
+    "Unshelve…",
+    "Restore (disabled)",
+    "Show Diff",
+    "Create Patch…",
+    "Copy as Patch to Clipboard",
+    "Import Patches…",
+    "Rename…",
+    "Delete…"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Unshelve…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "README.md",
+     "value": "1"
+    },
+    {
+     "role": "AXButton",
+     "label": "Unshelve Changes"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Unshelve Changes",
+   "role": "AXButton"
+  },
+  {
+   "sh": "git status --porcelain README.md",
+   "is": "M README.md",
+   "within": 10000
+  }
+ ]
+}

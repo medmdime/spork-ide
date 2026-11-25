@@ -1,0 +1,378 @@
+{
+ "id": "settings-keymap",
+ "covers": [],
+ "reference-app": [
+  "screenshots/settings/keymap.jpg"
+ ],
+ "steps": [
+  {
+   "do": "action",
+   "name": "zed::OpenSettings"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "Keymap",
+   "role": "AXRow",
+   "in": "Settings categories",
+   "within": 8000
+  },
+  {
+   "expect": {
+    "settings.page": "Keymap",
+    "settings.keymap.rows": [
+     "▸ Editor Actions",
+     "▸ Main Menu",
+     "▸ Tool Windows",
+     "▸ Version Control Systems",
+     "▸ Other"
+    ]
+   }
+  },
+  {
+   "find": [
+    {
+     "value": "macOS",
+     "role": "AXPopUpButton"
+    },
+    {
+     "label": "Expand All",
+     "role": "AXButton"
+    },
+    {
+     "label": "Collapse All",
+     "role": "AXButton"
+    },
+    {
+     "label": "Search actions",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Find Actions by Shortcut",
+     "role": "AXButton"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "keymap",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Main Menu",
+   "in": "Actions"
+  },
+  {
+   "do": "click",
+   "label": "Edit",
+   "in": "Actions"
+  },
+  {
+   "find": [
+    {
+     "label": "Undo",
+     "in": "Actions"
+    },
+    {
+     "label": "Select All",
+     "in": "Actions"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Select All",
+   "in": "Actions",
+   "button": "right"
+  },
+  {
+   "menu": "Select All",
+   "items": [
+    "Add Keyboard Shortcut",
+    "Remove ⌘A"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Add Keyboard Shortcut",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "First stroke",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Second stroke:",
+     "role": "AXCheckBox"
+    },
+    {
+     "label": "OK",
+     "role": "AXButton",
+     "enabled": false
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-alt-shift-k",
+   "window": "Settings – fixture"
+  },
+  {
+   "find": {
+    "label": "First stroke",
+    "role": "AXTextField",
+    "value": "⌥⇧⌘K"
+   }
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "keyboard-shortcut",
+   "window": "smallest"
+  },
+  {
+   "do": "keys",
+   "keys": "enter",
+   "window": "Settings – fixture"
+  },
+  {
+   "expect": {
+    "settings.keymap.selected": "editor::SelectAll",
+    "settings.keymap.selected_shortcuts": [
+     "⌘A",
+     "⌥⇧⌘K"
+    ],
+    "settings.apply": true,
+    "settings.modified": [
+     "Keymap"
+    ]
+   }
+  },
+  {
+   "do": "click",
+   "label": "Cancel",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings": null
+   }
+  },
+  {
+   "sh": "test ! -e ../home/.config/spork-ide/keymap.json || ! grep -q editor::SelectAll ../home/.config/spork-ide/keymap.json"
+  },
+  {
+   "do": "action",
+   "name": "zed::OpenSettings"
+  },
+  {
+   "expect": {
+    "settings.page": "Keymap",
+    "settings.apply": false
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "Search actions",
+   "role": "AXTextField",
+   "within": 8000
+  },
+  {
+   "do": "keys",
+   "keys": "s e l e c t space a l l",
+   "window": "Settings – fixture"
+  },
+  {
+   "find": {
+    "label": "Select All",
+    "in": "Actions"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Select All",
+   "in": "Actions",
+   "button": "right"
+  },
+  {
+   "do": "click",
+   "label": "Add Keyboard Shortcut",
+   "role": "AXMenuItem"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-c",
+   "window": "Settings – fixture"
+  },
+  {
+   "expect": {
+    "settings.keymap.recording.first": "⌘C"
+   }
+  },
+  {
+   "of": {
+    "do": "state"
+   },
+   "expect": {
+    "settings.keymap.recording.conflicts.0": "Copy"
+   }
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton",
+   "in": "Keyboard Shortcut"
+  },
+  {
+   "find": [
+    {
+     "label": "Remove",
+     "role": "AXButton",
+     "in": "Warning"
+    },
+    {
+     "label": "Keep",
+     "role": "AXButton",
+     "in": "Warning"
+    },
+    {
+     "label": "Cancel",
+     "role": "AXButton",
+     "in": "Warning"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Cancel",
+   "role": "AXButton",
+   "in": "Warning"
+  },
+  {
+   "do": "click",
+   "label": "Select All",
+   "in": "Actions",
+   "button": "right"
+  },
+  {
+   "do": "click",
+   "label": "Add Keyboard Shortcut",
+   "role": "AXMenuItem"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-alt-shift-k enter",
+   "window": "Settings – fixture"
+  },
+  {
+   "expect": {
+    "settings.keymap.selected_shortcuts": [
+     "⌘A",
+     "⌥⇧⌘K"
+    ]
+   }
+  },
+  {
+   "do": "click",
+   "label": "Apply",
+   "role": "AXButton"
+  },
+  {
+   "sh": "cat ../home/.config/spork-ide/keymap.json",
+   "contains": "\"alt-cmd-shift-k\": \"editor::SelectAll\"",
+   "within": 8000
+  },
+  {
+   "expect": {
+    "settings.apply": false,
+    "settings.keymap.edits": 0,
+    "settings.keymap.selected_shortcuts": [
+     "⌘A",
+     "⌥⇧⌘K"
+    ]
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Find Actions by Shortcut",
+   "role": "AXButton"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-alt-shift-k",
+   "window": "Settings – fixture"
+  },
+  {
+   "expect": {
+    "settings.keymap.shortcut_filter": [
+     "⌥⇧⌘K"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Select All",
+    "in": "Actions"
+   },
+   "missing": [
+    {
+     "label": "Undo",
+     "in": "Actions"
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape",
+   "window": "Settings – fixture"
+  },
+  {
+   "do": "click",
+   "value": "macOS",
+   "role": "AXPopUpButton"
+  },
+  {
+   "do": "click",
+   "label": "VS Code",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "settings.apply": true,
+    "look.base_keymap": "macOS"
+   }
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings": null,
+    "look.base_keymap": "VS Code"
+   },
+   "within": 8000
+  }
+ ]
+}

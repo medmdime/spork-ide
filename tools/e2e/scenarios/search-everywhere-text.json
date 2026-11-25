@@ -1,0 +1,162 @@
+{
+ "id": "search-everywhere-text",
+ "covers": [
+  "action:TextSearchAction",
+  "dialog:TextSearchAction"
+ ],
+ "reference-app": [
+  "screenshots/dialogs/textsearchaction.jpg"
+ ],
+ "steps": [
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-shift-cmd-e"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "SearchEverywhere",
+     "Input"
+    ]
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Text",
+     "role": "AXRadioButton",
+     "value": "1",
+     "in": "Search Everywhere"
+    },
+    {
+     "label": "Match Case",
+     "role": "AXButton"
+    },
+    {
+     "label": "Words",
+     "role": "AXButton"
+    },
+    {
+     "label": "Regex",
+     "role": "AXButton"
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "h e l l o"
+  },
+  {
+   "find": [
+    {
+     "label": "pub fn hello(name: &str) -> String {",
+     "role": "AXStaticText",
+     "selected": true
+    },
+    {
+     "label": "format!(\"Hello, {name}!\")",
+     "role": "AXStaticText"
+    },
+    {
+     "label": "println!(\"{}\", greeting::hello(\"world\"));",
+     "role": "AXStaticText"
+    }
+   ],
+   "within": 8000
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "text"
+  },
+  {
+   "do": "click",
+   "label": "Match Case",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "format!(\"Hello, {name}!\")",
+    "role": "AXStaticText"
+   },
+   "absent": true,
+   "within": 8000
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "find": {
+    "label": "println!(\"{}\", greeting::hello(\"world\"));",
+    "role": "AXStaticText",
+    "selected": true
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Line 4, column 30",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::GoToText"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "SearchEverywhere",
+     "Input"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Text",
+    "role": "AXRadioButton",
+    "value": "1",
+    "in": "Search Everywhere"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  }
+ ]
+}

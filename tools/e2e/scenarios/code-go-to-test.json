@@ -1,0 +1,237 @@
+{
+ "id": "code-go-to-test",
+ "covers": [
+  "action:GotoTest",
+  "action:GotoRelated"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "sh": "mkdir -p tests"
+  },
+  {
+   "file": "tests/greeting.rs",
+   "text": "#[test]\nfn says_hello() {}\n"
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-f12"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-t"
+  },
+  {
+   "expect": {
+    "active": "tests/greeting.rs"
+   }
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-t"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-cmd-up"
+  },
+  {
+   "expect": {
+    "active": "tests/greeting.rs"
+   }
+  },
+  {
+   "file": "src/greeting_test.rs",
+   "text": "#[test]\nfn says_hello_again() {}\n"
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-t"
+  },
+  {
+   "find": [
+    {
+     "label": "Choose Test for greeting (2 found)",
+     "role": "AXMenu"
+    },
+    {
+     "label": "greeting_test.rs",
+     "role": "AXMenuItem",
+     "selected": true
+    },
+    {
+     "label": "greeting.rs",
+     "role": "AXMenuItem"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "choose-test"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "active": "src/greeting_test.rs"
+   }
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-cmd-up"
+  },
+  {
+   "find": [
+    {
+     "label": "Choose Target",
+     "role": "AXMenu"
+    },
+    {
+     "label": "greeting_test.rs",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "greeting.rs",
+     "role": "AXMenuItem"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-t"
+  },
+  {
+   "find": {
+    "label": "No test subjects found"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-cmd-up"
+  },
+  {
+   "find": {
+    "label": "No related symbols"
+   }
+  },
+  {
+   "menu": "Navigate",
+   "path": [
+    "Navigate"
+   ],
+   "items": [
+    "Super Method (disabled)",
+    "Test",
+    "Related Symbol…"
+   ],
+   "part": true
+  }
+ ]
+}

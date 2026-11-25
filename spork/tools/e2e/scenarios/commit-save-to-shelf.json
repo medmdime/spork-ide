@@ -1,0 +1,69 @@
+{
+ "id": "commit-save-to-shelf",
+ "covers": [
+  "action:ChangesView.SaveToShelve"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "action",
+   "name": "spork::ToggleCommit"
+  },
+  {
+   "expect": {
+    "left": "[Commit, Project]"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXCheckBox"
+    }
+   ],
+   "within": 6000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "README.md"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "action",
+   "name": "changes::SaveToShelf"
+  },
+  {
+   "sh": "grep -c 'DESCRIPTION\" value=\"Changes' .idea/shelf/Changes.xml",
+   "is": "1"
+  },
+  {
+   "sh": "grep -q '^+changed' .idea/shelf/Changes/shelved.patch && ! git diff --quiet HEAD -- README.md"
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXCheckBox"
+    }
+   ]
+  },
+  {
+   "do": "action",
+   "name": "spork::ShowShelf"
+  },
+  {
+   "find": [
+    {
+     "role": "AXRow",
+     "label": "Changes"
+    }
+   ],
+   "within": 5000
+  }
+ ]
+}

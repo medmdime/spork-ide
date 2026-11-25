@@ -1,0 +1,271 @@
+{
+ "id": "find-tool-window-exclude",
+ "covers": [
+  "action:UsageView.Exclude",
+  "action:UsageView.Include",
+  "action:UsageView.Remove",
+  "action:UsageView.Rerun"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-f"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "FindInFiles",
+     "Input"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "g r e e t i n g"
+  },
+  {
+   "find": {
+    "label": "2 matches in 1 file",
+    "role": "AXStaticText"
+   },
+   "within": 8000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-enter"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "Find"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Found occurrences",
+     "role": "AXRow",
+     "in": "Find Results"
+    },
+    {
+     "label": "main.rs",
+     "role": "AXRow",
+     "in": "Find Results"
+    },
+    {
+     "label": "mod greeting;",
+     "role": "AXRow",
+     "in": "Find Results",
+     "selected": true
+    },
+    {
+     "label": "println!(\"{}\", greeting::hello(\"world\"));",
+     "role": "AXRow",
+     "in": "Find Results"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "keys",
+   "keys": "backspace"
+  },
+  {
+   "do": "keys",
+   "keys": "alt-cmd-down"
+  },
+  {
+   "find": {
+    "label": "Line 4, column 20",
+    "role": "AXButton"
+   }
+  },
+  {
+   "find": {
+    "label": "Occurrence 1 of 1",
+    "in": "Navigation Bar"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-3"
+  },
+  {
+   "find": {
+    "label": "println!(\"{}\", greeting::hello(\"world\"));",
+    "role": "AXRow",
+    "in": "Find Results",
+    "selected": true
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "up"
+  },
+  {
+   "find": {
+    "label": "mod greeting;",
+    "role": "AXRow",
+    "in": "Find Results",
+    "selected": true
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "shift-backspace"
+  },
+  {
+   "do": "keys",
+   "keys": "alt-cmd-up"
+  },
+  {
+   "find": {
+    "label": "Line 1, column 5",
+    "role": "AXButton"
+   }
+  },
+  {
+   "find": {
+    "label": "Occurrence 1 of 2",
+    "in": "Navigation Bar"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-3"
+  },
+  {
+   "find": {
+    "label": "mod greeting;",
+    "role": "AXRow",
+    "in": "Find Results",
+    "selected": true
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-x"
+  },
+  {
+   "find": {
+    "label": "mod greeting;",
+    "role": "AXRow",
+    "in": "Find Results"
+   },
+   "absent": true
+  },
+  {
+   "find": {
+    "label": "println!(\"{}\", greeting::hello(\"world\"));",
+    "role": "AXRow",
+    "in": "Find Results",
+    "selected": true
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-r"
+  },
+  {
+   "find": {
+    "label": "mod greeting;",
+    "role": "AXRow",
+    "in": "Find Results"
+   },
+   "within": 8000
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "println!(\"{}\", greeting::hello(\"world\"));",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Find Results"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "menu": "context-menu:UsageView.Popup",
+   "items": [
+    "Rerun",
+    "Jump to Source",
+    "Open in Right Split",
+    "Exclude",
+    "Remove"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Exclude",
+   "role": "AXMenuItem"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "println!(\"{}\", greeting::hello(\"world\"));",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Find Results"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "menu": "context-menu:UsageView.Popup",
+   "items": [
+    "Rerun",
+    "Jump to Source",
+    "Open in Right Split",
+    "Include",
+    "Remove"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Include",
+   "role": "AXMenuItem"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "println!(\"{}\", greeting::hello(\"world\"));",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Find Results"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "Remove",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "println!(\"{}\", greeting::hello(\"world\"));",
+    "role": "AXRow",
+    "in": "Find Results"
+   },
+   "absent": true
+  }
+ ]
+}

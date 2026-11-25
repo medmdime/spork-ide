@@ -1,0 +1,342 @@
+{
+ "id": "bookmarks",
+ "covers": [
+  "action:ToggleBookmark",
+  "action:ToggleBookmarkWithMnemonic",
+  "dialog:ToggleBookmarkWithMnemonic",
+  "action:ActivateBookmarksToolWindow",
+  "action:GotoBookmark1",
+  "action:ToggleBookmark1",
+  "action:ShowTypeBookmarks",
+  "action:ShowBookmarks",
+  "action:EditBookmark",
+  "action:DeleteMnemonicFromBookmark"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "f3"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-2"
+  },
+  {
+   "expect": {
+    "docks.left.open": true,
+    "docks.left.panel": "Bookmarks"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Bookmarks",
+     "role": "AXCheckBox",
+     "value": "1",
+     "in": "Left stripe"
+    },
+    {
+     "label": "Edit",
+     "role": "AXButton",
+     "in": "Bookmarks"
+    },
+    {
+     "label": "Expand All",
+     "role": "AXButton",
+     "in": "Bookmarks"
+    },
+    {
+     "label": "Collapse All",
+     "role": "AXButton",
+     "in": "Bookmarks"
+    },
+    {
+     "label": "fixture",
+     "role": "AXRow"
+    },
+    {
+     "label": "greeting.rs:1",
+     "role": "AXRow",
+     "selected": true
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-2"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "do": "keys",
+   "keys": "alt-f3"
+  },
+  {
+   "find": [
+    {
+     "label": "Add Mnemonic Bookmark",
+     "role": "AXWindow"
+    },
+    {
+     "label": "1",
+     "role": "AXButton"
+    },
+    {
+     "label": "0",
+     "role": "AXButton"
+    },
+    {
+     "label": "A",
+     "role": "AXButton"
+    },
+    {
+     "label": "Z",
+     "role": "AXButton"
+    },
+    {
+     "label": "Description (Optional)"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "mnemonic-chooser"
+  },
+  {
+   "do": "keys",
+   "keys": "a"
+  },
+  {
+   "find": {
+    "label": "Add Mnemonic Bookmark",
+    "role": "AXWindow"
+   },
+   "absent": true
+  },
+  {
+   "find": {
+    "label": "A greeting.rs:2",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-shift-1"
+  },
+  {
+   "find": {
+    "label": "1 greeting.rs:3",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "up up"
+  },
+  {
+   "find": {
+    "label": "Line 1, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-1"
+  },
+  {
+   "find": {
+    "label": "Line 3, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "gutter"
+  },
+  {
+   "do": "keys",
+   "keys": "alt-cmd-f3"
+  },
+  {
+   "find": [
+    {
+     "label": "Go to Mnemonic",
+     "role": "AXWindow"
+    },
+    {
+     "label": "A greeting.rs:2",
+     "role": "AXRow"
+    },
+    {
+     "label": "1 greeting.rs:3",
+     "role": "AXRow"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "find": {
+    "label": "greeting.rs:1",
+    "role": "AXRow",
+    "in": "Go to Mnemonic"
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "a"
+  },
+  {
+   "find": {
+    "label": "Go to Mnemonic",
+    "role": "AXWindow"
+   },
+   "absent": true
+  },
+  {
+   "find": {
+    "label": "Line 2, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f3"
+  },
+  {
+   "find": [
+    {
+     "label": "Bookmarks",
+     "role": "AXWindow"
+    },
+    {
+     "label": "fixture",
+     "role": "AXRow"
+    },
+    {
+     "label": "greeting.rs:1",
+     "role": "AXRow",
+     "selected": true
+    },
+    {
+     "label": "A greeting.rs:2",
+     "role": "AXRow"
+    },
+    {
+     "label": "1 greeting.rs:3",
+     "role": "AXRow"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 2000
+  },
+  {
+   "shot": "show-bookmarks"
+  },
+  {
+   "do": "keys",
+   "keys": "down down enter"
+  },
+  {
+   "find": {
+    "label": "Bookmarks",
+    "role": "AXWindow"
+   },
+   "absent": true
+  },
+  {
+   "find": {
+    "label": "Line 3, column 1",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "up"
+  },
+  {
+   "do": "action",
+   "name": "navigate::RenameBookmark"
+  },
+  {
+   "find": {
+    "label": "Bookmark Description",
+    "role": "AXWindow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "s a y"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "find": {
+    "label": "say A greeting.rs:2",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::RemoveMnemonic"
+  },
+  {
+   "find": {
+    "label": "say greeting.rs:2",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "f3"
+  },
+  {
+   "find": {
+    "label": "say greeting.rs:2",
+    "role": "AXRow"
+   },
+   "absent": true
+  },
+  {
+   "find": {
+    "label": "greeting.rs:1",
+    "role": "AXRow"
+   }
+  }
+ ]
+}

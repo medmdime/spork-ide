@@ -1,0 +1,258 @@
+{
+ "id": "problems-tool-window-options",
+ "covers": [
+  "context-menu:ProblemsView.ToolWindow.TreePopup",
+  "action:ProblemsView.CopyProblemDescription",
+  "action:ProblemsView.GroupByToolId",
+  "action:ProblemsView.SortFoldersFirst",
+  "action:ProblemsView.AutoscrollToSource"
+ ],
+ "reference-app": [],
+ "settings": {
+  "enable_language_server": true,
+  "lsp": {
+   "rust-analyzer": {
+    "binary": {
+     "path": "$RUST_ANALYZER"
+    },
+    "initialization_options": {
+     "checkOnSave": false,
+     "cargo": {
+      "buildScripts": {
+       "enable": false
+      }
+     },
+     "procMacro": {
+      "enable": false
+     }
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "file": "src/greeting.rs",
+   "text": "pub fn hello(name: &str) -> String {\n    let count: i32 = \"one\";\n    format!(\"Hello, {name}!\")\n}\n"
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-6"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "Problems"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "greeting.rs",
+     "role": "AXRow",
+     "in": "Problems"
+    },
+    {
+     "label": "expected i32, found &'static str",
+     "role": "AXRow",
+     "in": "Problems"
+    }
+   ],
+   "ordered": true,
+   "within": 60000
+  },
+  {
+   "sh": "printf none | pbcopy"
+  },
+  {
+   "do": "click",
+   "label": "expected i32, found &'static str",
+   "role": "AXRow",
+   "in": "Problems",
+   "button": "right"
+  },
+  {
+   "menu": "context-menu:ProblemsView.ToolWindow.TreePopup",
+   "items": [
+    "Show Quick-Fixes",
+    "Copy Problem Description",
+    "Jump to Source"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Copy Problem Description",
+   "role": "AXMenuItem"
+  },
+  {
+   "sh": "pbpaste",
+   "is": "expected i32, found &'static str"
+  },
+  {
+   "sh": "printf none | pbcopy"
+  },
+  {
+   "do": "click",
+   "label": "expected i32, found &'static str",
+   "role": "AXRow",
+   "in": "Problems"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-c"
+  },
+  {
+   "sh": "pbpaste",
+   "is": "expected i32, found &'static str"
+  },
+  {
+   "do": "click",
+   "label": "View Options",
+   "in": "Problems Toolbar"
+  },
+  {
+   "find": [
+    {
+     "label": "Warning",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Show Other Problems",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Folders Always on Top",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Severity",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Name",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Group by Inspection",
+     "role": "AXMenuItem"
+    }
+   ],
+   "ordered": true,
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Group by Inspection",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "greeting.rs",
+     "role": "AXRow",
+     "in": "Problems"
+    },
+    {
+     "label": "rust-analyzer",
+     "role": "AXRow",
+     "in": "Problems"
+    },
+    {
+     "label": "expected i32, found &'static str",
+     "role": "AXRow",
+     "in": "Problems"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Options",
+   "in": "Problems"
+  },
+  {
+   "menu": "action:ProblemsView.AutoscrollToSource",
+   "items": [
+    "Open Files with Single Click",
+    "Enable Preview Tab",
+    "Open Editor Preview"
+   ],
+   "part": true,
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Open Files with Single Click",
+   "role": "AXMenuItem"
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Project Errors",
+   "role": "AXRadioButton"
+  },
+  {
+   "find": {
+    "label": "expected i32, found &'static str",
+    "role": "AXRow",
+    "in": "Problems"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "expected i32, found &'static str",
+   "role": "AXRow",
+   "in": "Problems"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs",
+    "focused": [
+     "Workspace",
+     "Dock",
+     "ProblemsPanel"
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-down"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   },
+   "within": 5000
+  }
+ ]
+}

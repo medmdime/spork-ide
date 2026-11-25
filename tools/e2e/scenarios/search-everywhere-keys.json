@@ -1,0 +1,150 @@
+{
+ "id": "search-everywhere-keys",
+ "covers": [
+  "action:SearchEverywhere.NavigateToNextGroup",
+  "action:SearchEverywhere.NavigateToPrevGroup",
+  "action:SearchEverywhere.SelectItem"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "do": "action",
+   "name": "navigate::SearchEverywhere"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "SearchEverywhere",
+     "Input"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "r e"
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXStaticText",
+     "in": "Search Everywhere",
+     "selected": true
+    },
+    {
+     "label": "greeting.rs",
+     "role": "AXStaticText",
+     "in": "Search Everywhere"
+    },
+    {
+     "label": "Redo",
+     "role": "AXStaticText",
+     "in": "Search Everywhere"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "find": {
+    "label": "greeting.rs",
+    "role": "AXStaticText",
+    "in": "Search Everywhere",
+    "selected": true
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "pagedown"
+  },
+  {
+   "find": {
+    "label": "README.md",
+    "role": "AXStaticText",
+    "in": "Search Everywhere",
+    "selected": true
+   },
+   "absent": true
+  },
+  {
+   "find": {
+    "label": "greeting.rs",
+    "role": "AXStaticText",
+    "in": "Search Everywhere",
+    "selected": true
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "pageup"
+  },
+  {
+   "find": {
+    "label": "README.md",
+    "role": "AXStaticText",
+    "in": "Search Everywhere",
+    "selected": true
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-down"
+  },
+  {
+   "find": {
+    "label": "README.md",
+    "role": "AXStaticText",
+    "in": "Search Everywhere",
+    "selected": true
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-up"
+  },
+  {
+   "find": {
+    "label": "README.md",
+    "role": "AXStaticText",
+    "in": "Search Everywhere",
+    "selected": true
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "active": "README.md",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Search Everywhere",
+    "role": "AXWindow"
+   },
+   "absent": true
+  }
+ ]
+}

@@ -1,0 +1,209 @@
+{
+ "id": "markdown-preview-sync",
+ "covers": [
+  "action:org.intellij.plugins.markdown.ui.actions.scrolling.AutoScrollAction",
+  "action:Markdown.Preview.AdjustFontSize",
+  "toolbar:Markdown.Toolbar.Right"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "file": "notes.md",
+   "text": "## Section 1\n\nParagraph 1 of the notes.\n\n## Section 2\n\nParagraph 2 of the notes.\n\n## Section 3\n\nParagraph 3 of the notes.\n\n## Section 4\n\nParagraph 4 of the notes.\n\n## Section 5\n\nParagraph 5 of the notes.\n\n## Section 6\n\nParagraph 6 of the notes.\n\n## Section 7\n\nParagraph 7 of the notes.\n\n## Section 8\n\nParagraph 8 of the notes.\n\n## Section 9\n\nParagraph 9 of the notes.\n\n## Section 10\n\nParagraph 10 of the notes.\n\n## Section 11\n\nParagraph 11 of the notes.\n\n## Section 12\n\nParagraph 12 of the notes.\n\n## Section 13\n\nParagraph 13 of the notes.\n\n## Section 14\n\nParagraph 14 of the notes.\n\n## Section 15\n\nParagraph 15 of the notes.\n\n## Section 16\n\nParagraph 16 of the notes.\n\n## Section 17\n\nParagraph 17 of the notes.\n\n## Section 18\n\nParagraph 18 of the notes.\n\n## Section 19\n\nParagraph 19 of the notes.\n\n## Section 20\n\nParagraph 20 of the notes.\n\n## Section 21\n\nParagraph 21 of the notes.\n\n## Section 22\n\nParagraph 22 of the notes.\n\n## Section 23\n\nParagraph 23 of the notes.\n\n## Section 24\n\nParagraph 24 of the notes.\n\n## Section 25\n\nParagraph 25 of the notes.\n\n## Section 26\n\nParagraph 26 of the notes.\n\n## Section 27\n\nParagraph 27 of the notes.\n\n## Section 28\n\nParagraph 28 of the notes.\n\n## Section 29\n\nParagraph 29 of the notes.\n\n## Section 30\n\nParagraph 30 of the notes.\n\n## Section 31\n\nParagraph 31 of the notes.\n\n## Section 32\n\nParagraph 32 of the notes.\n\n## Section 33\n\nParagraph 33 of the notes.\n\n## Section 34\n\nParagraph 34 of the notes.\n\n## Section 35\n\nParagraph 35 of the notes.\n\n## Section 36\n\nParagraph 36 of the notes.\n\n## Section 37\n\nParagraph 37 of the notes.\n\n## Section 38\n\nParagraph 38 of the notes.\n\n## Section 39\n\nParagraph 39 of the notes.\n\n## Section 40\n\nParagraph 40 of the notes.\n\n## Section 41\n\nParagraph 41 of the notes.\n\n## Section 42\n\nParagraph 42 of the notes.\n\n## Section 43\n\nParagraph 43 of the notes.\n\n## Section 44\n\nParagraph 44 of the notes.\n\n## Section 45\n\nParagraph 45 of the notes.\n\n## Section 46\n\nParagraph 46 of the notes.\n\n## Section 47\n\nParagraph 47 of the notes.\n\n## Section 48\n\nParagraph 48 of the notes.\n\n## Section 49\n\nParagraph 49 of the notes.\n\n## Section 50\n\nParagraph 50 of the notes.\n\n## Section 51\n\nParagraph 51 of the notes.\n\n## Section 52\n\nParagraph 52 of the notes.\n\n## Section 53\n\nParagraph 53 of the notes.\n\n## Section 54\n\nParagraph 54 of the notes.\n\n## Section 55\n\nParagraph 55 of the notes.\n\n## Section 56\n\nParagraph 56 of the notes.\n\n## Section 57\n\nParagraph 57 of the notes.\n\n## Section 58\n\nParagraph 58 of the notes.\n\n## Section 59\n\nParagraph 59 of the notes.\n\n## Section 60\n\nParagraph 60 of the notes.\n\n"
+  },
+  {
+   "do": "open",
+   "path": "notes.md"
+  },
+  {
+   "expect": {
+    "active": "notes.md",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "action",
+   "name": "workspace::CloseAllDocks"
+  },
+  {
+   "do": "action",
+   "name": "spork_editor::MarkdownEditorAndPreview"
+  },
+  {
+   "expect": {
+    "split": "horizontal",
+    "items": [
+     "notes.md",
+     "Preview notes.md"
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "find": [
+    {
+     "label": "Sync Scroll",
+     "in": "Markdown Editor Layout Actions"
+    },
+    {
+     "label": "Editor",
+     "role": "AXButton",
+     "in": "Markdown Editor Layout Actions"
+    },
+    {
+     "label": "Editor and Preview",
+     "role": "AXButton",
+     "in": "Markdown Editor Layout Actions"
+    },
+    {
+     "label": "Preview",
+     "role": "AXButton",
+     "in": "Markdown Editor Layout Actions"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Sync Scroll",
+   "in": "Markdown Editor Layout Actions"
+  },
+  {
+   "do": "keys",
+   "keys": "pagedown pagedown pagedown"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "sync-off"
+  },
+  {
+   "do": "click",
+   "label": "Sync Scroll",
+   "in": "Markdown Editor Layout Actions"
+  },
+  {
+   "do": "keys",
+   "keys": "pagedown"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "sync-on"
+  },
+  {
+   "do": "click",
+   "at": [
+    950,
+    400
+   ],
+   "button": "right"
+  },
+  {
+   "find": {
+    "label": "Adjust Font Size…",
+    "role": "AXMenuItem"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Adjust Font Size…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "text": "Font size:"
+    },
+    {
+     "label": "Decrease",
+     "role": "AXButton"
+    },
+    {
+     "label": "15"
+    },
+    {
+     "label": "Increase",
+     "role": "AXButton"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "adjust-font-size"
+  },
+  {
+   "do": "click",
+   "label": "Increase",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "look.markdown_preview_font_size": 16.0
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Decrease",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "look.markdown_preview_font_size": 14.0
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Decrease",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "look.markdown_preview_font_size": 12.0
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": {
+    "text": "Font size:"
+   },
+   "absent": true
+  }
+ ]
+}

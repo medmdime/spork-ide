@@ -1,0 +1,258 @@
+{
+ "id": "settings-tools-pages",
+ "covers": [],
+ "reference-app": [
+  "screenshots/settings/tools-terminal.jpg",
+  "screenshots/settings/advanced-settings.jpg"
+ ],
+ "steps": [
+  {
+   "do": "keys",
+   "keys": "cmd-,"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture",
+    "settings.page": "Appearance & Behavior/Appearance"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "Build, Execution, Deployment",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "do": "click",
+   "label": "Debugger",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "do": "click",
+   "label": "Data Views",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Build, Execution, Deployment/Debugger/Data Views"
+   },
+   "within": 8000
+  },
+  {
+   "toolbar": "Settings page",
+   "items": [
+    "Show values inline"
+   ],
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Languages & Frameworks",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "do": "click",
+   "label": "Markdown",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Languages & Frameworks/Markdown"
+   }
+  },
+  {
+   "toolbar": "Settings page",
+   "items": [
+    "Default layout",
+    "Preview font size"
+   ]
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "markdown",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Tools",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "do": "click",
+   "label": "Terminal",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Tools/Terminal"
+   }
+  },
+  {
+   "toolbar": "Settings page",
+   "items": [
+    "Font",
+    "Fallback",
+    "Copy to clipboard on selection",
+    "Use Option as Meta key",
+    "Cursor shape"
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "Start directory",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Environment variables",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Shell path",
+     "role": "AXTextField"
+    }
+   ]
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "terminal",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Advanced Settings",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Advanced Settings"
+   }
+  },
+  {
+   "toolbar": "Settings page",
+   "items": [
+    "Use native file chooser dialog on Windows/macOS"
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "Duration of storing changes in Local History",
+     "role": "AXTextField",
+     "value": "5"
+    },
+    {
+     "label": "Terminal scrollback buffer size",
+     "role": "AXTextField",
+     "value": "10000"
+    }
+   ]
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "advanced",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Duration of storing changes in Local History",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a 7",
+   "window": "Settings – fixture"
+  },
+  {
+   "expect": {
+    "settings.modified": [
+     "Advanced Settings"
+    ]
+   }
+  },
+  {
+   "do": "click",
+   "label": "Apply",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings.apply": false
+   },
+   "within": 8000
+  },
+  {
+   "expect": {
+    "value": 7
+   },
+   "of": {
+    "do": "setting",
+    "path": "/spork/local_history/days_to_keep"
+   },
+   "within": 8000
+  },
+  {
+   "sh": "cat ../home/.config/spork-ide/local_history.json",
+   "contains": "\"days_to_keep\": 7"
+  },
+  {
+   "sh": "cat ../home/.config/spork-ide/settings.json",
+   "lacks": "days_to_keep"
+  },
+  {
+   "do": "click",
+   "label": "Terminal scrollback buffer size",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a 5 0 0 0",
+   "window": "Settings – fixture"
+  },
+  {
+   "expect": {
+    "settings.apply": true
+   }
+  },
+  {
+   "do": "click",
+   "label": "Cancel",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings": null
+   }
+  },
+  {
+   "expect": {
+    "value": 10000
+   },
+   "of": {
+    "do": "setting",
+    "path": "/terminal/max_scroll_history_lines"
+   }
+  },
+  {
+   "sh": "cat ../home/.config/spork-ide/settings.json",
+   "lacks": "max_scroll_history_lines"
+  }
+ ]
+}

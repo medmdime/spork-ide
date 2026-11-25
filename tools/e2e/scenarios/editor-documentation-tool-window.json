@@ -1,0 +1,353 @@
+{
+ "id": "editor-documentation-tool-window",
+ "covers": [
+  "action:QuickDocCopy",
+  "action:Documentation.ToggleShowInPopup",
+  "action:Documentation.ToggleAutoUpdate",
+  "action:Documentation.EditSource",
+  "action:Documentation.ToggleAutoShow"
+ ],
+ "reference-app": [],
+ "settings": {
+  "enable_language_server": true,
+  "lsp": {
+   "rust-analyzer": {
+    "binary": {
+     "path": "$RUST_ANALYZER"
+    },
+    "initialization_options": {
+     "checkOnSave": false,
+     "cargo": {
+      "buildScripts": {
+       "enable": false
+      }
+     },
+     "procMacro": {
+      "enable": false
+     }
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "action",
+   "name": "workspace::CloseAllDocks"
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "expect": {
+    "code.ready": true
+   },
+   "within": 90000
+  },
+  {
+   "wait": 2000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down down down right right right right right right right right right right right right right right right right right right right right right right right right right right right right right"
+  },
+  {
+   "find": {
+    "label": "Line 4, column 30",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "f1"
+  },
+  {
+   "find": [
+    {
+     "label": "`hello` on docs.rs",
+     "role": "AXLink"
+    }
+   ],
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "More",
+   "in": "Documentation"
+  },
+  {
+   "menu": "action:QuickJavaDoc",
+   "items": [
+    "Open in Documentation Tool Window",
+    "Show Documentation Popup First",
+    "Show on Mouse Move",
+    "Show Automatically During Completion",
+    "Adjust Font Size…",
+    "Restore Size (disabled)",
+    "Copy Quick Doc",
+    "Back (disabled)",
+    "Forward (disabled)",
+    "View External Documentation"
+   ],
+   "checked": [
+    "Show Documentation Popup First",
+    "Show on Mouse Move"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Copy Quick Doc",
+   "role": "AXMenuItem"
+  },
+  {
+   "sh": "pbpaste",
+   "contains": "pub fn hello(name: &str) -> String"
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "keys",
+   "keys": "f1"
+  },
+  {
+   "find": [
+    {
+     "label": "`hello` on docs.rs",
+     "role": "AXLink"
+    }
+   ],
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "More",
+   "in": "Documentation"
+  },
+  {
+   "do": "click",
+   "label": "Open in Documentation Tool Window",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "docks.right.open": true,
+    "docks.right.panel": "Documentation",
+    "documentation.shown": "hello"
+   },
+   "within": 5000
+  },
+  {
+   "find": [
+    {
+     "label": "Documentation",
+     "role": "AXToolbar"
+    },
+    {
+     "label": "hello",
+     "role": "AXRadioButton"
+    }
+   ]
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "tool-window"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down down down right right right right right"
+  },
+  {
+   "expect": {
+    "documentation.shown": "println"
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "Options",
+   "in": "Documentation"
+  },
+  {
+   "menu": "action:Documentation.ToggleAutoUpdate",
+   "items": [
+    "Show Documentation Popup First",
+    "Show on Mouse Move",
+    "Show Automatically During Completion",
+    "Auto-Update from Source"
+   ],
+   "part": true,
+   "checked": [
+    "Show Documentation Popup First",
+    "Show on Mouse Move",
+    "Auto-Update from Source",
+    "Right"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Auto-Update from Source",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "documentation.auto_update": false
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down down down right right right right right right right right right right right right right right right right right right right right right right right right right right right right right"
+  },
+  {
+   "wait": 2000
+  },
+  {
+   "expect": {
+    "documentation.shown": "println"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "f1"
+  },
+  {
+   "expect": {
+    "documentation.shown": "hello"
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "Options",
+   "in": "Documentation"
+  },
+  {
+   "do": "click",
+   "label": "Show Documentation Popup First",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "documentation.popup_first": false
+   }
+  },
+  {
+   "do": "action",
+   "name": "workspace::CloseAllDocks"
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "expect": {
+    "docks.right.open": false
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down down down right right right right right f1"
+  },
+  {
+   "expect": {
+    "docks.right.open": true,
+    "docks.right.panel": "Documentation",
+    "documentation.shown": "println"
+   },
+   "within": 20000
+  },
+  {
+   "find": {
+    "label": "`hello` on docs.rs",
+    "role": "AXLink"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Options",
+   "in": "Documentation"
+  },
+  {
+   "do": "click",
+   "label": "Show Automatically During Completion",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "value": true
+   },
+   "of": {
+    "do": "setting",
+    "path": "/show_completion_documentation"
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down down down right right right right right right right right right right right right right right right right right right right right right right right right right right right right right f1"
+  },
+  {
+   "expect": {
+    "documentation.shown": "hello"
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "Jump to Source",
+   "in": "Documentation"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   },
+   "within": 10000
+  }
+ ]
+}

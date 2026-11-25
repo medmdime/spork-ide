@@ -1,0 +1,93 @@
+{
+ "id": "log-panes-toolbar",
+ "covers": [
+  "toolbar:Vcs.Log.Toolbar.RightCorner",
+  "context-menu:Vcs.Log.Toolbar.RightCorner",
+  "toolbar:Vcs.Log.Toolbar",
+  "context-menu:Vcs.Log.Toolbar",
+  "toolbar:Dvcs.Log.Toolbar",
+  "context-menu:Vcs.Log.TextFilterSettings",
+  "context-menu:Vcs.Log.PresentationSettings"
+ ],
+ "reference-app": [
+  "screenshots/menus/vcs-log-toolbar-rightcorner.png",
+  "screenshots/menus/vcs-log-presentationsettings.png",
+  "screenshots/menus/vcs-log-textfiltersettings.png"
+ ],
+ "steps": [
+  {
+   "expect": {
+    "view": "History",
+    "commits": 7
+   }
+  },
+  {
+   "do": "action",
+   "name": "spork::SelectNextCommit"
+  },
+  {
+   "expect": {
+    "selected": 0
+   }
+  },
+  {
+   "toolbar": "VCS Log Toolbar",
+   "id": "toolbar:Vcs.Log.Toolbar.RightCorner"
+  },
+  {
+   "toolbar": "VCS Log Toolbar",
+   "id": "context-menu:Vcs.Log.Toolbar.RightCorner"
+  },
+  {
+   "toolbar": "VCS Log Toolbar",
+   "items": [
+    "Cherry-Pick"
+   ],
+   "part": true,
+   "id": "toolbar:Vcs.Log.Toolbar"
+  },
+  {
+   "toolbar": "VCS Log Toolbar",
+   "items": [
+    "Cherry-Pick"
+   ],
+   "part": true,
+   "id": "context-menu:Vcs.Log.Toolbar"
+  },
+  {
+   "toolbar": "VCS Log Toolbar",
+   "items": [
+    "Cherry-Pick"
+   ],
+   "part": true,
+   "id": "toolbar:Dvcs.Log.Toolbar"
+  },
+  {
+   "toolbar": "Text Filter Settings",
+   "id": "context-menu:Vcs.Log.TextFilterSettings"
+  },
+  {
+   "do": "click",
+   "label": "View Options"
+  },
+  {
+   "menu": "context-menu:Vcs.Log.PresentationSettings",
+   "checked": [
+    "Compact References View",
+    "My Commits",
+    "Merge Commits",
+    "Current Branch"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "log"
+  }
+ ]
+}

@@ -1,0 +1,148 @@
+{
+ "id": "editor-toggle-case-and-braces",
+ "covers": [
+  "action:EditorToggleCase",
+  "action:EditorMatchBrace"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "file": "src/case.rs",
+   "text": "fn hello(a: u32) {\n    call(a, (1 + 2));\n}\n"
+  },
+  {
+   "do": "open",
+   "path": "src/case.rs"
+  },
+  {
+   "expect": {
+    "active": "src/case.rs",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home right right right right shift-cmd-u"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/case.rs",
+   "is": "fn HELLO(a: u32) {|    call(a, (1 + 2));|}|"
+  },
+  {
+   "do": "keys",
+   "keys": "shift-cmd-u"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/case.rs",
+   "is": "fn hello(a: u32) {|    call(a, (1 + 2));|}|"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down end shift-home shift-cmd-u"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/case.rs",
+   "is": "fn hello(a: u32) {|    CALL(A, (1 + 2));|}|"
+  },
+  {
+   "do": "keys",
+   "keys": "shift-cmd-u"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < src/case.rs",
+   "is": "fn hello(a: u32) {|    call(a, (1 + 2));|}|"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home end left ctrl-m"
+  },
+  {
+   "find": {
+    "label": "Line 3, column 2",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-m"
+  },
+  {
+   "find": {
+    "label": "Line 1, column 18",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "right ctrl-m"
+  },
+  {
+   "find": {
+    "label": "Line 3, column 2",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "left ctrl-m"
+  },
+  {
+   "find": {
+    "label": "Line 1, column 18",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down right right right right right right right right right right right right right right right ctrl-m"
+  },
+  {
+   "find": {
+    "label": "Line 2, column 13",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down right right right right right right right right right right ctrl-m"
+  },
+  {
+   "find": {
+    "label": "Line 2, column 9",
+    "role": "AXButton"
+   }
+  }
+ ]
+}

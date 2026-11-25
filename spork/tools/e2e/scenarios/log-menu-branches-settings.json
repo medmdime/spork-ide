@@ -1,0 +1,102 @@
+{
+ "id": "log-menu-branches-settings",
+ "covers": [
+  "context-menu:Git.Log.Branches.Settings",
+  "action:git.branches.group.by.directory",
+  "action:git.branches.show.tags"
+ ],
+ "reference-app": [
+  "screenshots/menus/git-log-branches-settings.png"
+ ],
+ "steps": [
+  {
+   "find": {
+    "text": "Branches Pane Settings",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Branches Pane Settings",
+   "role": "AXButton"
+  },
+  {
+   "menu": "context-menu:Git.Log.Branches.Settings",
+   "items": [
+    "Update Branch Filter",
+    "Navigate Log to Branch Head",
+    "Group by Directory",
+    "Show Tags"
+   ],
+   "checked": [
+    "Group by Directory",
+    "Show Tags"
+   ]
+  },
+  {
+   "shot": "menu"
+  },
+  {
+   "find": {
+    "text": "login"
+   }
+  },
+  {
+   "find": {
+    "text": "feature/login"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Group by Directory",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "text": "feature/login"
+   }
+  },
+  {
+   "find": {
+    "text": "fix/typo"
+   }
+  },
+  {
+   "wait": 600
+  },
+  {
+   "find": {
+    "text": "Branches Pane Settings",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Branches Pane Settings",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "text": "Show Tags",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "find": {
+    "text": "v1.0"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Show Tags",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "text": "v1.0"
+   },
+   "absent": true
+  }
+ ]
+}

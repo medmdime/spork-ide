@@ -1,0 +1,1501 @@
+{
+ "id": "settings-editor",
+ "covers": [
+  "settings:Editor",
+  "settings:Editor › General",
+  "settings:Editor › General › Auto Import",
+  "settings:Editor › General › Appearance",
+  "settings:Editor › General › Breadcrumbs",
+  "settings:Editor › General › Code Completion",
+  "settings:Editor › General › Code Completion › Popup",
+  "settings:Editor › General › Code Folding",
+  "settings:Editor › General › Console",
+  "settings:Editor › General › Editor Tabs",
+  "settings:Editor › General › Gutter Icons",
+  "settings:Editor › General › Postfix Completion",
+  "settings:Editor › General › Smart Keys",
+  "settings:Editor › General › Smart Keys › HTML/CSS",
+  "settings:Editor › General › Sticky Lines",
+  "settings:Editor › Code Editing",
+  "settings:Editor › Font",
+  "settings:Editor › Live Templates",
+  "settings:Editor › Reader Mode"
+ ],
+ "reference-app": [
+  "screenshots/settings/editor.jpg",
+  "screenshots/settings/editor-general.jpg",
+  "screenshots/settings/editor-general-auto-import.jpg",
+  "screenshots/settings/editor-general-appearance.jpg",
+  "screenshots/settings/editor-general-breadcrumbs.jpg",
+  "screenshots/settings/editor-general-code-completion.jpg",
+  "screenshots/settings/editor-general-code-completion-popup.jpg",
+  "screenshots/settings/editor-general-code-completion-inline.jpg",
+  "screenshots/settings/editor-general-code-folding.jpg",
+  "screenshots/settings/editor-general-console.jpg",
+  "screenshots/settings/editor-general-editor-tabs.jpg",
+  "screenshots/settings/editor-general-gutter-icons.jpg",
+  "screenshots/settings/editor-general-postfix-completion.jpg",
+  "screenshots/settings/editor-general-smart-keys.jpg",
+  "screenshots/settings/editor-general-smart-keys-html-css.jpg",
+  "screenshots/settings/editor-general-sticky-lines.jpg",
+  "screenshots/settings/editor-code-editing.jpg",
+  "screenshots/settings/editor-font.jpg",
+  "screenshots/settings/editor-live-templates.jpg",
+  "screenshots/settings/editor-reader-mode.jpg"
+ ],
+ "steps": [
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Editor"
+  },
+  {
+   "expect": {
+    "settings": "Editor"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXLink",
+     "label": "General"
+    },
+    {
+     "role": "AXLink",
+     "label": "Code Editing"
+    },
+    {
+     "role": "AXLink",
+     "label": "Font"
+    },
+    {
+     "role": "AXLink",
+     "label": "Color Scheme"
+    },
+    {
+     "role": "AXLink",
+     "label": "Code Style"
+    },
+    {
+     "role": "AXLink",
+     "label": "Inspections"
+    },
+    {
+     "role": "AXLink",
+     "label": "File and Code Templates"
+    },
+    {
+     "role": "AXLink",
+     "label": "File Encodings"
+    },
+    {
+     "role": "AXLink",
+     "label": "Live Templates"
+    },
+    {
+     "role": "AXLink",
+     "label": "File Types"
+    },
+    {
+     "role": "AXLink",
+     "label": "Inlay Hints"
+    },
+    {
+     "role": "AXLink",
+     "label": "Emmet"
+    },
+    {
+     "role": "AXLink",
+     "label": "Intentions"
+    },
+    {
+     "role": "AXLink",
+     "label": "Reader Mode"
+    },
+    {
+     "role": "AXLink",
+     "label": "TextMate Bundles"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "editor",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Editor/General"
+  },
+  {
+   "expect": {
+    "settings": "Editor/General"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Change font size with Command+Mouse Wheel in:",
+     "value": "0"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Active editor",
+     "value": "1",
+     "enabled": false
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "All editors",
+     "value": "0",
+     "enabled": false
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Move code fragments with drag-and-drop",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Soft-wrap these files:",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Use the original line's indent for wrapped fragments",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Only show soft-wrap indicators for the current line",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "After the end of line",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Inside tabs",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show virtual space at the bottom of the file",
+     "value": "0"
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "Jump to the current word boundaries"
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "Jump to the next/previous line boundaries"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Enable smooth scrolling",
+     "value": "1"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Keep the caret in place, scroll editor canvas",
+     "value": "1"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Move caret, minimize editor scrolling",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Copy (⌘C) as rich text",
+     "value": "1"
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "Active scheme"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Remove trailing spaces on:",
+     "value": "1"
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "Modified lines"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Keep trailing spaces on caret line",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Remove trailing blank lines at the end of saved files",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Ensure every saved file ends with a line break",
+     "value": "0"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "editor-general",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Editor/General/Auto Import"
+  },
+  {
+   "expect": {
+    "settings": "Editor/General/Auto Import"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Show auto-import tooltip",
+     "value": "1"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "editor-general-auto-import",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Editor/General/Appearance"
+  },
+  {
+   "expect": {
+    "settings": "Editor/General/Appearance"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Caret blinking (ms):",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Use smooth caret blinking",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Use block caret",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Use full line height caret",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Use smooth caret movement",
+     "value": "0"
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "Snappy"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show hard wrap and visual guides (configured in Code Style options)",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show line numbers:",
+     "value": "1"
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "Absolute"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show method separators",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show indent guides",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Highlight occurrences of selected text",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show whitespaces",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Leading",
+     "value": "1",
+     "enabled": false
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Inner",
+     "value": "1",
+     "enabled": false
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Trailing",
+     "value": "1",
+     "enabled": false
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Selection",
+     "value": "1",
+     "enabled": false
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Render documentation comments",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Use editor font for inlay hints",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Enable HTML/XML tag tree highlighting",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show intention bulb",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show preview for intention actions when available",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show code lens on scrollbar hover",
+     "value": "1"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "editor-general-appearance",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Editor/General/Breadcrumbs"
+  },
+  {
+   "expect": {
+    "settings": "Editor/General/Breadcrumbs"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Show breadcrumbs",
+     "value": "1"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Top",
+     "value": "0"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Bottom",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "HTML",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "XHTML",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "XML",
+     "value": "0"
+    },
+    {
+     "role": "AXLink",
+     "label": "Manage colors"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "editor-general-breadcrumbs",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Editor/General/Code Completion"
+  },
+  {
+   "expect": {
+    "settings": "Editor/General/Code Completion"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "editor-general-code-completion",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Editor/General/Code Completion/Popup"
+  },
+  {
+   "expect": {
+    "settings": "Editor/General/Code Completion/Popup"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Match case:",
+     "value": "1"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "First letter only",
+     "value": "1"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "All letters",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Sort suggestions alphabetically",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show suggestions as you type",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Insert selected suggestion by pressing space, dot, or other context-dependent keys",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show the documentation popup in",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Insert parentheses automatically when applicable",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Enable auto-popup of tag name code completion when typing in HTML text",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show the parameter info popup in",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show full method signatures",
+     "value": "0"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "editor-general-code-completion-popup",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Editor/General/Code Completion/Inline"
+  },
+  {
+   "expect": {
+    "settings": "Editor/General/Code Completion/Inline"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "editor-general-code-completion-inline",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Editor/General/Code Folding"
+  },
+  {
+   "expect": {
+    "settings": "Editor/General/Code Folding"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Show code folding arrows",
+     "value": "1"
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "On mouse hover"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show bottom arrows",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "File header",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Imports",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Documentation comments",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Method bodies",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Custom folding regions",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "XML tags",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "HTML 'style' attribute",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "XML entities",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Data URIs",
+     "value": "1"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "editor-general-code-folding",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Editor/General/Console"
+  },
+  {
+   "expect": {
+    "settings": "Editor/General/Console"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Use soft wraps in console",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Override console cycle buffer size (1024 KB)",
+     "value": "0"
+    },
+    {
+     "role": "AXPopUpButton"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "editor-general-console",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Editor/General/Editor Tabs"
+  },
+  {
+   "expect": {
+    "settings": "Editor/General/Editor Tabs"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXPopUpButton",
+     "value": "Top"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "One row, and if tabs don't fit:",
+     "value": "1"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Scroll the tabs panel",
+     "value": "1"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Squeeze tabs",
+     "value": "0"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Multiple rows",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show pinned tabs in a separate row",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show file icon",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show file extension",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show directory for non-unique file names",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Mark modified",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show full path on mouse hover",
+     "value": "1"
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "Right"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Sort tabs alphabetically",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Open new tabs at the end",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Enable preview tab",
+     "value": "0"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Close unchanged",
+     "value": "0"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Close unused",
+     "value": "1"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "The tab on the left",
+     "value": "1"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "The tab on the right",
+     "value": "0"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Most recently opened tab",
+     "value": "0"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "editor-general-editor-tabs",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Editor/General/Gutter Icons"
+  },
+  {
+   "expect": {
+    "settings": "Editor/General/Gutter Icons"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Show gutter icons",
+     "value": "1"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "editor-general-gutter-icons",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Editor/General/Postfix Completion"
+  },
+  {
+   "expect": {
+    "settings": "Editor/General/Postfix Completion"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Enable postfix completion",
+     "value": "1"
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "Tab"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "editor-general-postfix-completion",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Editor/General/Smart Keys"
+  },
+  {
+   "expect": {
+    "settings": "Editor/General/Smart Keys"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Home moves caret to first non-whitespace character",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "End on blank line moves caret to indent position",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Insert paired brackets (), [], {}, <>",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Insert pair quote",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Reformat block on typing '}'",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Use \"CamelHumps\" words",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Honor \"CamelHumps\" words settings when selecting on double click",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Surround selection on typing quote or brace",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Add multiple carets on double ⌥ with arrow keys",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Jump outside closing bracket/quote with Tab when typing",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Smart indent",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Insert pair '}'",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Close block comment",
+     "value": "1"
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "To proper indent position"
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "Indent each line"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Reformat again to remove custom line breaks",
+     "value": "0"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "editor-general-smart-keys",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Editor/General/Smart Keys/HTML/CSS"
+  },
+  {
+   "expect": {
+    "settings": "Editor/General/Smart Keys/HTML/CSS"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Insert closing tag on tag completion",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Insert required attributes on tag completion",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Insert required subtags on tag completion",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Start attribute on tag completion",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Add quotes for attribute value on typing '=' and attribute completion",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Auto-close tag on typing '</'",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Simultaneous '<tag></tag>' editing",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Select whole CSS identifiers on double click",
+     "value": "1"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "editor-general-smart-keys-html-css",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Editor/General/Sticky Lines"
+  },
+  {
+   "expect": {
+    "settings": "Editor/General/Sticky Lines"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Show sticky lines while scrolling",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "HTML",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "XHTML",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "XML",
+     "value": "1"
+    },
+    {
+     "role": "AXLink",
+     "label": "Manage colors"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "editor-general-sticky-lines",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Editor/Code Editing"
+  },
+  {
+   "expect": {
+    "settings": "Editor/Code Editing"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Matched brace",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Current scope",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Usages of element at caret",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show quick documentation on hover",
+     "value": "1"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "In the editor",
+     "value": "1"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "In modal dialogs",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Preselect current symbol name for Rename refactoring",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Show inline dialog for local variables",
+     "value": "1"
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "The problems with the highest priority"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "editor-code-editing",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Editor/Font"
+  },
+  {
+   "expect": {
+    "settings": "Editor/Font"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXPopUpButton",
+     "value": "JetBrains Mono"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Enable ligatures",
+     "value": "0"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "editor-font",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Editor/Live Templates"
+  },
+  {
+   "expect": {
+    "settings": "Editor/Live Templates"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXPopUpButton",
+     "value": "Tab"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ],
+   "absent": true
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "editor-live-templates",
+   "window": "smallest"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Editor/Reader Mode"
+  },
+  {
+   "expect": {
+    "settings": "Editor/Reader Mode"
+   }
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXCheckBox",
+     "label": "Enable Reader mode",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Rendered documentation comments",
+     "value": "1"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Error and warning highlighting, inspection widget",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Font ligatures",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Increased line height",
+     "value": "0"
+    },
+    {
+     "role": "AXCheckBox",
+     "label": "Format code according to preferred style",
+     "value": "1"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Use active scheme: Default",
+     "value": "1"
+    },
+    {
+     "role": "AXRadioButton",
+     "label": "Choose scheme:",
+     "value": "0"
+    },
+    {
+     "role": "AXPopUpButton",
+     "value": "Default"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "within": 15000,
+   "find": [
+    {
+     "role": "AXImage",
+     "label": "Settings marked with this icon are only applied to the current project. Non-marked settings are applied to all projects."
+    }
+   ]
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "shot": "editor-reader-mode",
+   "window": "smallest"
+  }
+ ]
+}

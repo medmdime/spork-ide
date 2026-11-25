@@ -1,0 +1,235 @@
+{
+ "id": "frame-tool-window-layout",
+ "covers": [
+  "action:JumpToLastWindow",
+  "action:HideAllWindows",
+  "action:RestoreFactoryDefaultLayout"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "expect": {
+    "docks.left.open": true,
+    "docks.left.panel": "Project Panel"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-f12"
+  },
+  {
+   "expect": {
+    "docks.left.open": false,
+    "docks.bottom.open": false,
+    "docks.right.open": false
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-f12"
+  },
+  {
+   "expect": {
+    "docks.left.open": true,
+    "docks.left.panel": "Project Panel"
+   }
+  },
+  {
+   "find": {
+    "label": "Commit",
+    "role": "AXCheckBox",
+    "in": "Left stripe"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Commit",
+   "role": "AXCheckBox",
+   "in": "Left stripe"
+  },
+  {
+   "expect": {
+    "docks.left.open": true,
+    "docks.left.panel": "Commit"
+   }
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "f12"
+  },
+  {
+   "expect": {
+    "docks.left.open": true,
+    "docks.left.panel": "Commit"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-f12"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "TerminalPanel"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "shift-escape"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": false
+   }
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "f12"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "TerminalPanel",
+    "focused": [
+     "Workspace",
+     "Dock",
+     "Pane",
+     "Terminal"
+    ]
+   }
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "shift-f12"
+  },
+  {
+   "expect": {
+    "docks.left.open": true,
+    "docks.left.panel": "Project Panel",
+    "docks.bottom.open": false,
+    "docks.right.open": false
+   }
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "AI Chat",
+    "role": "AXCheckBox",
+    "in": "Right stripe"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "AI Chat",
+   "role": "AXCheckBox",
+   "in": "Right stripe"
+  },
+  {
+   "expect": {
+    "docks.right.open": true
+   }
+  },
+  {
+   "wait": 3000
+  },
+  {
+   "do": "action",
+   "name": "tool_windows::RestoreFactoryDefaultLayout"
+  },
+  {
+   "expect": {
+    "docks.left.open": true,
+    "docks.left.panel": "Project Panel",
+    "docks.bottom.open": false,
+    "docks.right.open": false
+   }
+  },
+  {
+   "menu": "Window",
+   "path": [
+    "Window",
+    "Tool Window Layouts"
+   ],
+   "items": [
+    "Default",
+    "Restore Current Layout"
+   ]
+  },
+  {
+   "menu": "Window",
+   "path": [
+    "Window",
+    "Active Tool Window"
+   ],
+   "items": [
+    "Hide Active Tool Window",
+    "Hide All Tool Windows",
+    "Jump to Last Tool Window"
+   ],
+   "part": true
+  }
+ ]
+}

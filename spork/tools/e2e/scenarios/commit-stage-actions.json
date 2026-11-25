@@ -1,0 +1,191 @@
+{
+ "id": "commit-stage-actions",
+ "covers": [
+  "action:Git.Stage.Revert",
+  "action:Git.Stage.ToggleIgnored",
+  "action:Git.Stage.Add.All"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "sh": "echo build.log > .git/info/exclude && echo log > build.log"
+  },
+  {
+   "do": "action",
+   "name": "changes::UseStagingArea"
+  },
+  {
+   "do": "action",
+   "name": "spork::ToggleCommit"
+  },
+  {
+   "expect": {
+    "left": "[Commit, Project]"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Unstaged",
+     "role": "AXRow"
+    },
+    {
+     "label": "README.md",
+     "role": "AXRow"
+    }
+   ],
+   "missing": [
+    {
+     "label": "Ignored",
+     "role": "AXRow"
+    }
+   ],
+   "within": 6000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "README.md",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "find": [
+    {
+     "label": "Rollback",
+     "role": "AXMenuItem"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Rollback",
+   "role": "AXMenuItem"
+  },
+  {
+   "git": [
+    "status",
+    "--porcelain",
+    "README.md"
+   ],
+   "is": ""
+  },
+  {
+   "find": [
+    {
+     "label": "Unstaged",
+     "role": "AXRow"
+    }
+   ],
+   "absent": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "View Options",
+   "role": "AXButton"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "find": [
+    {
+     "label": "Ignored Files",
+     "role": "AXMenuItem"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Ignored Files",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "Ignored",
+     "role": "AXRow"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Ignored",
+   "role": "AXRow"
+  },
+  {
+   "find": [
+    {
+     "label": "build.log",
+     "role": "AXRow"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "View Options",
+   "role": "AXButton"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "menu": "context-menu:Git.Stage.Ui.Settings",
+   "items": [
+    "Group By ▸",
+    "Ignored Files"
+   ],
+   "checked": [
+    "Ignored Files"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "sh": "echo more >> main.rs"
+  },
+  {
+   "do": "action",
+   "name": "changes::StageAll"
+  },
+  {
+   "git": [
+    "diff",
+    "--cached",
+    "--name-only"
+   ],
+   "is": "main.rs\nnotes.txt"
+  },
+  {
+   "find": [
+    {
+     "label": "Untracked",
+     "role": "AXRow"
+    }
+   ],
+   "absent": true,
+   "within": 5000
+  },
+  {
+   "find": [
+    {
+     "label": "Staged",
+     "role": "AXRow"
+    },
+    {
+     "label": "Ignored",
+     "role": "AXRow"
+    }
+   ]
+  }
+ ]
+}

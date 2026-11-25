@@ -1,0 +1,237 @@
+{
+ "id": "find-action",
+ "covers": [
+  "action:GotoAction",
+  "dialog:GotoAction"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-a"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "SearchEverywhere",
+     "Input"
+    ]
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Actions",
+     "role": "AXRadioButton",
+     "value": "1",
+     "in": "Search Everywhere"
+    },
+    {
+     "label": "Include disabled actions",
+     "role": "AXCheckBox",
+     "value": "0"
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "s o f t space w r a p"
+  },
+  {
+   "find": [
+    {
+     "label": "Soft-Wrap",
+     "role": "AXStaticText",
+     "selected": true,
+     "in": "Search Everywhere"
+    },
+    {
+     "label": "View | Active Editor",
+     "in": "Search Everywhere"
+    }
+   ]
+  },
+  {
+   "find": {
+    "role": "AXCheckBox",
+    "value": "0",
+    "in": "Soft-Wrap"
+   }
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "soft-wrap-off"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "menu": "Help",
+   "path": [
+    "Help"
+   ],
+   "items": [
+    "Find Action…"
+   ],
+   "part": true
+  },
+  {
+   "do": "action",
+   "name": "navigate::FindAction"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "SearchEverywhere",
+     "Input"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "s o f t space w r a p"
+  },
+  {
+   "find": {
+    "role": "AXCheckBox",
+    "value": "1",
+    "in": "Soft-Wrap"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-a"
+  },
+  {
+   "do": "keys",
+   "keys": "s a v e space a l l"
+  },
+  {
+   "find": [
+    {
+     "label": "Save All",
+     "role": "AXStaticText",
+     "selected": true,
+     "in": "Search Everywhere"
+    },
+    {
+     "label": "⌘S",
+     "in": "Search Everywhere"
+    },
+    {
+     "label": "File",
+     "in": "Search Everywhere"
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a backspace c l e a r space t e r m i n a l"
+  },
+  {
+   "find": {
+    "label": "Clear Terminal",
+    "role": "AXStaticText"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Include disabled actions",
+   "role": "AXCheckBox"
+  },
+  {
+   "find": [
+    {
+     "label": "Include disabled actions",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "Clear Terminal",
+     "role": "AXStaticText",
+     "in": "Search Everywhere"
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-a"
+  },
+  {
+   "do": "keys",
+   "keys": "s a v e space a l l"
+  },
+  {
+   "find": {
+    "label": "Save All",
+    "role": "AXStaticText",
+    "selected": true,
+    "in": "Search Everywhere"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "alt-enter"
+  },
+  {
+   "find": [
+    {
+     "label": "First stroke",
+     "role": "AXTextField",
+     "in": "Keyboard Shortcut"
+    },
+    {
+     "label": "OK",
+     "role": "AXButton",
+     "enabled": false,
+     "in": "Keyboard Shortcut"
+    }
+   ],
+   "within": 8000
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": {
+    "label": "First stroke",
+    "role": "AXTextField"
+   },
+   "absent": true,
+   "within": 3000
+  }
+ ]
+}

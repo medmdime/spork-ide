@@ -1,0 +1,156 @@
+{
+ "id": "plugins-update",
+ "covers": [],
+ "reference-app": [],
+ "steps": [
+  {
+   "sh": "(nohup python3 \"$E2E/extensions_http.py\" ../registry-port 600 > ../registry.log 2>&1 &) && for i in $(seq 1800); do [ -s ../registry-port ] && break; sleep 0.1; done && python3 -c \"import json; p='../home/.config/spork-ide/settings.json'; s=json.load(open(p)); url='http://127.0.0.1:'+open('../registry-port').read().strip(); s['server_url']=url; s.setdefault('lsp', {})['fixture-ls']={'settings': {'download_url': url+'/files/lsp_fixture.py'}}; json.dump(s, open(p, 'w'))\""
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-,"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "Plugins",
+   "role": "AXRow",
+   "in": "Settings categories",
+   "within": 8000
+  },
+  {
+   "expect": {
+    "settings.page": "Plugins",
+    "settings.plugins.marketplace": [
+     "Fixture Theme",
+     "Fixture Language",
+     "Fixture Snippets",
+     "Fixture Icons",
+     "Fixture MCP",
+     "Fixture Debugger"
+    ]
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Search plugins",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "t h e m e",
+   "window": "Settings – fixture"
+  },
+  {
+   "expect": {
+    "settings.plugins.marketplace": [
+     "Fixture Theme"
+    ]
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Fixture Theme",
+   "in": "Plugins"
+  },
+  {
+   "do": "click",
+   "label": "Install",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings.plugins.installed": [
+     "Fixture Theme"
+    ]
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "look.theme": "Fixture Dark"
+   },
+   "within": 8000
+  },
+  {
+   "sh": "curl -sf http://127.0.0.1:$(cat ../registry-port)/e2e/publish/fixture-theme/1.1.0"
+  },
+  {
+   "do": "click",
+   "label": "Installed",
+   "role": "AXRadioButton"
+  },
+  {
+   "expect": {
+    "settings.plugins.tab": "Installed",
+    "settings.plugins.updates": {
+     "fixture-theme": "1.1.0"
+    }
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Fixture Theme",
+   "in": "Plugins"
+  },
+  {
+   "find": [
+    {
+     "label": "Update",
+     "role": "AXButton"
+    },
+    {
+     "label": "Uninstall",
+     "role": "AXButton"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "update",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Update",
+   "role": "AXButton"
+  },
+  {
+   "sh": "cat '../home/Library/Application Support/Spork IDE/extensions/installed/fixture-theme/extension.toml'",
+   "contains": "version = \"1.1.0\"",
+   "within": 20000
+  },
+  {
+   "expect": {
+    "settings.plugins.updates": {},
+    "look.theme": "Fixture Dark"
+   },
+   "within": 10000
+  },
+  {
+   "find": {
+    "label": "Update",
+    "role": "AXButton"
+   },
+   "absent": true,
+   "within": 5000
+  }
+ ]
+}

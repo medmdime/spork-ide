@@ -1,0 +1,379 @@
+{
+ "id": "editor-find-bar",
+ "covers": [
+  "action:Find",
+  "action:FindNext",
+  "action:FindPrevious",
+  "action:SelectAllOccurrences"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "BufferSearchBar",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Show Replace Field",
+     "role": "AXCheckBox",
+     "value": "0",
+     "in": "Find"
+    },
+    {
+     "label": "Search History",
+     "role": "AXButton",
+     "in": "Search"
+    },
+    {
+     "label": "New Line",
+     "role": "AXButton",
+     "in": "Search"
+    },
+    {
+     "label": "Match Case",
+     "role": "AXCheckBox",
+     "value": "0",
+     "in": "Search"
+    },
+    {
+     "label": "Words",
+     "role": "AXCheckBox",
+     "value": "0",
+     "in": "Search"
+    },
+    {
+     "label": "Regex",
+     "role": "AXCheckBox",
+     "value": "0",
+     "in": "Search"
+    },
+    {
+     "label": "Previous Occurrence",
+     "role": "AXButton",
+     "in": "Find"
+    },
+    {
+     "label": "Next Occurrence",
+     "role": "AXButton",
+     "in": "Find"
+    },
+    {
+     "label": "Filter Search Results",
+     "role": "AXButton",
+     "in": "Find"
+    },
+    {
+     "label": "Open in Window, Multiple Cursors",
+     "role": "AXButton",
+     "in": "Find"
+    },
+    {
+     "label": "Close",
+     "role": "AXButton",
+     "in": "Find"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "keys",
+   "keys": "n a m e"
+  },
+  {
+   "find": {
+    "label": "1/2",
+    "role": "AXStaticText",
+    "in": "Find"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 1, column 18",
+    "role": "AXButton"
+   }
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "find"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "find": {
+    "label": "2/2",
+    "role": "AXStaticText",
+    "in": "Find"
+   }
+  },
+  {
+   "find": {
+    "label": "Line 2, column 26",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "shift-enter"
+  },
+  {
+   "find": {
+    "label": "1/2",
+    "role": "AXStaticText",
+    "in": "Find"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-g"
+  },
+  {
+   "find": {
+    "label": "2/2",
+    "role": "AXStaticText",
+    "in": "Find"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-g"
+  },
+  {
+   "find": {
+    "label": "1/2",
+    "role": "AXStaticText",
+    "in": "Find"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Match Case",
+   "role": "AXCheckBox"
+  },
+  {
+   "find": {
+    "label": "Match Case",
+    "role": "AXCheckBox",
+    "value": "1",
+    "in": "Search"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a shift-n a m e"
+  },
+  {
+   "find": {
+    "label": "0 results",
+    "role": "AXStaticText",
+    "in": "Find"
+   }
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "no-results"
+  },
+  {
+   "do": "click",
+   "label": "Match Case",
+   "role": "AXCheckBox"
+  },
+  {
+   "find": {
+    "label": "1/2",
+    "role": "AXStaticText",
+    "in": "Find"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Words",
+   "role": "AXCheckBox"
+  },
+  {
+   "find": {
+    "label": "Words",
+    "role": "AXCheckBox",
+    "value": "1",
+    "in": "Search"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "backspace"
+  },
+  {
+   "find": {
+    "label": "0 results",
+    "role": "AXStaticText",
+    "in": "Find"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Words",
+   "role": "AXCheckBox"
+  },
+  {
+   "find": {
+    "label": "Words",
+    "role": "AXCheckBox",
+    "value": "0",
+    "in": "Search"
+   }
+  },
+  {
+   "find": {
+    "label": "0 results",
+    "role": "AXStaticText",
+    "in": "Find"
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Find",
+    "role": "AXGroup"
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-cmd-g"
+  },
+  {
+   "do": "keys",
+   "keys": "w h o"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "sh": "cat src/greeting.rs",
+   "is": "pub fn hello(who: &str) -> String {\n    format!(\"Hello, {who}!\")\n}"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a w h o"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "find": {
+    "label": "0 results",
+    "role": "AXStaticText",
+    "in": "Find"
+   },
+   "absent": true,
+   "within": 1000
+  },
+  {
+   "do": "click",
+   "label": "Open in Window, Multiple Cursors",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "Open Results in Find Window",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Add Selection for Next Occurrence",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Unselect Occurrence",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Select All Occurrences",
+     "role": "AXMenuItem"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "Open Results in Find Window",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "Find"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Occurrences of 'who'",
+     "role": "AXRadioButton",
+     "value": "1"
+    },
+    {
+     "label": "Found occurrences",
+     "role": "AXRow"
+    },
+    {
+     "label": "greeting.rs",
+     "role": "AXRow",
+     "in": "Find Results"
+    },
+    {
+     "label": "pub fn hello(who: &str) -> String {",
+     "role": "AXRow"
+    },
+    {
+     "label": "format!(\"Hello, {who}!\")",
+     "role": "AXRow"
+    }
+   ],
+   "ordered": true
+  }
+ ]
+}

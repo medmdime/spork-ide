@@ -1,0 +1,311 @@
+{
+ "id": "debug-tool-window",
+ "covers": [
+  "action:StepOver",
+  "action:StepInto",
+  "action:StepOut",
+  "action:Resume"
+ ],
+ "reference-app": [],
+ "settings": {
+  "dap": {
+   "CodeLLDB": {
+    "binary": "/usr/bin/python3",
+    "args": [
+     "$E2E/dap_fixture.py"
+    ]
+   }
+  },
+  "languages": {
+   "JSON": {
+    "prettier": {
+     "allowed": false
+    }
+   },
+   "JSONC": {
+    "prettier": {
+     "allowed": false
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "sh": "mkdir -p .zed && printf '[{\"label\": \"debug fixture\", \"adapter\": \"CodeLLDB\", \"request\": \"launch\", \"program\": \"$FIXTURE/target/debug/fixture\", \"cwd\": \"$FIXTURE\"}]' > .zed/debug.json"
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "find": {
+    "label": "debug fixture, Run / Debug Configurations",
+    "role": "AXButton"
+   },
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "do": "keys",
+   "keys": "down down down"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "expect": {
+    "run.breakpoints.0.at": "main.rs:4"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-d"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "DebugPanel",
+    "run.debug.status": "Stopped"
+   },
+   "within": 15000
+  },
+  {
+   "find": [
+    {
+     "label": "Debug",
+     "role": "AXCheckBox",
+     "value": "1",
+     "in": "Left stripe"
+    },
+    {
+     "label": "debug fixture",
+     "role": "AXRadioButton",
+     "value": "1",
+     "in": "Debug"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "toolbar": "XDebugger.ToolWindow.TopToolbar3",
+   "items": [
+    "Rerun 'debug fixture'",
+    "Stop 'debug fixture'",
+    "Resume Program",
+    "Pause Program (disabled)",
+    "Step Over",
+    "Step Into",
+    "Step Out",
+    "View Breakpoints…",
+    "Mute Breakpoints",
+    "More"
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "Threads & Variables",
+     "role": "AXRadioButton",
+     "value": "1"
+    },
+    {
+     "label": "Console",
+     "role": "AXRadioButton",
+     "value": "0"
+    },
+    {
+     "label": "\"main\"@1: STOPPED"
+    },
+    {
+     "label": "fixture::main:4, main.rs",
+     "role": "AXGroup",
+     "in": "Frames"
+    },
+    {
+     "label": "Evaluate expression (⏎) or add a watch (⇧⌘⏎)",
+     "role": "AXTextField"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "f7"
+  },
+  {
+   "find": [
+    {
+     "label": "fixture::greeting::hello:2, greeting.rs",
+     "role": "AXGroup",
+     "in": "Frames"
+    },
+    {
+     "label": "fixture::main:4, main.rs",
+     "role": "AXGroup",
+     "in": "Frames"
+    }
+   ],
+   "ordered": true,
+   "within": 10000
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs",
+    "run.debug.status": "Stopped"
+   }
+  },
+  {
+   "menu": "Debugging Actions",
+   "path": [
+    "Run",
+    "Debugging Actions"
+   ],
+   "items": [
+    "Step Over",
+    "Force Step Over",
+    "Step Into",
+    "Force Step Into",
+    "Smart Step Into",
+    "Step Out",
+    "Run to Cursor",
+    "Force Run to Cursor",
+    "Reset Frame",
+    "Pause Program (disabled)",
+    "Resume Program",
+    "Evaluate Expression…",
+    "Show Execution Point"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "click",
+   "label": "Evaluate expression (⏎) or add a watch (⇧⌘⏎)",
+   "role": "AXTextField"
+  },
+  {
+   "do": "type",
+   "text": "1 + 2"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "find": {
+    "label": "result = 3"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a"
+  },
+  {
+   "do": "type",
+   "text": "name"
+  },
+  {
+   "do": "keys",
+   "keys": "shift-cmd-enter"
+  },
+  {
+   "expect": {
+    "run.debug.watches.name": "\"world\""
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "threads-and-variables"
+  },
+  {
+   "do": "click",
+   "label": "fixture::main:4, main.rs",
+   "role": "AXGroup"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "do": "click",
+   "label": "fixture::greeting::hello:2, greeting.rs",
+   "role": "AXGroup"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "f8"
+  },
+  {
+   "find": {
+    "label": "fixture::greeting::hello:3, greeting.rs",
+    "role": "AXGroup",
+    "in": "Frames"
+   },
+   "within": 10000
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "shift-f8"
+  },
+  {
+   "find": {
+    "label": "fixture::main:5, main.rs",
+    "role": "AXGroup",
+    "in": "Frames"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Console",
+   "role": "AXRadioButton"
+  },
+  {
+   "find": {
+    "label": "Console",
+    "role": "AXGroup"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Threads & Variables",
+   "role": "AXRadioButton"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "alt-cmd-r"
+  },
+  {
+   "expect": {
+    "run.debug.terminated": true
+   },
+   "within": 10000
+  }
+ ]
+}

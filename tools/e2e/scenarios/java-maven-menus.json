@@ -1,0 +1,361 @@
+{
+ "id": "java-maven-menus",
+ "fixture": "maven",
+ "covers": [
+  "context-menu:Maven.SyncAllGroupPopup",
+  "context-menu:Maven.DownloadAllGroupPopup",
+  "context-menu:Maven.ProfilesMenu",
+  "context-menu:Maven.ProfileMenu",
+  "action:Maven.Reimport",
+  "action:Maven.BeforeCompile",
+  "action:Maven.ToggleProfile",
+  "action:Maven.ResetProfiles",
+  "action:Maven.DownloadSelectedSources"
+ ],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "file": "pom.xml",
+   "text": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd\">\n    <modelVersion>4.0.0</modelVersion>\n\n    <groupId>com.example</groupId>\n    <artifactId>fixture</artifactId>\n    <version>1.0-SNAPSHOT</version>\n\n    <properties>\n        <maven.compiler.release>17</maven.compiler.release>\n        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>\n    </properties>\n\n    <dependencies>\n        <dependency>\n            <groupId>junit</groupId>\n            <artifactId>junit</artifactId>\n            <version>4.13.2</version>\n            <scope>test</scope>\n        </dependency>\n    </dependencies>\n\n    <profiles>\n        <profile>\n            <id>dev</id>\n        </profile>\n    </profiles>\n</project>\n"
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "find": {
+    "label": "Load Maven Project",
+    "role": "AXLink"
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "Load Maven Project",
+   "role": "AXLink"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 300000
+  },
+  {
+   "do": "action",
+   "name": "maven_tool_window::ToggleFocus"
+  },
+  {
+   "expect": {
+    "docks.right.open": true,
+    "docks.right.panel": "Maven"
+   }
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "Sync/Reload All Maven Projects",
+   "role": "AXButton"
+  },
+  {
+   "menu": "context-menu:Maven.SyncAllGroupPopup",
+   "items": [
+    "Sync All Maven Projects",
+    "Reload All Maven Projects"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Reload All Maven Projects",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 120000
+  },
+  {
+   "find": [
+    {
+     "label": "Profiles",
+     "role": "AXRow"
+    },
+    {
+     "label": "fixture",
+     "role": "AXRow"
+    }
+   ],
+   "ordered": true,
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Download Sources and/or Documentation",
+   "role": "AXButton"
+  },
+  {
+   "menu": "context-menu:Maven.DownloadAllGroupPopup",
+   "items": [
+    "Download Sources",
+    "Download Documentation",
+    "Download Sources and Documentation"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "click",
+   "label": "Expand All",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "dev",
+     "role": "AXRow"
+    },
+    {
+     "label": "validate",
+     "role": "AXRow"
+    },
+    {
+     "label": "junit:junit:4.13.2",
+     "role": "AXRow"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "fixture",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "menu": "context-menu:Maven.NavigatorProjectMenu",
+   "items": [
+    "Sync Project",
+    "Generate Sources and Update Folders",
+    "Create 'settings.xml'",
+    "Download Sources",
+    "Download Documentation",
+    "Download Sources and Documentation",
+    "Run Maven Build (disabled)"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "click",
+   "label": "validate",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "menu": "context-menu:Maven.BuildMenu",
+   "items": [
+    "Run Maven Build",
+    "Execute Before Build",
+    "Execute After Build",
+    "Execute Before Rebuild",
+    "Execute After Rebuild"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Execute Before Build",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "java.triggers": [
+     "Before Build validate"
+    ]
+   }
+  },
+  {
+   "do": "click",
+   "label": "validate",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "menu": "context-menu:Maven.BuildMenu",
+   "items": [
+    "Run Maven Build",
+    "Execute Before Build",
+    "Execute After Build",
+    "Execute Before Rebuild",
+    "Execute After Rebuild"
+   ],
+   "checked": [
+    "Execute Before Build"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "triggers"
+  },
+  {
+   "do": "action",
+   "name": "build::BuildProject"
+  },
+  {
+   "expect": {
+    "java.build.status": "build finished",
+    "java.build.running": false,
+    "java.build.log": [
+     "Running 'before' tasks",
+     "[INFO] BUILD SUCCESS"
+    ]
+   },
+   "within": 180000
+  },
+  {
+   "do": "click",
+   "label": "dev",
+   "role": "AXRow"
+  },
+  {
+   "expect": {
+    "java.profiles": [
+     "dev"
+    ]
+   }
+  },
+  {
+   "do": "click",
+   "label": "Profiles",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "menu": "context-menu:Maven.ProfilesMenu",
+   "items": [
+    "Reset Profiles"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Reset Profiles",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "java.profiles": []
+   }
+  },
+  {
+   "do": "click",
+   "label": "dev",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "menu": "context-menu:Maven.ProfileMenu",
+   "items": [
+    "Toggle Profile"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Toggle Profile",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "java.profiles": [
+     "dev"
+    ]
+   }
+  },
+  {
+   "do": "click",
+   "label": "Collapse All",
+   "role": "AXButton"
+  },
+  {
+   "do": "click",
+   "label": "fixture",
+   "role": "AXRow",
+   "count": 2
+  },
+  {
+   "do": "click",
+   "label": "Dependencies",
+   "role": "AXRow",
+   "count": 2
+  },
+  {
+   "find": {
+    "label": "junit:junit:4.13.2",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "junit:junit:4.13.2",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "menu": "context-menu:Maven.DependencyMenu",
+   "items": [
+    "Download Sources",
+    "Download Documentation",
+    "Download Sources and Documentation"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Download Sources",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "java.downloading": false
+   },
+   "within": 240000
+  },
+  {
+   "sh": "ls $E2E/cache/m2/repository/junit/junit/4.13.2/",
+   "contains": "junit-4.13.2-sources.jar",
+   "within": 10000
+  }
+ ]
+}

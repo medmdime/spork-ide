@@ -1,0 +1,64 @@
+{
+ "id": "recent-projects-manage",
+ "covers": [
+  "action:ManageRecentProjects",
+  "dialog:ManageRecentProjects"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "find": {
+    "label": "src",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "projects::ManageRecentProjects"
+  },
+  {
+   "find": [
+    "Recent Projects",
+    "Search projects",
+    {
+     "label": "fixture",
+     "role": "AXMenuItem"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 400
+  },
+  {
+   "shot": "manage-projects"
+  },
+  {
+   "do": "type",
+   "text": "zzz"
+  },
+  {
+   "find": {
+    "label": "Search projects",
+    "value": "zzz"
+   }
+  },
+  {
+   "find": {
+    "label": "fixture",
+    "role": "AXMenuItem"
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "find": "Recent Projects",
+   "absent": true
+  }
+ ]
+}

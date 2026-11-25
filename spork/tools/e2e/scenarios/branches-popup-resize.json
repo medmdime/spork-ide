@@ -1,0 +1,109 @@
+{
+ "id": "branches-popup-resize",
+ "covers": [
+  "action:git.branches.popup.resize"
+ ],
+ "reference-app": [
+  "screenshots/dialogs/git-branches.png"
+ ],
+ "steps": [
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "expect": {
+    "branches_popup": true
+   }
+  },
+  {
+   "find": {
+    "label": "Settings",
+    "role": "AXButton"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Settings",
+   "role": "AXButton"
+  },
+  {
+   "menu": "context-menu:Git.Branches.Popup.Settings",
+   "items": [
+    "Show Actions in Search Results",
+    "Group by Directory",
+    "Show Recent Branches",
+    "Show Tags",
+    "Restore Popup Size (disabled)"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Search for branches and actions"
+  },
+  {
+   "do": "drag",
+   "label": "Resize",
+   "by": [
+    120,
+    80
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "resized"
+  },
+  {
+   "do": "click",
+   "label": "Settings",
+   "role": "AXButton"
+  },
+  {
+   "menu": "context-menu:Git.Branches.Popup.Settings",
+   "items": [
+    "Show Actions in Search Results",
+    "Group by Directory",
+    "Show Recent Branches",
+    "Show Tags",
+    "Restore Popup Size"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Restore Popup Size",
+   "role": "AXMenuItem"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "restored"
+  },
+  {
+   "do": "click",
+   "label": "Settings",
+   "role": "AXButton"
+  },
+  {
+   "menu": "context-menu:Git.Branches.Popup.Settings",
+   "items": [
+    "Show Actions in Search Results",
+    "Group by Directory",
+    "Show Recent Branches",
+    "Show Tags",
+    "Restore Popup Size (disabled)"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Search for branches and actions"
+  },
+  {
+   "expect": {
+    "branches_popup": true
+   }
+  }
+ ]
+}

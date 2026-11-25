@@ -1,0 +1,42 @@
+{
+ "id": "git-menu-staging",
+ "covers": [
+  "action:Git.Show.Stage"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "action",
+   "name": "spork::ShowStagingArea"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "expect": {
+    "left": "[Project]"
+   }
+  },
+  {
+   "do": "action",
+   "name": "changes::UseStagingArea"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "action",
+   "name": "spork::ShowStagingArea"
+  },
+  {
+   "expect": {
+    "left": "[Commit, Project]"
+   }
+  },
+  {
+   "find": {
+    "label": "Unstaged"
+   }
+  }
+ ]
+}

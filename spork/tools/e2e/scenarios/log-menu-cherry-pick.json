@@ -1,0 +1,40 @@
+{
+ "id": "log-menu-cherry-pick",
+ "covers": [
+  "action:Vcs.CherryPick"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "find": {
+    "text": "fix: a typo",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "fix: a typo",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "find": {
+    "text": "Cherry-Pick",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Cherry-Pick",
+   "role": "AXMenuItem"
+  },
+  {
+   "sh": "git log -1 --format=%s main",
+   "is": "fix: a typo"
+  },
+  {
+   "sh": "git rev-list --count main",
+   "is": "7"
+  }
+ ]
+}

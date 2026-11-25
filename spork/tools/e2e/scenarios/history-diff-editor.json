@@ -1,0 +1,28 @@
+{
+ "id": "history-diff-editor",
+ "covers": [
+  "action:Diff.OpenInEditor"
+ ],
+ "reference-app": [],
+ "steps": [
+  {"do": "open", "what": "change", "path": "README.md"},
+  {"expect": {"view": "Changes", "change_file": "README.md", "last_notification": null}, "of": {"do": "history"}},
+  {"wait": 800},
+  {"find": {"label": "Select Modified line 3"}, "within": 6000},
+  {"do": "click", "label": "Select Modified line 3"},
+  {"wait": 300},
+  {"do": "keys", "keys": "cmd-down"},
+  {"expect": {"last_notification": "Choose your editor in Preferences first"}, "of": {"do": "history"}},
+  {"sh": "rm main.rs"},
+  {"do": "git", "args": ["status"]},
+  {"wait": 800},
+  {"do": "open", "what": "change", "path": "main.rs"},
+  {"expect": {"change_file": "main.rs"}, "of": {"do": "history"}},
+  {"wait": 800},
+  {"find": {"label": "Select Original line 1"}, "within": 6000},
+  {"do": "click", "label": "Select Original line 1"},
+  {"wait": 300},
+  {"do": "keys", "keys": "f4"},
+  {"expect": {"last_notification": "That file isn't in the working copy any more"}, "of": {"do": "history"}}
+ ]
+}

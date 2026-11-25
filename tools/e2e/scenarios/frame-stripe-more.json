@@ -1,0 +1,135 @@
+{
+ "id": "frame-stripe-more",
+ "covers": [],
+ "steps": [
+  {
+   "toolbar": "Left stripe",
+   "items": [
+    "Project",
+    "Commit",
+    "Structure",
+    "More",
+    "Services",
+    "Terminal",
+    "Problems",
+    "Git"
+   ],
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "More",
+   "in": "Left stripe"
+  },
+  {
+   "menu": "popup:MoreToolWindows",
+   "items": [
+    "Bookmarks",
+    "Debug",
+    "Run"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Bookmarks",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "docks.left.open": true,
+    "docks.left.panel": "Bookmarks"
+   }
+  },
+  {
+   "toolbar": "Left stripe",
+   "items": [
+    "Project",
+    "Commit",
+    "Structure",
+    "Bookmarks",
+    "More",
+    "Services",
+    "Terminal",
+    "Problems",
+    "Git"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Structure",
+   "role": "AXCheckBox",
+   "in": "Left stripe",
+   "button": "right"
+  },
+  {
+   "menu": "context-menu:ToolWindowStripe",
+   "items": [
+    "Left",
+    "Right",
+    "Remove from Sidebar"
+   ],
+   "part": true
+  },
+  {
+   "do": "click",
+   "label": "Remove from Sidebar",
+   "role": "AXMenuItem"
+  },
+  {
+   "toolbar": "Left stripe",
+   "items": [
+    "Project",
+    "Commit",
+    "Bookmarks",
+    "More",
+    "Services",
+    "Terminal",
+    "Problems",
+    "Git"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "More",
+   "in": "Left stripe"
+  },
+  {
+   "menu": "popup:MoreToolWindows",
+   "items": [
+    "Debug",
+    "Run",
+    "Structure"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Structure",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "docks.left.open": true,
+    "docks.left.panel": "Outline Panel"
+   }
+  },
+  {
+   "toolbar": "Left stripe",
+   "items": [
+    "Project",
+    "Commit",
+    "Structure",
+    "Bookmarks",
+    "More",
+    "Services",
+    "Terminal",
+    "Problems",
+    "Git"
+   ],
+   "within": 3000
+  }
+ ]
+}

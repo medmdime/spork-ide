@@ -1,0 +1,144 @@
+{
+ "id": "debug-attach-to-process",
+ "covers": [
+  "action:XDebugger.AttachToProcess"
+ ],
+ "reference-app": [],
+ "settings": {
+  "dap": {
+   "CodeLLDB": {
+    "binary": "/usr/bin/python3",
+    "args": [
+     "$E2E/dap_fixture.py"
+    ]
+   }
+  },
+  "languages": {
+   "JSON": {
+    "prettier": {
+     "allowed": false
+    }
+   },
+   "JSONC": {
+    "prettier": {
+     "allowed": false
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "sh": "mkdir -p .zed && printf '#include <unistd.h>\\nint main(void){sleep(120);return 0;}\\n' | cc -x c -o .zed/spork-sleeper - && (.zed/spork-sleeper >/dev/null 2>&1 & echo $! > .zed/sleeper.pid)"
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   },
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "do": "keys",
+   "keys": "down down down"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "menu": "RunMenu",
+   "path": [
+    "Run"
+   ],
+   "items": [
+    "Run",
+    "Debug",
+    "Run…",
+    "Debug…",
+    "Attach to Process…",
+    "Edit Configurations…",
+    "Stop (disabled)",
+    "Stop Background Processes… (disabled)",
+    "Show Running List (disabled)",
+    "Debugging Actions",
+    "Toggle Breakpoint",
+    "View Breakpoints…"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "keys",
+   "keys": "alt-shift-f5"
+  },
+  {
+   "find": {
+    "label": "Attach To",
+    "role": "AXWindow"
+   },
+   "within": 8000
+  },
+  {
+   "do": "type",
+   "text": "spork-sleeper"
+  },
+  {
+   "find": {
+    "label": "spork-sleeper",
+    "role": "AXTextField"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "docks.bottom.panel": "DebugPanel",
+    "run.debug.status": "Stopped"
+   },
+   "within": 15000
+  },
+  {
+   "find": {
+    "label": "fixture::main:4, main.rs",
+    "role": "AXGroup",
+    "in": "Frames"
+   },
+   "within": 10000
+  },
+  {
+   "sh": "grep '\"attach\"' ../dap-requests.log",
+   "contains": "\"pid\": "
+  },
+  {
+   "sh": "grep -c \"\\\"pid\\\": $(cat .zed/sleeper.pid)\" ../dap-requests.log",
+   "is": "1"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "f9"
+  },
+  {
+   "expect": {
+    "run.debug.terminated": true
+   },
+   "within": 10000
+  },
+  {
+   "sh": "kill $(cat .zed/sleeper.pid)"
+  }
+ ]
+}

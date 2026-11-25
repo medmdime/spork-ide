@@ -1,0 +1,132 @@
+{
+ "id": "branches-popup-actions",
+ "covers": [
+  "context-menu:Git.Branches.List",
+  "context-menu:Git.Experimental.Branch.Popup.Actions",
+  "context-menu:Git.Branches.Popup.Settings",
+  "action:git.branches.show.recent",
+  "action:git.branches.popup.filter.by.action"
+ ],
+ "reference-app": [
+  "screenshots/dialogs/git-branches.png",
+  "screenshots/menus/git-branches-list.png",
+  "screenshots/menus/git-branches-popup-settings.png"
+ ],
+ "steps": [
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "expect": {
+    "branches_popup": true
+   }
+  },
+  {
+   "menu": "context-menu:Git.Branches.List",
+   "items": [
+    "Commit…",
+    "New Branch…",
+    "New Worktree…",
+    "Checkout Tag or Revision…"
+   ]
+  },
+  {
+   "find": {
+    "label": "Recent",
+    "role": "AXRow",
+    "in": "Branches Tree"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Settings",
+   "role": "AXButton"
+  },
+  {
+   "menu": "context-menu:Git.Branches.Popup.Settings",
+   "items": [
+    "Show Actions in Search Results",
+    "Group by Directory",
+    "Show Recent Branches",
+    "Show Tags",
+    "Restore Popup Size (disabled)"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Show Recent Branches",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Recent",
+    "role": "AXRow",
+    "in": "Branches Tree"
+   },
+   "absent": true
+  },
+  {
+   "find": {
+    "label": "Local",
+    "role": "AXRow",
+    "in": "Branches Tree"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "n e w"
+  },
+  {
+   "find": {
+    "label": "Search for branches and actions",
+    "value": "new"
+   }
+  },
+  {
+   "find": {
+    "label": "New Branch…",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "find": {
+    "label": "Checkout Tag or Revision…",
+    "role": "AXMenuItem"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Settings",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Show Actions in Search Results",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Show Actions in Search Results",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "New Branch…",
+    "role": "AXMenuItem"
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "expect": {
+    "branches_popup": false
+   }
+  }
+ ]
+}

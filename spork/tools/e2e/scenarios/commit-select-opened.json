@@ -1,0 +1,95 @@
+{
+ "id": "commit-select-opened",
+ "covers": [
+  "action:ChangesView.SelectFile"
+ ],
+ "reference-app": [
+  "screenshots/toolwindows/commit.jpg"
+ ],
+ "steps": [
+  {
+   "do": "open",
+   "what": "file-history",
+   "path": "README.md"
+  },
+  {
+   "expect": {
+    "view": "File"
+   }
+  },
+  {
+   "do": "action",
+   "name": "spork::ToggleCommit"
+  },
+  {
+   "expect": {
+    "left": "[Commit, Project]"
+   }
+  },
+  {
+   "toolbar": "ChangesViewToolbar",
+   "items": [
+    "Refresh",
+    "Rollback…",
+    "Show Diff (disabled)",
+    "Shelve Silently (disabled)",
+    "View Options ▸",
+    "Select Opened File in Changes View",
+    "Expand All",
+    "Collapse All"
+   ],
+   "within": 6000
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXRow",
+     "selected": true
+    }
+   ],
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Collapse All",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXRow"
+    }
+   ],
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Select Opened File in Changes View",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXRow",
+     "selected": true
+    }
+   ]
+  },
+  {
+   "toolbar": "ChangesViewToolbar",
+   "items": [
+    "Refresh",
+    "Rollback…",
+    "Show Diff",
+    "Shelve Silently",
+    "View Options ▸",
+    "Select Opened File in Changes View",
+    "Expand All",
+    "Collapse All"
+   ]
+  }
+ ]
+}

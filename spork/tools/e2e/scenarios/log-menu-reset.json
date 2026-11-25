@@ -1,0 +1,66 @@
+{
+ "id": "log-menu-reset",
+ "covers": [
+  "action:Git.Reset.In.Log"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "find": {
+    "text": "docs: a second line",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "docs: a second line",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "find": {
+    "text": "Reset Current Branch to Here…",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Reset Current Branch to Here…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "text": "Git Reset",
+    "role": "AXGroup"
+   }
+  },
+  {
+   "find": {
+    "text": "Mixed",
+    "role": "AXRadioButton"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Soft",
+   "role": "AXRadioButton"
+  },
+  {
+   "do": "click",
+   "label": "Reset",
+   "role": "AXButton"
+  },
+  {
+   "sh": "git log -1 --format=%s",
+   "is": "docs: a second line"
+  },
+  {
+   "sh": "git diff --cached --name-only",
+   "is": "login.rs"
+  },
+  {
+   "sh": "git status --porcelain README.md",
+   "is": "M README.md"
+  }
+ ]
+}

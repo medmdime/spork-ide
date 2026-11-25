@@ -1,0 +1,259 @@
+{
+ "id": "debug-watches",
+ "covers": [
+  "action:XDebugger.RemoveWatch",
+  "action:XDebugger.MoveWatchUp",
+  "action:XDebugger.MoveWatchDown"
+ ],
+ "reference-app": [],
+ "settings": {
+  "dap": {
+   "CodeLLDB": {
+    "binary": "/usr/bin/python3",
+    "args": [
+     "$E2E/dap_fixture.py"
+    ]
+   }
+  },
+  "languages": {
+   "JSON": {
+    "prettier": {
+     "allowed": false
+    }
+   },
+   "JSONC": {
+    "prettier": {
+     "allowed": false
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "sh": "mkdir -p .zed && printf '[{\"label\": \"debug fixture\", \"adapter\": \"CodeLLDB\", \"request\": \"launch\", \"program\": \"$FIXTURE/target/debug/fixture\", \"cwd\": \"$FIXTURE\", \"requestLog\": \"$FIXTURE/../dap-requests.log\"}]' > .zed/debug.json"
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "find": {
+    "label": "debug fixture, Run / Debug Configurations",
+    "role": "AXButton"
+   },
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "expect": {
+    "run.breakpoints.0.at": "greeting.rs:2"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-d"
+  },
+  {
+   "expect": {
+    "docks.bottom.panel": "DebugPanel",
+    "run.debug.status": "Stopped"
+   },
+   "within": 15000
+  },
+  {
+   "find": {
+    "label": "fixture::greeting::hello:2, greeting.rs",
+    "role": "AXGroup",
+    "in": "Frames"
+   },
+   "within": 10000
+  },
+  {
+   "toolbar": "XDebugger.Watches.Tree.Toolbar",
+   "items": [
+    "New Watch…",
+    "Remove Watch (disabled)",
+    "Move Watch Up (disabled)",
+    "Move Watch Down (disabled)",
+    "Duplicate Watch (disabled)"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "New Watch…",
+   "role": "AXButton"
+  },
+  {
+   "do": "type",
+   "text": "1 + 2"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "run.debug.watches.1 + 2": "3"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "New Watch…",
+   "role": "AXButton"
+  },
+  {
+   "do": "type",
+   "text": "name"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "run.debug.watch_order": [
+     "1 + 2",
+     "name"
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "find": [
+    {
+     "label": "name = \"world\"",
+     "in": "Variables"
+    },
+    {
+     "label": "1 + 2 = 3",
+     "in": "Variables"
+    },
+    {
+     "label": "name = \"world\"",
+     "in": "Variables"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "name = \"world\"",
+   "in": "Variables",
+   "nth": 1
+  },
+  {
+   "toolbar": "XDebugger.Watches.Tree.Toolbar",
+   "items": [
+    "New Watch…",
+    "Remove Watch",
+    "Move Watch Up",
+    "Move Watch Down (disabled)",
+    "Duplicate Watch (disabled)"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Variables",
+   "role": "AXGroup",
+   "hover": true
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "watches"
+  },
+  {
+   "do": "click",
+   "label": "Move Watch Up",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "run.debug.watch_order": [
+     "name",
+     "1 + 2"
+    ]
+   }
+  },
+  {
+   "toolbar": "XDebugger.Watches.Tree.Toolbar",
+   "items": [
+    "New Watch…",
+    "Remove Watch",
+    "Move Watch Up (disabled)",
+    "Move Watch Down",
+    "Duplicate Watch (disabled)"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Move Watch Down",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "run.debug.watch_order": [
+     "1 + 2",
+     "name"
+    ]
+   }
+  },
+  {
+   "do": "click",
+   "label": "Remove Watch",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "run.debug.watch_order": [
+     "1 + 2"
+    ]
+   }
+  },
+  {
+   "do": "click",
+   "label": "name = \"world\"",
+   "in": "Variables"
+  },
+  {
+   "do": "click",
+   "label": "Duplicate Watch",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "run.debug.watch_order": [
+     "1 + 2",
+     "name"
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "f9"
+  },
+  {
+   "expect": {
+    "run.debug.terminated": true
+   },
+   "within": 10000
+  }
+ ]
+}

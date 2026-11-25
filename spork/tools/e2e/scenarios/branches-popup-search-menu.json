@@ -1,0 +1,125 @@
+{
+ "id": "branches-popup-search-menu",
+ "covers": [
+  "context-menu:Git.Branches.Popup.SpeedSearch",
+  "action:EditorCut",
+  "action:EditorPaste"
+ ],
+ "reference-app": [
+  "screenshots/menus/git-branches-popup-speedsearch.png"
+ ],
+ "steps": [
+  {
+   "do": "open",
+   "what": "branches"
+  },
+  {
+   "expect": {
+    "branches_popup": true
+   }
+  },
+  {
+   "find": {
+    "label": "Search for branches and actions"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "f i x"
+  },
+  {
+   "find": {
+    "label": "Search for branches and actions",
+    "value": "fix"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Search for branches and actions",
+   "button": "right"
+  },
+  {
+   "menu": "context-menu:Git.Branches.Popup.SpeedSearch",
+   "items": [
+    "Cut",
+    "Paste"
+   ]
+  },
+  {
+   "shot": "menu"
+  },
+  {
+   "do": "click",
+   "label": "Cut",
+   "role": "AXMenuItem"
+  },
+  {
+   "sh": "pbpaste",
+   "is": "fix"
+  },
+  {
+   "find": {
+    "label": "Recent",
+    "role": "AXRow",
+    "in": "Branches Tree"
+   }
+  },
+  {
+   "find": {
+    "label": "Search for branches and actions",
+    "value": "fix"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Search for branches and actions",
+   "button": "right"
+  },
+  {
+   "menu": "context-menu:Git.Branches.Popup.SpeedSearch",
+   "items": [
+    "Cut",
+    "Paste"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Paste",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Search for branches and actions",
+    "value": "fix"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Search for branches and actions",
+   "button": "right"
+  },
+  {
+   "find": {
+    "label": "Paste",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Paste",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Search for branches and actions",
+    "value": "fixfix"
+   }
+  },
+  {
+   "expect": {
+    "branches_popup": true
+   }
+  }
+ ]
+}

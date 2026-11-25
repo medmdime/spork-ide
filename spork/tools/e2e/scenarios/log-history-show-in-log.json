@@ -1,0 +1,18 @@
+{
+ "id": "log-history-show-in-log",
+ "covers": [
+  "action:Vcs.Log.SelectInLog"
+ ],
+ "reference-app": [],
+ "steps": [
+  {"do": "open", "what": "file-history", "path": "README.md"},
+  {"expect": {"view": "File", "selected": "docs: a second line"}, "of": {"do": "history"}},
+  {"do": "ui"},
+  {"wait": 500},
+  {"do": "click", "label": "docs: start the readme"},
+  {"wait": 300},
+  {"do": "click", "label": "Show in VCS Log", "in": "Vcs.FileHistory.Toolbar.RightCorner"},
+  {"expect": {"view": "History", "log_selected": "docs: start the readme"}, "of": {"do": "history"}, "within": 5000},
+  {"expect": {"selected": 6}}
+ ]
+}

@@ -1,0 +1,115 @@
+{
+ "id": "welcome-plugins-settings",
+ "covers": [
+  "action:WelcomeScreen.Plugins",
+  "action:WelcomeScreen.Settings"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "action",
+   "name": "workspace::CloseProject"
+  },
+  {
+   "expect": {
+    "roots": [],
+    "windows.0.title": "Welcome to Spork IDE"
+   },
+   "within": 10000
+  },
+  {
+   "find": [
+    "Projects",
+    "Customize",
+    "Plugins",
+    "Learn"
+   ],
+   "ordered": true,
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Plugins"
+  },
+  {
+   "expect": {
+    "settings.page": "Plugins"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "expect": {
+    "windows.0.title": "Welcome to Spork IDE",
+    "windows.1.title": "Settings"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Marketplace"
+    },
+    {
+     "label": "Installed"
+    }
+   ],
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Cancel",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings": null
+   },
+   "within": 8000
+  },
+  {
+   "expect": {
+    "windows.0.title": "Welcome to Spork IDE"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Settings",
+   "role": "AXButton"
+  },
+  {
+   "menu": "Settings",
+   "items": [
+    "Settings…",
+    "About"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Settings…",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings",
+    "settings.page": "Plugins"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "Cancel",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings": null
+   },
+   "within": 8000
+  }
+ ]
+}

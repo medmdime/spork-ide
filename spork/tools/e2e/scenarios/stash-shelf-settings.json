@@ -1,0 +1,125 @@
+{
+ "id": "stash-shelf-settings",
+ "covers": [
+  "settings:Version Control › Shelf"
+ ],
+ "note": "Change Shelves Location… applies at once, as the reference app's dialog does, and writes the location where the reference app keeps it (.idea/workspace.xml, VcsManagerConfiguration). The Browse… picker is answered by the test.",
+ "reference-app": [
+  "screenshots/settings/version-control-shelf.jpg"
+ ],
+ "steps": [
+  {
+   "sh": "mkdir -p .idea/shelf/Fix_readme .idea/shelf2 && printf '/shelf/\\n' > .idea/.gitignore && git diff README.md > .idea/shelf/Fix_readme/shelved.patch && printf '<changelist name=\"Fix_readme\" date=\"1767261600000\" recycled=\"false\" deleted=\"false\">\\n  <option name=\"DESCRIPTION\" value=\"Fix readme\" />\\n</changelist>\\n' > .idea/shelf/Fix_readme.xml && git checkout -- README.md"
+  },
+  {
+   "do": "open",
+   "what": "settings",
+   "page": "Version Control/Shelf"
+  },
+  {
+   "expect": {
+    "settings": "Version Control/Shelf"
+   }
+  },
+  {
+   "find": [
+    {"role": "AXCheckBox", "label": "Remove successfully applied files from the shelf", "value": "0"},
+    {"role": "AXCheckBox", "label": "Shelve base revisions of files under distributed version control systems", "value": "1"},
+    {"role": "AXButton", "label": "Change Shelves Location…"},
+    {"role": "AXButton", "label": "Cancel"},
+    {"role": "AXButton", "label": "OK"}
+   ],
+   "ordered": true,
+   "within": 6000
+  },
+  {
+   "wait": 400
+  },
+  {
+   "shot": "shelf-page",
+   "window": "smallest"
+  },
+  {
+   "find": [{"role": "AXButton", "label": "Change Shelves Location…"}]
+  },
+  {
+   "do": "click",
+   "label": "Change Shelves Location…",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {"role": "AXRadioButton", "label": "Default directory:", "value": "1"},
+    {"role": "AXRadioButton", "label": "Custom directory:", "value": "0"},
+    {"role": "AXCheckBox", "label": "Move shelves to the new location", "value": "0"},
+    {"role": "AXButton", "label": "Cancel"},
+    {"role": "AXButton", "label": "Change Location"}
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 500
+  },
+  {
+   "find": [{"role": "AXRadioButton", "label": "Custom directory:"}]
+  },
+  {
+   "do": "click",
+   "label": "Custom directory:",
+   "role": "AXRadioButton"
+  },
+  {
+   "find": [{"role": "AXRadioButton", "label": "Custom directory:", "value": "1"}]
+  },
+  {
+   "do": "pick",
+   "paths": [".idea/shelf2"]
+  },
+  {
+   "find": [{"role": "AXButton", "label": "Browse…"}]
+  },
+  {
+   "do": "click",
+   "label": "Browse…",
+   "role": "AXButton"
+  },
+  {
+   "find": [{"role": "AXCheckBox", "label": "Move shelves to the new location"}]
+  },
+  {
+   "do": "click",
+   "label": "Move shelves to the new location",
+   "role": "AXCheckBox"
+  },
+  {
+   "find": [{"role": "AXCheckBox", "label": "Move shelves to the new location", "value": "1"}]
+  },
+  {
+   "do": "click",
+   "label": "Change Location",
+   "role": "AXButton"
+  },
+  {
+   "sh": "test -f .idea/shelf2/Fix_readme.xml && test ! -e .idea/shelf/Fix_readme.xml && grep -c '<option name=\"USE_CUSTOM_SHELF_PATH\" value=\"true\" />' .idea/workspace.xml",
+   "is": "1"
+  },
+  {
+   "missing": [{"role": "AXButton", "label": "Change Location"}]
+  },
+  {
+   "find": [{"role": "AXButton", "label": "Cancel"}]
+  },
+  {
+   "do": "click",
+   "label": "Cancel",
+   "role": "AXButton"
+  },
+  {
+   "do": "action",
+   "name": "spork::ShowShelf"
+  },
+  {
+   "find": [{"role": "AXRow", "label": "Fix readme"}]
+  }
+ ]
+}

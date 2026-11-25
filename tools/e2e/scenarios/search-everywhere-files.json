@@ -1,0 +1,192 @@
+{
+ "id": "search-everywhere-files",
+ "covers": [
+  "action:GotoFile",
+  "dialog:GotoFile"
+ ],
+ "reference-app": [
+  "screenshots/dialogs/gotofile.jpg"
+ ],
+ "steps": [
+  {
+   "sh": "echo notes.log > .gitignore && echo notes > notes.log"
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-o"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "SearchEverywhere",
+     "Input"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Files",
+    "role": "AXRadioButton",
+    "value": "1",
+    "in": "Search Everywhere"
+   }
+  },
+  {
+   "find": {
+    "label": "greeting.rs",
+    "role": "AXStaticText",
+    "in": "Search Everywhere"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "m a i n"
+  },
+  {
+   "find": {
+    "label": "main.rs",
+    "role": "AXStaticText",
+    "selected": true,
+    "in": "Search Everywhere"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Preview",
+   "role": "AXButton"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "files-preview"
+  },
+  {
+   "do": "click",
+   "label": "Preview",
+   "role": "AXButton"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "menu": "Navigate",
+   "path": [
+    "Navigate"
+   ],
+   "items": [
+    "File…"
+   ],
+   "part": true
+  },
+  {
+   "do": "action",
+   "name": "navigate::GoToFile"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "SearchEverywhere",
+     "Input"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Files",
+    "role": "AXRadioButton",
+    "value": "1",
+    "in": "Search Everywhere"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "n o t e s"
+  },
+  {
+   "find": {
+    "label": "Nothing found"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Include non-project items",
+   "role": "AXCheckBox"
+  },
+  {
+   "find": [
+    {
+     "label": "Include non-project items",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "notes.log",
+     "role": "AXStaticText",
+     "selected": true,
+     "in": "Search Everywhere"
+    }
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-o"
+  },
+  {
+   "find": {
+    "label": "Include non-project items",
+    "role": "AXCheckBox",
+    "value": "0"
+   }
+  },
+  {
+   "find": {
+    "label": "notes.log",
+    "role": "AXStaticText"
+   },
+   "absent": true
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "expect": {
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "find": {
+    "label": "Search Everywhere",
+    "role": "AXWindow"
+   },
+   "absent": true
+  }
+ ]
+}

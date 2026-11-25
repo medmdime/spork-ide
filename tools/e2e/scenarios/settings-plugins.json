@@ -1,0 +1,217 @@
+{
+ "id": "settings-plugins",
+ "covers": [
+  "action:ShowPlugins"
+ ],
+ "reference-app": [
+  "screenshots/settings/plugins.jpg"
+ ],
+ "steps": [
+  {
+   "sh": "(nohup python3 \"$E2E/extensions_http.py\" ../registry-port 300 > /dev/null 2>&1 &) && for i in $(seq 1800); do [ -s ../registry-port ] && break; sleep 0.1; done && python3 -c \"import json; p='../home/.config/spork-ide/settings.json'; s=json.load(open(p)); s['server_url']='http://127.0.0.1:'+open('../registry-port').read().strip(); json.dump(s, open(p, 'w'))\""
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "toolbar": "Title bar",
+   "items": [
+    "Search Everywhere",
+    "IDE and Project Settings"
+   ],
+   "part": true,
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "IDE and Project Settings",
+   "role": "AXButton"
+  },
+  {
+   "do": "click",
+   "label": "Plugins…",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture",
+    "settings.page": "Plugins",
+    "settings.plugins.tab": "Marketplace",
+    "settings.plugins.marketplace": [
+     "Fixture Theme",
+     "Fixture Language",
+     "Fixture Snippets",
+     "Fixture Icons",
+     "Fixture MCP",
+     "Fixture Debugger"
+    ]
+   },
+   "within": 10000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "find": [
+    {
+     "label": "Marketplace",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "Installed",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "Search plugins",
+     "role": "AXTextField"
+    },
+    {
+     "label": "Fixture Theme",
+     "in": "Plugins"
+    },
+    {
+     "label": "Install",
+     "role": "AXButton"
+    },
+    {
+     "text": "Select plugin to preview details"
+    }
+   ],
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Search plugins",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "s n i p",
+   "window": "Settings – fixture"
+  },
+  {
+   "expect": {
+    "settings.plugins.marketplace": [
+     "Fixture Snippets"
+    ]
+   },
+   "within": 8000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a backspace",
+   "window": "Settings – fixture"
+  },
+  {
+   "expect": {
+    "settings.plugins.marketplace": [
+     "Fixture Theme",
+     "Fixture Language",
+     "Fixture Snippets",
+     "Fixture Icons",
+     "Fixture MCP",
+     "Fixture Debugger"
+    ]
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Fixture Theme",
+   "in": "Plugins"
+  },
+  {
+   "expect": {
+    "settings.plugins.selected": "fixture-theme"
+   }
+  },
+  {
+   "find": [
+    {
+     "text": "A dark theme for the tests."
+    },
+    {
+     "text": "Plugin ID: fixture-theme"
+    }
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "marketplace",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Install",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings.plugins.installed": [
+     "Fixture Theme"
+    ]
+   },
+   "within": 15000
+  },
+  {
+   "find": {
+    "label": "Uninstall",
+    "role": "AXButton"
+   }
+  },
+  {
+   "sh": "ls \"../home/Library/Application Support/Spork IDE/extensions/installed\"",
+   "contains": "fixture-theme"
+  },
+  {
+   "do": "click",
+   "label": "Installed",
+   "role": "AXRadioButton"
+  },
+  {
+   "expect": {
+    "settings.plugins.tab": "Installed"
+   }
+  },
+  {
+   "find": [
+    {
+     "text": "User-installed (1)"
+    },
+    {
+     "label": "Fixture Theme",
+     "in": "Plugins"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Fixture Theme",
+   "in": "Plugins"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "installed",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Uninstall",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings.plugins.installed": []
+   },
+   "within": 15000
+  },
+  {
+   "sh": "ls \"../home/Library/Application Support/Spork IDE/extensions/installed\"",
+   "lacks": "fixture-theme"
+  }
+ ]
+}

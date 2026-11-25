@@ -1,0 +1,349 @@
+{
+ "id": "markdown-editing",
+ "covers": [
+  "action:org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction",
+  "action:org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction",
+  "action:org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction",
+  "action:org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction",
+  "action:Markdown.Styling.CreateLink",
+  "action:Markdown.GenerateTableOfContents",
+  "action:Markdown.Table.SwapRows.SwapWithBelow",
+  "action:Markdown.Table.SwapRows.SwapWithAbove",
+  "action:Markdown.Table.SelectRow",
+  "action:Markdown.Table.SelectCurrentColumn.SelectContentCells"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "file": "notes.md",
+   "text": "hello world\n"
+  },
+  {
+   "do": "open",
+   "path": "notes.md"
+  },
+  {
+   "expect": {
+    "active": "notes.md",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home end alt-shift-left cmd-b"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < notes.md",
+   "is": "hello **world**|"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-b"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < notes.md",
+   "is": "hello world|"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home end alt-shift-left cmd-i"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < notes.md",
+   "is": "hello *world*|"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-i"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < notes.md",
+   "is": "hello world|"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home end alt-shift-left cmd-shift-s"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < notes.md",
+   "is": "hello ~~world~~|"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-s"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < notes.md",
+   "is": "hello world|"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home end alt-shift-left cmd-shift-c"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < notes.md",
+   "is": "hello `world`|"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-c"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < notes.md",
+   "is": "hello world|"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home end cmd-b"
+  },
+  {
+   "do": "type",
+   "text": "x"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < notes.md",
+   "is": "hello world**x**|"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home alt-shift-right cmd-shift-u"
+  },
+  {
+   "do": "type",
+   "text": "u"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < notes.md",
+   "is": "[hello](u) world**x**|"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-u"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < notes.md",
+   "is": "hello world**x**|"
+  },
+  {
+   "file": "docs.md",
+   "text": "# Title\n\n## Part one\n\ntext\n"
+  },
+  {
+   "do": "open",
+   "path": "docs.md"
+  },
+  {
+   "expect": {
+    "active": "docs.md"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-end"
+  },
+  {
+   "do": "action",
+   "name": "spork_editor::GenerateTableOfContents"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < docs.md",
+   "is": "# Title||## Part one||text|<!-- TOC -->|* [Title](#title)|    * [Part one](#part-one)|<!-- TOC -->|"
+  },
+  {
+   "do": "action",
+   "name": "spork_editor::GenerateTableOfContents"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < docs.md",
+   "is": "# Title||## Part one||text|<!-- TOC -->|* [Title](#title)|    * [Part one](#part-one)|<!-- TOC -->|"
+  },
+  {
+   "file": "table.md",
+   "text": "| a | b |\n|---|---|\n| 1 | 2 |\n| 3 | 4 |\n"
+  },
+  {
+   "do": "open",
+   "path": "table.md"
+  },
+  {
+   "expect": {
+    "active": "table.md"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down down right right"
+  },
+  {
+   "do": "action",
+   "name": "spork_editor::MoveTableRowDown"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < table.md",
+   "is": "| a | b |||---|---||| 3 | 4 ||| 1 | 2 ||"
+  },
+  {
+   "do": "action",
+   "name": "spork_editor::MoveTableRowUp"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < table.md",
+   "is": "| a | b |||---|---||| 1 | 2 ||| 3 | 4 ||"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down down down right right right right right right"
+  },
+  {
+   "do": "action",
+   "name": "spork_editor::SelectTableColumnCells"
+  },
+  {
+   "do": "type",
+   "text": "Z"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < table.md",
+   "is": "| a | Z |||---|---||| 1 | Z ||| 3 | Z ||"
+  },
+  {
+   "do": "keys",
+   "keys": "escape cmd-home down down"
+  },
+  {
+   "do": "action",
+   "name": "spork_editor::SelectTableRow"
+  },
+  {
+   "do": "type",
+   "text": "| 9 | 9 |"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "sh": "tr '\\n' '|' < table.md",
+   "is": "| a | Z |||---|---||| 9 | 9 ||| 3 | Z ||"
+  }
+ ]
+}

@@ -1,0 +1,83 @@
+{
+ "id": "commit-unshelve-silently",
+ "covers": [
+  "action:ChangesView.UnshelveSilently"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "action",
+   "name": "spork::ToggleCommit"
+  },
+  {
+   "expect": {
+    "left": "[Commit, Project]"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXCheckBox"
+    }
+   ],
+   "within": 6000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "README.md"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-h"
+  },
+  {
+   "find": [
+    {
+     "label": "README.md",
+     "role": "AXCheckBox"
+    }
+   ],
+   "absent": true,
+   "within": 5000
+  },
+  {
+   "sh": "git diff --quiet HEAD -- README.md"
+  },
+  {
+   "do": "action",
+   "name": "spork::ShowShelf"
+  },
+  {
+   "find": [
+    {
+     "role": "AXRow",
+     "label": "Changes"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Changes",
+   "role": "AXRow"
+  },
+  {
+   "wait": 400
+  },
+  {
+   "do": "keys",
+   "keys": "alt-cmd-u"
+  },
+  {
+   "sh": "git status --porcelain README.md",
+   "is": "M README.md"
+  }
+ ]
+}

@@ -1,0 +1,259 @@
+{
+ "id": "markdown-structure",
+ "covers": [
+  "toolbar:Markdown.Toolbar.Floating",
+  "action:Markdown.Styling.SetHeaderLevel",
+  "action:org.intellij.plugins.markdown.ui.actions.styling.HeaderUpAction",
+  "action:org.intellij.plugins.markdown.ui.actions.styling.HeaderDownAction",
+  "action:Markdown.Styling.CreateOrChangeList"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "file": "notes.md",
+   "text": "Intro\nfirst line\nsecond line\n"
+  },
+  {
+   "do": "open",
+   "path": "notes.md"
+  },
+  {
+   "expect": {
+    "active": "notes.md",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "action",
+   "name": "workspace::CloseAllDocks"
+  },
+  {
+   "expect": {
+    "docks.left.open": false,
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   },
+   "within": 3000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down alt-shift-right"
+  },
+  {
+   "toolbar": "Markdown Editor Floating Toolbar",
+   "items": [
+    "Set Header Style",
+    "Bold",
+    "Italic",
+    "Strikethrough",
+    "Code",
+    "Create Link",
+    "Create Or Change List"
+   ],
+   "within": 3000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "shot": "floating-toolbar"
+  },
+  {
+   "do": "click",
+   "label": "Set Header Style",
+   "role": "AXButton"
+  },
+  {
+   "menu": "Set Header Style",
+   "items": [
+    "Normal",
+    "Title",
+    "Subtitle",
+    "Heading 1",
+    "Heading 2",
+    "Heading 3",
+    "Heading 4"
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "shot": "header-styles"
+  },
+  {
+   "do": "click",
+   "label": "Subtitle",
+   "role": "AXMenuItem"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "sh": "tr '\\n' '|' < notes.md",
+   "is": "Intro||## first line||second line|",
+   "within": 3000
+  },
+  {
+   "find": {
+    "label": "Markdown Editor Floating Toolbar",
+    "role": "AXToolbar"
+   },
+   "absent": true
+  },
+  {
+   "do": "action",
+   "name": "spork_editor::DecreaseHeaderLevel"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "sh": "tr '\\n' '|' < notes.md",
+   "is": "Intro||### first line||second line|",
+   "within": 3000
+  },
+  {
+   "do": "action",
+   "name": "spork_editor::IncreaseHeaderLevel"
+  },
+  {
+   "do": "action",
+   "name": "spork_editor::IncreaseHeaderLevel"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "sh": "tr '\\n' '|' < notes.md",
+   "is": "Intro||# first line||second line|",
+   "within": 3000
+  },
+  {
+   "do": "action",
+   "name": "spork_editor::IncreaseHeaderLevel"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "sh": "tr '\\n' '|' < notes.md",
+   "is": "Intro||first line||second line|",
+   "within": 3000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-end up shift-end"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "toolbar": "Markdown Editor Floating Toolbar",
+   "items": [
+    "Set Header Style",
+    "Bold",
+    "Italic",
+    "Strikethrough",
+    "Code",
+    "Create Link",
+    "Create Or Change List"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Create Or Change List"
+  },
+  {
+   "find": [
+    {
+     "label": "Unordered List",
+     "in": "Create Or Change List"
+    },
+    {
+     "label": "Ordered List",
+     "in": "Create Or Change List"
+    },
+    {
+     "label": "Checkmark List",
+     "in": "Create Or Change List"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "shot": "list-kinds"
+  },
+  {
+   "do": "click",
+   "label": "Ordered List"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "sh": "tr '\\n' '|' < notes.md",
+   "is": "Intro||first line||1. second line|",
+   "within": 3000
+  },
+  {
+   "do": "action",
+   "name": "spork_editor::CreateOrChangeList"
+  },
+  {
+   "do": "click",
+   "label": "Checkmark List"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "sh": "tr '\\n' '|' < notes.md",
+   "is": "Intro||first line||1. [ ] second line|",
+   "within": 3000
+  },
+  {
+   "do": "action",
+   "name": "spork_editor::CreateOrChangeList"
+  },
+  {
+   "do": "click",
+   "label": "Checkmark List"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "sh": "tr '\\n' '|' < notes.md",
+   "is": "Intro||first line||second line|",
+   "within": 3000
+  }
+ ]
+}

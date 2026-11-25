@@ -1,0 +1,66 @@
+{
+ "id": "log-menu-fixup",
+ "covers": [
+  "action:Git.Fixup.To.Commit",
+  "action:Git.Squash.Into.Commit"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "find": {
+    "text": "docs: a second line",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "docs: a second line",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "find": {
+    "text": "Fixup…",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Fixup…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "text": "fixup! docs: a second line"
+   }
+  },
+  {
+   "find": {
+    "text": "docs: a second line",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "docs: a second line",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "find": {
+    "text": "Squash Into…",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Squash Into…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "text": "squash! docs: a second line"
+   }
+  }
+ ]
+}

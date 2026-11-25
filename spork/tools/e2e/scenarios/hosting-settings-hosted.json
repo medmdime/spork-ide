@@ -1,0 +1,108 @@
+{
+ "id": "hosting-settings-hosted",
+ "covers": [
+  "action:Github.View.Pull.Request",
+  "action:GitLab.Merge.Request.Show.List"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "git",
+   "args": [
+    "remote",
+    "add",
+    "github",
+    "https://github.e2e.invalid/spork/fixture.git"
+   ]
+  },
+  {
+   "menu": "context-menu:GitHub.MainMenu",
+   "path": [
+    "Git",
+    "GitHub"
+   ],
+   "within": 8000,
+   "items": [
+    "Create Pull Request…",
+    "View Pull Requests",
+    "Sync Fork",
+    "Share Project on GitHub",
+    "Clone Repository from GitHub…",
+    "Manage GitHub Accounts…"
+   ]
+  },
+  {
+   "do": "action",
+   "name": "spork::ViewPullRequests"
+  },
+  {
+   "expect": {
+    "left": "[PullRequests]"
+   }
+  },
+  {
+   "find": [
+    "Pull Requests"
+   ],
+   "ordered": true
+  },
+  {
+   "do": "action",
+   "name": "spork::ToggleProject"
+  },
+  {
+   "do": "git",
+   "args": [
+    "remote",
+    "remove",
+    "github"
+   ]
+  },
+  {
+   "do": "git",
+   "args": [
+    "remote",
+    "add",
+    "gitlab",
+    "https://gitlab.e2e.invalid/spork/fixture.git"
+   ]
+  },
+  {
+   "menu": "context-menu:GitLab.Main.Group",
+   "path": [
+    "Git",
+    "GitLab"
+   ],
+   "within": 8000,
+   "items": [
+    "Create Merge Request…",
+    "View Merge Requests",
+    "Share Project on GitLab",
+    "Clone Repository from GitLab…",
+    "Manage GitLab Accounts…"
+   ]
+  },
+  {
+   "menu": "context-menu:GitHub.MainMenu",
+   "path": [
+    "Git",
+    "GitHub"
+   ]
+  },
+  {
+   "do": "action",
+   "name": "spork::ViewMergeRequests"
+  },
+  {
+   "expect": {
+    "left": "[PullRequests]"
+   }
+  },
+  {
+   "find": [
+    "Merge Requests"
+   ],
+   "ordered": true
+  }
+ ]
+}

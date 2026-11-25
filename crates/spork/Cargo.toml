@@ -1,0 +1,39 @@
+[package]
+name = "spork"
+description = "Spork: neither a spoon nor a fork, just a better Git client"
+version = "0.0.1"
+edition.workspace = true
+publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
+
+# the views, for the IDE's windows (`ide`), and the standalone app's `main`
+[lib]
+path = "src/spork.rs"
+doctest = false
+
+[[bin]]
+name = "spork"
+path = "src/main.rs"
+
+[dependencies]
+chrono = { workspace = true, features = ["clock"] }
+gpui_kit = { workspace = true, features = ["syntect"] }
+notify.workspace = true
+# a log filter is the user's own regex
+regex = { workspace = true, features = ["unicode"] }
+serde_json.workspace = true
+smol.workspace = true
+spork_ai.workspace = true
+spork_git.workspace = true
+spork_graph.workspace = true
+spork_hosting.workspace = true
+spork_patch.workspace = true
+spork_terminal.workspace = true
+spork_workbench.workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2.workspace = true
+objc2-foundation.workspace = true

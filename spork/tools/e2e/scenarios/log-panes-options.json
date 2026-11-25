@@ -1,0 +1,256 @@
+{
+ "id": "log-panes-options",
+ "covers": [
+  "action:Vcs.Log.FocusTextFilter",
+  "action:Vcs.Log.EnableFilterByRegexAction",
+  "action:Vcs.Log.MatchCaseAction",
+  "action:Vcs.Log.CompactReferencesView",
+  "action:Vcs.Log.ShowTagNames",
+  "action:Vcs.Log.ShowLongEdges",
+  "action:Vcs.Log.PreferCommitDate",
+  "action:Vcs.Log.AlignLabels",
+  "action:Vcs.Log.ResumeIndexing"
+ ],
+ "reference-app": [
+  "screenshots/menus/vcs-log-presentationsettings.png"
+ ],
+ "steps": [
+  {
+   "expect": {
+    "view": "History",
+    "commits": 7,
+    "log.indexed": false
+   }
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "do": "keys",
+   "keys": "F i x"
+  },
+  {
+   "expect": {
+    "log.matches": 1
+   }
+  },
+  {
+   "do": "click",
+   "label": "Match Case",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "log.match_case": true,
+    "log.matches": 0
+   }
+  },
+  {
+   "do": "click",
+   "label": "Match Case",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "log.match_case": false,
+    "log.matches": 1
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "backspace backspace backspace f . x"
+  },
+  {
+   "expect": {
+    "log.matches": 0
+   }
+  },
+  {
+   "do": "click",
+   "label": "Regex",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "log.regex": true,
+    "log.matches": 1
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a backspace"
+  },
+  {
+   "expect": {
+    "log.matches": 0
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "expect": {
+    "selected": 1
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "View Options"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "Tag Names",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "log.tag_names": true
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "View Options"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "Compact References View",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "log.compact_refs": false
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "View Options"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "Long Edges",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "log.long_edges": true
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "View Options"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "Commit Timestamp",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "log.commit_time": true
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "View Options"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "References on the Left",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "log.refs_left": true
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "View Options"
+  },
+  {
+   "menu": "context-menu:Vcs.Log.PresentationSettings",
+   "checked": [
+    "Tag Names",
+    "Long Edges",
+    "Commit Timestamp",
+    "References on the Left",
+    "My Commits",
+    "Merge Commits",
+    "Current Branch"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "options"
+  },
+  {
+   "do": "click",
+   "label": "Enable Git Log Indexing",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "log.indexed": true
+   },
+   "within": 8000
+  },
+  {
+   "toolbar": "VCS Log Toolbar",
+   "items": [
+    "Refresh",
+    "Cherry-Pick",
+    "View Options ▸",
+    "Go To Hash/Branch/Tag"
+   ],
+   "id": "context-menu:Vcs.Log.Toolbar.RightCorner"
+  }
+ ]
+}

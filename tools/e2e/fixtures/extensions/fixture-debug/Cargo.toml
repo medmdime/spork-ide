@@ -1,0 +1,13 @@
+[package]
+name = "fixture_debug"
+version = "1.0.0"
+edition = "2024"
+publish = false
+license = "GPL-3.0-or-later"
+
+[lib]
+path = "src/fixture_debug.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+zed_extension_api.workspace = true

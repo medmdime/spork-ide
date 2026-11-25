@@ -1,0 +1,95 @@
+{
+ "id": "commit-stage-commit",
+ "covers": [
+  "action:Git.Commit.Stage"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "action",
+   "name": "changes::UseStagingArea"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-k"
+  },
+  {
+   "expect": {
+    "left": "[Commit, Project]"
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Unstaged",
+     "role": "AXRow"
+    },
+    {
+     "label": "README.md",
+     "role": "AXRow"
+    },
+    {
+     "label": "Commit",
+     "role": "AXButton"
+    }
+   ],
+   "within": 6000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "keys",
+   "keys": "f i x"
+  },
+  {
+   "find": [
+    {
+     "role": "AXTextArea",
+     "value": "fix"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "README.md",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "Stage",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "Staged",
+     "role": "AXRow"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Commit",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "Staged",
+     "role": "AXRow"
+    }
+   ],
+   "absent": true,
+   "within": 8000
+  },
+  {
+   "sh": "test \"$(git log -1 --format=%s)\" = fix && git diff --quiet HEAD -- README.md"
+  }
+ ]
+}

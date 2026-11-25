@@ -1,0 +1,201 @@
+{
+ "id": "settings-file-types",
+ "covers": [],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "keys",
+   "keys": "cmd-,"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "File Types",
+   "role": "AXRow",
+   "in": "Settings categories",
+   "within": 8000
+  },
+  {
+   "expect": {
+    "settings.page": "Editor/File Types"
+   },
+   "within": 8000
+  },
+  {
+   "find": [
+    {
+     "label": "Recognized File Types",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "Ignored Files and Folders",
+     "role": "AXRadioButton"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Rust",
+   "in": "Recognized File Types"
+  },
+  {
+   "find": [
+    {
+     "text": "File name patterns:"
+    },
+    {
+     "text": "No registered file patterns"
+    }
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Add",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "text": "Add Wildcard"
+    },
+    {
+     "label": "Enter new wildcard ('*' and '?' allowed):",
+     "role": "AXTextField"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "type",
+   "text": "*.rsx",
+   "window": "Settings – fixture"
+  },
+  {
+   "do": "keys",
+   "keys": "enter",
+   "window": "Settings – fixture"
+  },
+  {
+   "find": {
+    "label": "*.rsx",
+    "in": "File name patterns"
+   },
+   "within": 3000
+  },
+  {
+   "expect": {
+    "settings.apply": true,
+    "settings.modified": [
+     "Editor/File Types"
+    ]
+   }
+  },
+  {
+   "find": {
+    "text": "Add Wildcard"
+   },
+   "absent": true,
+   "within": 3000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "label": "Ignored Files and Folders",
+   "role": "AXRadioButton"
+  },
+  {
+   "find": [
+    {
+     "label": "**/.git",
+     "in": "Ignored Files and Folders"
+    },
+    {
+     "text": "Ignored files and folders are not visible in the IDE and not indexed"
+    }
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Add",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Ignored pattern",
+    "role": "AXTextField"
+   },
+   "within": 3000
+  },
+  {
+   "do": "type",
+   "text": "**/target",
+   "window": "Settings – fixture"
+  },
+  {
+   "do": "keys",
+   "keys": "enter",
+   "window": "Settings – fixture"
+  },
+  {
+   "find": {
+    "label": "**/target",
+    "in": "Ignored Files and Folders"
+   },
+   "within": 3000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "ignored-files",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Apply",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "value": [
+     "*.rsx"
+    ]
+   },
+   "of": {
+    "do": "setting",
+    "path": "/file_types/Rust"
+   },
+   "within": 8000
+  },
+  {
+   "sh": "cat ../home/.config/spork-ide/settings.json",
+   "contains": "**/target",
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "settings": null
+   },
+   "within": 8000
+  }
+ ]
+}

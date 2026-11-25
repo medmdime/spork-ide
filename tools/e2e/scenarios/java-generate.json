@@ -1,0 +1,578 @@
+{
+ "id": "java-generate",
+ "fixture": "maven",
+ "covers": [
+  "action:GenerateConstructor",
+  "action:GenerateGetter",
+  "action:GenerateSetter",
+  "action:GenerateGetterAndSetter",
+  "action:OverrideMethods",
+  "action:ImplementMethods",
+  "action:DelegateMethods"
+ ],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "find": {
+    "label": "Load Maven Project",
+    "role": "AXLink"
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "Load Maven Project",
+   "role": "AXLink"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 300000
+  },
+  {
+   "file": "src/main/java/com/example/Person.java",
+   "text": "package com.example;\n\n/** A person. */\npublic class Person implements Comparable<Person> {\n    private String name;\n    private int age;\n}\n"
+  },
+  {
+   "wait": 2000
+  },
+  {
+   "do": "open",
+   "path": "src/main/java/com/example/Person.java"
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/Person.java"
+   }
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "code.ready": true
+   },
+   "within": 120000
+  },
+  {
+   "do": "keys",
+   "keys": "down down down down down"
+  },
+  {
+   "menu": "menu:CodeMenu",
+   "path": [
+    "Code"
+   ],
+   "part": true,
+   "items": [
+    "Override Methods…",
+    "Implement Methods…",
+    "Delegate Methods…",
+    "Generate…"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-n"
+  },
+  {
+   "find": {
+    "label": "Generate",
+    "role": "AXMenu"
+   },
+   "within": 20000
+  },
+  {
+   "find": [
+    {
+     "label": "Constructor",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Getter",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Setter",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Getter and Setter",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "equals() and hashCode()",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "toString()",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Override Methods…",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Implement Methods…",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Delegate Methods…",
+     "role": "AXMenuItem"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "generate"
+  },
+  {
+   "do": "click",
+   "label": "Constructor",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    "Choose Fields to Initialize by Constructor",
+    {
+     "label": "Person",
+     "role": "AXRow"
+    },
+    {
+     "label": "name:String",
+     "role": "AXRow",
+     "selected": true
+    },
+    {
+     "label": "age:int",
+     "role": "AXRow",
+     "selected": true
+    }
+   ],
+   "within": 20000
+  },
+  {
+   "find": [
+    {
+     "label": "Select None",
+     "role": "AXButton"
+    },
+    {
+     "label": "Cancel",
+     "role": "AXButton"
+    },
+    {
+     "label": "OK",
+     "role": "AXButton"
+    }
+   ]
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "constructor"
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "sh": "cat src/main/java/com/example/Person.java",
+   "contains": "public Person(String name, int age)",
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-n"
+  },
+  {
+   "find": {
+    "label": "Getter and Setter",
+    "role": "AXMenuItem"
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "Getter and Setter",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    "Select Fields to Generate Getters and Setters",
+    {
+     "label": "name:String",
+     "role": "AXRow",
+     "selected": true
+    },
+    {
+     "label": "age:int",
+     "role": "AXRow",
+     "selected": true
+    }
+   ],
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "age:int",
+   "role": "AXRow"
+  },
+  {
+   "find": {
+    "label": "age:int",
+    "role": "AXRow",
+    "selected": true
+   }
+  },
+  {
+   "find": {
+    "label": "name:String",
+    "role": "AXRow",
+    "selected": true
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "sh": "cat src/main/java/com/example/Person.java",
+   "contains": "public void setAge(int age)",
+   "within": 20000
+  },
+  {
+   "sh": "cat src/main/java/com/example/Person.java",
+   "lacks": "getName()"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-n"
+  },
+  {
+   "find": {
+    "label": "Getter",
+    "role": "AXMenuItem"
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "Getter",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    "Select Fields to Generate Getters",
+    {
+     "label": "Person",
+     "role": "AXRow"
+    },
+    {
+     "label": "name:String",
+     "role": "AXRow",
+     "selected": true
+    }
+   ],
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "sh": "cat src/main/java/com/example/Person.java",
+   "contains": "public String getName()",
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-n"
+  },
+  {
+   "find": {
+    "label": "Setter",
+    "role": "AXMenuItem"
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "Setter",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    "Select Fields to Generate Setters",
+    {
+     "label": "Person",
+     "role": "AXRow"
+    },
+    {
+     "label": "name:String",
+     "role": "AXRow",
+     "selected": true
+    }
+   ],
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "sh": "cat src/main/java/com/example/Person.java",
+   "contains": "public void setName(String name)",
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-n"
+  },
+  {
+   "find": {
+    "label": "toString()",
+    "role": "AXMenuItem"
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "toString()",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    "Generate toString()",
+    {
+     "label": "name:String",
+     "role": "AXRow",
+     "selected": true
+    },
+    {
+     "label": "age:int",
+     "role": "AXRow",
+     "selected": true
+    }
+   ],
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "sh": "cat src/main/java/com/example/Person.java",
+   "contains": "public String toString()",
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-n"
+  },
+  {
+   "find": {
+    "label": "equals() and hashCode()",
+    "role": "AXMenuItem"
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "equals() and hashCode()",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    "Generate equals() and hashCode()",
+    {
+     "label": "name:String",
+     "role": "AXRow",
+     "selected": true
+    }
+   ],
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "sh": "cat src/main/java/com/example/Person.java",
+   "contains": "public boolean equals(Object",
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-i"
+  },
+  {
+   "find": [
+    "Select Methods to Implement",
+    {
+     "label": "java.lang.Comparable",
+     "role": "AXRow"
+    },
+    {
+     "label": "compareTo(Person)",
+     "role": "AXRow",
+     "selected": true
+    }
+   ],
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "sh": "cat src/main/java/com/example/Person.java",
+   "contains": "public int compareTo(Person",
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-o"
+  },
+  {
+   "find": [
+    "Select Methods to Override",
+    {
+     "label": "java.lang.Object",
+     "role": "AXRow"
+    },
+    {
+     "label": "clone()",
+     "role": "AXRow"
+    }
+   ],
+   "within": 20000
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "override"
+  },
+  {
+   "do": "click",
+   "label": "clone()",
+   "role": "AXRow"
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "sh": "cat src/main/java/com/example/Person.java",
+   "contains": "protected Object clone()",
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-n"
+  },
+  {
+   "find": {
+    "label": "Delegate Methods…",
+    "role": "AXMenuItem"
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "Delegate Methods…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    "Select Target to Generate Delegates for",
+    {
+     "label": "name:String",
+     "role": "AXRow",
+     "selected": true
+    }
+   ],
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    "Select Methods to Generate Delegates for",
+    {
+     "label": "charAt(int)",
+     "role": "AXRow"
+    }
+   ],
+   "within": 20000
+  },
+  {
+   "wait": 800
+  },
+  {
+   "shot": "delegate-methods"
+  },
+  {
+   "do": "click",
+   "label": "charAt(int)",
+   "role": "AXRow"
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "sh": "cat src/main/java/com/example/Person.java",
+   "contains": "public char charAt(int",
+   "within": 20000
+  },
+  {
+   "sh": "cat src/main/java/com/example/Person.java",
+   "lacks": "\t"
+  },
+  {
+   "sh": "cat src/main/java/com/example/Person.java",
+   "lacks": "TODO"
+  }
+ ]
+}

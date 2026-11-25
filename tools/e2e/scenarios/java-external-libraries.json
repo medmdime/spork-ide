@@ -1,0 +1,129 @@
+{
+ "id": "java-external-libraries",
+ "fixture": "maven",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "find": {
+    "label": "Load Maven Project",
+    "role": "AXLink"
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "Load Maven Project",
+   "role": "AXLink"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 300000
+  },
+  {
+   "do": "click",
+   "label": "src",
+   "role": "AXRow"
+  },
+  {
+   "find": [
+    {
+     "label": "fixture",
+     "role": "AXRow"
+    },
+    {
+     "label": "pom.xml",
+     "role": "AXRow"
+    },
+    {
+     "label": "README.md",
+     "role": "AXRow"
+    },
+    {
+     "label": "External Libraries",
+     "role": "AXRow"
+    }
+   ],
+   "ordered": true,
+   "within": 60000
+  },
+  {
+   "do": "click",
+   "label": "External Libraries",
+   "role": "AXRow"
+  },
+  {
+   "find": [
+    {
+     "label": "External Libraries",
+     "role": "AXRow"
+    },
+    {
+     "label": "< 17 >",
+     "role": "AXRow"
+    },
+    {
+     "label": "Maven: junit:junit:4.13.2",
+     "role": "AXRow"
+    },
+    {
+     "label": "Maven: org.hamcrest:hamcrest-core:1.3",
+     "role": "AXRow"
+    }
+   ],
+   "ordered": true,
+   "within": 10000
+  },
+  {
+   "find": {
+    "label": "< 17 >",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Maven: junit:junit:4.13.2",
+   "role": "AXRow"
+  },
+  {
+   "find": [
+    {
+     "label": "Maven: junit:junit:4.13.2",
+     "role": "AXRow"
+    },
+    {
+     "label": "junit-4.13.2.jar",
+     "role": "AXRow"
+    },
+    {
+     "label": "Maven: org.hamcrest:hamcrest-core:1.3",
+     "role": "AXRow"
+    }
+   ],
+   "ordered": true,
+   "within": 10000
+  }
+ ]
+}

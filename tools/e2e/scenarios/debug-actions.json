@@ -1,0 +1,369 @@
+{
+ "id": "debug-actions",
+ "covers": [
+  "action:SmartStepInto",
+  "action:ForceStepOver",
+  "action:ForceRunToCursor",
+  "action:Debugger.PopFrame"
+ ],
+ "reference-app": [],
+ "settings": {
+  "dap": {
+   "CodeLLDB": {
+    "binary": "/usr/bin/python3",
+    "args": [
+     "$E2E/dap_fixture.py"
+    ]
+   }
+  },
+  "languages": {
+   "JSON": {
+    "prettier": {
+     "allowed": false
+    }
+   },
+   "JSONC": {
+    "prettier": {
+     "allowed": false
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "sh": "mkdir -p .zed && printf '[{\"label\": \"debug fixture\", \"adapter\": \"CodeLLDB\", \"request\": \"launch\", \"program\": \"$FIXTURE/target/debug/fixture\", \"cwd\": \"$FIXTURE\", \"requestLog\": \"$FIXTURE/../dap-requests.log\"}]' > .zed/debug.json"
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "find": {
+    "label": "debug fixture, Run / Debug Configurations",
+    "role": "AXButton"
+   },
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "do": "keys",
+   "keys": "down down down"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "expect": {
+    "run.breakpoints.0.at": "main.rs:4"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-d"
+  },
+  {
+   "expect": {
+    "docks.bottom.panel": "DebugPanel",
+    "run.debug.status": "Stopped"
+   },
+   "within": 15000
+  },
+  {
+   "find": {
+    "label": "fixture::main:4, main.rs",
+    "role": "AXGroup",
+    "in": "Frames"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "More",
+   "role": "AXButton",
+   "in": "XDebugger.ToolWindow.TopToolbar3"
+  },
+  {
+   "menu": "XDebugger.ToolWindow.TopToolbar3.Extra",
+   "items": [
+    "Force Step Over",
+    "Force Step Into",
+    "Smart Step Into",
+    "Run to Cursor",
+    "Force Run to Cursor",
+    "Show Execution Point",
+    "Evaluate Expression…",
+    "Reset Frame"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "menu": "Debugging Actions",
+   "path": [
+    "Run",
+    "Debugging Actions"
+   ],
+   "items": [
+    "Step Over",
+    "Force Step Over",
+    "Step Into",
+    "Force Step Into",
+    "Smart Step Into",
+    "Step Out",
+    "Run to Cursor",
+    "Force Run to Cursor",
+    "Reset Frame",
+    "Pause Program (disabled)",
+    "Resume Program",
+    "Evaluate Expression…",
+    "Show Execution Point"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "shift-f7"
+  },
+  {
+   "find": [
+    {
+     "label": "Method to Step Into",
+     "role": "AXWindow"
+    },
+    {
+     "label": "greeting::hello(\"world\")",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "std::io::_print(…)",
+     "role": "AXMenuItem"
+    }
+   ],
+   "ordered": true,
+   "within": 8000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "smart-step-into"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "find": {
+    "label": "fixture::greeting::hello:2, greeting.rs",
+    "role": "AXGroup",
+    "in": "Frames"
+   },
+   "within": 10000
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "f8"
+  },
+  {
+   "find": {
+    "label": "fixture::greeting::hello:3, greeting.rs",
+    "role": "AXGroup",
+    "in": "Frames"
+   },
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "run::ResetFrame"
+  },
+  {
+   "find": {
+    "label": "fixture::greeting::hello:2, greeting.rs",
+    "role": "AXGroup",
+    "in": "Frames"
+   },
+   "within": 10000
+  },
+  {
+   "sh": "grep -c '\"restartFrame\"' ../dap-requests.log",
+   "is": "1"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "f9"
+  },
+  {
+   "expect": {
+    "run.debug.terminated": true
+   },
+   "within": 10000
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "expect": {
+    "run.breakpoints.0.at": "greeting.rs:2",
+    "run.breakpoints.1.at": "main.rs:4"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-d"
+  },
+  {
+   "expect": {
+    "docks.bottom.panel": "DebugPanel",
+    "run.debug.status": "Stopped"
+   },
+   "within": 15000
+  },
+  {
+   "find": {
+    "label": "fixture::main:4, main.rs",
+    "role": "AXGroup",
+    "in": "Frames"
+   },
+   "within": 10000
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "alt-shift-f8"
+  },
+  {
+   "find": {
+    "label": "fixture::main:5, main.rs",
+    "role": "AXGroup",
+    "in": "Frames"
+   },
+   "within": 10000
+  },
+  {
+   "expect": {
+    "run.debug.status": "Stopped",
+    "run.debug.skipping_breakpoints": false
+   },
+   "within": 5000
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "f9"
+  },
+  {
+   "expect": {
+    "run.debug.terminated": true
+   },
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-d"
+  },
+  {
+   "expect": {
+    "docks.bottom.panel": "DebugPanel",
+    "run.debug.status": "Stopped"
+   },
+   "within": 15000
+  },
+  {
+   "find": {
+    "label": "fixture::main:4, main.rs",
+    "role": "AXGroup",
+    "in": "Frames"
+   },
+   "within": 10000
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "expect": {
+    "active": "src/main.rs"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-home down down down down"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "alt-cmd-f9"
+  },
+  {
+   "find": {
+    "label": "fixture::main:5, main.rs",
+    "role": "AXGroup",
+    "in": "Frames"
+   },
+   "within": 10000
+  },
+  {
+   "expect": {
+    "run.debug.status": "Stopped",
+    "run.debug.skipping_breakpoints": false
+   },
+   "within": 5000
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "f9"
+  },
+  {
+   "expect": {
+    "run.debug.terminated": true
+   },
+   "within": 10000
+  }
+ ]
+}

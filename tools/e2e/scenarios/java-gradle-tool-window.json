@@ -1,0 +1,260 @@
+{
+ "id": "java-gradle-tool-window",
+ "fixture": "gradle",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "java.tool": "Gradle",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "find": {
+    "label": "Load Gradle Project",
+    "role": "AXLink"
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "Load Gradle Project",
+   "role": "AXLink"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 600000
+  },
+  {
+   "do": "action",
+   "name": "gradle_tool_window::ToggleFocus"
+  },
+  {
+   "expect": {
+    "docks.right.open": true,
+    "docks.right.panel": "Gradle"
+   }
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "find": [
+    {
+     "label": "fixture",
+     "role": "AXRow"
+    },
+    {
+     "label": "Tasks",
+     "role": "AXRow"
+    },
+    {
+     "label": "Dependencies",
+     "role": "AXRow"
+    }
+   ],
+   "ordered": true,
+   "within": 600000
+  },
+  {
+   "toolbar": "Gradle Toolbar",
+   "items": [
+    "Sync All Gradle Projects",
+    "Select Project Data To Import (disabled)",
+    "Download Sources (disabled)",
+    "Link Gradle Project (disabled)",
+    "Unlink Gradle Project (disabled)",
+    "Execute Gradle Task",
+    "Toggle Offline Mode",
+    "Analyze Dependencies… (disabled)",
+    "Expand All",
+    "Collapse All",
+    "Build Tool Settings (disabled)"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Expand All",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "Tasks",
+     "role": "AXRow"
+    },
+    {
+     "label": "application",
+     "role": "AXRow"
+    },
+    {
+     "label": "run",
+     "role": "AXRow"
+    },
+    {
+     "label": "build",
+     "role": "AXRow"
+    },
+    {
+     "label": "assemble",
+     "role": "AXRow"
+    },
+    {
+     "label": "verification",
+     "role": "AXRow"
+    },
+    {
+     "label": "test",
+     "role": "AXRow"
+    },
+    {
+     "label": "other",
+     "role": "AXRow"
+    },
+    {
+     "label": "Dependencies",
+     "role": "AXRow"
+    },
+    {
+     "label": "testCompileClasspath",
+     "role": "AXRow"
+    },
+    {
+     "label": "junit:junit:4.13.2",
+     "role": "AXRow"
+    },
+    {
+     "label": "org.hamcrest:hamcrest-core:1.3",
+     "role": "AXRow"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "Collapse All",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "fixture",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "fixture",
+   "role": "AXRow",
+   "count": 2
+  },
+  {
+   "find": {
+    "label": "Tasks",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Tasks",
+   "role": "AXRow",
+   "count": 2
+  },
+  {
+   "find": {
+    "label": "application",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "application",
+   "role": "AXRow",
+   "count": 2
+  },
+  {
+   "wait": 500
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 60000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "shot": "tool-window"
+  },
+  {
+   "find": {
+    "label": "run",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "run",
+   "role": "AXRow",
+   "count": 2
+  },
+  {
+   "expect": {
+    "java.selected": "task:run",
+    "run.tabs.0.title": "fixture [run]",
+    "run.tabs.0.running": false,
+    "run.tabs.0.last_line": "Process finished with exit code 0"
+   },
+   "within": 300000
+  },
+  {
+   "do": "click",
+   "label": "Execute Gradle Task",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Run Anything",
+    "role": "AXTextField",
+    "value": "gradle "
+   }
+  },
+  {
+   "do": "type",
+   "text": "help"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "run.tabs.1.title": "fixture [help]",
+    "run.tabs.1.running": false,
+    "run.tabs.1.last_line": "Process finished with exit code 0"
+   },
+   "within": 300000
+  }
+ ]
+}

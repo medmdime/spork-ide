@@ -1,0 +1,259 @@
+{
+ "id": "code-inspect",
+ "covers": [],
+ "reference-app": [],
+ "settings": {
+  "enable_language_server": true,
+  "lsp": {
+   "rust-analyzer": {
+    "binary": {
+     "path": "$RUST_ANALYZER"
+    },
+    "initialization_options": {
+     "checkOnSave": false,
+     "cargo": {
+      "buildScripts": {
+       "enable": false
+      }
+     },
+     "procMacro": {
+      "enable": false
+     }
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "file": "src/broken.rs",
+   "text": "pub fn broken( -> u32 {\n    1\n}\n"
+  },
+  {
+   "file": "src/main.rs",
+   "text": "mod broken;\nmod greeting;\n\nfn main() {\n    println!(\"{}\", greeting::hello(\"world\"));\n}\n"
+  },
+  {
+   "do": "open",
+   "path": "src/main.rs"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "expect": {
+    "code.ready": true
+   },
+   "within": 120000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   }
+  },
+  {
+   "do": "action",
+   "name": "code::InspectCode"
+  },
+  {
+   "find": {
+    "label": "Specify Inspection Scope",
+    "role": "Heading"
+   },
+   "within": 10000
+  },
+  {
+   "find": [
+    {
+     "label": "Whole project",
+     "role": "AXRadioButton",
+     "value": "1"
+    },
+    {
+     "label": "Uncommitted files",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "File 'src/main.rs'",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "Analyze",
+     "role": "AXButton"
+    }
+   ]
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "scope"
+  },
+  {
+   "do": "click",
+   "label": "Analyze",
+   "role": "AXButton",
+   "in": "Specify Inspection Scope"
+  },
+  {
+   "expect": {
+    "code.inspection.scope": "Project 'fixture'"
+   },
+   "within": 60000
+  },
+  {
+   "expect": {
+    "code.inspection.files": [
+     "src/broken.rs"
+    ]
+   }
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "Problems",
+    "focused": [
+     "Workspace",
+     "Dock",
+     "ProblemsPanel"
+    ]
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "File",
+     "role": "AXRadioButton",
+     "value": "0"
+    },
+    {
+     "label": "Project Errors",
+     "role": "AXRadioButton",
+     "value": "0"
+    },
+    {
+     "label": "Inspections on Project 'fixture'",
+     "role": "AXRadioButton",
+     "value": "1"
+    }
+   ]
+  },
+  {
+   "toolbar": "Inspection Toolbar",
+   "items": [
+    "Rerun",
+    "Previous Problem",
+    "Next Problem",
+    "Show Quick Fixes (disabled)",
+    "Expand All",
+    "Collapse All"
+   ]
+  },
+  {
+   "find": [
+    {
+     "label": "Inspection Results",
+     "role": "AXRow",
+     "in": "Problems"
+    },
+    {
+     "label": "broken.rs",
+     "role": "AXRow",
+     "in": "Problems"
+    },
+    {
+     "label": "Syntax Error: expected pattern",
+     "role": "AXRow",
+     "in": "Problems"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "at": [
+    700,
+    300
+   ],
+   "hover": true
+  },
+  {
+   "wait": 800
+  },
+  {
+   "shot": "results"
+  },
+  {
+   "do": "click",
+   "label": "Collapse All",
+   "in": "Inspection Toolbar"
+  },
+  {
+   "find": {
+    "label": "Syntax Error: expected pattern",
+    "role": "AXRow",
+    "in": "Problems"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Expand All",
+   "in": "Inspection Toolbar"
+  },
+  {
+   "do": "click",
+   "label": "Next Problem",
+   "in": "Inspection Toolbar"
+  },
+  {
+   "expect": {
+    "active": "src/broken.rs"
+   },
+   "within": 5000
+  },
+  {
+   "toolbar": "Inspection Toolbar",
+   "items": [
+    "Rerun",
+    "Previous Problem",
+    "Next Problem",
+    "Show Quick Fixes",
+    "Expand All",
+    "Collapse All"
+   ]
+  },
+  {
+   "file": "src/broken.rs",
+   "text": "pub fn broken() -> u32 {\n    1\n}\n"
+  },
+  {
+   "do": "click",
+   "label": "Rerun",
+   "in": "Inspection Toolbar"
+  },
+  {
+   "expect": {
+    "code.inspection.problems": []
+   },
+   "within": 60000
+  },
+  {
+   "find": {
+    "label": "Inspections on Project 'fixture'",
+    "role": "AXRadioButton"
+   },
+   "absent": true
+  },
+  {
+   "find": {
+    "label": "File",
+    "role": "AXRadioButton",
+    "value": "1"
+   }
+  }
+ ]
+}

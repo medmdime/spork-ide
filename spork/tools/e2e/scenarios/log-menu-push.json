@@ -1,0 +1,48 @@
+{
+ "id": "log-menu-push",
+ "covers": [],
+ "reference-app": [],
+ "steps": [
+  {
+   "sh": "git commit -q --allow-empty -m one && git commit -q --allow-empty -m two"
+  },
+  {
+   "find": {
+    "text": "one",
+    "role": "AXRow"
+   }
+  },
+  {
+   "do": "click",
+   "label": "one",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "find": {
+    "text": "Push All up to Here…",
+    "role": "AXMenuItem"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Push All up to Here…",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "text": "Push Commits to origin",
+    "role": "AXGroup"
+   }
+  },
+  {
+   "do": "click",
+   "label": "Push",
+   "role": "AXButton"
+  },
+  {
+   "sh": "test \"$(git ls-remote origin refs/heads/main | cut -f1)\" = \"$(git rev-parse main~1)\" && echo same",
+   "is": "same"
+  }
+ ]
+}

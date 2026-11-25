@@ -1,0 +1,152 @@
+{
+ "id": "code-generate-shell",
+ "covers": [
+  "action:ShGenerateForLoop",
+  "action:ShGenerateWhileLoop",
+  "action:ShGenerateUntilLoop"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "file": "build.sh",
+   "text": "#!/bin/sh\necho start\n"
+  },
+  {
+   "do": "open",
+   "path": "build.sh"
+  },
+  {
+   "expect": {
+    "active": "build.sh"
+   },
+   "within": 5000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "down"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-n"
+  },
+  {
+   "find": {
+    "label": "Generate",
+    "role": "AXMenu"
+   },
+   "within": 5000
+  },
+  {
+   "find": [
+    {
+     "label": "For Loop",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "While Loop",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Until Loop",
+     "role": "AXMenuItem"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "generate"
+  },
+  {
+   "do": "click",
+   "label": "For Loop",
+   "role": "AXMenuItem"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "sh": "cat build.sh",
+   "is": "#!/bin/sh\necho start\nfor (( i = 0; i < n; i++ )); do\n\ndone",
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "escape escape cmd-down"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-n"
+  },
+  {
+   "find": {
+    "label": "While Loop",
+    "role": "AXMenuItem"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "While Loop",
+   "role": "AXMenuItem"
+  },
+  {
+   "do": "type",
+   "text": "-f x"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "sh": "cat build.sh",
+   "contains": "done\nwhile [ -f x ]; do\n\ndone",
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "escape escape cmd-down"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-n"
+  },
+  {
+   "find": {
+    "label": "Until Loop",
+    "role": "AXMenuItem"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Until Loop",
+   "role": "AXMenuItem"
+  },
+  {
+   "do": "type",
+   "text": "-z y"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "sh": "cat build.sh",
+   "contains": "done\nuntil [ -z y ]; do\n\ndone",
+   "within": 5000
+  }
+ ]
+}

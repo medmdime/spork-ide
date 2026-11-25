@@ -1,0 +1,43 @@
+{
+ "id": "project-popup",
+ "covers": [
+  "action:main.toolbar.Project"
+ ],
+ "reference-app": [],
+ "steps": [
+  {
+   "do": "open",
+   "what": "projects"
+  },
+  {
+   "expect": {
+    "project_popup": true
+   }
+  },
+  {
+   "wait": 600
+  },
+  {
+   "shot": "open"
+  },
+  {
+   "do": "keys",
+   "keys": "a b"
+  },
+  {
+   "find": {
+    "role": "AXTextField",
+    "value": "ab"
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "expect": {
+    "project_popup": false
+   }
+  }
+ ]
+}

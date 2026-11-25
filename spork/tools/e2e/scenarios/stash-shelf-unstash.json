@@ -1,0 +1,32 @@
+{
+ "id": "stash-shelf-unstash",
+ "covers": [
+  "dialog:Git.Unstash"
+ ],
+ "note": "The reference app, its Stash tab on, opens no dialog for Unstash Changes… (its capture shows only the branches popup left on screen): it shows the Stash tab, which a repository without stashes doesn't have. Spork opens the Commit tool window, and with stashes its Stash tab (stash-shelf-stash-ops).",
+ "reference-app": [
+  "screenshots/dialogs/git-unstash.png"
+ ],
+ "steps": [
+  {
+   "do": "action",
+   "name": "spork::Unstash"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "expect": {
+    "left": "[Commit, Project]"
+   }
+  },
+  {
+   "missing": [
+    {"role": "AXButton", "label": "Apply Stash"},
+    {"role": "AXButton", "label": "Pop Stash"},
+    {"role": "AXCheckBox", "label": "Pop stash"},
+    {"role": "AXRadioButton", "label": "Stash"}
+   ]
+  }
+ ]
+}

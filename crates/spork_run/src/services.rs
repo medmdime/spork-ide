@@ -1,0 +1,1126 @@
+//! The Services tool window (⌘8, `ServiceView`): the run configurations of the types added to it
+//! (Add Service ▸ Run Configuration…), grouped by type or, from View Options, by status (Running,
+//! Failed, Finished, Not Started), beside the selected one's console: its run's (the Run tool
+//! window's terminal) or its debug session's. Its toolbar is IntelliJ's `ServiceViewTreeToolbar`
+//! (Add Service, View Options | Expand All, Collapse All); a configuration's own toolbar (Run,
+//! Debug, Stop | Scroll to End, Clear All) is on its console's left, as the run content's, and in
+//! its context menu. Also Show Running List (IntelliJ's "Running List" balloon at the frame's top
+//! right) and Stop Background Processes… (the language servers' cancellable work). Docker's
+//! connections are listed after the configurations (`docker.rs`).
+
+use std::collections::BTreeSet;
+
+use gpui::prelude::FluentBuilder as _;
+use gpui::{
+    Action, Anchor, AnyElement, AnyView, App, AppContext as _, Context, DismissEvent, Entity,
+    EventEmitter, FocusHandle, Focusable, InteractiveElement as _, IntoElement, ParentElement as _,
+    Pixels, Render, Role, SharedString, StatefulInteractiveElement as _, Styled as _, Subscription,
+    TaskExt as _, WeakEntity, Window, anchored, div, point, px,
+};
+use gpui_kit::component::menu::{DropdownMenu as _, PopupMenuItem};
+use gpui_kit::component::{h_flex, v_flex};
+use project::Project;
+use project::lsp_store::ProgressToken;
+use serde_json::{Value, json};
+use spork_workbench::tree::{Tree, TreeItem};
+use spork_workbench::{ActionButton, Tokens, popup};
+use util::ResultExt as _;
+use workspace::dock::{DockPosition, Panel, PanelEvent};
+use workspace::{ModalView, Workspace};
+
+use crate::docker::{Docker, DockerEvent, NewConnection};
+use crate::list_popup::{ListPopup, Row};
+use crate::{Configuration, ProjectConfigurations, run, run_panel};
+
+pub mod services_panel {
+    gpui::actions!(
+        services_panel,
+        [
+            /// Opens the Services tool window and focuses it, or gives the focus back to the
+            /// editor.
+            ToggleFocus,
+            /// Shows the services under their type's node, or without it (IntelliJ's Group
+            /// Services by Type).
+            GroupServicesByType
+        ]
+    );
+}
+
+pub(crate) fn register(workspace: &mut Workspace) {
+    workspace.register_action(|workspace, _: &services_panel::ToggleFocus, window, cx| {
+        // a tool window shown over Services in its dock may leave it the focus: ⌘8 shows it then
+        let shown = workspace.panel::<ServicesPanel>(cx).is_some_and(|panel| {
+            workspace
+                .bottom_dock()
+                .read(cx)
+                .visible_panel()
+                .is_some_and(|visible| visible.panel_id() == panel.entity_id())
+        });
+        match shown {
+            true => {
+                workspace.toggle_panel_focus::<ServicesPanel>(window, cx);
+            }
+            false => {
+                workspace.focus_panel::<ServicesPanel>(window, cx);
+            }
+        }
+    });
+    // greyed while nothing runs, or no background work can stop, as IntelliJ's
+    workspace.register_action_renderer(|div, workspace, _, cx| {
+        let running = !running_list(workspace, cx).is_empty();
+        let cancellable = !cancellable_work(workspace.project(), cx).is_empty();
+        div.when(running, |div| {
+            div.on_action(
+                cx.listener(|workspace, _: &run::ShowRunningList, window, cx| {
+                    show_running_list(workspace, window, cx)
+                }),
+            )
+        })
+        .when(cancellable, |div| {
+            div.on_action(
+                cx.listener(|workspace, _: &run::StopBackgroundProcesses, window, cx| {
+                    stop_background_processes(workspace, window, cx)
+                }),
+            )
+        })
+    });
+}
+
+/// Adds the Services tool window to a workspace whose panels are loaded.
+pub(crate) fn add(workspace: &mut Workspace, window: &mut Window, cx: &mut Context<Workspace>) {
+    if workspace.panel::<ServicesPanel>(cx).is_some() {
+        return;
+    }
+    let Some(configurations) = ProjectConfigurations::of(workspace, cx) else {
+        return;
+    };
+    let handle = workspace.weak_handle();
+    let project = workspace.project().clone();
+    let panel = cx.new(|cx| ServicesPanel::new(handle, project, configurations, cx));
+    workspace.add_panel(panel, window, cx);
+}
+
+/// What a configuration is doing, by IntelliJ's status groups.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+enum Status {
+    Running,
+    Failed,
+    Finished,
+    NotStarted,
+}
+
+impl Status {
+    fn title(self) -> &'static str {
+        match self {
+            Status::Running => "Running",
+            Status::Failed => "Failed",
+            Status::Finished => "Finished",
+            Status::NotStarted => "Not Started",
+        }
+    }
+}
+
+/// The console a configuration shows on the right: its run's or its debug session's.
+enum Console {
+    Run(run_panel::Run),
+    Debug(Entity<debugger_ui::RunningState>),
+}
+
+pub struct ServicesPanel {
+    workspace: WeakEntity<Workspace>,
+    project: Entity<Project>,
+    configurations: Entity<ProjectConfigurations>,
+    /// The configuration types added to Services, by their names ("Shell Script").
+    types: BTreeSet<SharedString>,
+    group_by_status: bool,
+    /// Group Services by Type: the run configurations under a "Run Configurations" node.
+    // shortcut: kept while the IDE runs; IntelliJ keeps it in the project's view state
+    group_by_contributor: bool,
+    /// The selected configuration, by its name.
+    selected: Option<SharedString>,
+    /// Bumped by Expand All and Collapse All, so the tree's groups start over open or closed.
+    generation: usize,
+    expand: bool,
+    /// Docker's connections and what they hold.
+    docker: Entity<Docker>,
+    focus: FocusHandle,
+    _subscriptions: Vec<Subscription>,
+}
+
+impl ServicesPanel {
+    fn new(
+        workspace: WeakEntity<Workspace>,
+        project: Entity<Project>,
+        configurations: Entity<ProjectConfigurations>,
+        cx: &mut Context<Self>,
+    ) -> Self {
+        let dap_store = project.read(cx).dap_store();
+        let types = read_types(&project, cx);
+        let docker = cx.new(|cx| Docker::new(workspace.clone(), project.clone(), cx));
+        Self {
+            workspace,
+            project,
+            _subscriptions: vec![
+                cx.observe(&configurations, |_, _, cx| cx.notify()),
+                cx.observe(&dap_store, |_, _, cx| cx.notify()),
+                cx.observe(&docker, |_, _, cx| cx.notify()),
+                cx.subscribe(&docker, |this, _, event: &DockerEvent, cx| match event {
+                    DockerEvent::Selected => {
+                        this.selected = None;
+                        cx.notify();
+                    }
+                }),
+            ],
+            docker,
+            configurations,
+            types,
+            group_by_status: false,
+            group_by_contributor: false,
+            selected: None,
+            generation: 0,
+            expand: true,
+            focus: cx.focus_handle(),
+        }
+    }
+
+    /// The configurations Services shows, with what each is doing.
+    fn services(&self, workspace: &Workspace, cx: &App) -> Vec<(Configuration, Status)> {
+        self.configurations
+            .read(cx)
+            .list
+            .iter()
+            .filter(|configuration| self.types.contains(&configuration.type_name()))
+            .map(|configuration| {
+                let name = configuration.name();
+                let session = debug_session_of(workspace, &name, cx);
+                let run = run_panel::run_of(workspace, &name, cx);
+                let status = match (&run, &session) {
+                    (Some(run), _) if run.running => Status::Running,
+                    (_, Some(session)) if !session.read(cx).session().read(cx).is_terminated() => {
+                        Status::Running
+                    }
+                    (Some(run), _) => match run.failed {
+                        Some(true) => Status::Failed,
+                        _ => Status::Finished,
+                    },
+                    (None, Some(_)) => Status::Finished,
+                    (None, None) => Status::NotStarted,
+                };
+                (configuration.clone(), status)
+            })
+            .collect()
+    }
+
+    fn console(&self, workspace: &Workspace, name: &str, cx: &App) -> Option<Console> {
+        let session = debug_session_of(workspace, name, cx);
+        match (run_panel::run_of(workspace, name, cx), session) {
+            (_, Some(session)) if !session.read(cx).session().read(cx).is_terminated() => {
+                Some(Console::Debug(session))
+            }
+            (Some(run), _) => Some(Console::Run(run)),
+            (None, Some(session)) => Some(Console::Debug(session)),
+            (None, None) => None,
+        }
+    }
+
+    fn group_services_by_type(&mut self, _: &mut Window, cx: &mut Context<Self>) {
+        self.group_by_contributor = !self.group_by_contributor;
+        cx.notify();
+    }
+
+    fn add_types(&mut self, added: impl IntoIterator<Item = SharedString>, cx: &mut Context<Self>) {
+        self.types.extend(added);
+        write_types(&self.project, &self.types, cx);
+        cx.notify();
+    }
+
+    fn launch(&self, name: &SharedString, debug: bool, window: &mut Window, cx: &mut App) {
+        let configuration = self
+            .configurations
+            .read(cx)
+            .list
+            .iter()
+            .find(|configuration| &configuration.name() == name)
+            .cloned();
+        if let Some(configuration) = configuration {
+            self.workspace
+                .update(cx, |workspace, cx| {
+                    crate::run_widget::launch(Some(&configuration), debug, workspace, window, cx)
+                })
+                .log_err();
+        }
+    }
+
+    fn stop(&self, name: &SharedString, cx: &mut App) {
+        let Some(workspace) = self.workspace.upgrade() else {
+            return;
+        };
+        run_panel::stop_runs_of(&workspace, name, cx);
+        if let Some(running) = debug_session_of(workspace.read(cx), name, cx) {
+            let session = running.read(cx).session().clone();
+            session
+                .update(cx, |session, cx| session.shutdown(cx))
+                .detach();
+        }
+    }
+
+    /// Add Service ▸ Run Configuration…: IntelliJ's "Add Configuration" chooser of the types.
+    fn choose_type(&self, window: &mut Window, cx: &mut Context<Self>) {
+        let types: Vec<(SharedString, Option<SharedString>)> =
+            crate::configurations_dialog::types(cx)
+                .into_iter()
+                .map(|adapter| {
+                    (
+                        crate::configurations::type_name(adapter.as_deref()),
+                        adapter,
+                    )
+                })
+                .filter(|(name, _)| !self.types.contains(name))
+                .collect();
+        let rows = types
+            .iter()
+            .map(|(name, adapter)| {
+                Row::new(name.clone()).image(crate::configurations::type_icon(adapter.as_deref()))
+            })
+            .collect();
+        let services = cx.entity().downgrade();
+        self.workspace
+            .update(cx, |workspace, cx| {
+                ListPopup::show(
+                    workspace,
+                    "Add Configuration",
+                    rows,
+                    "Nothing to show",
+                    300.,
+                    move |ix, _, cx| {
+                        if let Some((name, _)) = types.get(ix) {
+                            services
+                                .update(cx, |services, cx| services.add_types([name.clone()], cx))
+                                .log_err();
+                        }
+                    },
+                    window,
+                    cx,
+                )
+            })
+            .log_err();
+    }
+
+    fn toolbar(&self, empty: bool, cx: &mut Context<Self>) -> AnyElement {
+        let tokens = Tokens::get(cx);
+        let this = cx.entity().downgrade();
+        let docker = self.docker.downgrade();
+        let add = ActionButton::new("services-add", "general/add")
+            .tooltip("Add Service (⌘N)")
+            .dropdown_menu(move |menu, _, _| {
+                let this = this.clone();
+                let docker = docker.clone();
+                menu.item(PopupMenuItem::new("Run Configuration…").on_click(
+                    move |_, window, cx| {
+                        this.update(cx, |this, cx| this.choose_type(window, cx))
+                            .log_err();
+                    },
+                ))
+                // nothing can be hidden from Services yet
+                .item(PopupMenuItem::new("Restore Hidden Configurations").disabled(true))
+                .item(
+                    PopupMenuItem::new("Docker Connection")
+                        .on_click(move |_, _, cx| NewConnection::open(docker.clone(), cx)),
+                )
+            });
+        let this = cx.entity().downgrade();
+        let by_status = self.group_by_status;
+        let by_contributor = self.group_by_contributor;
+        let options = ActionButton::new("services-view-options", "general/show")
+            .tooltip("View Options")
+            .dropdown_menu(move |menu, window, cx| {
+                let this = this.clone();
+                // `ServiceView.ViewOptions`: Services shows run configurations only, so Group
+                // Services by Type has one type to group
+                menu.item(
+                    PopupMenuItem::new("Group Services by Type")
+                        .checked(by_contributor)
+                        .on_click({
+                            let this = this.clone();
+                            move |_, window, cx| {
+                                this.update(cx, |this, cx| this.group_services_by_type(window, cx))
+                                    .log_err();
+                            }
+                        }),
+                )
+                .separator()
+                .submenu("Run Configurations", window, cx, move |menu, _, _| {
+                    let group = |label: &'static str, status: bool| {
+                        let this = this.clone();
+                        PopupMenuItem::new(label)
+                            .checked(by_status == status)
+                            .on_click(move |_, _, cx| {
+                                this.update(cx, |this, cx| {
+                                    this.group_by_status = status;
+                                    cx.notify();
+                                })
+                                .log_err();
+                            })
+                    };
+                    menu.item(PopupMenuItem::label("Group"))
+                        .item(group("Type", false))
+                        .item(group("Status", true))
+                })
+            });
+        h_flex()
+            .id("services-toolbar")
+            .role(Role::Toolbar)
+            .aria_label("ServiceViewTreeToolbar")
+            .flex_none()
+            .h(px(32.))
+            .px(px(5.))
+            .gap(px(4.))
+            .child(add)
+            .child(options)
+            .child(div().w(px(1.)).h(px(20.)).mx(px(3.)).bg(tokens.separator))
+            .child(
+                ActionButton::new("services-expand-all", "general/expandAll")
+                    .tooltip("Expand All (⌘=)")
+                    .disabled(empty)
+                    .on_click(cx.listener(|this, _, _, cx| {
+                        this.expand = true;
+                        this.generation += 1;
+                        cx.notify();
+                    })),
+            )
+            .child(
+                ActionButton::new("services-collapse-all", "general/collapseAll")
+                    .tooltip("Collapse All (⌘-)")
+                    .disabled(empty)
+                    .on_click(cx.listener(|this, _, _, cx| {
+                        this.expand = false;
+                        this.generation += 1;
+                        cx.notify();
+                    })),
+            )
+            .into_any_element()
+    }
+
+    fn tree(&self, services: &[(Configuration, Status)], cx: &mut Context<Self>) -> AnyElement {
+        let tokens = Tokens::get(cx);
+        if services.is_empty() && self.docker.read(cx).is_empty() {
+            let this = cx.entity().downgrade();
+            return v_flex()
+                .id("services-empty")
+                .flex_1()
+                .items_center()
+                .justify_center()
+                .gap(px(4.))
+                .text_color(tokens.text_secondary)
+                .child(
+                    div()
+                        .id("services-none")
+                        .role(Role::Label)
+                        .aria_label("No services configured.")
+                        .child("No services configured."),
+                )
+                .child(
+                    h_flex()
+                        .gap(px(4.))
+                        .child(
+                            spork_workbench::controls::link("services-add-link", "Add service", cx)
+                                .on_click(move |_, window, cx| {
+                                    this.update(cx, |this, cx| this.choose_type(window, cx))
+                                        .log_err();
+                                }),
+                        )
+                        .child("⌘N"),
+                )
+                .into_any_element();
+        }
+        let mut groups: Vec<(
+            SharedString,
+            Option<&'static str>,
+            Vec<&(Configuration, Status)>,
+        )> = Vec::new();
+        for service in services {
+            let (title, icon) = match self.group_by_status {
+                true => (SharedString::from(service.1.title()), None),
+                false => (service.0.type_name(), Some(service.0.icon())),
+            };
+            match groups.iter_mut().find(|(name, _, _)| name == &title) {
+                Some((_, _, members)) => members.push(service),
+                None => groups.push((title, icon, vec![service])),
+            }
+        }
+        if self.group_by_status {
+            groups.sort_by_key(|(_, _, members)| members.first().map(|(_, status)| *status));
+        } else {
+            groups.sort_by(|a, b| a.0.cmp(&b.0));
+        }
+        let items = groups.into_iter().map(|(title, icon, members)| {
+            let children = members.into_iter().map(|(configuration, status)| {
+                let name = configuration.name();
+                let selected = self.selected.as_ref() == Some(&name);
+                let icon = match status {
+                    Status::Running => "run/run",
+                    _ => configuration.icon(),
+                };
+                let (select, menu) = (cx.entity().downgrade(), cx.entity().downgrade());
+                let docker = self.docker.downgrade();
+                let (picked, menu_name) = (name.clone(), name.clone());
+                let running = *status == Status::Running;
+                TreeItem::new(name)
+                    .colored_icon(icon)
+                    .active(selected)
+                    .on_click(move |_, _, cx| {
+                        docker
+                            .update(cx, |docker, cx| docker.clear_selection(cx))
+                            .log_err();
+                        select
+                            .update(cx, |this, cx| {
+                                this.selected = Some(picked.clone());
+                                cx.notify();
+                            })
+                            .log_err();
+                    })
+                    .context_menu(move |popup, _, _| {
+                        let item = |label: String, enabled: bool, act: u8| {
+                            let (this, name) = (menu.clone(), menu_name.clone());
+                            PopupMenuItem::new(label).disabled(!enabled).on_click(
+                                move |_, window, cx| {
+                                    this.update(cx, |this, cx| match act {
+                                        0 => this.launch(&name, false, window, cx),
+                                        1 => this.launch(&name, true, window, cx),
+                                        _ => this.stop(&name, cx),
+                                    })
+                                    .log_err();
+                                },
+                            )
+                        };
+                        popup
+                            .item(item(format!("Run '{menu_name}'"), true, 0))
+                            .item(item(format!("Debug '{menu_name}'"), true, 1))
+                            .item(item("Stop".into(), running, 2))
+                    })
+            });
+            let group = TreeItem::new(title)
+                .default_open(self.expand)
+                .children(children.collect::<Vec<_>>());
+            match icon {
+                Some(icon) => group.colored_icon(icon),
+                None => group,
+            }
+        });
+        let mut items: Vec<TreeItem> = match self.group_by_contributor {
+            true if !services.is_empty() => vec![
+                TreeItem::new("Run Configurations")
+                    .default_open(self.expand)
+                    .children(items),
+            ],
+            _ => items.collect(),
+        };
+        // Docker's nodes start closed, as IntelliJ's, until Expand All
+        let expand = self.expand && self.generation > 0;
+        let docker = self
+            .docker
+            .update(cx, |docker, cx| docker.tree_items(expand, cx));
+        match self.group_by_contributor {
+            true if !docker.is_empty() => items.push(
+                TreeItem::new("Docker")
+                    .colored_icon("webReferences/server")
+                    .default_open(self.expand)
+                    .children(docker),
+            ),
+            _ => items.extend(docker),
+        }
+        div()
+            .id("services-tree")
+            .role(Role::Tree)
+            .aria_label("Services")
+            .flex_1()
+            .py(px(4.))
+            .overflow_y_scroll()
+            .child(Tree::new(format!("services-{}", self.generation)).children(items))
+            .into_any_element()
+    }
+
+    /// The selected configuration's console, with its toolbar on the left.
+    fn details(&self, cx: &mut Context<Self>) -> AnyElement {
+        let tokens = Tokens::get(cx);
+        if self.docker.read(cx).has_selection() {
+            return div()
+                .flex_1()
+                .min_w_0()
+                .h_full()
+                .child(self.docker.clone())
+                .into_any_element();
+        }
+        let centered = |text: &'static str| {
+            div()
+                .id(text)
+                .role(Role::Label)
+                .aria_label(text)
+                .flex_1()
+                .h_full()
+                .flex()
+                .items_center()
+                .justify_center()
+                .text_color(tokens.text_secondary)
+                .child(text)
+                .into_any_element()
+        };
+        let Some(name) = self.selected.clone() else {
+            return centered("Select service to view details");
+        };
+        let Some(workspace) = self.workspace.upgrade() else {
+            return centered("Select service to view details");
+        };
+        let console = self.console(workspace.read(cx), &name, cx);
+        let running = match &console {
+            Some(Console::Run(run)) => run.running,
+            Some(Console::Debug(session)) => !session.read(cx).session().read(cx).is_terminated(),
+            None => false,
+        };
+        let terminal = match &console {
+            Some(Console::Run(run)) => Some(run.terminal.clone()),
+            _ => None,
+        };
+        let content: AnyElement = match console {
+            Some(Console::Run(run)) => AnyView::from(run.view).into_any_element(),
+            Some(Console::Debug(session)) => session.read(cx).console_view().into_any_element(),
+            None => centered("No content available"),
+        };
+        let (rerun, debug, stop) = (
+            cx.entity().downgrade(),
+            cx.entity().downgrade(),
+            cx.entity().downgrade(),
+        );
+        let (rerun_name, debug_name, stop_name) = (name.clone(), name.clone(), name.clone());
+        let (scroll, clear) = (terminal.clone(), terminal.clone());
+        h_flex()
+            .flex_1()
+            .min_w_0()
+            .h_full()
+            .items_start()
+            .child(
+                v_flex()
+                    .id("services-console-toolbar")
+                    .role(Role::Toolbar)
+                    .aria_label("ServiceViewItemToolbar")
+                    .flex_none()
+                    .w(px(32.))
+                    .h_full()
+                    .pt(px(4.))
+                    .items_center()
+                    .gap(px(4.))
+                    .border_r_1()
+                    .border_color(tokens.separator)
+                    .child(
+                        ActionButton::new("services-run", "run/run")
+                            .colored()
+                            .tooltip(format!("Run '{name}'"))
+                            .on_click(move |_, window, cx| {
+                                rerun
+                                    .update(cx, |this, cx| {
+                                        this.launch(&rerun_name, false, window, cx)
+                                    })
+                                    .log_err();
+                            }),
+                    )
+                    .child(
+                        ActionButton::new("services-debug", "run/debug")
+                            .colored()
+                            .tooltip(format!("Debug '{name}'"))
+                            .on_click(move |_, window, cx| {
+                                debug
+                                    .update(cx, |this, cx| {
+                                        this.launch(&debug_name, true, window, cx)
+                                    })
+                                    .log_err();
+                            }),
+                    )
+                    .child(
+                        match running {
+                            true => ActionButton::new("services-stop", "run/stop").colored(),
+                            false => ActionButton::new("services-stop", "run/stop"),
+                        }
+                        .tooltip(format!("Stop '{name}'"))
+                        .disabled(!running)
+                        .on_click(move |_, _, cx| {
+                            stop.update(cx, |this, cx| this.stop(&stop_name, cx))
+                                .log_err();
+                        }),
+                    )
+                    .child(div().w(px(20.)).h(px(1.)).my(px(3.)).bg(tokens.separator))
+                    .child(
+                        ActionButton::new("services-scroll-to-end", "general/scrollDown")
+                            .tooltip("Scroll to End")
+                            .disabled(terminal.is_none())
+                            .on_click(move |_, window, cx| {
+                                if let Some(terminal) = &scroll {
+                                    terminal.update(cx, |terminal, cx| {
+                                        terminal.scroll_to_bottom();
+                                        terminal.sync(window, cx);
+                                        cx.notify();
+                                    });
+                                }
+                            }),
+                    )
+                    .child(
+                        ActionButton::new("services-clear-all", "general/delete")
+                            .tooltip("Clear All")
+                            .disabled(terminal.is_none())
+                            .on_click(move |_, window, cx| {
+                                if let Some(terminal) = &clear {
+                                    terminal.update(cx, |terminal, cx| {
+                                        terminal.clear();
+                                        terminal.sync(window, cx);
+                                        cx.notify();
+                                    });
+                                }
+                            }),
+                    ),
+            )
+            .child(
+                div()
+                    .id("services-console")
+                    .role(Role::Group)
+                    .aria_label("Console")
+                    .flex_1()
+                    .min_w_0()
+                    .h_full()
+                    .child(content),
+            )
+            .into_any_element()
+    }
+}
+
+impl Render for ServicesPanel {
+    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let tokens = Tokens::get(cx);
+        let services = match self.workspace.upgrade() {
+            Some(workspace) => self.services(workspace.read(cx), cx),
+            None => Vec::new(),
+        };
+        if self
+            .selected
+            .as_ref()
+            .is_some_and(|name| !services.iter().any(|(c, _)| &c.name() == name))
+        {
+            self.selected = None;
+        }
+        let header = workspace::frame::tool_window_header(
+            workspace::frame::tool_window_title_label("Services").into_any_element(),
+            Vec::new(),
+            std::sync::Arc::new(cx.entity()),
+            "Services".into(),
+            cx,
+        )
+        .into_any_element();
+        let empty = services.is_empty() && self.docker.read(cx).is_empty();
+        let toolbar = self.toolbar(empty, cx);
+        let tree = self.tree(&services, cx);
+        let details = self.details(cx);
+        spork_vcs::spork_look(cx).size_full().child(
+            v_flex()
+                .size_full()
+                .bg(tokens.island)
+                .track_focus(&self.focus)
+                .key_context("ServicesPanel")
+                .on_action(cx.listener(
+                    |this, _: &services_panel::GroupServicesByType, window, cx| {
+                        this.group_services_by_type(window, cx)
+                    },
+                ))
+                .on_key_down(cx.listener(|this, event: &gpui::KeyDownEvent, window, cx| {
+                    let keystroke = &event.keystroke;
+                    if keystroke.key == "n" && keystroke.modifiers.platform {
+                        cx.stop_propagation();
+                        this.choose_type(window, cx);
+                    }
+                }))
+                .child(header)
+                .child(
+                    h_flex()
+                        .flex_1()
+                        .min_h_0()
+                        .items_start()
+                        .child(
+                            v_flex()
+                                .w(relative_tree_width())
+                                .flex_none()
+                                .h_full()
+                                .border_r_1()
+                                .border_color(tokens.separator)
+                                .child(toolbar)
+                                .child(tree),
+                        )
+                        .child(details),
+                ),
+        )
+    }
+}
+
+/// The tree's width: IntelliJ's splitter gives it 0.3 of the tool window.
+fn relative_tree_width() -> gpui::DefiniteLength {
+    gpui::relative(0.3)
+}
+
+impl Focusable for ServicesPanel {
+    fn focus_handle(&self, _: &App) -> FocusHandle {
+        self.focus.clone()
+    }
+}
+
+impl EventEmitter<PanelEvent> for ServicesPanel {}
+
+impl Panel for ServicesPanel {
+    fn persistent_name() -> &'static str {
+        "Services"
+    }
+
+    fn panel_key() -> &'static str {
+        "ServicesToolWindow"
+    }
+
+    fn position(&self, _: &Window, _: &App) -> DockPosition {
+        DockPosition::Bottom
+    }
+
+    // shortcut: the tool window stays where IntelliJ puts it, as the Run tool window does, until
+    // the stripes let tool windows move
+    fn position_is_valid(&self, position: DockPosition) -> bool {
+        position == DockPosition::Bottom
+    }
+
+    fn set_position(&mut self, _: DockPosition, _: &mut Window, _: &mut Context<Self>) {}
+
+    // a local daemon started since is found once Services shows again, as IntelliJ finds it
+    fn set_active(&mut self, active: bool, _: &mut Window, cx: &mut Context<Self>) {
+        if active {
+            self.docker.update(cx, |docker, cx| docker.detect(cx));
+        }
+    }
+
+    fn default_size(&self, _: &Window, _: &App) -> Pixels {
+        px(300.)
+    }
+
+    fn icon(&self, _: &Window, _: &App) -> Option<ui::IconName> {
+        Some(ui::IconName::Server)
+    }
+
+    fn icon_tooltip(&self, _: &Window, _: &App) -> Option<&'static str> {
+        Some("Services")
+    }
+
+    fn toggle_action(&self) -> Box<dyn Action> {
+        Box::new(services_panel::ToggleFocus)
+    }
+
+    fn activation_priority(&self) -> u32 {
+        30
+    }
+}
+
+/// Shows the configuration `name` in Services when Services lists it, as IntelliJ shows a run
+/// there rather than in the Run tool window; whether it did.
+pub(crate) fn reveal(
+    workspace: &mut Workspace,
+    name: &str,
+    window: &mut Window,
+    cx: &mut Context<Workspace>,
+) -> bool {
+    let Some(panel) = workspace.panel::<ServicesPanel>(cx) else {
+        return false;
+    };
+    let listed = panel
+        .read(cx)
+        .services(workspace, cx)
+        .iter()
+        .any(|(configuration, _)| configuration.name().as_ref() == name);
+    if listed {
+        panel.update(cx, |panel, cx| {
+            panel.selected = Some(name.to_owned().into());
+            cx.notify();
+        });
+        workspace.open_panel::<ServicesPanel>(window, cx);
+    }
+    listed
+}
+
+/// The debug session of the configuration `name`, its latest.
+fn debug_session_of(
+    workspace: &Workspace,
+    name: &str,
+    cx: &App,
+) -> Option<Entity<debugger_ui::RunningState>> {
+    let panel = workspace.panel::<debugger_ui::debugger_panel::DebugPanel>(cx)?;
+    panel
+        .read(cx)
+        .session_items()
+        .into_iter()
+        .rev()
+        .map(|session| session.read(cx).running_state().clone())
+        .find(|running| {
+            running
+                .read(cx)
+                .session()
+                .read(cx)
+                .label()
+                .is_some_and(|label| label.as_ref() == name)
+        })
+}
+
+/// The key the types added to Services are kept under, per project.
+fn types_key(project: &Entity<Project>, cx: &App) -> Option<String> {
+    let root = project
+        .read(cx)
+        .visible_worktrees(cx)
+        .next()?
+        .read(cx)
+        .abs_path();
+    Some(format!("spork_services_types_{}", root.display()))
+}
+
+fn read_types(project: &Entity<Project>, cx: &App) -> BTreeSet<SharedString> {
+    let Some(key) = types_key(project, cx) else {
+        return BTreeSet::new();
+    };
+    db::kvp::KeyValueStore::global(cx)
+        .read_kvp(&key)
+        .log_err()
+        .flatten()
+        .and_then(|value| serde_json::from_str::<Vec<String>>(&value).log_err())
+        .map(|types| types.into_iter().map(SharedString::from).collect())
+        .unwrap_or_default()
+}
+
+fn write_types(project: &Entity<Project>, types: &BTreeSet<SharedString>, cx: &mut App) {
+    let Some(key) = types_key(project, cx) else {
+        return;
+    };
+    let value = serde_json::to_string(&types.iter().map(|t| t.to_string()).collect::<Vec<_>>());
+    let store = db::kvp::KeyValueStore::global(cx);
+    cx.background_spawn(async move { store.write_kvp(key, value?).await })
+        .detach_and_log_err(cx);
+}
+
+/// What runs at the moment: the runs, then the debug sessions, each with its executor's icon.
+fn running_list(workspace: &Workspace, cx: &App) -> Vec<(SharedString, &'static str, bool)> {
+    let runs = run_panel::runs(workspace, cx)
+        .into_iter()
+        .filter(|run| run.running)
+        .map(|run| (run.title, "run/run", false));
+    let sessions = workspace
+        .panel::<debugger_ui::debugger_panel::DebugPanel>(cx)
+        .map(|panel| panel.read(cx).session_items())
+        .unwrap_or_default()
+        .into_iter()
+        .filter_map(|session| {
+            let running = session.read(cx).running_state().read(cx);
+            let session = running.session().read(cx);
+            (!session.is_terminated())
+                .then(|| (session.label().unwrap_or_default(), "run/debug", true))
+        });
+    runs.chain(sessions).collect()
+}
+
+/// Show Running List (`ShowLiveRunConfigurations`): IntelliJ's "Running List" balloon under the
+/// frame's top right corner, a link per run that shows its tool window.
+fn show_running_list(workspace: &mut Workspace, window: &mut Window, cx: &mut Context<Workspace>) {
+    let list = running_list(workspace, cx);
+    let handle = workspace.weak_handle();
+    workspace.toggle_modal(window, cx, move |window, cx| {
+        let focus = cx.focus_handle();
+        window.focus(&focus, cx);
+        RunningList {
+            list,
+            workspace: handle,
+            focus,
+        }
+    });
+}
+
+struct RunningList {
+    list: Vec<(SharedString, &'static str, bool)>,
+    workspace: WeakEntity<Workspace>,
+    focus: FocusHandle,
+}
+
+impl EventEmitter<DismissEvent> for RunningList {}
+
+impl ModalView for RunningList {}
+
+impl Focusable for RunningList {
+    fn focus_handle(&self, _: &App) -> FocusHandle {
+        self.focus.clone()
+    }
+}
+
+impl Render for RunningList {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let tokens = Tokens::get(cx);
+        let width = window.viewport_size().width;
+        let rows = self
+            .list
+            .iter()
+            .enumerate()
+            .map(|(ix, (title, icon, debug))| {
+                let (workspace, title, debug) = (self.workspace.clone(), title.clone(), *debug);
+                h_flex()
+                    .id(("running-list-row", ix))
+                    .role(Role::Link)
+                    .aria_label(title.clone())
+                    .gap(px(4.))
+                    .cursor_pointer()
+                    .child(spork_workbench::image(icon, cx).size(px(16.)))
+                    .child(div().text_color(tokens.text_link).child(title.clone()))
+                    .on_click(cx.listener(move |_, _, window, cx| {
+                        cx.emit(DismissEvent);
+                        workspace
+                            .update(cx, |workspace, cx| match debug {
+                                true => workspace
+                                    .open_panel::<debugger_ui::debugger_panel::DebugPanel>(
+                                        window, cx,
+                                    ),
+                                false => {
+                                    if !reveal(workspace, &title, window, cx) {
+                                        run_panel::show_run(workspace, &title, window, cx)
+                                    }
+                                }
+                            })
+                            .log_err();
+                    }))
+                    .into_any_element()
+            });
+        let empty = self.list.is_empty();
+        anchored()
+            .anchor(Anchor::TopRight)
+            .position(point(width - px(12.), px(44.)))
+            .snap_to_window_with_margin(px(8.))
+            .child(
+                spork_vcs::spork_look(cx).child(
+                    popup::surface(cx)
+                        .id("running-list")
+                        .role(Role::Dialog)
+                        .aria_label("Running List")
+                        .track_focus(&self.focus)
+                        .key_context("RunningList")
+                        .occlude()
+                        .on_action(cx.listener(|_, _: &menu::Cancel, _, cx| cx.emit(DismissEvent)))
+                        .min_w(px(220.))
+                        .p(px(12.))
+                        .gap(px(6.))
+                        .child(
+                            div()
+                                .font_weight(gpui::FontWeight::BOLD)
+                                .child("Running List"),
+                        )
+                        .children(rows)
+                        .when(empty, |list| list.child("Nothing to show"))
+                        .child(
+                            div()
+                                .text_xs()
+                                .text_color(tokens.text_secondary)
+                                .child("Click to navigate"),
+                        ),
+                ),
+            )
+    }
+}
+
+/// The language servers' work that can be cancelled: IntelliJ's cancellable background tasks.
+fn cancellable_work(
+    project: &Entity<Project>,
+    cx: &App,
+) -> Vec<(lsp::LanguageServerId, ProgressToken, SharedString)> {
+    project
+        .read(cx)
+        .language_server_statuses(cx)
+        .flat_map(|(id, status)| {
+            status
+                .pending_work
+                .iter()
+                .filter(|(_, progress)| progress.is_cancellable)
+                .map(move |(token, progress)| {
+                    let title = progress
+                        .title
+                        .clone()
+                        .or_else(|| progress.message.clone())
+                        .unwrap_or_else(|| status.name.to_string());
+                    (id, token.clone(), SharedString::from(title))
+                })
+        })
+        .collect()
+}
+
+/// Stop Background Processes… (⇧⌘F2): IntelliJ's popup of the cancellable background tasks.
+fn stop_background_processes(
+    workspace: &mut Workspace,
+    window: &mut Window,
+    cx: &mut Context<Workspace>,
+) {
+    let work = cancellable_work(workspace.project(), cx);
+    let title = match work.len() {
+        1 => "Confirm Background Process Stop",
+        _ => "Stop Background Process",
+    };
+    let rows = work
+        .iter()
+        .map(|(_, _, title)| Row::new(title.clone()))
+        .collect();
+    let project = workspace.project().downgrade();
+    ListPopup::show(
+        workspace,
+        title,
+        rows,
+        "Nothing to show",
+        320.,
+        move |ix, _, cx| {
+            if let Some((id, token, _)) = work.get(ix).cloned() {
+                project
+                    .update(cx, |project, cx| {
+                        project.cancel_language_server_work(id, Some(token), cx)
+                    })
+                    .log_err();
+            }
+        },
+        window,
+        cx,
+    );
+}
+
+/// The Services tool window, for the end-to-end tests: its groups with their configurations and
+/// their status, the selected one and the console it shows.
+pub(crate) fn e2e_services(workspace: &Workspace, cx: &App) -> Value {
+    let Some(panel) = workspace.panel::<ServicesPanel>(cx) else {
+        return Value::Null;
+    };
+    let panel = panel.read(cx);
+    let services: serde_json::Map<String, Value> = panel
+        .services(workspace, cx)
+        .into_iter()
+        .map(|(configuration, status)| {
+            (
+                configuration.name().to_string(),
+                json!({"type": configuration.type_name().as_ref(), "status": status.title()}),
+            )
+        })
+        .collect();
+    let console = panel.selected.as_ref().and_then(|name| {
+        Some(match panel.console(workspace, name, cx)? {
+            Console::Run(run) => json!({"run": run.title.as_ref()}),
+            Console::Debug(_) => json!({"debug": name.as_ref()}),
+        })
+    });
+    json!({
+        "types": panel.types.iter().map(|t| t.as_ref()).collect::<Vec<_>>(),
+        "services": services,
+        "selected": panel.selected.as_ref().map(|s| s.as_ref()),
+        "group_by_status": panel.group_by_status,
+        "group_by_contributor": panel.group_by_contributor,
+        "console": console,
+        "docker": panel.docker.read(cx).e2e_state(cx),
+        "running_list": running_list(workspace, cx)
+            .into_iter()
+            .map(|(title, _, _)| title.to_string())
+            .collect::<Vec<_>>(),
+    })
+}

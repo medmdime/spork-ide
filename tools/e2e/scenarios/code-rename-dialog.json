@@ -1,0 +1,192 @@
+{
+ "id": "code-rename-dialog",
+ "covers": [
+  "dialog:RenameElement"
+ ],
+ "reference-app": [],
+ "settings": {
+  "enable_language_server": true,
+  "lsp": {
+   "rust-analyzer": {
+    "binary": {
+     "path": "$RUST_ANALYZER"
+    },
+    "initialization_options": {
+     "checkOnSave": false,
+     "cargo": {
+      "buildScripts": {
+       "enable": false
+      }
+     },
+     "procMacro": {
+      "enable": false
+     }
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "file": "src/greeting.rs",
+   "text": "/// Says hello to `name`.\npub fn hello(name: &str) -> String {\n    format!(\"Hello, {name}!\")\n}\n"
+  },
+  {
+   "do": "open",
+   "path": "src/greeting.rs"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "expect": {
+    "code.ready": true
+   },
+   "within": 120000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "docks.left.open": false
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "down right right right right right right right right"
+  },
+  {
+   "do": "keys",
+   "keys": "shift-f6"
+  },
+  {
+   "expect": {
+    "code.renaming": "hello"
+   },
+   "within": 30000
+  },
+  {
+   "do": "type",
+   "text": "salute"
+  },
+  {
+   "do": "keys",
+   "keys": "shift-f6"
+  },
+  {
+   "find": [
+    {
+     "label": "Rename",
+     "role": "Heading"
+    },
+    {
+     "label": "Rename 'hello' and its usages to:",
+     "role": "AXStaticText"
+    },
+    {
+     "label": "Rename 'hello' and its usages to:",
+     "role": "AXTextField",
+     "value": "salute"
+    }
+   ]
+  },
+  {
+   "expect": {
+    "code.renaming": null
+   }
+  },
+  {
+   "find": [
+    {
+     "label": "Search in comments and strings",
+     "role": "AXCheckBox"
+    },
+    {
+     "label": "Search for text occurrences",
+     "role": "AXCheckBox"
+    },
+    {
+     "label": "Preview",
+     "role": "AXButton"
+    },
+    {
+     "label": "Cancel",
+     "role": "AXButton"
+    },
+    {
+     "label": "Refactor",
+     "role": "AXButton"
+    }
+   ]
+  },
+  {
+   "sh": "cat src/greeting.rs",
+   "contains": "pub fn hello(name"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "dialog",
+   "window": "largest"
+  },
+  {
+   "do": "click",
+   "label": "Search in comments and strings",
+   "in": "Rename"
+  },
+  {
+   "do": "click",
+   "label": "Preview",
+   "in": "Rename"
+  },
+  {
+   "find": {
+    "label": "Refactoring Preview",
+    "role": "AXRadioButton"
+   },
+   "within": 20000
+  },
+  {
+   "find": [
+    {
+     "label": "References to be changed",
+     "role": "AXRow"
+    },
+    {
+     "label": "greeting.rs",
+     "role": "AXRow"
+    },
+    {
+     "label": "main.rs",
+     "role": "AXRow"
+    }
+   ],
+   "within": 20000
+  },
+  {
+   "sh": "cat src/greeting.rs",
+   "contains": "pub fn hello(name"
+  },
+  {
+   "do": "click",
+   "label": "Refactor",
+   "role": "AXButton"
+  },
+  {
+   "sh": "cat src/main.rs",
+   "contains": "greeting::salute(\"world\")",
+   "within": 20000
+  },
+  {
+   "sh": "cat src/greeting.rs",
+   "contains": "/// Says salute to `name`.",
+   "within": 20000
+  },
+  {
+   "sh": "cat src/greeting.rs",
+   "contains": "pub fn salute(name"
+  }
+ ]
+}

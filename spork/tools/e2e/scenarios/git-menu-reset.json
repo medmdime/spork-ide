@@ -1,0 +1,99 @@
+{
+ "id": "git-menu-reset",
+ "covers": [
+  "action:Git.Reset",
+  "dialog:Git.Reset"
+ ],
+ "reference-app": [
+  "screenshots/dialogs/git-reset.jpg"
+ ],
+ "steps": [
+  {
+   "do": "action",
+   "name": "spork::GitReset"
+  },
+  {
+   "find": [
+    {
+     "text": "Reset Head"
+    },
+    {
+     "text": "Git Root:"
+    },
+    {
+     "text": "Current Branch:"
+    },
+    {
+     "text": "main"
+    },
+    {
+     "text": "Reset Type:"
+    },
+    {
+     "text": "Mixed"
+    },
+    {
+     "text": "To Commit:"
+    },
+    {
+     "text": "HEAD"
+    },
+    {
+     "text": "Validate"
+    },
+    {
+     "text": "Show help contents"
+    },
+    {
+     "text": "Cancel"
+    },
+    {
+     "text": "Reset"
+    }
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "open"
+  },
+  {
+   "do": "click",
+   "role": "AXTextField",
+   "nth": 2
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a f i x / t y p o"
+  },
+  {
+   "find": [
+    {
+     "text": "fix/typo"
+    }
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Reset",
+   "role": "AXButton"
+  },
+  {
+   "git": [
+    "log",
+    "-1",
+    "--format=%s"
+   ],
+   "is": "fix: a typo"
+  },
+  {
+   "git": [
+    "diff",
+    "--cached",
+    "--name-only"
+   ],
+   "is": ""
+  }
+ ]
+}

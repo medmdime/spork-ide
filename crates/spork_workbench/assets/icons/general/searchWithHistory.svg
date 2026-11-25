@@ -1,0 +1,6 @@
+<!-- Spork: IntelliJ's search icon (expui/general/search.svg, Apache-2.0) with its history arrow. -->
+<svg width="20" height="16" viewBox="0 0 20 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="7" cy="7" r="4.5" stroke="#CED0D6"/>
+<path d="M10.1992 10.2002L13.4992 13.4961" stroke="#CED0D6" stroke-linecap="round"/>
+<path d="M14.5 7.5H18.5L16.5 10Z" fill="#CED0D6"/>
+</svg>

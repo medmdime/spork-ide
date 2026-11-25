@@ -1,0 +1,103 @@
+{
+ "id": "vcs-commit-double-click",
+ "covers": [
+  "action:CommitView.ShowOnDoubleClick.Source",
+  "action:CommitView.ShowOnDoubleClick.EditorPreview"
+ ],
+ "steps": [
+  {
+   "file": "src/greeting.rs",
+   "text": "pub fn hello(name: &str) -> String {\n    format!(\"Hi, {name}!\")\n}\n"
+  },
+  {
+   "find": {
+    "label": "Commit",
+    "role": "AXCheckBox",
+    "in": "Left stripe"
+   },
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-0"
+  },
+  {
+   "find": {
+    "label": "greeting.rs",
+    "role": "AXCheckBox"
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Options",
+   "role": "AXButton"
+  },
+  {
+   "do": "click",
+   "label": "Show on Double-Click",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    {
+     "label": "Diff",
+     "role": "AXMenuItem"
+    },
+    {
+     "label": "Source",
+     "role": "AXMenuItem"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "click",
+   "label": "Source",
+   "role": "AXMenuItem"
+  },
+  {
+   "do": "click",
+   "at": [
+    160,
+    158
+   ],
+   "count": 2
+  },
+  {
+   "expect": {
+    "active": "src/greeting.rs"
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Options",
+   "role": "AXButton"
+  },
+  {
+   "do": "click",
+   "label": "Show on Double-Click",
+   "role": "AXMenuItem"
+  },
+  {
+   "do": "click",
+   "label": "Diff",
+   "role": "AXMenuItem"
+  },
+  {
+   "do": "click",
+   "at": [
+    160,
+    158
+   ],
+   "count": 2
+  },
+  {
+   "expect": {
+    "active": "Commit: greeting.rs"
+   },
+   "within": 8000
+  }
+ ]
+}
