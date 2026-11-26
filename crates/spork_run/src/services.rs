@@ -46,6 +46,80 @@ pub mod services_panel {
     );
 }
 
+/// A service of another tool listed after the run configurations and Docker (IntelliJ's
+/// `ServiceViewContributor`s): the HTTP Client's requests, with the view its node shows.
+pub struct ContributedService {
+    /// Its key in Services, unique among the contributor's.
+    pub id: SharedString,
+    pub label: SharedString,
+    pub icon: &'static str,
+    pub view: AnyView,
+}
+
+/// A contributor's node ("HTTP Request") and its services.
+pub struct ContributedGroup {
+    pub title: SharedString,
+    pub icon: &'static str,
+    pub services: Vec<ContributedService>,
+}
+
+type Contributor = std::rc::Rc<dyn Fn(&Workspace, &App) -> Option<ContributedGroup>>;
+
+#[derive(Default)]
+struct Contributors(Vec<Contributor>);
+
+impl gpui::Global for Contributors {}
+
+/// Lists a tool's services in Services: `contributor` gives its node for a workspace, `None`
+/// while it has nothing to show.
+pub fn register_contributor(
+    contributor: impl Fn(&Workspace, &App) -> Option<ContributedGroup> + 'static,
+    cx: &mut App,
+) {
+    cx.default_global::<Contributors>()
+        .0
+        .push(std::rc::Rc::new(contributor));
+}
+
+fn contributed(workspace: &Workspace, cx: &App) -> Vec<ContributedGroup> {
+    cx.try_global::<Contributors>()
+        .map(|contributors| {
+            contributors
+                .0
+                .iter()
+                .filter_map(|contributor| contributor(workspace, cx))
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+/// Shows the contributed service `id` selected in Services, as IntelliJ shows a run's node; or
+/// redraws Services when `id` is `None` (a contributor's services changed).
+pub fn show_contributed(
+    workspace: &mut Workspace,
+    id: Option<SharedString>,
+    window: &mut Window,
+    cx: &mut Context<Workspace>,
+) {
+    let Some(panel) = workspace.panel::<ServicesPanel>(cx) else {
+        return;
+    };
+    let show = id.is_some();
+    panel.update(cx, |panel, cx| {
+        if let Some(id) = id {
+            panel.selected = None;
+            panel
+                .docker
+                .update(cx, |docker, cx| docker.clear_selection(cx));
+            panel.contributed = Some(id);
+        }
+        cx.notify();
+    });
+    if show {
+        workspace.open_panel::<ServicesPanel>(window, cx);
+    }
+}
+
 pub(crate) fn register(workspace: &mut Workspace) {
     workspace.register_action(|workspace, _: &services_panel::ToggleFocus, window, cx| {
         // a tool window shown over Services in its dock may leave it the focus: ⌘8 shows it then
@@ -66,11 +140,29 @@ pub(crate) fn register(workspace: &mut Workspace) {
         }
     });
     // greyed while nothing runs, or no background work can stop, as IntelliJ's
-    workspace.register_action_renderer(|div, workspace, _, cx| {
+    workspace.register_action_renderer(|div, workspace, window, cx| {
         let running = !running_list(workspace, cx).is_empty();
         let cancellable = !cancellable_work(workspace.project(), cx).is_empty();
-        let updatable = running && !updaters(workspace, cx).is_empty();
-        div.when(updatable, |div| {
+        let updaters = match running {
+            true => updaters(workspace, cx),
+            false => Vec::new(),
+        };
+        // the menu bar is the front window's, or the last drawn one's while the app is behind
+        let in_front = cx
+            .active_window()
+            .is_none_or(|active| active == window.window_handle());
+        if in_front {
+            let text = match updaters.as_slice() {
+                [updater] => Some(updater.text.clone()),
+                _ => None,
+            };
+            let mut menu = crate::run_menu(cx);
+            if menu.update != text {
+                menu.update = text;
+                cx.set_global(menu);
+            }
+        }
+        div.when(!updaters.is_empty(), |div| {
             div.on_action(cx.listener(
                 |workspace, _: &run::UpdateRunningApplication, window, cx| {
                     update_running_application(workspace, window, cx)
@@ -146,6 +238,8 @@ pub struct ServicesPanel {
     group_by_contributor: bool,
     /// The selected configuration, by its name.
     selected: Option<SharedString>,
+    /// The selected contributed service, by its id.
+    contributed: Option<SharedString>,
     /// Bumped by Expand All and Collapse All, so the tree's groups start over open or closed.
     generation: usize,
     expand: bool,
@@ -181,6 +275,7 @@ impl ServicesPanel {
                 cx.subscribe(&docker, |this, _, event: &DockerEvent, cx| match event {
                     DockerEvent::Selected => {
                         this.selected = None;
+                        this.contributed = None;
                         cx.notify();
                     }
                 }),
@@ -191,6 +286,7 @@ impl ServicesPanel {
             group_by_status: false,
             group_by_contributor: false,
             selected: None,
+            contributed: None,
             generation: 0,
             expand: true,
             focus: cx.focus_handle(),
@@ -473,9 +569,14 @@ impl ServicesPanel {
             .into_any_element()
     }
 
-    fn tree(&self, services: &[(Configuration, Status)], cx: &mut Context<Self>) -> AnyElement {
+    fn tree(
+        &self,
+        services: &[(Configuration, Status)],
+        contributed: &[ContributedGroup],
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
         let tokens = Tokens::get(cx);
-        if services.is_empty() && self.docker.read(cx).is_empty() {
+        if services.is_empty() && self.docker.read(cx).is_empty() && contributed.is_empty() {
             let this = cx.entity().downgrade();
             return v_flex()
                 .id("services-empty")
@@ -569,6 +670,7 @@ impl ServicesPanel {
                         select
                             .update(cx, |this, cx| {
                                 this.selected = Some(picked.clone());
+                                this.contributed = None;
                                 cx.notify();
                             })
                             .log_err();
@@ -632,6 +734,35 @@ impl ServicesPanel {
             ),
             _ => items.extend(docker),
         }
+        for group in contributed {
+            let children = group.services.iter().map(|service| {
+                let (this, docker, id) = (
+                    cx.entity().downgrade(),
+                    self.docker.downgrade(),
+                    service.id.clone(),
+                );
+                TreeItem::new(service.label.clone())
+                    .colored_icon(service.icon)
+                    .active(self.contributed.as_ref() == Some(&service.id))
+                    .on_click(move |_, _, cx| {
+                        docker
+                            .update(cx, |docker, cx| docker.clear_selection(cx))
+                            .log_err();
+                        this.update(cx, |this, cx| {
+                            this.selected = None;
+                            this.contributed = Some(id.clone());
+                            cx.notify();
+                        })
+                        .log_err();
+                    })
+            });
+            items.push(
+                TreeItem::new(group.title.clone())
+                    .colored_icon(group.icon)
+                    .default_open(true)
+                    .children(children.collect::<Vec<_>>()),
+            );
+        }
         div()
             .id("services-tree")
             .role(Role::Tree)
@@ -644,8 +775,26 @@ impl ServicesPanel {
     }
 
     /// The selected configuration's console, with its toolbar on the left.
-    fn details(&mut self, window: &mut Window, cx: &mut Context<Self>) -> AnyElement {
+    fn details(
+        &mut self,
+        contributed: &[ContributedGroup],
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
         let tokens = Tokens::get(cx);
+        let view = contributed
+            .iter()
+            .flat_map(|group| &group.services)
+            .find(|service| self.contributed.as_ref() == Some(&service.id))
+            .map(|service| service.view.clone());
+        if let Some(view) = view {
+            return div()
+                .flex_1()
+                .min_w_0()
+                .h_full()
+                .child(view)
+                .into_any_element();
+        }
         if self.docker.read(cx).has_selection() {
             return div()
                 .flex_1()
@@ -684,6 +833,13 @@ impl ServicesPanel {
             Some(Console::Run(run)) => Some(run.terminal.clone()),
             _ => None,
         };
+        let update = match &console {
+            Some(Console::Debug(session)) => Some(session.read(cx).session().clone()),
+            _ => None,
+        };
+        let update = running
+            .then(|| update_button(&workspace, &name, update, cx))
+            .flatten();
         // the type's own view beside the console, as IntelliJ's Actuator tab
         let configuration = self
             .configurations
@@ -814,6 +970,7 @@ impl ServicesPanel {
                                 .log_err();
                         }),
                     )
+                    .children(update)
                     .child(div().w(px(20.)).h(px(1.)).my(px(3.)).bg(tokens.separator))
                     .child(
                         ActionButton::new("services-scroll-to-end", "general/scrollDown")
@@ -904,10 +1061,16 @@ impl Render for ServicesPanel {
                 .ok();
             }));
         }
-        let empty = services.is_empty() && self.docker.read(cx).is_empty();
+        let contributed = self
+            .workspace
+            .upgrade()
+            .map(|workspace| contributed(workspace.read(cx), cx))
+            .unwrap_or_default();
+        let empty =
+            services.is_empty() && self.docker.read(cx).is_empty() && contributed.is_empty();
         let toolbar = self.toolbar(empty, cx);
-        let tree = self.tree(&services, cx);
-        let details = self.details(window, cx);
+        let tree = self.tree(&services, &contributed, cx);
+        let details = self.details(&contributed, window, cx);
         spork_vcs::spork_look(cx).size_full().child(
             v_flex()
                 .size_full()
@@ -1265,10 +1428,6 @@ struct Updater {
 /// The running configurations whose type updates them (IntelliJ's `RunningApplicationUpdater`s),
 /// the runs first.
 fn updaters(workspace: &Workspace, cx: &App) -> Vec<Updater> {
-    let Some(configurations) = ProjectConfigurations::of(workspace, cx) else {
-        return Vec::new();
-    };
-    let list = &configurations.read(cx).list;
     let runs = run_panel::runs(workspace, cx)
         .into_iter()
         .filter(|run| run.running)
@@ -1284,18 +1443,56 @@ fn updaters(workspace: &Workspace, cx: &App) -> Vec<Updater> {
             (!session.read(cx).is_terminated()).then_some((label, Some(session)))
         });
     runs.chain(sessions)
-        .filter_map(|(name, session)| {
-            let configuration = list.iter().find(|c| c.name() == name)?.clone();
-            let runner = crate::configurations::runner(&configuration, cx)?;
-            let text = runner.update_text(&configuration, workspace, cx)?;
-            Some(Updater {
-                configuration,
-                session,
-                runner,
-                text,
-            })
-        })
+        .filter_map(|(name, session)| updater(workspace, &name, session, cx))
         .collect()
+}
+
+/// The running configuration `name`'s update, when its type updates it.
+fn updater(
+    workspace: &Workspace,
+    name: &str,
+    session: Option<Entity<project::debugger::session::Session>>,
+    cx: &App,
+) -> Option<Updater> {
+    let configurations = ProjectConfigurations::of(workspace, cx)?;
+    let configuration = configurations
+        .read(cx)
+        .list
+        .iter()
+        .find(|configuration| configuration.name() == name)?
+        .clone();
+    let runner = crate::configurations::runner(&configuration, cx)?;
+    let text = runner.update_text(&configuration, workspace, cx)?;
+    Some(Updater {
+        configuration,
+        session,
+        runner,
+        text,
+    })
+}
+
+/// The Run and Debug tool windows' Update button on the running configuration `name` (IntelliJ's
+/// `UpdateRunningApplication` in the run content's toolbar after Rerun), when its type updates it.
+pub(crate) fn update_button(
+    workspace: &Entity<Workspace>,
+    name: &str,
+    session: Option<Entity<project::debugger::session::Session>>,
+    cx: &App,
+) -> Option<ActionButton> {
+    let updater = updater(workspace.read(cx), name, session, cx)?;
+    let workspace = workspace.clone();
+    Some(
+        ActionButton::new("run-update", "javaee/updateRunningApplication")
+            .tooltip(format!("{} (⌘F10)", updater.text))
+            .on_click(move |_, _, cx| {
+                updater.runner.update(
+                    &updater.configuration,
+                    updater.session.clone(),
+                    &workspace,
+                    cx,
+                )
+            }),
+    )
 }
 
 /// Update Running Application (⌘F10): the one running application's update, or a choice of
@@ -1546,6 +1743,7 @@ pub(crate) fn e2e_services(workspace: &Workspace, cx: &App) -> Value {
         "types": panel.types.iter().map(|t| t.as_ref()).collect::<Vec<_>>(),
         "services": services,
         "selected": panel.selected.as_ref().map(|s| s.as_ref()),
+        "contributed": panel.contributed.as_ref().map(|s| s.as_ref()),
         "group_by_status": panel.group_by_status,
         "group_by_contributor": panel.group_by_contributor,
         "console": console,

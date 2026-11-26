@@ -22,9 +22,31 @@ trace" (kotlin-coroutine-frames), "Kotlin is not configured" with Configure (kot
 (kotlin-server-without-kotlin-files). The Generate items (`KotlinGenerate*`) and Convert Java to Kotlin are (b): the
 Kotlin language server (271.2085.0) offers neither a command nor a code action for them.
 
+Built by the coverage wave (2026-11-26), on IntelliJ's own coverage agent: Run with Coverage, the editor's coverage marks and popup, the Coverage tool window, Manage Coverage Reports…, Generate Coverage Report…, Hide Coverage, the Code Coverage question, Settings › Build, Execution, Deployment › Coverage and the configurations' Code Coverage options (`coverage-*` scenarios; their tasks are on the Run and Settings pages, not triaged here).
+
+Built by the third debugger wave (2026-11-26), its tasks on the Run page (11-run, outside these four pages): Java
+exception breakpoints of a class with IntelliJ's class chooser, Caught/Uncaught and class filters
+(java-debug-exception-class); the variables' Inspect…, Mark Object…, Jump To Source, Jump To Type Source, View as and
+Show types (java-debug-values: `XDebugger.JumpToTypeSource`, `Debugger.ShowTypes`, `XDebugger.Inspect`); Customize
+Threads View…, Get Thread Dump, Export Threads… and Add Stepping Filter… (java-debug-thread-dump:
+`Debugger.CustomizeThreadsView`, `Debugger.AddSteppingFilter`, `ExportThreads`; `DumpThreads` not ticked, a dump has no
+locks); Evaluate's code fragment mode (java-debug-evaluate-fragment); the stepping filters' Add Pattern… and Remove, Make
+Default, the HotSwap page's row of radios and the values refreshed after a Data Views change (java-debug-leftovers);
+HotSwap's Restart Debug (java-debug-hotswap-restart); the Debug tool window's Layout Settings (java-debug-layout:
+`Runner.RestoreLayout`, `Runner.ToggleTabLabels`, `XDebugger.SeparateWatches`); Kotlin's Toggle Method Breakpoint and
+"Any exception" (kotlin-debug-method-exception). Kotlin's exception breakpoints of a class stay (b): the Kotlin server's
+debugger takes only its caught and uncaught filters.
+
 Built by the second Spring wave (2026-11-25), beside the tasks below it marks: run configurations kept in the workspace
 until Store as project file, Update Running Application (Run menu), New Project ▸ Spring Boot, the Spring gutter
 icons and Go to Declaration into a library's class.
+
+Built by the third Spring wave (2026-11-26), without tasks of their own in the CE catalogue: the Update button and
+"Update 'X' application" (spring-boot-update-resources), the Initializr's Server URL dialog, Retry, "Requires Spring
+Boot version", dependency links and Kotlin projects (spring-boot-initializr), Search Everywhere's Endpoints tab and
+Navigate ▸ Endpoint…, Endpoints' Compact List Items and side panel tabs, Navigate to related views
+(spring-boot-endpoints-navigation), the HTTP Client's first slice (spring-boot-http-client) and the Beans tool window
+(spring-boot-beans-tool-window).
 
 Built without a task of its own (2026-11-23): every menu and every scrollbar of the IDE is Spork's (its popup menus'
 look, its scrollbar), checked by the `popup-menu-look` and `scrollbar-behaviour` scenarios.
@@ -90,7 +112,7 @@ The main reasons in (b), by how many tasks they hold:
 | Got It tooltips (IntelliJ's feature hints): Spork IDE shows none yet | 1 |
 | a JDK download source: decided, the Foojay Disco API (built in the JDK wave) | 0 |
 | WSL, on Windows only: a decision on Windows support | 1 |
-| a coverage engine: none | 1 |
+| a coverage engine (built in the coverage wave, 2026-11-26: the task left is buildable now) | 1 |
 | colour scheme editing (Settings › Editor › Color Scheme's options): phase 9b left it | 1 |
 | Zed's minimap has no side setting | 1 |
 | editor windows: Zed's panes can't open an item in a window of its own within the same project | 1 |
@@ -919,7 +941,7 @@ Settings item (the Settings dialog opens on a page only from its own crate).
 - `context-menu:ExtractMethodToolWindow.TreePopup` ExtractMethodToolWindow.TreePopup — (b) IntelliJ's own Extract Method (its duplicates): the language servers' extract finds none
 - `context-menu:Maven.RepositoryMenu` Maven.RepositoryMenu — (b) Maven repository indices: no engine indexes the local repository
 - `context-menu:Mq.Patches.ContextMenu` Mq.Patches.ContextMenu — (b) a decision on version control beyond git (Spork's engine is git's; Mercurial isn't decided)
-- `context-menu:TestTreePopupMenu` TestTreePopupMenu — (a) the test runner engine exists (test wave): not built yet
+- `context-menu:TestTreePopupMenu` TestTreePopupMenu — (a) · built in part (test waves: Run, Debug, Jump to Source, Exclude from Suite; no Run with Coverage, Add to Pattern Suite or the diff's items) · tested: java-test-kinds
 - `context-menu:ShowFilterPopup` ShowFilterPopup — (b) a syntax filter in Zed's search (in comments, in string literals): phase 4 left it
 - `action:IntegrateFiles` Integrate — (b) a decision on version control beyond git: the action is Subversion's and Perforce's (git has no such operation)
 - `action:CheckStatusForFiles` Check Status — (b) a decision on version control beyond git: the action is Subversion's and Perforce's (git has no such operation)
@@ -1006,7 +1028,7 @@ Settings item (the Settings dialog opens on a page only from its own crate).
 - `action:SearchContext.InComments` SearchContext.InComments — (b) a syntax filter in Zed's search (in comments, in string literals): phase 4 left it
 - `action:SearchContext.InStringLiterals` SearchContext.InStringLiterals — (b) a syntax filter in Zed's search (in comments, in string literals): phase 4 left it
 - `action:Svn.RefreshWorkingCopies` Refresh — (b) a decision on version control beyond git (Subversion isn't decided)
-- `action:excludeFromSuite` Exclude from Suite — (a) the test runner engine exists (test wave): not built yet
+- `action:excludeFromSuite` Exclude from Suite — (a) · built (test wave, round 2: a class of a Pattern configuration's patterns; a method's pattern is left) · tested: java-test-kinds
 - `action:excludeFromTestNGSuite` Exclude from Suite — (a) the test runner engine exists (test wave): not built yet
 - `action:openAssertEqualsDiff` View assertEquals Difference — (a) · built (test wave: the failure's "Click to see difference"; its ⌘D action is left) · tested: java-test-runner (pass)
 - `action:CloseGotItTooltip` Close Got It Tooltip — (b) Got It tooltips (IntelliJ's feature hints): Spork IDE shows none yet
@@ -1037,7 +1059,7 @@ Settings item (the Settings dialog opens on a page only from its own crate).
 - `action:SingleUserFollowAction` Follow single user — (b) our own collaboration server first (Decision 2: Zed's collaboration comes back on it)
 - `action:FileChooser.GotoHome` Home Directory — (b) a decision: IntelliJ uses the system's file dialog by default (Advanced Settings › Use native file chooser dialog, `ide.ui.native.file.chooser`, on), as Spork IDE does; its own File Chooser shows only with that setting off
 - `action:FileChooser.GoToWslHome` Home Directory in WSL — (b) a decision: IntelliJ uses the system's file dialog by default (Advanced Settings › Use native file chooser dialog, `ide.ui.native.file.chooser`, on), as Spork IDE does; its own File Chooser shows only with that setting off
-- `action:ImportCoverage` Import External Coverage Report… — (b) a coverage engine: none
+- `action:ImportCoverage` Import External Coverage Report… — (b) a coverage engine (built in the coverage wave, 2026-11-26: the task left is buildable now; Manage Coverage Reports' Add reads an agent's `.ic`)
 - `action:JumpToColorsAndFonts` Jump to Colors and Fonts — (b) colour scheme editing (Settings › Editor › Color Scheme's options): phase 9b left it
 - `action:SingleJumpToCursorAction` Jump to cursor — (b) our own collaboration server first (Decision 2: Zed's collaboration comes back on it)
 - `action:ForceOthersToFollowAction` Make Everyone Follow You — (b) our own collaboration server first (Decision 2: Zed's collaboration comes back on it)
@@ -1057,7 +1079,7 @@ Settings item (the Settings dialog opens on a page only from its own crate).
 - `action:FileChooser.GoBackward` Previous Directory — (b) a decision: IntelliJ uses the system's file dialog by default (Advanced Settings › Use native file chooser dialog, `ide.ui.native.file.chooser`, on), as Spork IDE does; its own File Chooser shows only with that setting off
 - `action:PreviousLessonAction` Previous Lesson — (b) the Learn courses' content (phase 6 left the Welcome window's Learn): a decision
 - `action:FileChooser.GotoProject` Project Directory — (b) a decision: IntelliJ uses the system's file dialog by default (Advanced Settings › Use native file chooser dialog, `ide.ui.native.file.chooser`, on), as Spork IDE does; its own File Chooser shows only with that setting off
-- `action:ShowRecentTests` Recent Tests — (a) the test runner engine exists (test wave): not built yet
+- `action:ShowRecentTests` Recent Tests — (a) the test runner engine exists (test waves): not built yet (round 2 did the test history, Import Tests from File… and Rerun Automatically)
 - `action:FileChooser.Refresh` Refresh — (b) a decision: IntelliJ uses the system's file dialog by default (Advanced Settings › Use native file chooser dialog, `ide.ui.native.file.chooser`, on), as Spork IDE does; its own File Chooser shows only with that setting off
 - `action:RerunFailedTests` Rerun Failed Tests — (a) · built (test wave) · tested: java-test-runner (pass)
 - `action:RerunTests` Rerun Tests — (a) · built (test wave) · tested: java-test-runner (pass)
@@ -1305,7 +1327,7 @@ Settings item (the Settings dialog opens on a page only from its own crate).
 - `action:Qodana.AddQodanaToCiAction` Add Qodana to CI Pipeline — (c) Qodana, a JetBrains service
 - `action:settingsSync.history` Backup and Sync History — (c) Backup and Sync, a JetBrains account service
 - `action:settingsSync.troubleShoot` Backup and Sync Troubleshooting — (c) Backup and Sync, a JetBrains account service
-- `action:PromoBeans` Beans — (c) IntelliJ IDEA Ultimate promotion
+- `action:PromoBeans` Beans — built (2026-11-26, the third Spring wave): the paid edition's Beans tool window itself, on the Spring LS's index (spring-boot-beans-tool-window)
 - `action:PromoSpring` Change Active Spring Profiles… — (c) IntelliJ IDEA Ultimate promotion
 - `action:chart-demo` chart-demo — (c) IntelliJ's internal IDE performance profiler
 - `action:Markdown.Extensions.CleanupExternalFiles` Clean Up Markdown Extensions External Files… — (c) IntelliJ's own Markdown extensions and its embedded browser

@@ -1,0 +1,403 @@
+{
+ "id": "java-debug-thread-dump",
+ "fixture": "maven",
+ "covers": [
+  "action:Debugger.CustomizeThreadsView",
+  "action:Debugger.AddSteppingFilter",
+  "action:ExportThreads"
+ ],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "sh": "mkdir -p .zed && printf '%s' '[{\"label\": \"Debuggee\", \"adapter\": \"Java\", \"request\": \"launch\", \"mainClass\": \"com.example.Debuggee\"}]' > .zed/debug.json"
+  },
+  {
+   "expect": {
+    "java.tool": "Maven"
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 600000
+  },
+  {
+   "expect": {
+    "run.configurations.selected": "Debuggee"
+   },
+   "within": 10000
+  },
+  {
+   "do": "open",
+   "path": "src/main/java/com/example/Debuggee.java"
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/Debuggee.java",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   },
+   "within": 5000
+  },
+  {
+   "do": "type",
+   "text": "49:1"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "find": {
+    "label": "Debug 'Debuggee'",
+    "role": "AXButton",
+    "enabled": true
+   },
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-d"
+  },
+  {
+   "expect": {
+    "run.debug.status": "Stopped"
+   },
+   "within": 120000
+  },
+  {
+   "expect": {
+    "run.debug.frames": [
+     "twice:49, Debuggee (com.example)",
+     "lambda$1:27, Debuggee (com.example)",
+     "2 hidden frames"
+    ],
+    "run.debug.thread": "\"worker\"@11: STOPPED"
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "twice:49, Debuggee (com.example)",
+   "button": "right"
+  },
+  {
+   "menu": "context-menu:XDebugger.Frames.Tree.Popup",
+   "items": [
+    "Reset Frame",
+    "Throw Exception (disabled)",
+    "Force Return (disabled)",
+    "Copy Stack",
+    "Hide Frames from Libraries",
+    "Async Stack Traces (disabled)",
+    "Customize Threads View…",
+    "Add Stepping Filter…",
+    "Export Threads…"
+   ],
+   "checked": [
+    "Hide Frames from Libraries"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "Customize Threads View…"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Customize Threads View"
+   },
+   "within": 5000
+  },
+  {
+   "find": [
+    {
+     "label": "Show thread groups",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "Show stack frames for synthetic methods",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "Move current thread to the top",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "Show line number",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "Show class name",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "Show package name",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "Show source file name",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "Show method arguments types",
+     "role": "AXCheckBox",
+     "value": "0"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Show thread groups",
+   "role": "AXCheckBox"
+  },
+  {
+   "do": "click",
+   "label": "Show source file name",
+   "role": "AXCheckBox"
+  },
+  {
+   "do": "click",
+   "label": "Show method arguments types",
+   "role": "AXCheckBox"
+  },
+  {
+   "do": "activate",
+   "window": "Customize Threads View"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "customize",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "run.debug.frames.0": "twice(int):49, Debuggee (com.example), Debuggee.java",
+    "run.debug.thread": "\"worker\"@11 in group \"main\": RUNNING"
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "run.debug.threads": {
+     "contains": "\"main\"@1 in group \"main\": WAIT"
+    }
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "More",
+   "role": "AXButton",
+   "in": "XDebugger.ToolWindow.TopToolbar3"
+  },
+  {
+   "do": "click",
+   "label": "Get Thread Dump"
+  },
+  {
+   "expect": {
+    "run.debug.dumps.0": {
+     "contains": "Dump "
+    },
+    "run.debug.dump": {
+     "contains": "\"main@1\" prio=5 tid=0x1 nid=NA waiting\n  java.lang.Thread.State: WAITING"
+    }
+   },
+   "within": 30000
+  },
+  {
+   "expect": {
+    "run.debug.dump": {
+     "contains": "\tat com.example.Debuggee.main(Debuggee.java:29)"
+    }
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "worker@11 runnable"
+  },
+  {
+   "expect": {
+    "run.debug.dump": {
+     "contains": "\"worker@11\" prio=5 tid=0x"
+    }
+   },
+   "within": 5000
+  },
+  {
+   "expect": {
+    "run.debug.dump": {
+     "contains": "\tat com.example.Debuggee.twice(Debuggee.java:49)"
+    }
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "main@1 waiting"
+  },
+  {
+   "expect": {
+    "run.debug.dump": {
+     "contains": "\"main@1\" prio=5 tid=0x1 nid=NA waiting"
+    }
+   },
+   "within": 5000
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "dump"
+  },
+  {
+   "do": "click",
+   "label": "Threads & Variables",
+   "role": "AXRadioButton"
+  },
+  {
+   "do": "click",
+   "label": "twice(int):49, Debuggee (com.example), Debuggee.java",
+   "button": "right"
+  },
+  {
+   "do": "click",
+   "label": "Export Threads…"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Export Preview"
+   },
+   "within": 20000
+  },
+  {
+   "find": {
+    "label": "Export to file",
+    "role": "AXTextField"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Save",
+   "role": "AXButton"
+  },
+  {
+   "sh": "grep -c 'java.lang.Thread.State' threads_report.txt",
+   "is": "7",
+   "within": 10000
+  },
+  {
+   "sh": "head -2 threads_report.txt",
+   "is": "\"main@1\" prio=5 tid=0x1 nid=NA waiting\n  java.lang.Thread.State: WAITING"
+  },
+  {
+   "do": "click",
+   "label": "twice(int):49, Debuggee (com.example), Debuggee.java",
+   "button": "right"
+  },
+  {
+   "do": "click",
+   "label": "Add Stepping Filter…"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Add Stepping Filter"
+   },
+   "within": 5000
+  },
+  {
+   "find": {
+    "label": "Add Stepping Filter",
+    "role": "AXTextField",
+    "value": "com.example.Debuggee"
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "enter",
+   "window": "Add Stepping Filter"
+  },
+  {
+   "expect": {
+    "value": {
+     "contains": [
+      "com.example.Debuggee",
+      true
+     ]
+    }
+   },
+   "of": {
+    "do": "setting",
+    "path": "/spork/debugger/step_filters"
+   },
+   "within": 8000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f2"
+  },
+  {
+   "expect": {
+    "run.debug.terminated": true
+   },
+   "within": 30000
+  }
+ ]
+}

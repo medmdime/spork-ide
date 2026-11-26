@@ -401,8 +401,9 @@
     "Run"
    ],
    "items": [
-    "Run",
-    "Debug",
+    "Run 'hello'",
+    "Debug 'hello'",
+    "Run 'hello' with Coverage (disabled)",
     "Run…",
     "Debug…",
     "Attach to Process…",
@@ -412,7 +413,10 @@
     "Show Running List",
     "Debugging Actions",
     "Toggle Breakpoint",
-    "View Breakpoints…"
+    "View Breakpoints…",
+    "Manage Coverage Reports…",
+    "Generate Coverage Report… (disabled)",
+    "Hide Coverage (disabled)"
    ]
   },
   {

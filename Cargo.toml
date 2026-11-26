@@ -207,12 +207,14 @@ members = [
     "crates/spork_git",
     "crates/spork_graph",
     "crates/spork_hosting",
+    "crates/spork_http",
     "crates/spork_java",
     "crates/spork_kotlin",
     "crates/spork_local_history",
     "crates/spork_patch",
     "crates/spork_projects",
     "crates/spork_code",
+    "crates/spork_coverage",
     "crates/spork_docker",
     "crates/spork_run",
     "crates/spork_terminal",
@@ -500,12 +502,14 @@ spork_editor = { path = "crates/spork_editor" }
 spork_git = { path = "crates/spork_git" }
 spork_graph = { path = "crates/spork_graph" }
 spork_hosting = { path = "crates/spork_hosting" }
+spork_http = { path = "crates/spork_http" }
 spork_java = { path = "crates/spork_java" }
 spork_kotlin = { path = "crates/spork_kotlin" }
 spork_local_history = { path = "crates/spork_local_history" }
 spork_patch = { path = "crates/spork_patch" }
 spork_projects = { path = "crates/spork_projects" }
 spork_code = { path = "crates/spork_code" }
+spork_coverage = { path = "crates/spork_coverage" }
 spork_docker = { path = "crates/spork_docker" }
 spork_run = { path = "crates/spork_run" }
 spork_terminal = { path = "crates/spork_terminal" }
@@ -1002,6 +1006,7 @@ tree-sitter-kotlin = { git = "https://github.com/fwcd/tree-sitter-kotlin", rev =
 tree-sitter-json = "0.24"
 tree-sitter-md = { git = "https://github.com/zed-industries/tree-sitter-markdown", rev = "b596e737286780d7bfa9fcddceaeeb754574b352" } # fork of 9a23c1a with serialize() buffer-overflow fix; https://github.com/tree-sitter-grammars/tree-sitter-markdown/issues/243
 tree-sitter-properties = "0.3"
+tree-sitter-language = "0.1"
 tree-sitter-python = "0.25"
 tree-sitter-regex = "0.24"
 tree-sitter-ruby = "0.23"

@@ -1,0 +1,176 @@
+{
+ "id": "coverage-kotlin",
+ "fixture": "coverage-kotlin-gradle",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Kotlin": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Gradle",
+    "kotlin.detected": true
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "kotlin.server.running": true
+   },
+   "within": 600000
+  },
+  {
+   "expect": {
+    "kotlin.server.busy": false
+   },
+   "within": 300000
+  },
+  {
+   "do": "open",
+   "path": "src/main/kotlin/com/example/Main.kt"
+  },
+  {
+   "find": {
+    "label": "Run line marker",
+    "role": "AXButton"
+   },
+   "within": 60000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "click",
+   "label": "Run line marker",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    "Run 'MainKt'",
+    "Debug 'MainKt'",
+    "Run 'MainKt' with Coverage"
+   ],
+   "ordered": true,
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Run 'MainKt' with Coverage"
+  },
+  {
+   "expect": {
+    "run.tabs.0.running": false,
+    "run.tabs.0.output": {
+     "contains": "Hello, world!\nHello, Kotlin!\n"
+    },
+    "coverage.active": [
+     "MainKt"
+    ]
+   },
+   "within": 240000
+  },
+  {
+   "expect": {
+    "coverage.view.rows": [
+     "com.example | 100% (2/2) | 100% (4/4) | 100% (9/9) | 100% (0/0)",
+     "  Greeting | 100% (1/1) | 100% (2/2) | 100% (2/2) | 100% (0/0)",
+     "  MainKt | 100% (1/1) | 100% (2/2) | 100% (7/7) | 100% (0/0)"
+    ]
+   },
+   "within": 30000
+  },
+  {
+   "expect": {
+    "coverage.marks": [
+     "5 full",
+     "6 full",
+     "7 full",
+     "8 full",
+     "9 full",
+     "13 full",
+     "14 full"
+    ]
+   },
+   "within": 10000
+  },
+  {
+   "expect": {
+    "kotlin.server.busy": false
+   },
+   "within": 60000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "do": "front"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "kotlin"
+  },
+  {
+   "do": "open",
+   "path": "src/test/kotlin/com/example/GreetingTest.kt"
+  },
+  {
+   "find": {
+    "label": "Run test 'GreetingTest'",
+    "role": "AXButton"
+   },
+   "within": 60000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "click",
+   "label": "Run test 'GreetingTest'",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    "Run 'GreetingTest'",
+    "Debug 'GreetingTest'",
+    "Run 'GreetingTest' with Coverage"
+   ],
+   "ordered": true,
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Run 'GreetingTest' with Coverage"
+  },
+  {
+   "expect": {
+    "coverage.dialog.question": true
+   },
+   "within": 240000
+  },
+  {
+   "do": "click",
+   "label": "Replace Active Suites"
+  },
+  {
+   "expect": {
+    "coverage.active": [
+     "GreetingTest"
+    ],
+    "coverage.view.title": "GreetingTest",
+    "coverage.view.rows": [
+     "com.example | 100% (2/2) | 75% (3/4) | 44% (4/9) | 100% (0/0)",
+     "  Greeting | 100% (1/1) | 100% (2/2) | 100% (2/2) | 100% (0/0)",
+     "  MainKt | 100% (1/1) | 50% (1/2) | 28% (2/7) | 100% (0/0)"
+    ]
+   },
+   "within": 30000
+  }
+ ]
+}

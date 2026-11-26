@@ -268,15 +268,20 @@ impl Runner for ApplicationRunner {
         };
         let allow_concurrent_runs = flag(&entry, ALLOW_MULTIPLE);
         let classpath = java.read(cx).classpath(&root, cx);
+        let coverage = crate::coverage::prepare(configuration, &root, cx);
         cx.background_spawn(async move {
             build.await?;
             let classpath = classpath.await?;
+            let coverage = match coverage {
+                Some(coverage) => Some(coverage.await?),
+                None => None,
+            };
             let cwd = entry
                 .get("cwd")
                 .and_then(Value::as_str)
                 .map(str::to_owned)
                 .unwrap_or_else(|| root.to_string_lossy().into_owned());
-            let env: HashMap<String, String> = entry
+            let mut env: HashMap<String, String> = entry
                 .get("env")
                 .and_then(Value::as_object)
                 .map(|env| {
@@ -287,11 +292,23 @@ impl Runner for ApplicationRunner {
                         .collect()
                 })
                 .unwrap_or_default();
+            let mut vm_options = arguments(&entry, "vmArgs");
+            if let Some(coverage) = coverage {
+                env.extend([coverage.env()]);
+                // the task's arguments reach the program through its shell, which splits the
+                // agent's path at its spaces (the data folder's)
+                let quoted = coverage.vm_options.iter().map(|option| {
+                    util::shell::ShellKind::Posix
+                        .try_quote(option)
+                        .map_or_else(|| option.clone(), |quoted| quoted.into_owned())
+                });
+                vm_options.splice(0..0, quoted);
+            }
             Ok(TaskTemplate {
                 label,
                 command: java_executable(&entry, &jdk),
                 args: java_command(
-                    &arguments(&entry, "vmArgs"),
+                    &vm_options,
                     &classpath,
                     main.trim(),
                     &arguments(&entry, "args"),
@@ -369,6 +386,10 @@ impl Runner for ApplicationRunner {
         field != Field::VmOptions || configuration.entry.contains_key("vmArgs")
     }
 
+    fn can_cover(&self) -> bool {
+        true
+    }
+
     /// Once JDT LS has java-debug (it fetches it the first time it starts).
     fn can_debug(&self, _: &App) -> bool {
         // the run widget asks on each frame: the disk is read until the plugin is there
@@ -439,6 +460,36 @@ impl DebugAdapter for JavaDebugAdapter {
             anyhow::Ok((java.build(cx), server, jdk, java.workspace.clone()))
         })?;
         let mut configuration = definition.config.clone();
+        // a test's Debug, as IntelliJ's: the tests run as their run does (by Gradle in a Gradle
+        // project), their JVM waiting, then java-debug attaches to it
+        if let Some(test) = configuration
+            .get(configurations::TEST_CONFIGURATION)
+            .and_then(Value::as_str)
+        {
+            let test: serde_json::Map<String, Value> =
+                serde_json::from_str(test).context("the test configuration")?;
+            let test = Configuration::from_entry(test);
+            let window_workspace = workspace
+                .upgrade()
+                .context("The project's window is closed")?;
+            let port =
+                spork_run::run_for_debugger(&window_workspace, test, configurations::JAVA, cx)
+                    .await?;
+            let attach_to = serde_json::json!({
+                "request": "attach",
+                "hostName": "127.0.0.1",
+                "port": port,
+            });
+            return attach(
+                &server,
+                &root,
+                attach_to,
+                workspace,
+                definition.label.clone(),
+                cx,
+            )
+            .await;
+        }
         if configuration["request"] == "attach" {
             return attach(
                 &server,
@@ -467,45 +518,19 @@ impl DebugAdapter for JavaDebugAdapter {
             vec![root_uri.into()],
         )
         .await?;
-        // the test runner isn't the project's: the project is the one with main classes
-        let test = configuration["classpathScope"] == "test";
         let project = mains
             .as_array()
             .and_then(|mains| {
                 mains
                     .iter()
-                    .find(|found| test || found["mainClass"] == main.as_str())
+                    .find(|found| found["mainClass"] == main.as_str())
             })
             .and_then(|found| found["projectName"].as_str())
             .with_context(|| format!("Could not find or load main class {main}"))?
             .to_owned();
-        let mut classpath_arguments = vec![main.clone().into(), project.clone().into()];
-        if test {
-            classpath_arguments.push("test".into());
-        }
-        let mut paths =
+        let classpath_arguments = vec![main.clone().into(), project.clone().into()];
+        let paths =
             execute_command(&server, "vscode.java.resolveClasspath", classpath_arguments).await?;
-        // a test configuration's runner and the JUnit Platform's launcher on its classpath
-        if main == configurations::TEST_RUNNER {
-            let classpath: Vec<String> = paths[1]
-                .as_array()
-                .map(|paths| {
-                    paths
-                        .iter()
-                        .filter_map(|path| path.as_str().map(str::to_owned))
-                        .collect()
-                })
-                .unwrap_or_default();
-            let http = cx.update(|cx| cx.http_client());
-            let mut classpath = crate::testing::with_launcher(classpath, http).await?;
-            classpath.insert(
-                0,
-                crate::testing::runner_classes()?
-                    .to_string_lossy()
-                    .into_owned(),
-            );
-            paths[1] = Value::from(classpath);
-        }
         let port = execute_command(&server, "vscode.java.startDebugSession", Vec::new())
             .await?
             .as_u64()
@@ -531,7 +556,6 @@ impl DebugAdapter for JavaDebugAdapter {
             }
         }
         object.insert("request".into(), "launch".into());
-        object.remove("classpathScope");
         object.insert("mainClass".into(), main.into());
         object.insert("projectName".into(), project.into());
         object.insert("modulePaths".into(), paths[0].clone());
@@ -776,6 +800,19 @@ impl ContextProvider for JavaContextProvider {
                     format!("${{ZED_CUSTOM_{PROGRAM_ARGUMENTS}}}"),
                 ],
                 cwd: Some("$ZED_WORKTREE_ROOT".into()),
+                // the configuration Run 'Main' with Coverage makes (`spork_run`'s gutter)
+                env: [
+                    (
+                        configurations::GUTTER_MAIN_ENV.to_owned(),
+                        format!("${{ZED_CUSTOM_{MAIN_CLASS}}}"),
+                    ),
+                    (
+                        configurations::GUTTER_TYPE_ENV.to_owned(),
+                        configurations::JAVA.to_owned(),
+                    ),
+                ]
+                .into_iter()
+                .collect(),
                 tags: vec!["java-main".into()],
                 ..TaskTemplate::default()
             },
@@ -783,20 +820,14 @@ impl ContextProvider for JavaContextProvider {
     }
 }
 
-/// The gutter's test run: the name and entry of the configuration its run makes, and the
-/// test runner's selector the gutter's Debug launches.
+/// The gutter's test run: the name and entry of the configuration its run (and its Debug) makes.
 const TEST_NAME: &str = "SPORK_TEST_NAME";
 /// The gutter's test configuration as JSON, a task variable (`${ZED_CUSTOM_…}`).
 pub const TEST_CONFIGURATION: &str = "SPORK_TEST_CONFIGURATION";
-const TEST_SELECTOR: &str = "SPORK_TEST_SELECTOR";
 
 /// The variables of a test class's or method's run from the gutter.
 pub fn test_variables(adapter: &str, class: &str, method: Option<&str>) -> TaskVariables {
     let configuration = crate::testing::gutter_configuration(adapter, class, method);
-    let selector = configurations::test_selectors(&configuration)
-        .into_iter()
-        .next()
-        .unwrap_or_default();
     TaskVariables::from_iter([
         (
             VariableName::Custom(TEST_NAME.into()),
@@ -806,7 +837,6 @@ pub fn test_variables(adapter: &str, class: &str, method: Option<&str>) -> TaskV
             VariableName::Custom(TEST_CONFIGURATION.into()),
             Value::Object(configuration.entry).to_string(),
         ),
-        (VariableName::Custom(TEST_SELECTOR.into()), selector),
     ])
 }
 
@@ -829,8 +859,8 @@ pub fn test_template(tags: &[&str]) -> TaskTemplate {
     }
 }
 
-/// The gutter's Debug for Java: a test task as a launch of the test runner on the test
-/// classpath, a `main` task as a launch of its class.
+/// The gutter's Debug for Java: a test task as its configuration's run with java-debug attached,
+/// a `main` task as a launch of its class.
 struct JavaLocator;
 
 #[async_trait]
@@ -850,10 +880,8 @@ impl dap::DapLocator for JavaLocator {
         }
         let config = if build.env.contains_key(configurations::CONFIGURATION_ENV) {
             serde_json::json!({
-                "request": "launch",
-                "mainClass": configurations::TEST_RUNNER,
-                "args": [format!("${{ZED_CUSTOM_{TEST_SELECTOR}}}")],
-                "classpathScope": "test",
+                "request": "attach",
+                configurations::TEST_CONFIGURATION: format!("${{ZED_CUSTOM_{TEST_CONFIGURATION}}}"),
             })
         } else if build.tags.iter().any(|tag| tag == "java-main") {
             serde_json::json!({
@@ -917,6 +945,11 @@ pub(crate) fn init(cx: &mut App) {
         Some(("caught", "uncaught")),
         cx,
     );
+    spork_run::register_exception_classes(
+        configurations::JAVA,
+        std::rc::Rc::new(crate::breakpoints::exception_classes),
+        cx,
+    );
     cx.set_global(debugger_ui::FrameSourceResolver(std::rc::Rc::new(
         crate::debugger::class_source,
     )));
@@ -948,8 +981,14 @@ pub(crate) fn init(cx: &mut App) {
         spork_run::register_adapter_hooks(
             adapter,
             spork_run::AdapterHooks {
-                frame_label: |frame| crate::debugger::frame_label(&frame.name, frame.line),
+                frame_label: |frame, view| {
+                    let source = frame.source.as_ref().and_then(|s| s.name.as_deref());
+                    crate::debugger::frame_label(&frame.name, frame.line, source, view)
+                },
                 force_step_into: crate::debugger::force_step_into,
+                thread_infos: Some(crate::thread_dump::thread_infos),
+                thread_dump: Some(crate::thread_dump::thread_dump),
+                frame_class: Some(|frame| crate::debugger::frame_class(&frame.name)),
             },
             cx,
         );

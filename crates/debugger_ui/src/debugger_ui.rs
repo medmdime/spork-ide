@@ -23,7 +23,10 @@ pub(crate) mod session;
 // Spork IDE: for the app's Debug tool window
 pub use session::running::ProgramTerminalStarted;
 pub use session::running::stack_frame_list::FrameSourceResolver;
-pub use session::running::variable_list::{FieldWatchpointHook, FlatScopeAdapters};
+pub use session::running::variable_list::{
+    FieldWatchpointHook, FlatScopeAdapters, SeparateWatches, ValueActions, ValueActionsHook,
+    ValueMarkupHook,
+};
 pub use session::{
     DebugSession,
     running::{RunningState, variable_list::VariableList},

@@ -36,10 +36,32 @@ final class TestNgTests {
                 classes.putIfAbsent(type.getName(), new ArrayList<String>());
             }
         }
+        // a suite file runs as it says
+        List<String> suiteFiles = new ArrayList<>();
+        for (String selector : selectors) {
+            if (selector.startsWith("suite:")) {
+                suiteFiles.add(TestRunner.value(selector));
+            }
+        }
+        if (!suiteFiles.isEmpty()) {
+            TestNG testng = new TestNG();
+            testng.setUseDefaultListeners(false);
+            testng.setTestSuites(suiteFiles);
+            Listener listener = new Listener(events);
+            testng.addListener(listener);
+            testng.run();
+            listener.closeSuite();
+            return !testng.hasFailure();
+        }
         XmlSuite suite = new XmlSuite();
         suite.setName("Default Suite");
         XmlTest test = new XmlTest(suite);
         test.setName("Default test");
+        for (String selector : selectors) {
+            if (selector.startsWith("group:")) {
+                test.addIncludedGroup(TestRunner.value(selector));
+            }
+        }
         List<XmlClass> xmlClasses = new ArrayList<>();
         for (Map.Entry<String, List<String>> entry : classes.entrySet()) {
             XmlClass xmlClass = new XmlClass(entry.getKey());

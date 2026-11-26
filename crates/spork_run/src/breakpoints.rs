@@ -20,7 +20,7 @@ use std::sync::Arc;
 use dap::ExceptionBreakpointsFilter;
 use dap::adapters::DebugAdapterName;
 use dap::client::SessionId;
-use editor::{BreakpointGutterIcon, BreakpointLook, BreakpointMenu, Editor};
+use editor::{BreakpointGutterIcon, BreakpointLook, BreakpointMenu, BreakpointToggle, Editor};
 use gpui::TaskExt as _;
 use gpui::prelude::FluentBuilder as _;
 use gpui::{
@@ -30,7 +30,7 @@ use gpui::{
     WindowBounds, WindowOptions, anchored, div, point, px, size,
 };
 use gpui_kit::component::input::{InputEvent, InputState};
-use gpui_kit::component::menu::{PopupMenu, PopupMenuItem};
+use gpui_kit::component::menu::{DropdownMenu as _, PopupMenu, PopupMenuItem};
 use gpui_kit::component::{h_flex, v_flex};
 use project::Project;
 use project::debugger::breakpoint_store::{
@@ -45,6 +45,7 @@ use spork_workbench::controls::{
     check_box, disabled_check, disabled_radio, labeled_check, labeled_combo, labeled_radio, link,
 };
 use spork_workbench::{ActionButton, Tokens};
+use util::ResultExt as _;
 use workspace::{ModalView, Workspace};
 
 use crate::run;
@@ -70,6 +71,8 @@ pub(crate) fn init(cx: &mut App) {
 }
 
 pub(crate) fn register(workspace: &mut Workspace, cx: &mut Context<Workspace>) {
+    // the languages' toggles are set by now
+    default_suspend_policy(cx);
     workspace.register_action(|workspace, _: &run::ViewBreakpoints, window, cx| {
         open_dialog(workspace.project().clone(), None, window, cx)
     });
@@ -134,6 +137,8 @@ fn toggle_temporary(workspace: &mut Workspace, cx: &mut Context<Workspace>) {
                 .anchor_after(text::Point::new(row, 0));
             let mut breakpoint = Breakpoint::new_standard();
             breakpoint.properties.temporary = true;
+            breakpoint.properties.suspend_thread =
+                spork_settings::debugger::settings(cx).default_suspend_thread;
             store.toggle_breakpoint(
                 buffer,
                 BreakpointWithPosition {
@@ -453,6 +458,8 @@ fn suspend_policy(
             .into_any_element()
         }
     };
+    // Make Default (`XSuspendPolicyPanel`): shown while the policy isn't the default
+    let default_thread = spork_settings::debugger::settings(cx).default_suspend_thread;
     h_flex()
         .gap(px(12.))
         .child(
@@ -462,7 +469,68 @@ fn suspend_policy(
         )
         .child(policy("All", !thread, false))
         .child(policy("Thread", thread, true))
+        .when(suspends && thread != default_thread, |row| {
+            row.child(
+                spork_workbench::Button::new("breakpoint-make-default", "Make Default").on_click(
+                    move |_, _, cx| {
+                        let mut settings = spork_settings::debugger::settings(cx);
+                        settings.default_suspend_thread = thread;
+                        spork_settings::debugger::set_settings(settings, cx).log_err();
+                        cx.refresh_windows();
+                    },
+                ),
+            )
+        })
         .into_any_element()
+}
+
+/// A new line breakpoint takes the default suspend policy (Make Default): the language's own
+/// toggle (Kotlin's function and lambda breakpoints) is asked first, then the gutter's and Toggle
+/// Line Breakpoint's new breakpoint suspends its thread when that's the default.
+fn default_suspend_policy(cx: &mut App) {
+    struct Wrapped;
+    impl Global for Wrapped {}
+    if cx.has_global::<Wrapped>() {
+        return;
+    }
+    cx.set_global(Wrapped);
+    let previous = cx.try_global::<BreakpointToggle>().cloned();
+    cx.set_global(BreakpointToggle(Rc::new(
+        move |editor, anchor, window, cx| {
+            if let Some(BreakpointToggle(previous)) = &previous
+                && previous(editor, anchor, window, cx)
+            {
+                return true;
+            }
+            if !spork_settings::debugger::settings(cx).default_suspend_thread {
+                return false;
+            }
+            let snapshot = editor.buffer().read(cx).snapshot(cx);
+            let Some((buffer_anchor, _)) = snapshot.anchor_to_buffer_anchor(anchor) else {
+                return false;
+            };
+            let Some(buffer) = editor.buffer().read(cx).buffer(buffer_anchor.buffer_id) else {
+                return false;
+            };
+            let (Some(store), Some(path)) = (
+                editor
+                    .project()
+                    .map(|project| project.read(cx).breakpoint_store()),
+                BreakpointStore::abs_path_from_buffer(&buffer, cx),
+            ) else {
+                return false;
+            };
+            let row = text::ToPoint::to_point(&buffer_anchor, &buffer.read(cx).snapshot()).row;
+            // one there already: Zed removes it
+            if store.read(cx).breakpoint_at_row(&path, row, cx).is_some() {
+                return false;
+            }
+            let mut breakpoint = Breakpoint::new_standard();
+            breakpoint.properties.suspend_thread = true;
+            editor.edit_breakpoint_at_anchor(anchor, breakpoint, BreakpointEditAction::Toggle, cx);
+            true
+        },
+    )));
 }
 
 /// "Remove once hit" (`XBreakpointActionsPanel`'s temporary breakpoint).
@@ -980,6 +1048,117 @@ pub fn register_exception_filters(
 /// The selection of an adapter's "Any exception" row.
 const ANY_EXCEPTION: &str = "any exception";
 
+/// The selection of an exception breakpoint of a class: this, then its class.
+const CLASS_EXCEPTION: &str = "class:";
+
+/// A Java exception breakpoint of a class (IntelliJ's `JavaExceptionBreakpointProperties`): the
+/// class's JVM name, whether it is on, its Caught and Uncaught notifications and class filters.
+#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct ExceptionClassBreakpoint {
+    pub class: String,
+    pub enabled: bool,
+    pub caught: bool,
+    pub uncaught: bool,
+    /// The class filters as IntelliJ's field writes them, `com.example.* -com.example.impl.*`
+    /// (where the exception is thrown); `None` while "Class filters" is unchecked.
+    #[serde(default)]
+    pub filters: Option<String>,
+}
+
+/// An adapter's exception breakpoints beyond its filters: "Any exception"'s class filters and
+/// the breakpoints of a class.
+#[derive(Clone, Debug, Default, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct ExceptionBreakpoints {
+    #[serde(default)]
+    pub any_filters: Option<String>,
+    #[serde(default)]
+    pub classes: Vec<ExceptionClassBreakpoint>,
+}
+
+/// The adapters' exception breakpoints of a class, kept for every project as Zed keeps an
+/// adapter's exception filters; the adapters that send them watch this global.
+#[derive(Default)]
+pub struct ExceptionClasses(pub BTreeMap<SharedString, ExceptionBreakpoints>);
+
+impl Global for ExceptionClasses {}
+
+const EXCEPTION_CLASSES_KEY: &str = "spork_exception_breakpoints";
+
+/// The adapters whose exception breakpoints can be of a class, with their class search.
+#[derive(Default)]
+struct ClassSearches(BTreeMap<SharedString, crate::class_chooser::ClassSearch>);
+
+impl Global for ClassSearches {}
+
+/// An adapter's exception breakpoints can be of a class, the chooser finding them by `search`.
+pub fn register_exception_classes(
+    adapter: &'static str,
+    search: crate::class_chooser::ClassSearch,
+    cx: &mut App,
+) {
+    cx.default_global::<ClassSearches>()
+        .0
+        .insert(adapter.into(), search);
+}
+
+fn has_exception_classes(adapter: &str, cx: &App) -> bool {
+    cx.try_global::<ClassSearches>()
+        .is_some_and(|searches| searches.0.contains_key(adapter))
+}
+
+/// An adapter's exception breakpoints of a class, read from the database the first time.
+pub fn exception_breakpoints(adapter: &str, cx: &mut App) -> ExceptionBreakpoints {
+    if !cx.has_global::<ExceptionClasses>() {
+        let saved = db::kvp::KeyValueStore::global(cx)
+            .read_kvp(EXCEPTION_CLASSES_KEY)
+            .log_err()
+            .flatten()
+            .and_then(|json| serde_json::from_str(&json).log_err())
+            .unwrap_or_default();
+        cx.set_global(ExceptionClasses(saved));
+    }
+    cx.global::<ExceptionClasses>()
+        .0
+        .get(adapter)
+        .cloned()
+        .unwrap_or_default()
+}
+
+/// Changes an adapter's exception breakpoints of a class, kept in the database.
+fn edit_exception_breakpoints(
+    adapter: &SharedString,
+    change: impl FnOnce(&mut ExceptionBreakpoints),
+    cx: &mut App,
+) {
+    let mut breakpoints = exception_breakpoints(adapter, cx);
+    change(&mut breakpoints);
+    let mut all = cx.global::<ExceptionClasses>().0.clone();
+    all.insert(adapter.clone(), breakpoints);
+    let json = serde_json::to_string(&all);
+    cx.set_global(ExceptionClasses(all));
+    let store = db::kvp::KeyValueStore::global(cx);
+    cx.background_spawn(async move { store.write_kvp(EXCEPTION_CLASSES_KEY.into(), json?).await })
+        .detach_and_log_err(cx);
+}
+
+/// Changes the exception breakpoint of `class`.
+fn edit_exception_class(
+    adapter: &SharedString,
+    class: &str,
+    change: impl FnOnce(&mut ExceptionClassBreakpoint),
+    cx: &mut App,
+) {
+    edit_exception_breakpoints(
+        adapter,
+        |breakpoints| {
+            if let Some(breakpoint) = breakpoints.classes.iter_mut().find(|b| b.class == class) {
+                change(breakpoint)
+            }
+        },
+        cx,
+    );
+}
+
 /// Turns an adapter's filters on or off, each that isn't already.
 fn set_exception_filters(
     project: &Entity<Project>,
@@ -1116,6 +1295,8 @@ struct BreakpointsDialog {
     condition: Entity<InputState>,
     log: Entity<InputState>,
     pass_count: Entity<InputState>,
+    /// The selected exception breakpoint's class filters.
+    class_filters: Entity<InputState>,
     focus: FocusHandle,
     _subscriptions: Vec<Subscription>,
 }
@@ -1126,12 +1307,14 @@ enum Text {
     Condition,
     Log,
     PassCount,
+    ClassFilters,
 }
 
 impl BreakpointsDialog {
     fn new(project: Entity<Project>, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let mut field = |cx: &mut Context<Self>| cx.new(|cx| InputState::new(window, cx));
-        let (condition, log, pass_count) = (field(cx), field(cx), field(cx));
+        let (condition, log, pass_count, class_filters) =
+            (field(cx), field(cx), field(cx), field(cx));
         let store = project.read(cx).breakpoint_store();
         let dap_store = project.read(cx).dap_store();
         let mut subscriptions = vec![
@@ -1143,6 +1326,7 @@ impl BreakpointsDialog {
             (&condition, Text::Condition),
             (&log, Text::Log),
             (&pass_count, Text::PassCount),
+            (&class_filters, Text::ClassFilters),
         ] {
             subscriptions.push(
                 cx.subscribe_in(input, window, move |this, _, event, _, cx| {
@@ -1162,6 +1346,7 @@ impl BreakpointsDialog {
             condition,
             log,
             pass_count,
+            class_filters,
             focus,
             _subscriptions: subscriptions,
         }
@@ -1238,13 +1423,17 @@ impl BreakpointsDialog {
 
     /// A text box changed: the selected breakpoint takes its text.
     fn apply(&mut self, text: Text, cx: &mut Context<Self>) {
+        if let Text::ClassFilters = text {
+            self.apply_class_filters(None, cx);
+            return;
+        }
         let Some((path, row)) = self.selected.clone() else {
             return;
         };
         let value = match text {
             Text::Condition => &self.condition,
             Text::Log => &self.log,
-            Text::PassCount => &self.pass_count,
+            Text::PassCount | Text::ClassFilters => &self.pass_count,
         }
         .read(cx)
         .value()
@@ -1266,6 +1455,78 @@ impl BreakpointsDialog {
             }
             _ => {}
         });
+    }
+
+    /// Selects an exception breakpoint: an adapter's filter, its "Any exception" or the breakpoint
+    /// of a class, its class filters in the field.
+    fn select_exception(
+        &mut self,
+        adapter: SharedString,
+        id: String,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let breakpoints = exception_breakpoints(&adapter, cx);
+        let filters = match id.strip_prefix(CLASS_EXCEPTION) {
+            Some(class) => breakpoints
+                .classes
+                .iter()
+                .find(|breakpoint| breakpoint.class == class)
+                .and_then(|breakpoint| breakpoint.filters.clone()),
+            None => breakpoints.any_filters,
+        };
+        self.selected = None;
+        self.selected_exception = None;
+        self.class_filters.update(cx, |field, cx| {
+            field.set_value(filters.unwrap_or_default(), window, cx)
+        });
+        self.selected_exception = Some((adapter, id));
+        cx.notify();
+    }
+
+    /// The class filters of the selected exception breakpoint: the field's text while "Class
+    /// filters" is checked; `check` turns it on or off.
+    fn apply_class_filters(&mut self, check: Option<bool>, cx: &mut Context<Self>) {
+        let Some((adapter, id)) = self.selected_exception.clone() else {
+            return;
+        };
+        let typed = self.class_filters.read(cx).value().trim().to_owned();
+        let set = move |filters: &mut Option<String>| match check {
+            Some(true) => *filters = Some(typed),
+            Some(false) => *filters = None,
+            None if filters.is_some() => *filters = Some(typed),
+            None => {}
+        };
+        match id.strip_prefix(CLASS_EXCEPTION) {
+            Some(class) => edit_exception_class(
+                &adapter,
+                class,
+                |breakpoint| set(&mut breakpoint.filters),
+                cx,
+            ),
+            None => edit_exception_breakpoints(
+                &adapter,
+                |breakpoints| set(&mut breakpoints.any_filters),
+                cx,
+            ),
+        }
+        cx.notify();
+    }
+
+    /// "Class filters:" with its field, for the selected exception breakpoint.
+    fn class_filters_field(&self, filters: Option<&String>, cx: &mut Context<Self>) -> AnyElement {
+        let on = filters.is_some();
+        v_flex()
+            .gap(px(6.))
+            .child(
+                labeled_check("details-class-filters", "Class filters:", on, cx).on_click(
+                    cx.listener(move |this, _, _, cx| this.apply_class_filters(Some(!on), cx)),
+                ),
+            )
+            .child(div().pl(px(20.)).child(
+                spork_workbench::TextField::new(&self.class_filters).aria_label("Class filters"),
+            ))
+            .into_any_element()
     }
 
     /// "Breakpoint hit" message and "Evaluate and log": each adds its part to the log message or
@@ -1314,6 +1575,7 @@ impl BreakpointsDialog {
             }
             // a breakpoint that doesn't suspend says it was hit, as IntelliJ's
             Text::Log => breakpoint.message = on.then(|| log_message(&path, row, true, None)),
+            Text::ClassFilters => {}
         });
         cx.notify();
     }
@@ -1461,9 +1723,21 @@ impl BreakpointsDialog {
             let any = cx
                 .try_global::<AnyException>()
                 .and_then(|any| any.0.get(adapter).cloned());
-            let all_on = match filters.iter().filter(|(_, on)| *on).count() {
+            let classes = match any {
+                Some(_) => exception_breakpoints(adapter, cx).classes,
+                None => Vec::new(),
+            };
+            let any_on = filters.iter().any(|(_, on)| *on);
+            // "Any exception" is one breakpoint, on while one of its notifications is
+            let states: Vec<bool> = match any {
+                Some(_) => std::iter::once(any_on)
+                    .chain(classes.iter().map(|class| class.enabled))
+                    .collect(),
+                None => filters.iter().map(|(_, on)| *on).collect(),
+            };
+            let all_on = match states.iter().filter(|on| **on).count() {
                 0 => Some(false),
-                n if n == filters.len() => Some(true),
+                n if n == states.len() => Some(true),
                 _ => None,
             };
             let (project, group_adapter) = (self.project.clone(), adapter.clone());
@@ -1503,6 +1777,15 @@ impl BreakpointsDialog {
                                     on,
                                     cx,
                                 );
+                                edit_exception_breakpoints(
+                                    &group_adapter,
+                                    |breakpoints| {
+                                        for class in &mut breakpoints.classes {
+                                            class.enabled = on;
+                                        }
+                                    },
+                                    cx,
+                                );
                             }),
                     )
                     .child(spork_workbench::image("breakpoints/breakpoint", cx).size(px(16.)))
@@ -1512,7 +1795,7 @@ impl BreakpointsDialog {
             // IntelliJ's "Any exception" (`breakpoint.any.exception.display.name`): on while one
             // of its notifications is
             if any.is_some() {
-                let on = all_on != Some(false);
+                let on = any_on;
                 let id = (adapter.clone(), ANY_EXCEPTION.to_owned());
                 let selected = self.selected_exception.as_ref() == Some(&id);
                 let (project, check_adapter) = (self.project.clone(), adapter.clone());
@@ -1563,13 +1846,19 @@ impl BreakpointsDialog {
                             .size(px(14.)),
                         )
                         .child("Any exception")
-                        .on_click(cx.listener(move |this, _, _, cx| {
-                            this.selected = None;
-                            this.selected_exception = Some(id.clone());
-                            cx.notify();
+                        .on_click(cx.listener(move |this, _, window, cx| {
+                            this.select_exception(id.0.clone(), id.1.clone(), window, cx)
                         }))
                         .into_any_element(),
                 );
+                for (class_ix, class) in classes.into_iter().enumerate() {
+                    exception_groups.push(self.exception_class_row(
+                        adapter,
+                        group_ix * 1000 + class_ix,
+                        class,
+                        cx,
+                    ));
+                }
                 continue;
             }
             for (filter, on) in filters {
@@ -1652,6 +1941,145 @@ impl BreakpointsDialog {
             .into_any_element()
     }
 
+    /// An exception breakpoint of a class under its adapter's group: its check, its icon and its
+    /// class (`JavaExceptionBreakpointType`'s display text).
+    fn exception_class_row(
+        &self,
+        adapter: &SharedString,
+        ix: usize,
+        class: ExceptionClassBreakpoint,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
+        let tokens = Tokens::get(cx);
+        let id = (adapter.clone(), format!("{CLASS_EXCEPTION}{}", class.class));
+        let selected = self.selected_exception.as_ref() == Some(&id);
+        let label = SharedString::from(class.class.clone());
+        let (check_adapter, check_class) = (adapter.clone(), class.class.clone());
+        h_flex()
+            .id(("exception-class", ix))
+            .role(Role::TreeItem)
+            .aria_label(label.clone())
+            .aria_selected(selected)
+            .h(px(24.))
+            .mx(px(6.))
+            .pl(px(26.))
+            .pr(px(6.))
+            .gap(px(4.))
+            .rounded(px(4.))
+            .cursor_pointer()
+            .when(selected, |row| row.bg(tokens.selection))
+            .when(!selected, |row| {
+                row.hover(move |row| row.bg(tokens.selection_hover))
+            })
+            .child(
+                check_box(("exception-class-check", ix), Some(class.enabled), cx)
+                    .role(Role::CheckBox)
+                    .aria_label(label.clone())
+                    .aria_toggled(class.enabled.into())
+                    .on_click(move |_, _, cx| {
+                        cx.stop_propagation();
+                        edit_exception_class(
+                            &check_adapter,
+                            &check_class,
+                            |b| b.enabled = !b.enabled,
+                            cx,
+                        )
+                    }),
+            )
+            .child(
+                spork_workbench::image(
+                    match class.enabled {
+                        true => "breakpoints/breakpointException",
+                        false => "breakpoints/breakpointExceptionDisabled",
+                    },
+                    cx,
+                )
+                .size(px(14.)),
+            )
+            .child(label)
+            .on_click(cx.listener(move |this, _, window, cx| {
+                this.select_exception(id.0.clone(), id.1.clone(), window, cx)
+            }))
+            .into_any_element()
+    }
+
+    /// An exception breakpoint of a class's properties (`ExceptionBreakpointPropertiesPanel`):
+    /// "Exception breakpoint for …", Enabled, Class filters, then its Notifications, Caught exception
+    /// and Uncaught exception, one of which stays checked as IntelliJ's does.
+    fn class_exception_details(
+        &self,
+        adapter: SharedString,
+        class: &str,
+        cx: &mut Context<Self>,
+    ) -> Option<AnyElement> {
+        let breakpoint = exception_breakpoints(&adapter, cx)
+            .classes
+            .into_iter()
+            .find(|breakpoint| breakpoint.class == class)?;
+        let title = format!("Exception breakpoint for {}", breakpoint.class);
+        let edit_with = |change: fn(&mut ExceptionClassBreakpoint)| {
+            let (adapter, class) = (adapter.clone(), breakpoint.class.clone());
+            move |_: &gpui::ClickEvent, _: &mut Window, cx: &mut App| {
+                edit_exception_class(&adapter, &class, change, cx)
+            }
+        };
+        let filters = self.class_filters_field(breakpoint.filters.as_ref(), cx);
+        Some(
+            v_flex()
+                .id("breakpoint-details")
+                .role(Role::Group)
+                .aria_label("Properties")
+                .flex_1()
+                .min_w_0()
+                .p(px(16.))
+                .gap(px(10.))
+                .child(
+                    div()
+                        .id("breakpoint-title")
+                        .role(Role::Heading)
+                        .aria_label(SharedString::from(title.clone()))
+                        .font_weight(gpui::FontWeight::BOLD)
+                        .child(title),
+                )
+                .child(
+                    labeled_check("details-enabled", "Enabled", breakpoint.enabled, cx)
+                        .on_click(edit_with(|b| b.enabled = !b.enabled)),
+                )
+                .child(filters)
+                .child(div().pt(px(6.)).child("Notifications"))
+                .child(
+                    v_flex()
+                        .pl(px(20.))
+                        .gap(px(6.))
+                        .child(
+                            labeled_check(
+                                "details-caught",
+                                "Caught exception",
+                                breakpoint.caught,
+                                cx,
+                            )
+                            .on_click(edit_with(|b| {
+                                b.caught = !b.caught;
+                                b.uncaught |= !b.caught;
+                            })),
+                        )
+                        .child(
+                            labeled_check(
+                                "details-uncaught",
+                                "Uncaught exception",
+                                breakpoint.uncaught,
+                                cx,
+                            )
+                            .on_click(edit_with(|b| {
+                                b.uncaught = !b.uncaught;
+                                b.caught |= !b.uncaught;
+                            })),
+                        ),
+                )
+                .into_any_element(),
+        )
+    }
+
     /// "Any exception"'s properties (IntelliJ's exception breakpoint panel): Enabled and its
     /// Notifications, Caught exception and Uncaught exception, each one of the adapter's filters.
     /// A breakpoint that is off shows both notifications, as IntelliJ's new one has them.
@@ -1690,6 +2118,11 @@ impl BreakpointsDialog {
                 set_exception_filters(&project, &adapter, &filters, !enabled, cx)
             }
         };
+        // where the adapter takes them (its exceptions can be of a class)
+        let class_filters = has_exception_classes(&adapter, cx).then(|| {
+            let any_filters = exception_breakpoints(&adapter, cx).any_filters;
+            self.class_filters_field(any_filters.as_ref(), cx)
+        });
         Some(
             v_flex()
                 .id("breakpoint-details")
@@ -1700,17 +2133,19 @@ impl BreakpointsDialog {
                 .p(px(16.))
                 .gap(px(10.))
                 .child(
+                    // `exception.breakpoint.description.any`
                     div()
                         .id("breakpoint-title")
                         .role(Role::Heading)
-                        .aria_label("Any exception")
+                        .aria_label("Any exception breakpoint")
                         .font_weight(gpui::FontWeight::BOLD)
-                        .child("Any exception"),
+                        .child("Any exception breakpoint"),
                 )
                 .child(
                     labeled_check("details-enabled", "Enabled", enabled, cx)
                         .on_click(toggle_enabled),
                 )
+                .children(class_filters)
                 .child(div().pt(px(6.)).child("Notifications"))
                 .child(
                     v_flex()
@@ -1732,6 +2167,9 @@ impl BreakpointsDialog {
         let (adapter, id) = self.selected_exception.clone()?;
         if id == ANY_EXCEPTION {
             return self.any_exception_details(exceptions, adapter, cx);
+        }
+        if let Some(class) = id.strip_prefix(CLASS_EXCEPTION) {
+            return self.class_exception_details(adapter, class, cx);
         }
         let (filter, on) = exceptions
             .iter()
@@ -1882,6 +2320,99 @@ impl BreakpointsDialog {
     }
 }
 
+impl BreakpointsDialog {
+    /// The toolbar's + (`XBreakpointsDialog`'s add action): the breakpoint types added here, an
+    /// exception breakpoint of a class through IntelliJ's class chooser; line breakpoints are set
+    /// in the gutter, method breakpoints and field watchpoints in the editor (their Add dialogs
+    /// aren't built: greyed).
+    fn add_button(&self, cx: &mut Context<Self>) -> impl IntoElement {
+        let adapters: Vec<SharedString> = cx
+            .try_global::<ClassSearches>()
+            .map(|searches| searches.0.keys().cloned().collect())
+            .unwrap_or_default();
+        let java = adapters.iter().any(|adapter| adapter == "Java");
+        let (project, this) = (self.project.clone(), cx.entity().downgrade());
+        ActionButton::new("breakpoints-add", "general/add")
+            .tooltip("Add")
+            .disabled(adapters.is_empty())
+            .dropdown_menu(move |menu, _, _| {
+                let greyed = |label: &'static str| PopupMenuItem::new(label).disabled(true);
+                let menu = match java {
+                    true => menu
+                        .item(greyed("Java Method Breakpoints"))
+                        .item(greyed("Java Field Watchpoints")),
+                    false => menu,
+                };
+                adapters.iter().fold(menu, |menu, adapter| {
+                    let (adapter, project, this) = (adapter.clone(), project.clone(), this.clone());
+                    menu.item(
+                        PopupMenuItem::new(format!("{adapter} Exception Breakpoints")).on_click(
+                            move |_, _, cx| {
+                                add_exception_class(&adapter, &project, this.clone(), cx)
+                            },
+                        ),
+                    )
+                })
+            })
+    }
+}
+
+/// + ▸ Java Exception Breakpoints: IntelliJ's "Enter Exception Class" chooser, then the class's
+/// breakpoint (both notifications on, as IntelliJ makes it) selected in the dialog.
+fn add_exception_class(
+    adapter: &SharedString,
+    project: &Entity<Project>,
+    dialog: gpui::WeakEntity<BreakpointsDialog>,
+    cx: &mut App,
+) {
+    let Some(search) = cx
+        .try_global::<ClassSearches>()
+        .and_then(|searches| searches.0.get(adapter).cloned())
+    else {
+        return;
+    };
+    let adapter = adapter.clone();
+    let chosen = move |class: String, cx: &mut App| {
+        edit_exception_breakpoints(
+            &adapter,
+            |breakpoints| {
+                if !breakpoints.classes.iter().any(|b| b.class == class) {
+                    breakpoints.classes.push(ExceptionClassBreakpoint {
+                        class: class.clone(),
+                        enabled: true,
+                        caught: true,
+                        uncaught: true,
+                        filters: None,
+                    });
+                }
+            },
+            cx,
+        );
+        let Some(dialog) = dialog.upgrade() else {
+            return;
+        };
+        let id = format!("{CLASS_EXCEPTION}{class}");
+        let adapter = adapter.clone();
+        if let Some(OpenDialog(handle)) = cx.try_global::<OpenDialog>().map(|d| OpenDialog(d.0)) {
+            handle
+                .update(cx, |_, window, cx| {
+                    window.activate_window();
+                    dialog.update(cx, |dialog, cx| {
+                        dialog.select_exception(adapter, id, window, cx)
+                    })
+                })
+                .log_err();
+        }
+    };
+    crate::class_chooser::open(
+        "Enter Exception Class",
+        project.clone(),
+        search,
+        Rc::new(chosen),
+        cx,
+    );
+}
+
 impl Focusable for BreakpointsDialog {
     fn focus_handle(&self, _: &App) -> FocusHandle {
         self.focus.clone()
@@ -1902,6 +2433,11 @@ impl Render for BreakpointsDialog {
             self.selected = rows.first().map(|(path, row, _)| (path.clone(), *row));
         }
         let selected = self.selected.clone();
+        // a breakpoint of a class goes; "Any exception" and an adapter's filters stay
+        let class = self.selected_exception.as_ref().and_then(|(adapter, id)| {
+            let class = id.strip_prefix(CLASS_EXCEPTION)?;
+            Some((adapter.clone(), class.to_owned()))
+        });
         let store = self.store(cx);
         let exceptions = exception_filters(&self.project, cx);
         let tree = self.tree(&rows, &exceptions, cx);
@@ -1944,20 +2480,25 @@ impl Render for BreakpointsDialog {
                                     .h(px(32.))
                                     .px(px(6.))
                                     .gap(px(4.))
-                                    // greyed: line breakpoints are set in the gutter, and an
-                                    // adapter's exception filters are its own, listed below
-                                    .child(
-                                        ActionButton::new("breakpoints-add", "general/add")
-                                            .tooltip("Add")
-                                            .disabled(true),
-                                    )
+                                    .child(self.add_button(cx))
                                     .child(
                                         ActionButton::new("breakpoints-remove", "general/remove")
                                             .tooltip("Remove")
-                                            .disabled(selected.is_none())
+                                            .disabled(selected.is_none() && class.is_none())
                                             .on_click(move |_, _, cx| {
                                                 if let Some((path, row)) = &selected {
                                                     remove(&store, path, *row, cx);
+                                                }
+                                                if let Some((adapter, class)) = &class {
+                                                    edit_exception_breakpoints(
+                                                        adapter,
+                                                        |breakpoints| {
+                                                            breakpoints
+                                                                .classes
+                                                                .retain(|b| &b.class != class)
+                                                        },
+                                                        cx,
+                                                    );
                                                 }
                                             }),
                                     ),

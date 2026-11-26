@@ -57,7 +57,8 @@ debugger's scenarios run dap_fixture.py, a debug adapter playing the fixture's p
   {"git": [args]}        the same for git
   {"file": path, "text": ...}  writes a file of the fixture project
 Steps that look at the screen wait up to "within" ms for it to hold. "$FIXTURE" in a step is the
-fixture project's path, "$E2E" this folder's (git_http.py, a local git server asking a password).
+fixture project's path, "$E2E" this folder's (git_http.py, a local git server asking a password),
+"$SPORK_E2E_…" the harness's variable (the recorded servers' URLs).
 
 The submenu mark " ▸" is left out of every comparison: macOS's accessibility doesn't tell a
 submenu from an item.
@@ -73,6 +74,7 @@ import http.server
 import json
 import os
 import pathlib
+import re
 import shutil
 import socket
 import subprocess
@@ -91,13 +93,14 @@ BIN = HERE / ".bin"
 # a share of pixels a screenshot may differ by before it fails: font hinting and the caret
 TOLERANCE = 0.002
 # the Java fixtures' downloads, kept across runs: the data folder's JDT LS, Kotlin and Spring Boot
-# language servers, HOME's Maven repository and wrapper (.m2), Gradle's caches (.gradle) and the
-# downloaded JDKs' archives
+# language servers and coverage agent, HOME's Maven repository and wrapper (.m2), Gradle's caches
+# (.gradle) and the downloaded JDKs' archives
 CACHE = HERE / "cache"
 CACHED = {"Library/Application Support/Spork IDE/languages/jdtls": "jdtls", ".m2": "m2",
           ".gradle": "gradle", "Library/Caches/Spork IDE/jdks": "jdk-archives",
           "Library/Application Support/Spork IDE/languages/Kotlin language server": "kotlin-lsp",
-          "Library/Application Support/Spork IDE/languages/spring-boot": "spring-boot"}
+          "Library/Application Support/Spork IDE/languages/spring-boot": "spring-boot",
+          "Library/Application Support/Spork IDE/java/coverage-agent": "coverage-agent"}
 # the test HOME's settings: the project trusted without asking, nothing sent home or downloaded
 # shortcut: language servers off so a run downloads none, turn them on per scenario once code
 # intelligence gets its scenarios (phase 7)
@@ -140,16 +143,17 @@ def serve_disco() -> None:
 
 class Initializr(http.server.BaseHTTPRequestHandler):
     """Spring Initializr's answers recorded in fixtures/initializr for New Project ▸ Spring Boot: its
-    metadata (`/`), and `starter.zip` for the one query recorded with it (`starter.query`); another
-    query is refused, so a scenario checks what the wizard asked for."""
+    metadata (`/`), and for `starter.zip` each `<name>.zip` for the query recorded with it
+    (`<name>.query`); another query is refused, so a scenario checks what the wizard asked for."""
 
     def do_GET(self) -> None:
         url = urllib.parse.urlparse(self.path)
         folder = HERE / "fixtures" / "initializr"
+        recorded = {query.read_text().strip(): query.with_suffix(".zip") for query in folder.glob("*.query")}
         if url.path in ("", "/"):
             body, kind = (folder / "metadata.json").read_bytes(), "application/vnd.initializr.v2.3+json"
-        elif url.path == "/starter.zip" and url.query == (folder / "starter.query").read_text().strip():
-            body, kind = (folder / "starter.zip").read_bytes(), "application/zip"
+        elif url.path == "/starter.zip" and url.query in recorded:
+            body, kind = recorded[url.query].read_bytes(), "application/zip"
         else:
             self.send_error(400, f"not recorded: {self.path}")
             return
@@ -500,6 +504,7 @@ def play(scenario: dict, record: bool, strict: bool, catalog: dict) -> dict:
                   scenario.get("prepare"))
         try:
             steps = json.dumps(scenario["steps"]).replace("$FIXTURE", str(ide.project))
+            steps = re.sub(r"\$(SPORK_E2E_[A-Z_]+)", lambda name: os.environ.get(name[1], name[0]), steps)
             for step in json.loads(steps.replace("$E2E", str(HERE))):
                 entry = {"step": step}
                 if "do" in step:

@@ -44,17 +44,25 @@ pub fn is_test(adapter: Option<&str>) -> bool {
 /// and its text in the form; the kinds of `adapter`'s form.
 pub fn test_kinds(adapter: Option<&str>) -> &'static [(&'static str, &'static str)] {
     match adapter {
+        // TestNG's `TestType`
         Some(TESTNG) => &[
             ("package", "All in package"),
             ("class", "Class"),
             ("method", "Method"),
+            ("group", "Group"),
+            ("suite", "Suite"),
             ("pattern", "Pattern"),
         ],
+        // `JUnitConfigurationModel.reloadTestKindModel`'s order
         _ => &[
             ("package", "All in package"),
+            ("directory", "All in directory"),
             ("pattern", "Pattern"),
             ("class", "Class"),
             ("method", "Method"),
+            ("category", "Category"),
+            ("uniqueId", "UniqueId"),
+            ("tags", "Tags"),
         ],
     }
 }
@@ -62,11 +70,36 @@ pub fn test_kinds(adapter: Option<&str>) -> &'static [(&'static str, &'static st
 /// The key of a test configuration's kind (`class` by default).
 pub const TEST_KIND: &str = "testKind";
 
+/// A JUnit configuration's fork mode (IntelliJ's Modify options ▸ Tests ▸ Fork mode): `none`,
+/// `method` or `class`, each test method or class in a JVM of its own.
+pub const FORK_MODE: &str = "forkMode";
+
+/// The fork modes, by the key the entry keeps them under, and their texts.
+pub const FORK_MODES: [(&str, &str); 3] =
+    [("none", "None"), ("method", "Method"), ("class", "Class")];
+
 /// The tests Rerun Failed Tests runs again, each `com.example.GreetingTest#greets`, over the
 /// configuration's kind.
 pub const RERUN_TESTS: &str = "rerunTests";
 
-/// A test configuration's kind: `class`, `method`, `package` or `pattern`.
+/// The fields a test configuration's kind takes, as its form shows them.
+pub fn test_kind_fields(kind: &str) -> &'static [Field] {
+    match kind {
+        "method" => &[Field::Command, Field::TestMethod],
+        "package" => &[Field::TestPackage],
+        "pattern" => &[Field::TestPattern],
+        "directory" => &[Field::TestDirectory],
+        "category" => &[Field::TestCategory],
+        "uniqueId" => &[Field::TestUniqueId],
+        "tags" => &[Field::TestTags],
+        "group" => &[Field::TestGroup],
+        "suite" => &[Field::TestSuite],
+        _ => &[Field::Command],
+    }
+}
+
+/// A test configuration's kind: `class`, `method`, `package`, `pattern`, `directory`, `category`,
+/// `uniqueId`, `tags`, or TestNG's `group` and `suite`.
 pub fn test_kind(configuration: &Configuration) -> &str {
     configuration
         .entry
@@ -76,8 +109,24 @@ pub fn test_kind(configuration: &Configuration) -> &str {
 }
 
 /// The tests a test configuration runs, as the test runner takes them: `class:<class>`,
-/// `method:<class>#<method>`, `package:<package>`, `pattern:<regex>`.
+/// `method:<class>#<method>`, `package:<package>`, `pattern:<regex>`, `category:<class>`,
+/// `uniqueId:<id>`, `tags:<expression>`, `group:<group>`, `suite:<file>`; a directory's are its
+/// package's (with the packages in it), every package's above the source roots.
 pub fn test_selectors(configuration: &Configuration) -> Vec<String> {
+    let mut selectors = kind_selectors(configuration);
+    if let Some(mode) = configuration
+        .entry
+        .get(FORK_MODE)
+        .and_then(Value::as_str)
+        .filter(|mode| *mode != "none")
+    {
+        selectors.push(format!("fork:{mode}"));
+    }
+    selectors
+}
+
+/// The selectors of the configuration's kind, or of the tests Rerun Failed Tests runs.
+fn kind_selectors(configuration: &Configuration) -> Vec<String> {
     if let Some(Value::Array(tests)) = configuration.entry.get(RERUN_TESTS) {
         return tests
             .iter()
@@ -96,17 +145,136 @@ pub fn test_selectors(configuration: &Configuration) -> Vec<String> {
             text(Field::TestMethod)
         )],
         "package" => vec![format!("package:{}", text(Field::TestPackage))],
-        "pattern" => vec![format!("pattern:{}", text(Field::TestPattern))],
+        // IntelliJ's Pattern kind keeps a set of patterns, written `A||B`
+        "pattern" => test_patterns(configuration)
+            .into_iter()
+            .map(|pattern| format!("pattern:{pattern}"))
+            .collect(),
+        "directory" => vec![format!(
+            "package:{}",
+            directory_package(Path::new(&text(Field::TestDirectory)))
+        )],
+        "category" => vec![format!("category:{}", text(Field::TestCategory))],
+        // IntelliJ separates the ids with ESC
+        "uniqueId" => text(Field::TestUniqueId)
+            .split('\u{1b}')
+            .filter(|id| !id.trim().is_empty())
+            .map(|id| format!("uniqueId:{}", id.trim()))
+            .collect(),
+        "tags" => vec![format!("tags:{}", text(Field::TestTags))],
+        "group" => vec![format!("group:{}", text(Field::TestGroup))],
+        "suite" => vec![format!("suite:{}", text(Field::TestSuite))],
         _ => vec![format!("class:{}", text(Field::Command))],
     }
 }
 
-/// A test run whose JVM waits for a debugger on port 5005 (Gradle's `--debug-jvm`), for a debug
-/// adapter that attaches: set on the run, never kept in a configuration.
+/// A Pattern configuration's patterns (IntelliJ's `||`-separated set).
+pub fn test_patterns(configuration: &Configuration) -> Vec<String> {
+    configuration
+        .text(Field::TestPattern)
+        .split("||")
+        .map(str::trim)
+        .filter(|pattern| !pattern.is_empty())
+        .map(str::to_owned)
+        .collect()
+}
+
+/// The package of a directory's classes: its path under a source root (`src/test/java`), the empty
+/// package (every one) above them.
+fn directory_package(directory: &Path) -> String {
+    let parts: Vec<String> = directory
+        .components()
+        .map(|part| part.as_os_str().to_string_lossy().into_owned())
+        .collect();
+    let root = parts
+        .windows(3)
+        .position(|window| window[0] == "src" && (window[2] == "java" || window[2] == "kotlin"));
+    match root {
+        Some(at) => parts[at + 3..].join("."),
+        None => String::new(),
+    }
+}
+
+/// A test run whose JVM waits for a debugger on this port of the loopback interface, for the
+/// debug adapter to attach to it, as IntelliJ debugs tests: set on the run, never kept in a
+/// configuration.
 pub const DEBUG_JVM: &str = "debugJvm";
 
-/// The line a JVM waiting for a debugger writes (the JDWP agent's).
-pub const DEBUG_JVM_LISTENING: &str = "Listening for transport dt_socket at address: 5005";
+/// The debug adapter that attaches to a test run's JVM ([`DEBUG_JVM`]): its tests show in that
+/// adapter's session in the Debug tool window.
+pub const DEBUG_ADAPTER: &str = "debugAdapter";
+
+/// The port a test run's JVM waits for a debugger on ([`DEBUG_JVM`]).
+pub fn debug_jvm_port(configuration: &Configuration) -> Option<u16> {
+    configuration
+        .entry
+        .get(DEBUG_JVM)
+        .and_then(Value::as_u64)
+        .and_then(|port| u16::try_from(port).ok())
+}
+
+/// The line a JVM waiting for a debugger on `port` writes (the JDWP agent's).
+pub fn debug_jvm_listening(port: u16) -> String {
+    format!("Listening for transport dt_socket at address: {port}")
+}
+
+/// The key of a test's debug scenario holding its JUnit or TestNG configuration as JSON: its
+/// debug adapter runs the tests with their JVM waiting, then attaches to it.
+pub const TEST_CONFIGURATION: &str = "testConfiguration";
+
+/// A run with coverage (IntelliJ's Run 'X' with Coverage), for a runner that gathers it: set on
+/// the run, never kept in a configuration.
+pub const WITH_COVERAGE: &str = "withCoverage";
+
+/// Whether a configuration's run gathers coverage.
+pub fn with_coverage(configuration: &Configuration) -> bool {
+    configuration
+        .entry
+        .get(WITH_COVERAGE)
+        .and_then(Value::as_bool)
+        == Some(true)
+}
+
+/// The environment variables of a gutter task that runs a main class with its own command (Java's
+/// and Kotlin's `main`): the class, and the configuration type a run with coverage makes of it.
+pub const GUTTER_MAIN_ENV: &str = "SPORK_GUTTER_MAIN";
+pub const GUTTER_TYPE_ENV: &str = "SPORK_GUTTER_TYPE";
+
+/// The environment variable of a run with coverage: the suite it gathers, as JSON
+/// (`spork_coverage`'s `Suite`), which the run's end hands to the app.
+pub const COVERAGE_SUITE_ENV: &str = "SPORK_COVERAGE_SUITE";
+
+/// A configuration's classes and packages to include in coverage or exclude from it (IntelliJ's
+/// Modify options ▸ Code Coverage): `[{"pattern": "com.example.*", "include": true, "enabled":
+/// true}]`.
+pub const COVERAGE_PATTERNS: &str = "coveragePatterns";
+
+/// A class pattern of a configuration's coverage: `com.example.*` or `com.example.Calculator`.
+#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct CoveragePattern {
+    pub pattern: String,
+    pub include: bool,
+    pub enabled: bool,
+}
+
+/// A configuration's coverage patterns, includes and excludes alike.
+pub fn coverage_patterns(configuration: &Configuration) -> Vec<CoveragePattern> {
+    configuration
+        .entry
+        .get(COVERAGE_PATTERNS)
+        .and_then(|patterns| serde_json::from_value(patterns.clone()).ok())
+        .unwrap_or_default()
+}
+
+/// Sets a configuration's coverage patterns.
+pub fn set_coverage_patterns(configuration: &mut Configuration, patterns: &[CoveragePattern]) {
+    match serde_json::to_value(patterns) {
+        Ok(value) => {
+            configuration.entry.insert(COVERAGE_PATTERNS.into(), value);
+        }
+        Err(error) => log::error!("writing coverage patterns: {error}"),
+    }
+}
 
 /// The JUnit or TestNG configuration of a test class or method, named as IntelliJ names it
 /// (`GreetingTest`, `GreetingTest.greets`): the gutter's, the test tree's.
@@ -226,6 +394,11 @@ pub trait Runner {
 
     /// Whether its debugger can debug it now.
     fn can_debug(&self, cx: &gpui::App) -> bool;
+
+    /// Whether it runs with coverage (IntelliJ's coverage executor applies to it).
+    fn can_cover(&self) -> bool {
+        false
+    }
 
     /// The type's Modify options (IntelliJ's settings fragments), by group; none by default.
     fn modify_options(&self, _configuration: &Configuration) -> Vec<ModifyOption> {
@@ -371,10 +544,17 @@ pub enum Field {
     Port,
     /// A Spring Boot configuration's Active profiles.
     ActiveProfiles,
-    /// A test configuration's method, package and pattern (its class is `Command`).
+    /// A test configuration's method, package, pattern and the other kinds' fields (its class
+    /// is `Command`).
     TestMethod,
     TestPackage,
     TestPattern,
+    TestDirectory,
+    TestCategory,
+    TestUniqueId,
+    TestTags,
+    TestGroup,
+    TestSuite,
 }
 
 impl Configuration {
@@ -416,6 +596,18 @@ impl Configuration {
         configuration
     }
 
+    /// A configuration of the IDE's files from its entry (one a run carries, the gutter's).
+    pub fn from_entry(entry: Map<String, Value>) -> Self {
+        Self {
+            adapter: entry
+                .get("adapter")
+                .and_then(Value::as_str)
+                .map(|adapter| adapter.to_owned().into()),
+            shared: false,
+            entry,
+        }
+    }
+
     pub fn name(&self) -> SharedString {
         self.text(Field::Name).into()
     }
@@ -451,6 +643,12 @@ impl Configuration {
             (Field::TestMethod, _) => "testMethod",
             (Field::TestPackage, _) => "testPackage",
             (Field::TestPattern, _) => "testPattern",
+            (Field::TestDirectory, _) => "testDirectory",
+            (Field::TestCategory, _) => "testCategory",
+            (Field::TestUniqueId, _) => "testUniqueId",
+            (Field::TestTags, _) => "testTags",
+            (Field::TestGroup, _) => "testGroup",
+            (Field::TestSuite, _) => "testSuite",
             (Field::VmOptions, _) => "vmArgs",
             (Field::ActiveProfiles, _) => "activeProfiles",
             (Field::Command, false) => "program",
@@ -527,7 +725,13 @@ impl Configuration {
             | Field::ActiveProfiles
             | Field::TestMethod
             | Field::TestPackage
-            | Field::TestPattern => (!text.trim().is_empty()).then(|| Value::from(text)),
+            | Field::TestPattern
+            | Field::TestDirectory
+            | Field::TestCategory
+            | Field::TestUniqueId
+            | Field::TestTags
+            | Field::TestGroup
+            | Field::TestSuite => (!text.trim().is_empty()).then(|| Value::from(text)),
         };
         match value {
             Some(value) => {
@@ -558,24 +762,19 @@ impl Configuration {
             entry.insert("adapter".into(), JAVA.into());
             entry.insert("request".into(), "attach".into());
         }
-        // the test runner runs the tests on the test classpath
+        // the tests run as a run of the configuration does, Java's debugger attached to them
         if is_test(self.adapter.as_deref()) {
-            let selectors = test_selectors(self).into_iter().map(Value::from).collect();
-            for key in [
-                "testClass",
-                "testMethod",
-                "testPackage",
-                "testPattern",
-                TEST_KIND,
-                RERUN_TESTS,
-                TEMPORARY,
-            ] {
-                entry.remove(key);
-            }
-            entry.insert("adapter".into(), JAVA.into());
-            entry.insert("mainClass".into(), TEST_RUNNER.into());
-            entry.insert("args".into(), Value::Array(selectors));
-            entry.insert("classpathScope".into(), "test".into());
+            let mut test = self.entry.clone();
+            test.remove(TEMPORARY);
+            let mut scenario = Map::new();
+            scenario.insert("label".into(), self.name().to_string().into());
+            scenario.insert("adapter".into(), JAVA.into());
+            scenario.insert("request".into(), "attach".into());
+            scenario.insert(
+                TEST_CONFIGURATION.into(),
+                Value::Object(test).to_string().into(),
+            );
+            entry = scenario;
         }
         serde_json::from_value(Value::Object(entry)).ok()
     }
@@ -797,7 +996,48 @@ pub async fn save(
 
 #[cfg(test)]
 mod tests {
-    use super::{Configuration, Field, order_key, ordered, split_arguments};
+    use super::{
+        Configuration, FORK_MODE, Field, JUNIT, TEST_KIND, order_key, ordered, split_arguments,
+        test_selectors,
+    };
+
+    #[test]
+    fn selects_each_kinds_tests() {
+        let mut configuration = Configuration::new_debug(JUNIT, "Kinds");
+        configuration
+            .entry
+            .insert(TEST_KIND.into(), "directory".into());
+        configuration.set_text(Field::TestDirectory, "app/src/test/java/com/example/kinds");
+        assert_eq!(
+            test_selectors(&configuration),
+            ["package:com.example.kinds"]
+        );
+        configuration.set_text(Field::TestDirectory, "/p/app");
+        assert_eq!(test_selectors(&configuration), ["package:"]);
+        configuration
+            .entry
+            .insert(TEST_KIND.into(), "uniqueId".into());
+        configuration.set_text(Field::TestUniqueId, "[engine:a]\u{1b}[engine:b]");
+        assert_eq!(
+            test_selectors(&configuration),
+            ["uniqueId:[engine:a]", "uniqueId:[engine:b]"]
+        );
+        configuration
+            .entry
+            .insert(TEST_KIND.into(), "pattern".into());
+        configuration.set_text(Field::TestPattern, "com.a.ATest|| com.b.BTest");
+        assert_eq!(
+            test_selectors(&configuration),
+            ["pattern:com.a.ATest", "pattern:com.b.BTest"]
+        );
+        configuration.entry.insert(TEST_KIND.into(), "tags".into());
+        configuration.set_text(Field::TestTags, "fast & !slow");
+        configuration.entry.insert(FORK_MODE.into(), "class".into());
+        assert_eq!(
+            test_selectors(&configuration),
+            ["tags:fast & !slow", "fork:class"]
+        );
+    }
 
     #[test]
     fn the_saved_order_wins_over_where_configurations_are_stored() {

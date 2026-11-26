@@ -205,7 +205,7 @@
     {
      "label": "Add",
      "role": "AXButton",
-     "enabled": false
+     "enabled": true
     },
     {
      "label": "Remove",

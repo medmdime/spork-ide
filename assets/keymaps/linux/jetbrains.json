@@ -18,6 +18,7 @@
       "alt-shift-f9": "run::ChooseDebugConfiguration",
       "shift-f10": "run_widget::Run",
       "shift-f9": "run_widget::Debug",
+      "ctrl-shift-f10": "run::RunContextConfiguration",
       "alt-f8": "run::EvaluateExpression",
       "ctrl-alt-f8": "run::QuickEvaluateExpression",
       "alt-f10": "run::ShowExecutionPoint",
@@ -97,6 +98,7 @@
       "ctrl-alt-f8": "run::QuickEvaluateExpression",
       "shift-f10": "run_widget::Run",
       "shift-f9": "run_widget::Debug",
+      "ctrl-shift-f10": "run::RunContextConfiguration", // over the default's Go to Definition in a split
       "ctrl-shift-f8": "run::EditBreakpoint", // the Breakpoints dialog without a breakpoint on the line
       "ctrl-shift-u": "editor::ToggleCase",
     },
@@ -280,6 +282,7 @@
       "shift shift": "navigate::SearchEverywhere",
       "ctrl-alt-shift-e": "navigate::GoToText", // IntelliJ: Search Everywhere's Text tab
       "alt-shift-f10": "run::ChooseRunConfiguration",
+      "ctrl-alt-f6": "coverage::ManageCoverageReports",
       "ctrl ctrl": "task::Spawn", // IntelliJ: Run Anything
       "ctrl-f5": "task::Rerun",
       "ctrl-e": "navigate::RecentFiles",
@@ -289,6 +292,7 @@
       "ctrl-shift-n": "navigate::GoToFile",
       "ctrl-shift-a": "navigate::FindAction",
       "ctrl-alt-shift-n": "navigate::GoToSymbol",
+      "ctrl-shift-\\": "navigate::GoToEndpoint", // IntelliJ: Go to Endpoint…
       "ctrl-shift-backspace": "navigate::LastEditLocation",
       "ctrl-alt-left": "pane::GoBack",
       "ctrl-alt-right": "pane::GoForward",
@@ -559,6 +563,9 @@
       "f2": "variable_list::EditVariable",
       "ctrl-insert": "variable_list::CopyVariableValue",
       "ctrl-c": "variable_list::CopyVariableValue", // shown in menus over Ctrl+Insert
+      "f11": "run::MarkObject", // IntelliJ: Toggle Bookmark's key
+      "f4": "run::JumpToSource",
+      "shift-f4": "run::JumpToTypeSource",
     },
   },
   {

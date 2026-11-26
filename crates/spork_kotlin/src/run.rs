@@ -593,13 +593,22 @@ impl Runner for KotlinRunner {
         };
         let entry = configuration.entry.clone();
         let name = configuration.name().to_string();
+        let coverage = spork_java::coverage::prepare(configuration, &build.root, cx);
         cx.background_spawn(async move {
             let module = module_of(&build.root, build.tool, text(&entry, MODULE), &main);
+            let coverage = match coverage {
+                Some(coverage) => Some(coverage.await?),
+                None => None,
+            };
+            let mut vm_args = arguments(&entry, "vmArgs");
+            if let Some(coverage) = &coverage {
+                vm_args.splice(0..0, coverage.vm_options.iter().cloned());
+            }
             let launch = Launch {
                 name,
                 main,
                 args: arguments(&entry, "args"),
-                vm_args: arguments(&entry, "vmArgs"),
+                vm_args,
                 cwd: text(&entry, "cwd").map(str::to_owned),
                 env: environment(&entry),
                 gradle_project: module.gradle_project,
@@ -611,8 +620,16 @@ impl Runner for KotlinRunner {
                 .get("allow_concurrent_runs")
                 .and_then(Value::as_bool)
                 .unwrap_or(false);
-            build.task(launch, allow_concurrent_runs)
+            let mut template = build.task(launch, allow_concurrent_runs)?;
+            if let Some(coverage) = coverage {
+                template.env.extend([coverage.env()]);
+            }
+            Ok(template)
         })
+    }
+
+    fn can_cover(&self) -> bool {
+        true
     }
 
     /// Once the Kotlin language server, which debugs, is downloaded.
@@ -826,7 +843,7 @@ impl DebugAdapter for KotlinDebugAdapter {
         let mut configuration = definition.config.clone();
         // a test's Debug: the tests run with their JVM waiting, then the debugger attaches
         if let Some(entry) = configuration
-            .get(TEST_CONFIGURATION_KEY)
+            .get(configurations::TEST_CONFIGURATION)
             .and_then(Value::as_str)
             .map(str::to_owned)
         {
@@ -944,13 +961,9 @@ impl DebugAdapter for KotlinDebugAdapter {
     }
 }
 
-/// The debug configuration key of a test's Debug: the JUnit or TestNG configuration to run, as
-/// JSON.
-const TEST_CONFIGURATION_KEY: &str = "testConfiguration";
-
-/// A test's Debug (IntelliJ's for Gradle: the tests run by the project's tool, the debugger
-/// attached to the test JVM): the configuration run in the Run tool window with its JVM waiting
-/// on port 5005, then the server's debugger attached once it listens.
+/// A test's Debug (IntelliJ's: the tests run by the project's tool, the debugger attached to the
+/// test JVM): the configuration run with its JVM waiting, then the server's debugger attached
+/// once it listens.
 async fn attach_to_tests(
     server: &Arc<lsp::LanguageServer>,
     root: &Path,
@@ -960,15 +973,7 @@ async fn attach_to_tests(
 ) -> Result<DebugAdapterBinary> {
     let entry: serde_json::Map<String, Value> =
         serde_json::from_str(entry).context("the test configuration")?;
-    let test = Configuration {
-        adapter: entry
-            .get("adapter")
-            .and_then(Value::as_str)
-            .map(|adapter| adapter.to_owned().into()),
-        shared: false,
-        entry,
-    };
-    let name = test.name().to_string();
+    let test = Configuration::from_entry(entry);
     let workspace = cx.update(|cx| {
         let java = JavaProject::containing(root, cx).context("The project isn't a Java project")?;
         java.read(cx)
@@ -976,25 +981,8 @@ async fn attach_to_tests(
             .upgrade()
             .context("The project's window is closed")
     })?;
-    cx.update(|cx| spork_run::run_for_debugger(&workspace, test, cx));
-    // the build comes first, then the JVM says it listens
-    let mut waited = std::time::Duration::ZERO;
-    let step = std::time::Duration::from_millis(250);
-    while !cx.update(|cx| {
-        spork_run::run_console_shows(
-            workspace.read(cx),
-            &name,
-            configurations::DEBUG_JVM_LISTENING,
-            cx,
-        )
-    }) {
-        anyhow::ensure!(
-            waited < std::time::Duration::from_secs(600),
-            "The JVM of the tests isn't waiting for the debugger"
-        );
-        cx.background_executor().timer(step).await;
-        waited += step;
-    }
+    let jvm_port =
+        spork_run::run_for_debugger(&workspace, test, configurations::KOTLIN, cx).await?;
     let root_uri = lsp::Uri::from_file_path(root)
         .map_err(|()| anyhow::anyhow!("{root:?} isn't a file path"))?
         .to_string();
@@ -1007,10 +995,10 @@ async fn attach_to_tests(
     let object = configuration
         .as_object_mut()
         .context("a Kotlin debug configuration is a JSON object")?;
-    object.remove(TEST_CONFIGURATION_KEY);
+    object.remove(configurations::TEST_CONFIGURATION);
     object.insert("request".into(), "attach".into());
-    object.insert("hostName".into(), "localhost".into());
-    object.insert("port".into(), 5005.into());
+    object.insert("hostName".into(), "127.0.0.1".into());
+    object.insert("port".into(), jvm_port.into());
     Ok(DebugAdapterBinary {
         command: None,
         arguments: Vec::new(),
@@ -1199,11 +1187,22 @@ impl ContextProvider for KotlinContextProvider {
                 // IntelliJ names the configuration it makes after the class
                 label: format!("${{ZED_CUSTOM_{NAME}}}"),
                 command: format!("${{ZED_CUSTOM_{COMMAND}}}"),
+                // and the configuration Run 'MainKt' with Coverage makes (`spork_run`'s gutter)
                 env: ENV
                     .iter()
                     .map(|(name, variable)| {
                         (name.to_string(), format!("${{ZED_CUSTOM_{variable}}}"))
                     })
+                    .chain([
+                        (
+                            configurations::GUTTER_MAIN_ENV.to_owned(),
+                            format!("${{ZED_CUSTOM_{MAIN}}}"),
+                        ),
+                        (
+                            configurations::GUTTER_TYPE_ENV.to_owned(),
+                            configurations::KOTLIN.to_owned(),
+                        ),
+                    ])
                     .collect(),
                 cwd: Some("$ZED_WORKTREE_ROOT".into()),
                 tags: vec!["kotlin-main".into()],
@@ -1239,7 +1238,7 @@ impl dap::DapLocator for KotlinLocator {
                 build: None,
                 config: json!({
                     "request": "attach",
-                    TEST_CONFIGURATION_KEY: format!("${{ZED_CUSTOM_{}}}", spork_java::TEST_CONFIGURATION),
+                    configurations::TEST_CONFIGURATION: format!("${{ZED_CUSTOM_{}}}", spork_java::TEST_CONFIGURATION),
                 }),
                 tcp_connection: None,
             });

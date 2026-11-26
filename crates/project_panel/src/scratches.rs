@@ -27,7 +27,8 @@ fn root() -> &'static Path {
     paths::config_dir()
 }
 
-pub(crate) fn folder() -> PathBuf {
+/// The scratches folder (IntelliJ's `scratches`), in the IDE's config folder.
+pub fn folder() -> PathBuf {
     root().join(FOLDER)
 }
 

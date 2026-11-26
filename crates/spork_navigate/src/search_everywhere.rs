@@ -8,6 +8,7 @@
 //! Symbols all their workspace symbols, Actions the actions the focused element can run (the
 //! command palette's), each with its menu path, shortcut and, for a toggle, its state.
 
+use std::rc::Rc;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
@@ -54,16 +55,20 @@ pub(crate) enum Tab {
     Files,
     Symbols,
     Actions,
+    /// The project's HTTP endpoints (IntelliJ's `UrlSearchEverywhereContributor`), in projects
+    /// that have them.
+    Endpoints,
     Text,
 }
 
 impl Tab {
-    const ALL: [Tab; 6] = [
+    const ALL: [Tab; 7] = [
         Tab::All,
         Tab::Classes,
         Tab::Files,
         Tab::Symbols,
         Tab::Actions,
+        Tab::Endpoints,
         Tab::Text,
     ];
 
@@ -74,6 +79,7 @@ impl Tab {
             Tab::Files => "Files",
             Tab::Symbols => "Symbols",
             Tab::Actions => "Actions",
+            Tab::Endpoints => "Endpoints",
             Tab::Text => "Text",
         }
     }
@@ -84,7 +90,46 @@ impl Tab {
     }
 }
 
+/// An HTTP endpoint as the Endpoints tab lists it: its URL, methods and handler, and how to go
+/// to it.
+pub struct EndpointItem {
+    pub url: SharedString,
+    pub methods: SharedString,
+    pub location: SharedString,
+    pub open: Rc<dyn Fn(&mut Workspace, &mut Window, &mut Context<Workspace>)>,
+}
+
+/// The endpoints of a workspace's project, `None` in a project without HTTP endpoints (no tab).
+type EndpointsProvider = Rc<dyn Fn(&Workspace, &App) -> Option<Vec<EndpointItem>>>;
+
+struct Endpoints(EndpointsProvider);
+
+impl gpui::Global for Endpoints {}
+
+/// Gives Search Everywhere its Endpoints tab, the project's endpoints `provider` lists.
+pub fn register_endpoints(
+    provider: impl Fn(&Workspace, &App) -> Option<Vec<EndpointItem>> + 'static,
+    cx: &mut App,
+) {
+    cx.set_global(Endpoints(Rc::new(provider)));
+}
+
+fn endpoints(workspace: &Workspace, cx: &App) -> Option<Vec<EndpointItem>> {
+    let provider = cx.try_global::<Endpoints>()?.0.clone();
+    provider(workspace, cx)
+}
+
 pub(crate) fn register(workspace: &mut Workspace) {
+    // Go to Endpoint… is there in a project with endpoints, as IntelliJ's
+    workspace.register_action_renderer(|div, workspace, _, cx| {
+        div.when(endpoints(workspace, cx).is_some(), |div| {
+            div.on_action(
+                cx.listener(|workspace, _: &navigate::GoToEndpoint, window, cx| {
+                    toggle(workspace, Tab::Endpoints, window, cx)
+                }),
+            )
+        })
+    });
     workspace.register_action(|workspace, _: &navigate::SearchEverywhere, window, cx| {
         toggle(workspace, Tab::All, window, cx)
     });
@@ -120,6 +165,7 @@ fn toggle(workspace: &mut Workspace, tab: Tab, window: &mut Window, cx: &mut Con
         let actions = actions(&workspace, window, cx);
         workspace.update(cx, |workspace, cx| {
             let recent = crate::recent_files(workspace, cx);
+            let endpoints = endpoints(workspace, cx);
             let project = workspace.project().clone();
             let handle = cx.entity().downgrade();
             workspace.toggle_modal(window, cx, move |window, cx| {
@@ -129,6 +175,7 @@ fn toggle(workspace: &mut Workspace, tab: Tab, window: &mut Window, cx: &mut Con
                     tab,
                     recent,
                     actions,
+                    endpoints,
                     previous_focus,
                     window,
                     cx,
@@ -158,6 +205,7 @@ enum Found {
     File(ProjectPath),
     Symbol(usize),
     Action(usize),
+    Endpoint(usize),
     Text(usize),
 }
 
@@ -178,6 +226,9 @@ pub(crate) struct SearchEverywhere {
     symbols: Vec<Symbol>,
     actions: Vec<ActionItem>,
     action_matches: Vec<usize>,
+    /// The project's endpoints, `None` without the Endpoints tab.
+    endpoints: Option<Vec<EndpointItem>>,
+    endpoint_matches: Vec<usize>,
     text: Vec<crate::find_in_files::Occurrence>,
     found: Vec<Found>,
     selected: usize,
@@ -209,6 +260,7 @@ impl SearchEverywhere {
         tab: Tab,
         recent: Vec<ProjectPath>,
         actions: Vec<ActionItem>,
+        endpoints: Option<Vec<EndpointItem>>,
         previous_focus: Option<FocusHandle>,
         window: &mut Window,
         cx: &mut Context<Self>,
@@ -237,6 +289,8 @@ impl SearchEverywhere {
             symbols: Vec::new(),
             actions,
             action_matches: Vec::new(),
+            endpoints,
+            endpoint_matches: Vec::new(),
             text: Vec::new(),
             found: Vec::new(),
             selected: 0,
@@ -253,6 +307,14 @@ impl SearchEverywhere {
         this
     }
 
+    /// The tabs shown: Endpoints in a project with endpoints only.
+    fn tabs(&self) -> Vec<Tab> {
+        Tab::ALL
+            .into_iter()
+            .filter(|tab| *tab != Tab::Endpoints || self.endpoints.is_some())
+            .collect()
+    }
+
     fn query(&self, cx: &App) -> String {
         self.search.read(cx).value().trim().to_owned()
     }
@@ -266,7 +328,8 @@ impl SearchEverywhere {
             .strip_prefix('/')
             .and_then(|command| command.split_once(' '))
             .and_then(|(name, rest)| {
-                let tab = Tab::ALL
+                let tab = self
+                    .tabs()
                     .into_iter()
                     .find(|tab| tab.title().eq_ignore_ascii_case(name))?;
                 Some((tab, rest.trim().to_owned()))
@@ -275,14 +338,14 @@ impl SearchEverywhere {
     }
 
     /// The commands `/typed` (no space yet) offers: the tabs whose name starts with it.
-    fn commands(query: &str) -> Option<Vec<Tab>> {
+    fn commands(&self, query: &str) -> Option<Vec<Tab>> {
         let typed = query.strip_prefix('/')?;
         if typed.contains(' ') {
             return None;
         }
         let typed = typed.to_lowercase();
         Some(
-            Tab::ALL
+            self.tabs()
                 .into_iter()
                 .filter(|tab| tab.title().to_lowercase().starts_with(&typed))
                 .collect(),
@@ -293,7 +356,7 @@ impl SearchEverywhere {
     /// out with a space after it. With nothing to complete the key goes on (to Next Tab).
     fn complete_command(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let query = self.search.read(cx).value().trim_start().to_owned();
-        let Some(commands) = Self::commands(&query) else {
+        let Some(commands) = self.commands(&query) else {
             cx.propagate();
             return;
         };
@@ -316,12 +379,12 @@ impl SearchEverywhere {
     }
 
     fn step_tab(&mut self, step: isize, window: &mut Window, cx: &mut Context<Self>) {
-        let ix = Tab::ALL
-            .iter()
-            .position(|tab| *tab == self.tab)
-            .unwrap_or(0) as isize;
-        let next = (ix + step).rem_euclid(Tab::ALL.len() as isize) as usize;
-        self.set_tab(Tab::ALL[next], window, cx);
+        let tabs = self.tabs();
+        let ix = tabs.iter().position(|tab| *tab == self.tab).unwrap_or(0) as isize;
+        let next = (ix + step).rem_euclid(tabs.len() as isize) as usize;
+        if let Some(tab) = tabs.get(next) {
+            self.set_tab(*tab, window, cx);
+        }
     }
 
     fn toggle_non_project(&mut self, window: &mut Window, cx: &mut Context<Self>) {
@@ -332,8 +395,9 @@ impl SearchEverywhere {
     /// Searches anew for the query: actions at once, files, symbols and text in the background.
     fn refresh(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let (tab, query) = self.scope(cx);
-        let searching = Self::commands(&query).is_none();
+        let searching = self.commands(&query).is_none();
         self.match_actions(&query);
+        self.match_endpoints(&query);
         let files = searching && matches!(tab, Tab::All | Tab::Files);
         self.search_files(
             if files { query.clone() } else { String::new() },
@@ -386,6 +450,33 @@ impl SearchEverywhere {
             .into_iter()
             .map(|found| found.candidate_id)
             .collect();
+    }
+
+    /// The endpoints whose URL matches the query, as IntelliJ's URL search matches its paths.
+    fn match_endpoints(&mut self, query: &str) {
+        let Some(endpoints) = &self.endpoints else {
+            return;
+        };
+        let candidates: Vec<StringMatchCandidate> = endpoints
+            .iter()
+            .enumerate()
+            .map(|(ix, item)| StringMatchCandidate::new(ix, item.url.clone()))
+            .collect();
+        if query.is_empty() {
+            self.endpoint_matches = candidates.iter().map(|candidate| candidate.id).collect();
+            return;
+        }
+        self.endpoint_matches = fuzzy_nucleo::match_strings(
+            &candidates,
+            query,
+            StringMatchOptions {
+                max_results: MaxResults::limit::<MAX_RESULTS>(),
+                ..Default::default()
+            },
+        )
+        .into_iter()
+        .map(|found| found.candidate_id)
+        .collect();
     }
 
     fn search_files(&mut self, query: String, window: &mut Window, cx: &mut Context<Self>) {
@@ -549,7 +640,7 @@ impl SearchEverywhere {
     fn rebuild(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let (tab, query) = self.scope(cx);
         let mut found = Vec::new();
-        if let Some(commands) = Self::commands(&query) {
+        if let Some(commands) = self.commands(&query) {
             // IntelliJ's commands: a tab by its name
             found.extend(commands.into_iter().map(Found::Command));
         } else {
@@ -583,6 +674,10 @@ impl SearchEverywhere {
             if (all && !query.is_empty()) || tab == Tab::Actions {
                 let actions = self.action_matches.iter().copied().map(Found::Action);
                 group("Actions", actions.collect());
+            }
+            if (all && !query.is_empty()) || tab == Tab::Endpoints {
+                let endpoints = self.endpoint_matches.iter().copied().map(Found::Endpoint);
+                group("Endpoints", endpoints.collect());
             }
             if tab == Tab::Text {
                 group("Text", (0..self.text.len()).map(Found::Text).collect());
@@ -708,6 +803,20 @@ impl SearchEverywhere {
                     .update(cx, |workspace, cx| {
                         crate::open_at(workspace, path, None, window, cx)
                     })
+                    .log_err();
+            }
+            Found::Endpoint(ix) => {
+                let Some(open) = self
+                    .endpoints
+                    .as_ref()
+                    .and_then(|endpoints| endpoints.get(ix))
+                    .map(|item| item.open.clone())
+                else {
+                    return;
+                };
+                cx.emit(DismissEvent);
+                workspace
+                    .update(cx, |workspace, cx| open(workspace, window, cx))
                     .log_err();
             }
             Found::Text(ix) => {
@@ -886,6 +995,15 @@ impl SearchEverywhere {
                             .children(item.shortcut.clone().map(secondary))
                             .child(secondary(item.location.clone()).truncate())
                     }
+                    Found::Endpoint(ix) => {
+                        let item = self.endpoints.as_ref()?.get(*ix)?;
+                        row.aria_label(item.url.clone())
+                            .child(spork_workbench::image("gutter/web", cx))
+                            .child(div().flex_none().child(item.url.clone()))
+                            .child(secondary(item.methods.clone()))
+                            .child(div().flex_1())
+                            .child(secondary(item.location.clone()).truncate())
+                    }
                     Found::Text(ix) => {
                         let found = self.text.get(*ix)?;
                         let name = found.path.path.file_name().unwrap_or_default().to_owned();
@@ -1033,7 +1151,7 @@ impl SearchEverywhere {
                 ),
             },
             Found::Action(_) => Some("Press ⌥⏎ to assign a shortcut".to_owned()),
-            Found::Group(_) | Found::Command(_) => None,
+            Found::Group(_) | Found::Command(_) | Found::Endpoint(_) => None,
         }
     }
 }
@@ -1041,7 +1159,7 @@ impl SearchEverywhere {
 impl Render for SearchEverywhere {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let tokens = Tokens::get(cx);
-        let tabs = Tab::ALL.into_iter().map(|tab| {
+        let tabs = self.tabs().into_iter().map(|tab| {
             let on = tab == self.tab;
             div()
                 .id(tab.title())

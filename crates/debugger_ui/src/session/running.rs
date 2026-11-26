@@ -1858,9 +1858,22 @@ impl RunningState {
     }
 
     pub fn rerun_session(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        // Spork IDE: an adapter that can't restart its session (java-debug, the Kotlin server,
+        // reached once through their port) gets the scenario started again, this session stopped
+        let restarts = self
+            .session()
+            .read(cx)
+            .capabilities()
+            .supports_restart_request
+            .unwrap_or_default();
         if let Some((scenario, context)) = self.scenario.take().zip(self.scenario_context.take())
-            && scenario.build.is_some()
+            && (scenario.build.is_some() || !restarts)
         {
+            if scenario.build.is_none() {
+                self.session()
+                    .update(cx, |session, cx| session.shutdown(cx))
+                    .detach();
+            }
             let DebugScenarioContext {
                 task_context,
                 active_buffer,

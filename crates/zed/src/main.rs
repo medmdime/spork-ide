@@ -568,6 +568,8 @@ fn main() {
         spork_java::init(languages.clone(), cx);
         // Spork IDE: Kotlin on its language server, run by Gradle or Maven (phase 10)
         spork_kotlin::init(languages.clone(), cx);
+        // Spork IDE: the HTTP Client, after Java: its gutter markers wrap Spring's
+        spork_http::init(languages.clone(), cx);
         let user_store = cx.new(|cx| UserStore::new(client.clone(), cx));
         let workspace_store = cx.new(|cx| WorkspaceStore::new(client.clone(), cx));
 
@@ -788,6 +790,7 @@ fn main() {
         spork_local_history::init(cx);
         spork_settings::init(cx);
         spork_run::init(cx);
+        spork_coverage::init(cx);
         spork_tool_windows::init(cx);
         spork_editor::init(cx);
         spork_code::init(cx);
@@ -861,13 +864,19 @@ fn main() {
         let menus = app_menus(cx);
         cx.set_menus(menus);
         // Spork IDE: the Git menu follows the repository's state, File ▸ Recent Projects the
-        // recent projects
+        // recent projects, Run ▸ Run, Debug and Run with Coverage the configuration they run and
+        // Debugging Actions' Update item the running application
         cx.observe_global::<spork_vcs::GitMenu>(|cx| {
             let menus = app_menus(cx);
             cx.set_menus(menus);
         })
         .detach();
         cx.observe_global::<spork_projects::RecentProjectsMenu>(|cx| {
+            let menus = app_menus(cx);
+            cx.set_menus(menus);
+        })
+        .detach();
+        cx.observe_global::<spork_run::RunMenu>(|cx| {
             let menus = app_menus(cx);
             cx.set_menus(menus);
         })

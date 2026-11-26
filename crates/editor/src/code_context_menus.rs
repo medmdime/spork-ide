@@ -2327,20 +2327,60 @@ impl CodeActionsMenu {
         // Configuration… last
         match CodeMenuLook::get(cx) {
             Some(look) => {
+                let coverage = self.run_with_coverage_row(&look, cx);
                 let modify = self.modify_run_configuration_row(&look, cx);
-                let list = match modify {
-                    Some(row) => div()
+                let list = match (coverage, modify) {
+                    (None, None) => list.into_any_element(),
+                    (coverage, modify) => div()
                         .flex()
                         .flex_col()
                         .child(list)
-                        .child(row)
+                        .children(coverage)
+                        .children(modify)
                         .into_any_element(),
-                    None => list.into_any_element(),
                 };
                 (look.code_actions)(list, cx)
             }
             None => Popover::new().child(list).into_any_element(),
         }
+    }
+
+    /// Spork IDE: IntelliJ's Run '…' with Coverage after the run icon's tasks, when the app
+    /// runs the first with coverage.
+    fn run_with_coverage_row(
+        &self,
+        look: &CodeMenuLook,
+        cx: &mut Context<Editor>,
+    ) -> Option<AnyElement> {
+        if !matches!(self.deployed_from, Some(CodeActionSource::RunMenu(_))) {
+            return None;
+        }
+        let coverage = cx.try_global::<crate::RunMenuCoverage>().cloned()?;
+        let task = self
+            .actions
+            .tasks()?
+            .templates
+            .first()
+            .map(|(_, task)| task.clone())?;
+        let label = (coverage.label)(&task, cx)?;
+        let row = CodeActionRow {
+            editor: cx.entity().downgrade(),
+            label,
+            kind: CodeActionRowKind::RunWithCoverage,
+            selected: false,
+        };
+        let run = coverage.run;
+        Some(
+            div()
+                .id("run_with_coverage")
+                .child((look.code_action_row)(row, cx))
+                .on_click(cx.listener(move |editor, _, window, cx| {
+                    cx.stop_propagation();
+                    editor.hide_context_menu(window, cx);
+                    run(&task, window, cx);
+                }))
+                .into_any_element(),
+        )
     }
 
     /// Spork IDE: IntelliJ's Modify Run Configuration… after the run icon's tasks, when the app

@@ -97,7 +97,12 @@ fn tool_window(name: &str) -> ToolWindow {
         // shortcut: the Web tool window's globe, as IntelliJ's own Endpoints icon is its paid
         // edition's; draw one in its style once the user decides
         "Endpoints" => ("Endpoints", Some("toolwindows/web"), false, 4, false),
+        // shortcut: the Dependencies tool window's icon, as IntelliJ's own Beans icon is its paid
+        // edition's; draw one in its style once the user decides
+        "Beans" => ("Beans", Some("toolwindows/dependencies"), false, 5, false),
         "Hierarchy" => ("Hierarchy", Some("toolwindows/hierarchy"), true, 4, false),
+        // a side tool window (`secondary`), after the line across the right stripe
+        "Coverage" => ("Coverage", Some("toolwindows/coverage"), true, 0, true),
         _ => ("", None, false, usize::MAX, false),
     };
     ToolWindow {

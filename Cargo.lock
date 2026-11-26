@@ -17425,6 +17425,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "spork_coverage"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "collections",
+ "editor",
+ "gpui",
+ "gpui_kit",
+ "log",
+ "menu",
+ "multi_buffer",
+ "paths",
+ "project",
+ "project_panel",
+ "serde",
+ "serde_json",
+ "settings",
+ "spork_run",
+ "spork_settings",
+ "spork_vcs",
+ "spork_workbench",
+ "text",
+ "theme",
+ "theme_settings",
+ "ui",
+ "util",
+ "workspace",
+]
+
+[[package]]
 name = "spork_docker"
 version = "0.1.0"
 dependencies = [
@@ -17459,8 +17490,10 @@ dependencies = [
  "settings",
  "smol",
  "spork_code",
+ "spork_coverage",
  "spork_editor",
  "spork_git",
+ "spork_http",
  "spork_java",
  "spork_kotlin",
  "spork_run",
@@ -17531,6 +17564,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "spork_http"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "cc",
+ "chrono",
+ "collections",
+ "editor",
+ "futures 0.3.34",
+ "gpui",
+ "gpui_kit",
+ "http_client",
+ "language",
+ "log",
+ "project",
+ "project_panel",
+ "serde_json",
+ "spork_run",
+ "spork_workbench",
+ "tempfile",
+ "text",
+ "tree-sitter",
+ "tree-sitter-language",
+ "util",
+ "workspace",
+]
+
+[[package]]
 name = "spork_java"
 version = "0.1.0"
 dependencies = [
@@ -17543,6 +17604,7 @@ dependencies = [
  "chrono",
  "collections",
  "dap",
+ "db",
  "debugger_ui",
  "editor",
  "futures 0.3.34",
@@ -17567,7 +17629,10 @@ dependencies = [
  "sha2",
  "smol",
  "spork_code",
+ "spork_coverage",
  "spork_editor",
+ "spork_http",
+ "spork_navigate",
  "spork_projects",
  "spork_run",
  "spork_settings",
@@ -17739,6 +17804,8 @@ dependencies = [
  "paths",
  "project",
  "project_panel",
+ "quick-xml 0.41.0",
+ "schemars 1.0.4",
  "serde",
  "serde_json",
  "settings",
@@ -23673,9 +23740,11 @@ dependencies = [
  "snippet_provider",
  "snippets_ui",
  "spork_code",
+ "spork_coverage",
  "spork_docker",
  "spork_e2e",
  "spork_editor",
+ "spork_http",
  "spork_java",
  "spork_kotlin",
  "spork_local_history",

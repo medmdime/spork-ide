@@ -3160,6 +3160,16 @@ impl Session {
         }
     }
 
+    /// Spork IDE: the variables and watches taken from the adapter again, their presentation
+    /// having changed (a Data Views option, Show types, View as).
+    pub fn refresh_variables(&mut self, cx: &mut Context<Self>) {
+        self.invalidate_command_type::<VariablesCommand>();
+        if let Some(frame_id) = self.watch_frame {
+            self.refresh_watchers(frame_id, cx);
+        }
+        cx.emit(SessionEvent::Variables);
+    }
+
     pub fn remove_watcher(&mut self, expression: SharedString) {
         self.watchers.shift_remove(&expression);
     }

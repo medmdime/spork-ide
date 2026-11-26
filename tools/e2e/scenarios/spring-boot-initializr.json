@@ -1,0 +1,584 @@
+{
+ "id": "spring-boot-initializr",
+ "fixture": "spring-maven",
+ "covers": [],
+ "env": {
+  "SPORK_IDE_INITIALIZR": "$SPORK_E2E_INITIALIZR"
+ },
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   },
+   "Spring Boot Properties": {
+    "enable_language_server": true
+   },
+   "Spring Boot YAML": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "do": "action",
+   "name": "workspace::CloseProject"
+  },
+  {
+   "find": "New Project",
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "New Project",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    "Empty Project",
+    "Generators",
+    "Spring Boot"
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Spring Boot"
+  },
+  {
+   "find": [
+    {
+     "label": "Server URL:"
+    },
+    {
+     "label": "$SPORK_E2E_INITIALIZR",
+     "role": "AXLink"
+    },
+    {
+     "label": "Configure",
+     "role": "AXButton"
+    },
+    {
+     "label": "Name:",
+     "role": "AXTextField",
+     "value": "demo"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "find": {
+    "label": "Retry",
+    "role": "AXButton"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Configure",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Server URL",
+    "role": "AXTextField",
+    "value": "$SPORK_E2E_INITIALIZR"
+   },
+   "within": 3000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a"
+  },
+  {
+   "do": "type",
+   "text": "not a url"
+  },
+  {
+   "find": {
+    "label": "OK",
+    "role": "AXButton",
+    "enabled": false
+   },
+   "within": 3000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a"
+  },
+  {
+   "do": "type",
+   "text": "http://127.0.0.1:9"
+  },
+  {
+   "find": {
+    "label": "OK",
+    "role": "AXButton",
+    "enabled": true
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "http://127.0.0.1:9",
+     "role": "AXLink"
+    },
+    {
+     "label": "Configure",
+     "role": "AXButton"
+    },
+    {
+     "label": "Retry",
+     "role": "AXButton"
+    }
+   ],
+   "ordered": true,
+   "within": 10000
+  },
+  {
+   "find": {
+    "label": "Name:",
+    "role": "AXTextField"
+   },
+   "absent": true
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "retry"
+  },
+  {
+   "do": "click",
+   "label": "Retry",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Retry",
+    "role": "AXButton"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Cancel",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Retry",
+    "role": "AXButton"
+   },
+   "absent": true,
+   "within": 3000
+  },
+  {
+   "find": "New Project",
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "New Project",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    "Empty Project",
+    "Generators",
+    "Spring Boot"
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Spring Boot"
+  },
+  {
+   "find": [
+    {
+     "label": "http://127.0.0.1:9",
+     "role": "AXLink"
+    },
+    {
+     "label": "Retry",
+     "role": "AXButton"
+    }
+   ],
+   "ordered": true,
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Configure",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Server URL",
+    "role": "AXTextField"
+   },
+   "within": 3000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a"
+  },
+  {
+   "do": "type",
+   "text": "$SPORK_E2E_INITIALIZR"
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "$SPORK_E2E_INITIALIZR",
+     "role": "AXLink"
+    },
+    {
+     "label": "Name:",
+     "role": "AXTextField",
+     "value": "demo"
+    }
+   ],
+   "ordered": true,
+   "within": 10000
+  },
+  {
+   "find": {
+    "label": "Retry",
+    "role": "AXButton"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Kotlin",
+   "role": "AXRadioButton"
+  },
+  {
+   "do": "click",
+   "label": "Gradle - Kotlin",
+   "role": "AXRadioButton"
+  },
+  {
+   "do": "click",
+   "label": "Next",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Spring Boot:",
+    "role": "AXPopUpButton",
+    "value": "4.2.0"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Search",
+   "role": "AXTextField"
+  },
+  {
+   "do": "type",
+   "text": "vaadin"
+  },
+  {
+   "find": {
+    "label": "Vaadin",
+    "role": "AXCheckBox",
+    "enabled": false
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Vaadin",
+   "role": "AXCheckBox"
+  },
+  {
+   "find": [
+    {
+     "label": "Vaadin",
+     "in": "Description"
+    },
+    {
+     "label": "Requires Spring Boot version >=4.1.0 and <4.2.0-M1",
+     "in": "Description"
+    }
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Spring Boot:",
+   "role": "AXPopUpButton"
+  },
+  {
+   "do": "click",
+   "label": "4.1.3",
+   "role": "AXMenuItem",
+   "within": 3000
+  },
+  {
+   "find": {
+    "label": "Vaadin",
+    "role": "AXCheckBox",
+    "enabled": true
+   },
+   "within": 3000
+  },
+  {
+   "find": {
+    "label": "Requires Spring Boot version >=4.1.0 and <4.2.0-M1"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Vaadin",
+   "role": "AXCheckBox"
+  },
+  {
+   "find": {
+    "label": "Vaadin",
+    "role": "AXCheckBox",
+    "value": "1"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Spring Boot:",
+   "role": "AXPopUpButton"
+  },
+  {
+   "do": "click",
+   "label": "4.2.0",
+   "role": "AXMenuItem",
+   "within": 3000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a"
+  },
+  {
+   "do": "type",
+   "text": "spring web"
+  },
+  {
+   "do": "click",
+   "label": "Spring Web",
+   "role": "AXCheckBox"
+  },
+  {
+   "find": [
+    {
+     "label": "Spring Web",
+     "in": "Description"
+    },
+    {
+     "label": "Building a RESTful Web Service",
+     "role": "AXLink",
+     "in": "Description"
+    },
+    {
+     "label": "Serving Web Content with Spring MVC",
+     "role": "AXLink",
+     "in": "Description"
+    },
+    {
+     "label": "Building REST services with Spring",
+     "role": "AXLink",
+     "in": "Description"
+    }
+   ],
+   "ordered": true,
+   "within": 3000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "links"
+  },
+  {
+   "do": "click",
+   "label": "Create",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Selected dependencies: Vaadin are not available for version 4.2.0."
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Search",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a"
+  },
+  {
+   "do": "type",
+   "text": "vaadin"
+  },
+  {
+   "do": "click",
+   "label": "Vaadin",
+   "role": "AXCheckBox"
+  },
+  {
+   "find": [
+    {
+     "label": "Vaadin",
+     "in": "Description"
+    },
+    {
+     "label": "Requires Spring Boot version >=4.1.0 and <4.2.0-M1",
+     "in": "Description"
+    }
+   ],
+   "within": 3000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "requires"
+  },
+  {
+   "do": "click",
+   "label": "Spring Boot:",
+   "role": "AXPopUpButton"
+  },
+  {
+   "do": "click",
+   "label": "4.1.3",
+   "role": "AXMenuItem",
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Vaadin",
+   "role": "AXCheckBox"
+  },
+  {
+   "find": {
+    "label": "Vaadin",
+    "role": "AXCheckBox",
+    "value": "0"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Spring Boot:",
+   "role": "AXPopUpButton"
+  },
+  {
+   "do": "click",
+   "label": "4.2.0",
+   "role": "AXMenuItem",
+   "within": 3000
+  },
+  {
+   "find": [
+    {
+     "label": "Web",
+     "in": "Added dependencies"
+    },
+    {
+     "label": "Spring Web",
+     "in": "Added dependencies"
+    }
+   ],
+   "ordered": true,
+   "within": 3000
+  },
+  {
+   "find": {
+    "label": "Vaadin",
+    "in": "Added dependencies"
+   },
+   "absent": true,
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Create",
+   "role": "AXButton"
+  },
+  {
+   "sh": "test -f ../home/SporkIdeProjects/demo/build.gradle.kts && test -f ../home/SporkIdeProjects/demo/src/main/kotlin/com/example/demo/DemoApplication.kt && echo ok",
+   "is": "ok",
+   "within": 20000
+  },
+  {
+   "find": {
+    "label": "demo",
+    "role": "AXButton",
+    "in": "Title bar"
+   },
+   "within": 15000
+  },
+  {
+   "expect": {
+    "java.tool": "Gradle",
+    "java.linked": true,
+    "kotlin.detected": true
+   },
+   "within": 60000
+  },
+  {
+   "expect": {
+    "run.configurations.names": [
+     "DemoApplicationKt"
+    ],
+    "run.configurations.selected": "DemoApplicationKt",
+    "java.spring.applications": [
+     "com.example.demo.DemoApplicationKt"
+    ]
+   },
+   "within": 120000
+  },
+  {
+   "do": "action",
+   "name": "workspace::CloseProject"
+  },
+  {
+   "find": "New Project",
+   "within": 10000
+  },
+  {
+   "wait": 3000
+  },
+  {
+   "sh": "cd ../home/SporkIdeProjects/demo && GRADLE_USER_HOME=../../.gradle ./gradlew --stop -q"
+  }
+ ]
+}

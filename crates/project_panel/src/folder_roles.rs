@@ -9,6 +9,7 @@ use std::rc::Rc;
 use std::sync::Arc;
 
 use gpui::{App, Global, SharedString, Window};
+use workspace::Workspace;
 
 /// An item a folder's role puts in New in its menu: IntelliJ's Java Class (before File) and
 /// package-info.java (after Directory) in a source folder.
@@ -58,7 +59,40 @@ pub fn set_folder_roles(roles: Arc<dyn FolderRoles>, cx: &mut App) {
     cx.set_global(GlobalFolderRoles(roles));
 }
 
+/// Spork IDE: what any folder's New shows besides its role's items, from other tools (the HTTP
+/// Client's HTTP Request after Directory).
+#[derive(Default)]
+struct ExtraNewItems(Vec<Rc<dyn Fn(&Path) -> Vec<NewItem>>>);
+
+impl Global for ExtraNewItems {}
+
+/// Adds `items` to New in every folder's menu.
+pub fn add_new_items(items: impl Fn(&Path) -> Vec<NewItem> + 'static, cx: &mut App) {
+    cx.default_global::<ExtraNewItems>().0.push(Rc::new(items));
+}
+
+pub(crate) fn extra_new_items(folder: &Path, cx: &App) -> Vec<NewItem> {
+    cx.try_global::<ExtraNewItems>()
+        .map(|extra| extra.0.iter().flat_map(|items| items(folder)).collect())
+        .unwrap_or_default()
+}
+
 pub(crate) fn folder_roles(cx: &App) -> Option<Arc<dyn FolderRoles>> {
     cx.try_global::<GlobalFolderRoles>()
         .map(|roles| roles.0.clone())
 }
+
+/// What the file's or folder's role runs at `abs_path` (Run 'Tests in …', then Debug), for
+/// IntelliJ's Run and Debug context configuration on the tool window's selection.
+pub fn run_items(abs_path: &Path, cx: &App) -> Vec<NewItem> {
+    folder_roles(cx)
+        .map(|roles| roles.run_items(abs_path))
+        .unwrap_or_default()
+}
+
+/// The text the app shows after a row's name, greyed (IntelliJ's coverage percentages, "50%
+/// classes, 33% lines covered"), set once: given the workspace and the row's file or folder.
+#[derive(Clone)]
+pub struct RowDecoration(pub Rc<dyn Fn(&Workspace, &Path, &App) -> Option<SharedString>>);
+
+impl Global for RowDecoration {}

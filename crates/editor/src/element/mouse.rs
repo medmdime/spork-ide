@@ -585,6 +585,19 @@ impl EditorElement {
         let mut click_count = event.click_count;
         let mut modifiers = event.modifiers;
 
+        // Spork IDE: a click on the app's free painter mark (IntelliJ's coverage popup)
+        if let Some((ix, _, _, _)) = position_map
+            .free_painter_marks
+            .iter()
+            .find(|(_, _, _, hitbox)| hitbox.is_hovered(window))
+        {
+            let row = point_for_position.nearest_valid.row();
+            if editor.free_painter_mark_clicked(*ix, row, window, cx) {
+                cx.stop_propagation();
+                return;
+            }
+        }
+
         if let Some(hovered_hunk) =
             position_map
                 .display_hunks

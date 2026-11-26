@@ -118,14 +118,54 @@
    "shot": "stopped"
   },
   {
-   "do": "keys",
-   "keys": "cmd-alt-r"
+   "do": "click",
+   "label": "Console",
+   "role": "AXRadioButton"
+  },
+  {
+   "find": {
+    "label": "Test Results",
+    "in": "Console"
+   },
+   "within": 10000
+  },
+  {
+   "expect": {
+    "run.debug.tests.rows": [
+     "Test Results running",
+     "  DebuggeeTest running",
+     "    measuresANameByItsLength() running"
+    ]
+   },
+   "within": 10000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "tests"
+  },
+  {
+   "do": "click",
+   "label": "Resume Program"
   },
   {
    "expect": {
     "run.debug.console": {
      "contains": "Process finished with exit code 0"
     }
+   },
+   "within": 60000
+  },
+  {
+   "expect": {
+    "run.debug.tests.rows": [
+     "Test Results passed",
+     "  DebuggeeTest passed",
+     "    measuresANameByItsLength() passed"
+    ],
+    "run.debug.tests.status": "1 test passed",
+    "run.tabs": []
    },
    "within": 60000
   }

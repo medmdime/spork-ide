@@ -1,0 +1,78 @@
+{
+ "id": "kotlin-test-maven-junit5",
+ "fixture": "tests-kotlin-maven5",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Kotlin": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "kotlin.detected": true
+   },
+   "within": 20000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "kotlin.server.running": true
+   },
+   "within": 600000
+  },
+  {
+   "expect": {
+    "kotlin.server.busy": false
+   },
+   "within": 300000
+  },
+  {
+   "do": "open",
+   "path": "src/test/kotlin/com/example/GreetingTest.kt"
+  },
+  {
+   "find": {
+    "label": "Run test 'GreetingTest'",
+    "role": "AXButton"
+   },
+   "within": 30000
+  },
+  {
+   "wait": 3000
+  },
+  {
+   "do": "click",
+   "label": "Run test 'GreetingTest'",
+   "role": "AXButton"
+  },
+  {
+   "find": "Run 'GreetingTest'",
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Run 'GreetingTest'"
+  },
+  {
+   "expect": {
+    "run.tabs.0.running": false,
+    "run.tabs.0.tests.rows": [
+     "Test Results failed",
+     "  GreetingTest failed",
+     "    greets() passed",
+     "    greetsAda() failed"
+    ],
+    "run.tabs.0.tests.status": "1 test failed, 1 passed"
+   },
+   "within": 300000
+  }
+ ]
+}

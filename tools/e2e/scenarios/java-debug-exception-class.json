@@ -1,0 +1,374 @@
+{
+ "id": "java-debug-exception-class",
+ "fixture": "maven",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "sh": "mkdir -p .zed && printf '%s' '[{\"label\": \"Debuggee\", \"adapter\": \"Java\", \"request\": \"launch\", \"mainClass\": \"com.example.Debuggee\"}]' > .zed/debug.json"
+  },
+  {
+   "expect": {
+    "java.tool": "Maven"
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 600000
+  },
+  {
+   "expect": {
+    "run.configurations.selected": "Debuggee"
+   },
+   "within": 10000
+  },
+  {
+   "do": "open",
+   "path": "src/main/java/com/example/Debuggee.java"
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/Debuggee.java",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-f8"
+  },
+  {
+   "find": {
+    "label": "Add",
+    "role": "AXButton",
+    "enabled": true
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Add",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "Java Method Breakpoints",
+     "enabled": false
+    },
+    {
+     "label": "Java Field Watchpoints",
+     "enabled": false
+    },
+    {
+     "label": "Java Exception Breakpoints",
+     "role": "AXMenuItem"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Java Exception Breakpoints",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "windows.2.title": "Enter Exception Class"
+   },
+   "within": 5000
+  },
+  {
+   "do": "activate",
+   "window": "Enter Exception Class"
+  },
+  {
+   "find": {
+    "label": "Search by Name",
+    "role": "AXTextField"
+   },
+   "within": 5000
+  },
+  {
+   "do": "type",
+   "text": "NumberFormat",
+   "window": "Enter Exception Class"
+  },
+  {
+   "find": {
+    "label": "NumberFormatException (java.lang)"
+   },
+   "within": 30000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "activate",
+   "window": "Enter Exception Class"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "chooser",
+   "window": "smallest"
+  },
+  {
+   "do": "keys",
+   "keys": "enter",
+   "window": "Enter Exception Class"
+  },
+  {
+   "expect": {
+    "windows.2": null
+   },
+   "within": 5000
+  },
+  {
+   "expect": {
+    "run.exception_classes.Java.classes": [
+     {
+      "class": "java.lang.NumberFormatException",
+      "enabled": true,
+      "caught": true,
+      "uncaught": true,
+      "filters": null
+     }
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "find": [
+    {
+     "label": "Java Exception Breakpoints",
+     "role": "AXCheckBox"
+    },
+    {
+     "label": "Any exception",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "java.lang.NumberFormatException",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "Exception breakpoint for java.lang.NumberFormatException"
+    },
+    {
+     "label": "Enabled",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "Class filters:",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "Caught exception",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "Uncaught exception",
+     "role": "AXCheckBox",
+     "value": "1"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Uncaught exception",
+   "role": "AXCheckBox"
+  },
+  {
+   "do": "click",
+   "label": "Caught exception",
+   "role": "AXCheckBox"
+  },
+  {
+   "expect": {
+    "run.exception_classes.Java.classes.0.caught": false,
+    "run.exception_classes.Java.classes.0.uncaught": true
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Caught exception",
+   "role": "AXCheckBox"
+  },
+  {
+   "do": "click",
+   "label": "Uncaught exception",
+   "role": "AXCheckBox"
+  },
+  {
+   "expect": {
+    "run.exception_classes.Java.classes.0.caught": true,
+    "run.exception_classes.Java.classes.0.uncaught": false
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Class filters:",
+   "role": "AXCheckBox"
+  },
+  {
+   "do": "click",
+   "label": "Class filters",
+   "role": "AXTextField"
+  },
+  {
+   "do": "type",
+   "text": "com.example.*",
+   "window": "Breakpoints"
+  },
+  {
+   "expect": {
+    "run.exception_classes.Java.classes.0.filters": "com.example.*"
+   },
+   "within": 5000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "activate",
+   "window": "Breakpoints"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "dialog",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Done",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Debug 'Debuggee'",
+    "role": "AXButton",
+    "enabled": true
+   },
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-d"
+  },
+  {
+   "expect": {
+    "run.debug.console": {
+     "contains": "not a number\n13 3 Point[x=1, y=2]"
+    }
+   },
+   "within": 120000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-f8"
+  },
+  {
+   "find": {
+    "label": "java.lang.NumberFormatException",
+    "role": "AXRow"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "java.lang.NumberFormatException",
+   "role": "AXRow"
+  },
+  {
+   "do": "click",
+   "label": "Class filters",
+   "role": "AXTextField"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-a",
+   "window": "Breakpoints"
+  },
+  {
+   "do": "type",
+   "text": "java.lang.*",
+   "window": "Breakpoints"
+  },
+  {
+   "expect": {
+    "run.exception_classes.Java.classes.0.filters": "java.lang.*"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Done",
+   "role": "AXButton"
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-d"
+  },
+  {
+   "expect": {
+    "run.debug.status": "Stopped"
+   },
+   "within": 120000
+  },
+  {
+   "expect": {
+    "run.debug.frames": [
+     "parseInt:668, Integer (java.lang)",
+     "1 hidden frame",
+     "main:31, Debuggee (com.example)"
+    ]
+   },
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-alt-r"
+  },
+  {
+   "expect": {
+    "run.debug.console": {
+     "contains": "not a number\n13 3 Point[x=1, y=2]"
+    }
+   },
+   "within": 30000
+  }
+ ]
+}

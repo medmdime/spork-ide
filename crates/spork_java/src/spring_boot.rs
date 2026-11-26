@@ -289,7 +289,46 @@ async fn applications(server: &lsp::LanguageServer, root: &Path) -> Result<Vec<(
             found.push((class.to_owned(), file));
         }
     }
+    found.extend(kotlin_applications(&root.join("src/main/kotlin")));
     Ok(found)
+}
+
+/// The Kotlin applications under `folder`, which JDT LS doesn't see: a file's top-level `main`
+/// is its `…Kt` class, as IntelliJ's Kotlin Spring Boot configurations name it.
+// shortcut: the sources' text, where IntelliJ reads the compiled classes; a `main` in a companion
+// object is taken for the file's class too
+fn kotlin_applications(folder: &Path) -> Vec<(String, PathBuf)> {
+    let Ok(entries) = std::fs::read_dir(folder) else {
+        return Vec::new();
+    };
+    let mut found = Vec::new();
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            found.extend(kotlin_applications(&path));
+            continue;
+        }
+        let Some(stem) = path
+            .file_stem()
+            .filter(|_| path.extension().is_some_and(|extension| extension == "kt"))
+        else {
+            continue;
+        };
+        let Ok(text) = std::fs::read_to_string(&path) else {
+            continue;
+        };
+        if !is_application(&text) {
+            continue;
+        }
+        let package = text
+            .lines()
+            .find_map(|line| line.trim().strip_prefix("package "))
+            .map(|package| format!("{}.", package.trim().trim_end_matches(';')))
+            .unwrap_or_default();
+        let class = format!("{package}{}Kt", stem.to_string_lossy());
+        found.push((class, path));
+    }
+    found
 }
 
 pub(crate) struct SpringBootRunner;
@@ -349,6 +388,10 @@ impl Runner for SpringBootRunner {
             }
             run.await
         })
+    }
+
+    fn can_cover(&self) -> bool {
+        true
     }
 
     fn can_debug(&self, cx: &App) -> bool {
@@ -619,11 +662,10 @@ fn policy_field(
         .into_any_element()
 }
 
-/// Runs an update policy on a running application (IntelliJ's `runUpdate`): the build for the
-/// resources and classes, then for the trigger file policies the file DevTools restarts on,
-/// written once HotSwap fails when the application is debugged.
-// shortcut: Update resources builds the classes too (JDT LS builds the whole project), where
-// IntelliJ copies the resources only
+/// Runs an update policy on a running application (IntelliJ's `runUpdate`): Update resources
+/// copies the changed resources into the class folder, as IntelliJ builds the modules' resources
+/// alone; the others build the project, then for the trigger file policies the file DevTools
+/// restarts on, written once HotSwap fails when the application is debugged.
 fn run_policy(
     policy: &'static str,
     session: Option<Entity<project::debugger::session::Session>>,
@@ -636,7 +678,8 @@ fn run_policy(
     let Some(root) = java.read(cx).root.clone() else {
         return;
     };
-    let build = (policy != UPDATE_TRIGGER_FILE).then(|| java.read(cx).build(cx));
+    let build = (!matches!(policy, UPDATE_TRIGGER_FILE | UPDATE_RESOURCES))
+        .then(|| java.read(cx).build(cx));
     let classpath = java.read(cx).classpath(&root, cx);
     let proxy = session
         .filter(|_| policy == HOT_SWAP_OR_TRIGGER_FILE)
@@ -650,6 +693,15 @@ fn run_policy(
         if let Some(build) = build {
             build.await?;
         }
+        if policy == UPDATE_RESOURCES {
+            let folder = class_folders(&root, classpath.await?).into_iter().next();
+            let folder = folder.context("Failed to update resources: class roots not found")?;
+            return cx
+                .background_spawn(
+                    async move { copy_changed(&root.join("src/main/resources"), &folder) },
+                )
+                .await;
+        }
         if !is_trigger_file(policy) {
             return Ok(());
         }
@@ -659,12 +711,7 @@ fn run_policy(
                 return Ok(());
             }
         }
-        let folders: Vec<PathBuf> = classpath
-            .await?
-            .into_iter()
-            .map(PathBuf::from)
-            .filter(|path| path.starts_with(&root) && path.is_dir())
-            .collect();
+        let folders = class_folders(&root, classpath.await?);
         anyhow::ensure!(
             !folders.is_empty(),
             "Failed to update trigger file: class roots not found"
@@ -678,6 +725,40 @@ fn run_policy(
         .await
     })
     .detach_and_log_err(cx);
+}
+
+/// The project's own class folders on its runtime classpath (Maven's `target/classes`, Gradle's
+/// `bin/main` under JDT LS).
+fn class_folders(root: &Path, classpath: Vec<String>) -> Vec<PathBuf> {
+    classpath
+        .into_iter()
+        .map(PathBuf::from)
+        .filter(|path| path.starts_with(root) && path.is_dir())
+        .collect()
+}
+
+/// Copies the files of `from` that are newer than their copy in `to`, or have none.
+// shortcut: the root module's `src/main/resources` copied as they are, where IntelliJ builds each
+// module's resource roots with Maven's filtering; read the roots from the build once modules are
+// imported
+fn copy_changed(from: &Path, to: &Path) -> Result<()> {
+    for entry in std::fs::read_dir(from)? {
+        let entry = entry?;
+        let (source, target) = (entry.path(), to.join(entry.file_name()));
+        if entry.file_type()?.is_dir() {
+            std::fs::create_dir_all(&target)?;
+            copy_changed(&source, &target)?;
+            continue;
+        }
+        let changed = std::fs::metadata(&target)
+            .and_then(|copied| Ok(entry.metadata()?.modified()? > copied.modified()?))
+            .unwrap_or(true);
+        if changed {
+            std::fs::copy(&source, &target)
+                .with_context(|| format!("Failed to update resources: {}", source.display()))?;
+        }
+    }
+    Ok(())
 }
 
 /// On frame deactivation: once the IDE is no longer the active app, each running Spring Boot
@@ -802,6 +883,8 @@ pub(crate) struct SpringBoot {
     classpath: Arc<AtomicBool>,
     /// The applications found at the last import.
     applications: Vec<String>,
+    /// New Project ▸ Spring Boot's sources were reformatted.
+    reformatted: bool,
     /// Each configuration's latest run, by the marker its JVM carries.
     pub(crate) markers: HashMap<String, String>,
     /// Each configuration's Actuator tab.
@@ -845,12 +928,88 @@ pub(crate) fn imported(java: &mut JavaProject, cx: &mut Context<JavaProject>) {
                 add_configurations(this, &found, cx);
             }
             start_language_server(this, &root, cx);
+            if cx.default_global::<PendingReformat>().0.remove(&root) {
+                reformat(this, &root, cx);
+            }
             cx.notify();
         })
         .ok();
         connect(this, cx).await;
     });
     java.spring.task = Some(task);
+}
+
+/// The projects New Project ▸ Spring Boot made, to reformat once imported (Settings › Spring ›
+/// Spring Initializr › "Reformat code when creating a new project").
+#[derive(Default)]
+pub(crate) struct PendingReformat(pub std::collections::HashSet<PathBuf>);
+
+impl gpui::Global for PendingReformat {}
+
+/// Reformats a new project's Java sources with JDT LS's formatter and saves them, as IntelliJ
+/// reformats the files Spring Initializr sends.
+// shortcut: the Java sources alone; Kotlin's and the build files keep the server's formatting
+fn reformat(java: &mut JavaProject, root: &Path, cx: &mut Context<JavaProject>) {
+    let project = java.project.clone();
+    let mut files = Vec::new();
+    collect_java_files(&root.join("src"), &mut files);
+    cx.spawn(async move |this, cx| {
+        let mut buffers = collections::HashSet::default();
+        for file in files {
+            let open = project.update(cx, |project, cx| project.open_local_buffer(file, cx));
+            buffers.insert(open.await?);
+        }
+        let format = project.update(cx, |project, cx| {
+            project.format(
+                buffers.clone(),
+                project::lsp_store::LspFormatTarget::Buffers,
+                false,
+                project::lsp_store::FormatTrigger::Manual,
+                cx,
+            )
+        });
+        format.await?;
+        project
+            .update(cx, |project, cx| project.save_buffers(buffers, cx))
+            .await?;
+        this.update(cx, |this, cx| {
+            this.spring.reformatted = true;
+            cx.notify();
+        })
+    })
+    .detach_and_log_err(cx);
+}
+
+fn collect_java_files(folder: &Path, files: &mut Vec<PathBuf>) {
+    let Ok(entries) = std::fs::read_dir(folder) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            collect_java_files(&path, files);
+        } else if path
+            .extension()
+            .is_some_and(|extension| extension == "java")
+        {
+            files.push(path);
+        }
+    }
+}
+
+/// A Spring Boot project without Java sources (Kotlin's): its applications found in its
+/// sources, each given its configuration as on an import.
+// shortcut: no Spring LS, which needs JDT LS's classpath; start it once Kotlin's server bridges
+pub(crate) fn imported_without_java(java: &mut JavaProject, cx: &mut Context<JavaProject>) {
+    let Some(root) = java.root.clone().filter(|root| is_project(root)) else {
+        return;
+    };
+    let found = kotlin_applications(&root.join("src/main/kotlin"));
+    java.spring.applications = found.iter().map(|(main, _)| main.clone()).collect();
+    if spork_settings::spring_boot_creates_run_configurations(cx) {
+        add_configurations(java, &found, cx);
+    }
+    cx.notify();
 }
 
 /// A Spring Boot configuration for each application that has none, named after its class (made
@@ -1091,8 +1250,13 @@ pub(crate) fn e2e_state(java: &JavaProject, cx: &App) -> Value {
         "server": spring_language_server(&java.project, cx).map(|server| server.process_id()),
         "bridged": spring.bridge.as_ref().is_some_and(|bridge| bridge.spring.upgrade().is_some()),
         "classpath": spring.classpath.load(Ordering::Relaxed),
+        "reformatted": spring.reformatted,
         "index": crate::endpoints::e2e_state(
             java,
+            java.workspace.upgrade().as_ref().map(|workspace| workspace.read(cx)),
+            cx,
+        ),
+        "beans": crate::beans::e2e_state(
             java.workspace.upgrade().as_ref().map(|workspace| workspace.read(cx)),
             cx,
         ),
@@ -1107,7 +1271,8 @@ pub(crate) fn e2e_state(java: &JavaProject, cx: &App) -> Value {
 #[cfg(test)]
 mod tests {
     use super::{
-        Configuration, SPRING_BOOT, check, is_application, service_state, unique_name, vm_options,
+        Configuration, SPRING_BOOT, check, copy_changed, is_application, kotlin_applications,
+        service_state, unique_name, vm_options,
     };
     use serde_json::json;
 
@@ -1210,5 +1375,48 @@ mod tests {
         let list = vec![configuration(json!({"label": "DemoApplication"}))];
         assert_eq!(unique_name(&list, "DemoApplication"), "DemoApplication (1)");
         assert_eq!(unique_name(&list, "Other"), "Other");
+    }
+
+    #[test]
+    fn update_resources_copies_the_changed_files_alone() -> anyhow::Result<()> {
+        let root = tempfile::tempdir()?;
+        let (resources, classes) = (root.path().join("resources"), root.path().join("classes"));
+        std::fs::create_dir_all(resources.join("static"))?;
+        std::fs::create_dir_all(&classes)?;
+        std::fs::write(resources.join("static/index.html"), "new")?;
+        std::fs::write(resources.join("application.properties"), "a=1")?;
+        // a copy newer than its resource stays
+        std::fs::write(classes.join("application.properties"), "kept")?;
+        copy_changed(&resources, &classes)?;
+        assert_eq!(
+            std::fs::read_to_string(classes.join("static/index.html"))?,
+            "new"
+        );
+        assert_eq!(
+            std::fs::read_to_string(classes.join("application.properties"))?,
+            "kept"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn a_kotlin_application_is_its_files_class() -> anyhow::Result<()> {
+        let root = tempfile::tempdir()?;
+        let folder = root.path().join("com/example/demo");
+        std::fs::create_dir_all(&folder)?;
+        std::fs::write(
+            folder.join("DemoApplication.kt"),
+            "package com.example.demo\n\n@SpringBootApplication\nclass DemoApplication\n\nfun main(args: Array<String>) {\n    runApplication<DemoApplication>(*args)\n}\n",
+        )?;
+        std::fs::write(
+            folder.join("Other.kt"),
+            "package com.example.demo\nclass Other\n",
+        )?;
+        let found: Vec<String> = kotlin_applications(root.path())
+            .into_iter()
+            .map(|(class, _)| class)
+            .collect();
+        assert_eq!(found, ["com.example.demo.DemoApplicationKt"]);
+        Ok(())
     }
 }

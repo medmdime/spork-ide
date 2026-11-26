@@ -110,12 +110,10 @@
    "ordered": true
   },
   {
-   "missing": [
-    {
-     "label": "Modify options",
-     "role": "AXLink"
-    }
-   ]
+   "find": {
+    "label": "Modify options",
+    "role": "AXLink"
+   }
   },
   {
    "do": "click",

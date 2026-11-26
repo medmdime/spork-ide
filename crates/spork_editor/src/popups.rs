@@ -585,12 +585,14 @@ fn code_action_row(row: CodeActionRow, cx: &App) -> AnyElement {
         CodeActionRowKind::Action | CodeActionRowKind::ModifyRunConfiguration => None,
         CodeActionRowKind::Run => Some("run/run"),
         CodeActionRowKind::Debug => Some("run/debug"),
+        CodeActionRowKind::RunWithCoverage => Some("run/runWithCoverage"),
     };
     // the run icon's popup: IntelliJ's executor actions, with their keys
     let runs = matches!(
         row.kind,
         CodeActionRowKind::Run
             | CodeActionRowKind::Debug
+            | CodeActionRowKind::RunWithCoverage
             | CodeActionRowKind::ModifyRunConfiguration
     );
     let shortcut = match row.kind {

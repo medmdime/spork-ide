@@ -1,0 +1,296 @@
+{
+ "id": "java-test-runner-options",
+ "fixture": "tests-maven",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven"
+   },
+   "within": 20000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 600000
+  },
+  {
+   "do": "open",
+   "path": "src/test/java/com/example/CalculatorTest.java"
+  },
+  {
+   "find": {
+    "label": "Run test 'CalculatorTest'",
+    "role": "AXButton"
+   },
+   "within": 30000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "click",
+   "label": "Run test 'CalculatorTest'",
+   "role": "AXButton"
+  },
+  {
+   "find": "Run 'CalculatorTest'",
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Run 'CalculatorTest'"
+  },
+  {
+   "expect": {
+    "run.tabs.0.running": false,
+    "run.tabs.0.tests.rows": [
+     "Test Results failed",
+     "  CalculatorTest failed",
+     "    adds() passed",
+     "    divides() ignored",
+     "    greetsAda() failed"
+    ]
+   },
+   "within": 300000
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "click",
+   "label": "adds()",
+   "role": "AXRow"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "click",
+   "label": "More",
+   "role": "AXButton",
+   "in": "TestTreeViewToolbar"
+  },
+  {
+   "do": "click",
+   "label": "Test Runner Settings"
+  },
+  {
+   "find": [
+    "Track Running Test",
+    "Show Inline Statistics",
+    "Scroll To",
+    "Open Source at Exception",
+    "Navigate with Single Click",
+    "Set Auto-Test Delay",
+    "Select First Failed Test When Finished",
+    "Include Non-Started Tests in Rerun Failed"
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 120000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "settings"
+  },
+  {
+   "do": "click",
+   "label": "Navigate with Single Click"
+  },
+  {
+   "do": "open",
+   "path": "src/main/java/com/example/Greeting.java"
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/Greeting.java"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "adds()",
+   "role": "AXRow"
+  },
+  {
+   "expect": {
+    "active": "src/test/java/com/example/CalculatorTest.java",
+    "editor.caret": "10:1"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "greetsAda()",
+   "role": "AXRow"
+  },
+  {
+   "expect": {
+    "editor.caret": "17:1"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Rerun Automatically",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "run.tabs.0.tests.auto_test": true
+   },
+   "within": 5000
+  },
+  {
+   "do": "open",
+   "path": "src/test/java/com/example/CalculatorTest.java"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "click",
+   "line_number": 12
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "end"
+  },
+  {
+   "do": "type",
+   "text": "//x"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-s"
+  },
+  {
+   "expect": {
+    "run.tabs.0.running": false,
+    "run.tabs.0.tests.history": {
+     "contains": ")\nCalculatorTest ("
+    }
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "run.tabs.0.tests.auto_test": true,
+    "run.tabs.0.tests.history": {
+     "contains": "CalculatorTest ("
+    }
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Test History",
+   "role": "AXButton"
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "do": "click",
+   "role": "AXMenuItem",
+   "nth": 0
+  },
+  {
+   "expect": {
+    "run.tabs.1.title": "CalculatorTest (1)",
+    "run.tabs.1.running": false,
+    "run.tabs.1.tests.rows": [
+     "Test Results failed",
+     "  CalculatorTest failed",
+     "    adds() passed",
+     "    divides() ignored",
+     "    greetsAda() failed"
+    ]
+   },
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "click",
+   "label": "More",
+   "role": "AXButton",
+   "in": "TestTreeViewToolbar"
+  },
+  {
+   "do": "click",
+   "label": "Export Test Results…"
+  },
+  {
+   "sh": "ls 'Test Results - CalculatorTest.xml'",
+   "contains": "Test Results",
+   "within": 10000
+  },
+  {
+   "do": "pick",
+   "paths": [
+    "Test Results - CalculatorTest.xml"
+   ]
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "click",
+   "label": "More",
+   "role": "AXButton",
+   "in": "TestTreeViewToolbar"
+  },
+  {
+   "do": "click",
+   "label": "Import Tests from File…"
+  },
+  {
+   "expect": {
+    "run.tabs.2.title": "CalculatorTest (2)",
+    "run.tabs.2.tests.status": "1 test failed, 1 passed, 1 ignored"
+   },
+   "within": 10000
+  }
+ ]
+}

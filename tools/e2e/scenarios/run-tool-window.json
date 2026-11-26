@@ -260,8 +260,9 @@
     "Run"
    ],
    "items": [
-    "Run",
-    "Debug",
+    "Run 'wait'",
+    "Debug 'wait'",
+    "Run 'wait' with Coverage (disabled)",
     "Run…",
     "Debug…",
     "Attach to Process…",
@@ -271,7 +272,10 @@
     "Show Running List (disabled)",
     "Debugging Actions",
     "Toggle Breakpoint",
-    "View Breakpoints…"
+    "View Breakpoints…",
+    "Manage Coverage Reports…",
+    "Generate Coverage Report… (disabled)",
+    "Hide Coverage (disabled)"
    ]
   },
   {

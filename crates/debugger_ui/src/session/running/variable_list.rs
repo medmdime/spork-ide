@@ -221,15 +221,110 @@ pub struct FieldWatchpointHook(pub std::rc::Rc<dyn Fn(&Entity<Session>, &str, &m
 
 impl gpui::Global for FieldWatchpointHook {}
 
+/// Spork IDE: what the app's actions on a value (IntelliJ's `XDebugger.ValueGroup`) can do with
+/// the selected one, given by the app for its adapters' sessions.
+#[derive(Clone, Debug, Default)]
+pub struct ValueActions {
+    /// Mark Object…, the value having an object to mark: whether it is marked (Unmark Object).
+    pub mark: Option<bool>,
+    pub jump_to_source: bool,
+    pub jump_to_type_source: bool,
+    /// View as: each renderer that applies and whether it shows the value.
+    pub renderers: Vec<(SharedString, bool)>,
+    /// Show types: whether values show their `{Type@id}`, where the app serves it.
+    pub show_types: Option<bool>,
+}
+
+/// Spork IDE: a selected value's `ValueActions`, given the session, the value and its depth in
+/// the tree (1 for a frame's own variables, under their scope); `None` for a session the app
+/// doesn't serve.
+#[derive(Clone)]
+pub struct ValueActionsHook(
+    pub std::rc::Rc<dyn Fn(&Entity<Session>, &dap::Variable, usize, &App) -> Option<ValueActions>>,
+);
+
+impl gpui::Global for ValueActionsHook {}
+
+/// Spork IDE: a value's IntelliJ markup (Mark Object…): its label, drawn before its name in its
+/// colour (`XValueNodeImpl`'s `[label] `).
+#[derive(Clone)]
+pub struct ValueMarkupHook(
+    pub std::rc::Rc<dyn Fn(&Entity<Session>, &dap::Variable, &App) -> Option<(SharedString, Hsla)>>,
+);
+
+impl gpui::Global for ValueMarkupHook {}
+
+fn value_markup(
+    session: &Entity<Session>,
+    variable: &dap::Variable,
+    cx: &App,
+) -> Option<(SharedString, Hsla)> {
+    let hook = cx.try_global::<ValueMarkupHook>()?;
+    (hook.0)(session, variable, cx)
+}
+
+/// Spork IDE: the watches aren't in the variables tree (IntelliJ's Separate Watches): the app
+/// shows them.
+#[derive(Default)]
+pub struct SeparateWatches(pub bool);
+
+impl gpui::Global for SeparateWatches {}
+
 /// Spork IDE: what the app's watches toolbar acts on.
 impl VariableList {
-    /// The rows, `name = value` (a scope by its name), for the app's end-to-end tests.
-    pub fn rows(&self) -> Vec<String> {
+    /// The tree built again, as Separate Watches changed.
+    pub fn rebuild(&mut self, cx: &mut Context<Self>) {
+        self.build_entries(cx);
+        cx.notify();
+    }
+
+    /// The selected variable or watch as the adapter's variable (a watch named by its
+    /// expression), with its depth in the tree.
+    pub fn selected_variable(&self) -> Option<(dap::Variable, usize)> {
+        let selection = self.selection.as_ref()?;
+        let entry = self.entries.iter().find(|entry| &entry.path == selection)?;
+        let depth = self
+            .entry_states
+            .get(&entry.path)
+            .map_or(0, |state| state.depth);
+        let variable = match &entry.entry {
+            DapEntry::Variable(variable) => variable.clone(),
+            DapEntry::Watcher(watcher) => dap::Variable {
+                name: watcher.expression.to_string(),
+                value: watcher.value.to_string(),
+                type_: None,
+                presentation_hint: watcher.presentation_hint.clone(),
+                evaluate_name: Some(watcher.expression.to_string()),
+                variables_reference: watcher.variables_reference,
+                named_variables: None,
+                indexed_variables: None,
+                memory_reference: None,
+                declaration_location_reference: None,
+                value_location_reference: None,
+            },
+            DapEntry::Scope(_) => return None,
+        };
+        Some((variable, depth))
+    }
+
+    fn markup_of(&self, variable: &dap::Variable, cx: &App) -> Option<(SharedString, Hsla)> {
+        value_markup(&self.session, variable, cx)
+    }
+
+    /// The rows, `name = value` (a scope by its name, a marked value after its `[label]`), for
+    /// the app's end-to-end tests.
+    pub fn rows(&self, cx: &App) -> Vec<String> {
         self.entries
             .iter()
             .map(|entry| match &entry.entry {
                 DapEntry::Watcher(watcher) => format!("{} = {}", watcher.expression, watcher.value),
-                DapEntry::Variable(variable) => format!("{} = {}", variable.name, variable.value),
+                DapEntry::Variable(variable) => {
+                    let row = format!("{} = {}", variable.name, variable.value);
+                    match self.markup_of(variable, cx) {
+                        Some((label, _)) => format!("[{label}] {row}"),
+                        None => row,
+                    }
+                }
                 DapEntry::Scope(scope) => scope.name.clone(),
             })
             .collect()
@@ -373,7 +468,14 @@ impl VariableList {
             .filter(|_| flat && stack.len() == 1)
             .map(|(_, _, path, _)| path.clone());
 
-        let watches = self.session.read(cx).watchers().clone();
+        let mut watches = self.session.read(cx).watchers().clone();
+        // Spork IDE: Separate Watches shows them in a view of their own
+        if cx
+            .try_global::<SeparateWatches>()
+            .is_some_and(|separate| separate.0)
+        {
+            watches.clear();
+        }
         // Spork IDE: the watches after the scopes and in their order, as IntelliJ lists them
         // (the stack pops its last first)
         stack.splice(
@@ -787,16 +889,66 @@ impl VariableList {
                 None
             };
             cx.update(|window, cx| {
-                // Spork IDE: IntelliJ's `XDebugger.Variables.Tree.Popup`, in its order; what the
-                // debug adapter protocol can't do greyed
-                let evaluate = cx.build_action("run::EvaluateExpression", None).ok();
+                // Spork IDE: IntelliJ's `XDebugger.Variables.Tree.Popup`, in its order; the app's
+                // actions where it serves the session (`ValueActionsHook`), what the debug
+                // adapter protocol can't do greyed
+                let app_action = |cx: &App, name: &str, data: Option<serde_json::Value>| {
+                    cx.build_action(name, data).ok()
+                };
+                let evaluate = app_action(cx, "run::EvaluateExpression", None);
+                let inspect = app_action(cx, "run::Inspect", None);
+                let mark = app_action(cx, "run::MarkObject", None);
+                let jump_to_source = app_action(cx, "run::JumpToSource", None);
+                let jump_to_type_source = app_action(cx, "run::JumpToTypeSource", None);
+                let show_types_action = app_action(cx, "run::ShowTypes", None);
+                let selected = this
+                    .update(cx, |this, _| this.selected_variable())
+                    .ok()
+                    .flatten();
+                let actions = selected
+                    .as_ref()
+                    .and_then(|(variable, depth)| {
+                        let hook = cx.try_global::<ValueActionsHook>()?.clone();
+                        let session = this.read_with(cx, |this, _| this.session.clone()).ok()?;
+                        (hook.0)(&session, variable, *depth, cx)
+                    })
+                    .unwrap_or_default();
+                let renderers: Vec<(SharedString, bool, Option<Box<dyn Action>>)> = actions
+                    .renderers
+                    .iter()
+                    .map(|(renderer, on)| {
+                        let action = app_action(
+                            cx,
+                            "run::ViewAs",
+                            Some(serde_json::json!({ "renderer": renderer })),
+                        );
+                        (renderer.clone(), *on, action)
+                    })
+                    .collect();
+                let auto = std::rc::Rc::new(app_action(
+                    cx,
+                    "run::ViewAs",
+                    Some(serde_json::json!({ "renderer": "" })),
+                ));
+                let renderers = std::rc::Rc::new(renderers);
                 let context_menu = ContextMenu::build(window, cx, |menu, _, _| {
                     let greyed = |label: &'static str| ContextMenuEntry::new(label).disabled(true);
+                    let app = |menu: ContextMenu,
+                               label: &'static str,
+                               action: &Option<Box<dyn Action>>,
+                               enabled: bool| match action {
+                        Some(action) if enabled => menu.action(label, action.boxed_clone()),
+                        _ => menu.item(greyed(label)),
+                    };
                     let variable = entry.as_variable().is_some();
+                    let menu = menu.item(greyed("New Class Level Watch…"));
+                    let menu = app(menu, "Inspect…", &inspect, selected.is_some());
+                    let menu = match actions.mark {
+                        Some(true) => app(menu, "Unmark Object", &mark, true),
+                        Some(false) => app(menu, "Mark Object…", &mark, true),
+                        None => menu.item(greyed("Mark Object…")),
+                    };
                     let menu = menu
-                        .item(greyed("New Class Level Watch…"))
-                        .item(greyed("Inspect…"))
-                        .item(greyed("Mark Object…"))
                         .action_disabled_when(
                             !supports_set_variable,
                             "Set Value…",
@@ -806,40 +958,77 @@ impl VariableList {
                         .item(greyed("Compare Value with Clipboard"))
                         .action("Copy Name", CopyVariableName.boxed_clone())
                         .separator();
-                    let menu = match evaluate {
-                        Some(evaluate) => menu.action("Evaluate Expression…", evaluate),
-                        None => menu.item(greyed("Evaluate Expression…")),
+                    let menu = app(menu, "Evaluate Expression…", &evaluate, true);
+                    let menu = menu
+                        .when(variable, |menu| {
+                            menu.action("Add to Watches", AddWatch.boxed_clone())
+                        })
+                        .when(entry.as_watcher().is_some(), |menu| {
+                            menu.action("Remove Watch", RemoveWatch.boxed_clone())
+                        })
+                        // IntelliJ's for a field: java-debug's watchpoints are on fields
+                        .when_some(can_toggle_data_breakpoint, |menu, _| {
+                            menu.action(
+                                "Toggle Field Watchpoint",
+                                crate::ToggleDataBreakpoint {
+                                    access_type: Some(dap::DataBreakpointAccessType::Write),
+                                }
+                                .boxed_clone(),
+                            )
+                        })
+                        .item(greyed("Show Referring Objects…"))
+                        .separator();
+                    let menu = app(
+                        menu,
+                        "Jump To Source",
+                        &jump_to_source,
+                        actions.jump_to_source,
+                    );
+                    let menu = app(
+                        menu,
+                        "Jump To Type Source",
+                        &jump_to_type_source,
+                        actions.jump_to_type_source,
+                    );
+                    let menu = menu.separator().item(greyed("View Text"));
+                    let menu = match renderers.is_empty() {
+                        true => menu.item(greyed("View as")),
+                        false => {
+                            let (renderers, auto) = (renderers.clone(), auto.clone());
+                            menu.submenu("View as", move |menu, _, _| {
+                                let mut menu = menu.item(greyed("Create…")).separator();
+                                if let Some(auto) = &*auto {
+                                    menu = menu.action("Auto", auto.boxed_clone()).separator();
+                                }
+                                renderers.iter().fold(
+                                    menu,
+                                    |menu, (label, on, action)| match action {
+                                        Some(action) => menu.action_checked(
+                                            label.clone(),
+                                            action.boxed_clone(),
+                                            *on,
+                                        ),
+                                        None => menu.item(
+                                            ContextMenuEntry::new(label.clone()).disabled(true),
+                                        ),
+                                    },
+                                )
+                            })
+                        }
                     };
-                    menu.when(variable, |menu| {
-                        menu.action("Add to Watches", AddWatch.boxed_clone())
-                    })
-                    .when(entry.as_watcher().is_some(), |menu| {
-                        menu.action("Remove Watch", RemoveWatch.boxed_clone())
-                    })
-                    // IntelliJ's for a field: java-debug's watchpoints are on fields
-                    .when_some(can_toggle_data_breakpoint, |menu, _| {
-                        menu.action(
-                            "Toggle Field Watchpoint",
-                            crate::ToggleDataBreakpoint {
-                                access_type: Some(dap::DataBreakpointAccessType::Write),
-                            }
-                            .boxed_clone(),
-                        )
-                    })
-                    .item(greyed("Show Referring Objects…"))
-                    .separator()
-                    .item(greyed("Jump To Source"))
-                    .item(greyed("Jump To Type Source"))
-                    .separator()
-                    .item(greyed("View Text"))
-                    .item(greyed("View as"))
-                    .item(greyed("Filter…"))
-                    .item(greyed("Adjust Range…"))
-                    .separator()
-                    .item(greyed("Show types"))
-                    .item(greyed("Mute Renderers"))
-                    .item(greyed("Customize Data Views…"))
-                    .context(focus_handle.clone())
+                    let menu = menu
+                        .item(greyed("Filter…"))
+                        .item(greyed("Adjust Range…"))
+                        .separator();
+                    let menu = match (actions.show_types, &show_types_action) {
+                        (Some(on), Some(action)) => {
+                            menu.action_checked("Show types", action.boxed_clone(), on)
+                        }
+                        _ => menu.item(greyed("Show types")),
+                    };
+                    menu.item(greyed("Mute Renderers"))
+                        .item(greyed("Customize Data Views…"))
+                        .context(focus_handle.clone())
                 });
                 _ = this.update(cx, |this, cx| {
                     cx.focus_view(&context_menu, window);
@@ -1691,6 +1880,15 @@ impl VariableList {
                         .gap_1()
                         .text_ui_sm(cx)
                         .w_full()
+                        // Spork IDE: the value's markup, `[label] ` in its colour
+                        .when_some(self.markup_of(dap, cx), |row, (label, color)| {
+                            row.child(
+                                div()
+                                    .font_weight(gpui::FontWeight::BOLD)
+                                    .text_color(color)
+                                    .child(format!("[{label}]")),
+                            )
+                        })
                         .child(
                             Label::new(&dap.name).when_some(variable_color.name, |this, color| {
                                 this.color(Color::from(color))

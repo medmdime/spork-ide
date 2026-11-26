@@ -12,9 +12,9 @@ use std::path::PathBuf;
 use collections::HashMap;
 use gpui::prelude::FluentBuilder as _;
 use gpui::{
-    AnyElement, App, Context, Entity, Global, InteractiveElement as _, IntoElement,
-    ParentElement as _, Render, Role, SharedString, StatefulInteractiveElement as _, Styled as _,
-    Task, TaskExt as _, WeakEntity, Window, div, px, relative,
+    AnyElement, App, AppContext as _, Context, Entity, Global, InteractiveElement as _,
+    IntoElement, ParentElement as _, Render, Role, SharedString, StatefulInteractiveElement as _,
+    Styled as _, Task, TaskExt as _, WeakEntity, Window, div, px, relative,
 };
 use gpui_kit::component::menu::{DropdownMenu as _, PopupMenu, PopupMenuItem};
 use gpui_kit::component::{Selectable as _, h_flex, v_flex};
@@ -29,6 +29,9 @@ use workspace::{OpenOptions, Workspace};
 pub const TEST_RUN: &str = "SPORK_TEST_RUN";
 /// The environment variable that gives a test run's runner the IDE's port.
 pub const TEST_PORT: &str = "SPORK_TEST_PORT";
+/// The environment variable that marks a test run as debugged, by the debug adapter it names:
+/// its tests show in the adapter's session in the Debug tool window, not in the Run tool window.
+pub const DEBUGGED_RUN: &str = "SPORK_DEBUGGED_RUN";
 
 /// A node's state, as its icon shows it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -338,11 +341,17 @@ impl TestResults {
         }
     }
 
-    /// The failed tests, each `com.example.GreetingTest#greets`, for Rerun Failed Tests.
-    pub fn failed_tests(&self) -> Vec<String> {
+    /// The failed tests, each `com.example.GreetingTest#greets`, for Rerun Failed Tests; with
+    /// `non_started` those the run didn't finish too (IntelliJ's Include Non-Started Tests in
+    /// Rerun Failed).
+    pub fn failed_tests(&self, non_started: bool) -> Vec<String> {
         self.tests(0)
             .into_iter()
-            .filter(|ix| self.nodes[*ix].state.is_defect())
+            .filter(|ix| {
+                let state = self.nodes[*ix].state;
+                state.is_defect()
+                    || (non_started && matches!(state, TestState::Terminated | TestState::NotRun))
+            })
             .filter_map(|ix| {
                 let (class, method) = location_parts(self.nodes[ix].location.as_deref()?)?;
                 Some(match method {
@@ -359,6 +368,184 @@ impl TestResults {
             .filter_map(|ix| Some((self.nodes[ix].location.clone()?, self.state(ix))))
             .collect()
     }
+}
+
+impl TestResults {
+    /// A run's results as IntelliJ's exported XML has them (`TestResultsXmlFormatter`, its test
+    /// history's and Export Test Results'), and the run's name.
+    pub fn from_xml(text: &str) -> anyhow::Result<(String, Self)> {
+        use quick_xml::events::Event;
+        let mut reader = quick_xml::Reader::from_str(text);
+        let mut results = Self::default();
+        let mut name = String::new();
+        // the open suites and tests, the root first; the output being read and its type
+        let mut open = vec![0];
+        let mut output: Option<(String, String)> = None;
+        loop {
+            let event = reader.read_event()?;
+            let (start, empty) = match &event {
+                Event::Start(start) => (Some(start.clone()), false),
+                Event::Empty(start) => (Some(start.clone()), true),
+                _ => (None, false),
+            };
+            if let Some(start) = start {
+                let mut attributes: HashMap<String, String> = HashMap::default();
+                for attribute in start.attributes().flatten() {
+                    attributes.insert(
+                        String::from_utf8_lossy(attribute.key.local_name().as_ref()).into_owned(),
+                        attribute
+                            .normalized_value(quick_xml::XmlVersion::Explicit1_0)?
+                            .into_owned(),
+                    );
+                }
+                let attribute = |key: &str| attributes.get(key).cloned();
+                match start.local_name().as_ref() {
+                    b"testrun" => name = attribute("name").unwrap_or_default(),
+                    tag @ (b"suite" | b"test") => {
+                        let parent = open.last().copied().unwrap_or(0);
+                        let ix = results.nodes.len();
+                        results.nodes.push(Node {
+                            name: attribute("name").unwrap_or_default(),
+                            location: attribute("locationUrl"),
+                            suite: tag == b"suite",
+                            children: Vec::new(),
+                            state: match attribute("status").as_deref() {
+                                Some("passed") => TestState::Passed,
+                                Some("failed") => TestState::Failed,
+                                Some("error") => TestState::Error,
+                                Some("ignored" | "skipped") => TestState::Ignored,
+                                Some("terminated") => TestState::Terminated,
+                                _ => TestState::NotRun,
+                            },
+                            duration: attribute("duration").and_then(|d| d.parse().ok()),
+                            finished: true,
+                            output: Vec::new(),
+                            failure: None,
+                        });
+                        results.nodes[parent].children.push(ix);
+                        if !empty {
+                            open.push(ix);
+                        }
+                    }
+                    b"output" if !empty => {
+                        output = Some((attribute("type").unwrap_or_default(), String::new()))
+                    }
+                    b"diff" => {
+                        if let Some(ix) = open.last().copied() {
+                            let failure = results.nodes[ix].failure.get_or_insert_default();
+                            failure.expected = attribute("expected");
+                            failure.actual = attribute("actual");
+                        }
+                    }
+                    _ => {}
+                }
+                continue;
+            }
+            match event {
+                Event::Text(text) => {
+                    if let Some((_, read)) = &mut output {
+                        read.push_str(&text.decode()?);
+                    }
+                }
+                Event::CData(data) => {
+                    if let Some((_, read)) = &mut output {
+                        read.push_str(&data.decode()?);
+                    }
+                }
+                Event::GeneralRef(reference) => {
+                    if let Some((_, read)) = &mut output {
+                        let character = match reference.resolve_char_ref()? {
+                            Some(character) => Some(character),
+                            None => match reference.decode()?.as_ref() {
+                                "lt" => Some('<'),
+                                "gt" => Some('>'),
+                                "amp" => Some('&'),
+                                "quot" => Some('"'),
+                                "apos" => Some('\''),
+                                _ => None,
+                            },
+                        };
+                        read.extend(character);
+                    }
+                }
+                Event::End(end) => match end.local_name().as_ref() {
+                    b"suite" | b"test" => {
+                        open.pop();
+                    }
+                    b"output" => {
+                        let (Some((kind, text)), Some(ix)) = (output.take(), open.last().copied())
+                        else {
+                            continue;
+                        };
+                        let node = &mut results.nodes[ix];
+                        // a failed test's stderr is its failure (the stack trace)
+                        if kind == "stderr" && node.state.is_defect() {
+                            let failure = node.failure.get_or_insert_default();
+                            failure.message = text.lines().next().unwrap_or_default().to_owned();
+                            failure.details = text;
+                        } else {
+                            node.output.push((text, kind == "stderr"));
+                        }
+                    }
+                    _ => {}
+                },
+                Event::Eof => break,
+                _ => {}
+            }
+        }
+        results.end();
+        Ok((name, results))
+    }
+}
+
+/// The folder of a project's test history (IntelliJ's `testHistory`): each finished run's
+/// results as XML, named after its configuration and when it ended.
+fn history_folder(root: &std::path::Path) -> PathBuf {
+    crate::configurations::workspace_folder(root).join("testHistory")
+}
+
+/// How many runs the history keeps (IntelliJ's `tests.history.size`).
+const HISTORY_SIZE: usize = 10;
+
+/// IntelliJ's `SMTestRunnerResultsForm.HISTORY_DATE_FORMAT`.
+const HISTORY_DATE_FORMAT: &str = "%Y.%m.%d at %Hh %Mm %Ss";
+
+/// The runs of the history, the latest first: each file and its Test History item's text
+/// (`GreetingTest (11/26/26, 1:52 AM)`).
+fn history(root: &std::path::Path) -> Vec<(PathBuf, String)> {
+    let Ok(entries) = std::fs::read_dir(history_folder(root)) else {
+        return Vec::new();
+    };
+    let mut files: Vec<(std::time::SystemTime, PathBuf)> = entries
+        .flatten()
+        .map(|entry| entry.path())
+        .filter(|path| path.extension().is_some_and(|extension| extension == "xml"))
+        .map(|path| {
+            let modified = std::fs::metadata(&path)
+                .and_then(|metadata| metadata.modified())
+                .unwrap_or(std::time::UNIX_EPOCH);
+            (modified, path)
+        })
+        .collect();
+    files.sort_by_key(|(modified, _)| std::cmp::Reverse(*modified));
+    files
+        .into_iter()
+        .map(|(_, path)| {
+            let stem = path
+                .file_stem()
+                .map(|stem| stem.to_string_lossy().into_owned())
+                .unwrap_or_default();
+            let text = stem
+                .rsplit_once(" - ")
+                .and_then(|(name, date)| {
+                    let date =
+                        chrono::NaiveDateTime::parse_from_str(date, HISTORY_DATE_FORMAT).ok()?;
+                    Some(format!("{name} ({})", date.format("%-m/%-d/%y, %-I:%M %p")))
+                })
+                .unwrap_or(stem);
+            (path, text)
+        })
+        .collect()
 }
 
 /// A location hint's class and method: `java:test://com.example.A/greets`.
@@ -629,12 +816,85 @@ fn modify_run_configuration(task: &task::ResolvedTask, window: &mut Window, cx: 
     });
 }
 
-/// The gutter's run icons and their popup's Modify Run Configuration….
+/// The configuration a gutter run's task runs ([`crate::configurations::CONFIGURATION_ENV`]), or
+/// a main class's ([`crate::configurations::GUTTER_MAIN_ENV`]): the project's configuration of
+/// that class when it has one (Spring Boot's), an Application or Kotlin one named after it.
+fn gutter_configuration(task: &task::ResolvedTask, cx: &App) -> Option<crate::Configuration> {
+    let env = &task.resolved.env;
+    if let (Some(main), Some(adapter)) = (
+        env.get(crate::configurations::GUTTER_MAIN_ENV),
+        env.get(crate::configurations::GUTTER_TYPE_ENV),
+    ) && !main.is_empty()
+    {
+        let existing = cx.active_window().and_then(|window| {
+            let workspace = window
+                .downcast::<workspace::MultiWorkspace>()?
+                .read(cx)
+                .ok()?
+                .workspace()
+                .clone();
+            let configurations = crate::ProjectConfigurations::of(workspace.read(cx), cx)?;
+            configurations
+                .read(cx)
+                .list
+                .iter()
+                .find(|configuration| {
+                    !configuration.is_task()
+                        && configuration
+                            .text(crate::configurations::Field::Command)
+                            .trim()
+                            == main
+                })
+                .cloned()
+        });
+        return Some(existing.unwrap_or_else(|| {
+            let mut configuration = crate::Configuration::new_debug(adapter, &task.resolved_label);
+            configuration.set_text(crate::configurations::Field::Command, main);
+            configuration
+        }));
+    }
+    let entry = task
+        .resolved
+        .env
+        .get(crate::configurations::CONFIGURATION_ENV)
+        .and_then(|entry| {
+            serde_json::from_str::<serde_json::Map<String, Value>>(entry).log_err()
+        })?;
+    Some(crate::Configuration {
+        adapter: entry
+            .get("adapter")
+            .and_then(Value::as_str)
+            .map(|adapter| adapter.to_owned().into()),
+        shared: false,
+        entry,
+    })
+}
+
+/// The gutter's run icons and their popup's Run '…' with Coverage and Modify Run
+/// Configuration….
 pub(crate) fn init(cx: &mut App) {
     cx.set_global(editor::RunIndicatorIcon(std::rc::Rc::new(gutter_icon)));
     cx.set_global(editor::RunMenuModify(std::rc::Rc::new(
         modify_run_configuration,
     )));
+    cx.set_global(editor::RunMenuCoverage {
+        label: std::rc::Rc::new(|task, cx| {
+            let configuration = gutter_configuration(task, cx)?;
+            crate::can_cover(&configuration, cx)
+                .then(|| format!("Run '{}' with Coverage", configuration.name()).into())
+        }),
+        run: std::rc::Rc::new(|task, window, cx| {
+            let (Some(configuration), Some(workspace)) = (
+                gutter_configuration(task, cx),
+                Workspace::for_window(window, cx),
+            ) else {
+                return;
+            };
+            workspace.update(cx, |workspace, cx| {
+                crate::run_temporary_with_coverage(configuration, workspace, window, cx)
+            });
+        }),
+    });
 }
 
 /// The test runner's view options, the same for every run and kept as the user leaves them, as
@@ -648,6 +908,18 @@ struct Options {
     inline_statistics: bool,
     track_running: bool,
     select_first_failed: bool,
+    /// Scroll To ▸ Stack Trace: a failed test's console shows its failure first.
+    scroll_to_stack_trace: bool,
+    /// Scroll To ▸ Bottom (or Top): where a test's console starts.
+    scroll_to_bottom: bool,
+    /// Open Source at Exception: Jump to Source opens a failed test at the line that failed.
+    open_failure_line: bool,
+    /// Navigate with Single Click: selecting a test opens its source.
+    navigate_single_click: bool,
+    /// Include Non-Started Tests in Rerun Failed.
+    include_non_started: bool,
+    /// Set Auto-Test Delay: how long Rerun Automatically waits after a save, in seconds.
+    auto_test_delay: u64,
 }
 
 impl Default for Options {
@@ -660,6 +932,12 @@ impl Default for Options {
             inline_statistics: true,
             track_running: true,
             select_first_failed: false,
+            scroll_to_stack_trace: false,
+            scroll_to_bottom: false,
+            open_failure_line: true,
+            navigate_single_click: false,
+            include_non_started: true,
+            auto_test_delay: 3,
         }
     }
 }
@@ -668,6 +946,13 @@ impl Default for Options {
 struct GlobalOptions(Options);
 
 impl Global for GlobalOptions {}
+
+/// The configurations whose runs rerun automatically (IntelliJ's Rerun Automatically), kept from
+/// run to run of each.
+#[derive(Default)]
+struct AutoTests(collections::HashSet<SharedString>);
+
+impl Global for AutoTests {}
 
 /// How the tree sorts its nodes.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -683,6 +968,9 @@ pub(crate) struct TabActions {
     pub rerun: Box<dyn Fn(&mut Window, &mut App)>,
     pub rerun_failed: Box<dyn Fn(Vec<String>, &mut Window, &mut App)>,
     pub stop: Box<dyn Fn(&mut Window, &mut App)>,
+    /// Opens a run's results from an XML file in a tab of their own (Test History, Import Tests
+    /// from File…).
+    pub import: std::rc::Rc<dyn Fn(PathBuf, &mut Window, &mut App)>,
 }
 
 /// A test run's tab: the toolbar, the tree and the selected node's console.
@@ -697,6 +985,14 @@ pub struct TestRunView {
     workspace: WeakEntity<Workspace>,
     name: SharedString,
     running: bool,
+    /// Shown in a debug session's Console, whose toolbar has the Rerun and Stop.
+    debugged: bool,
+    /// The selected node's console, scrolled where Scroll To says once the selection changes.
+    console_scroll: gpui::ScrollHandle,
+    scroll_pending: bool,
+    /// Rerun Automatically: the run again after a save, once the delay passes without another.
+    _auto_test: Task<()>,
+    _saves: Option<gpui::Subscription>,
     actions: TabActions,
     _listen: Task<()>,
 }
@@ -708,9 +1004,24 @@ impl TestRunView {
         workspace: WeakEntity<Workspace>,
         actions: TabActions,
         listener: smol::net::TcpListener,
+        debugged: bool,
         cx: &mut Context<Self>,
     ) -> Self {
-        let listen = cx.spawn(async move |this, cx| {
+        let mut view = Self::imported(name, TestResults::default(), workspace, actions, cx);
+        view.running = true;
+        view.debugged = debugged;
+        view._saves = view
+            .workspace
+            .upgrade()
+            .filter(|_| !debugged)
+            .map(|workspace| {
+                cx.subscribe(&workspace, |this, _, event, cx| {
+                    if let workspace::Event::UserSavedItem { .. } = event {
+                        this.saved(cx);
+                    }
+                })
+            });
+        view._listen = cx.spawn(async move |this, cx| {
             // a connection a runner (or a Gradle build's test task) opens, its lines in order
             loop {
                 let Ok((stream, _)) = listener.accept().await else {
@@ -732,8 +1043,19 @@ impl TestRunView {
                 .detach();
             }
         });
+        view
+    }
+
+    /// A view of a run's results read from a file (the test history's, an imported one).
+    pub(crate) fn imported(
+        name: SharedString,
+        results: TestResults,
+        workspace: WeakEntity<Workspace>,
+        actions: TabActions,
+        cx: &mut Context<Self>,
+    ) -> Self {
         Self {
-            results: TestResults::default(),
+            results,
             selected: 0,
             options: cx
                 .try_global::<GlobalOptions>()
@@ -744,9 +1066,14 @@ impl TestRunView {
             console: None,
             workspace,
             name,
-            running: true,
+            running: false,
+            debugged: false,
+            console_scroll: gpui::ScrollHandle::new(),
+            scroll_pending: false,
+            _auto_test: Task::ready(()),
+            _saves: None,
             actions,
-            _listen: listen,
+            _listen: Task::ready(()),
         }
     }
 
@@ -765,15 +1092,17 @@ impl TestRunView {
             && self.results.nodes.len() > before
             && !self.results.nodes[before].suite
         {
-            self.selected = before;
+            self.select(before);
         }
         cx.notify();
     }
 
-    /// The process ended: the tests left running were terminated, the gutter learns the states.
+    /// The process ended: the tests left running were terminated, the gutter learns the states,
+    /// the test history keeps the results.
     pub(crate) fn finished(&mut self, cx: &mut Context<Self>) {
         self.running = false;
         self.results.end();
+        self.save_history(cx);
         let states = self.results.states();
         let global = cx.default_global::<TestStates>();
         for (location, state) in states {
@@ -786,9 +1115,9 @@ impl TestRunView {
                 .into_iter()
                 .find(|ix| self.results.nodes[*ix].state.is_defect())
         {
-            self.selected = first;
+            self.select(first);
         } else if self.options.track_running {
-            self.selected = 0;
+            self.select(0);
         }
         // the editors' run icons show the new states
         cx.refresh_windows();
@@ -797,6 +1126,45 @@ impl TestRunView {
 
     pub fn results(&self) -> &TestResults {
         &self.results
+    }
+
+    /// Whether its configuration reruns automatically.
+    fn auto_test(&self, cx: &App) -> bool {
+        cx.try_global::<AutoTests>()
+            .is_some_and(|auto| auto.0.contains(&self.name))
+    }
+
+    /// A file was saved: with Rerun Automatically, the run again once the delay passes without
+    /// another save, unless it still runs.
+    fn saved(&mut self, cx: &mut Context<Self>) {
+        if !self.auto_test(cx) {
+            return;
+        }
+        let delay = std::time::Duration::from_secs(self.options.auto_test_delay);
+        self._auto_test = cx.spawn(async move |this, cx| {
+            cx.background_executor().timer(delay).await;
+            this.update(cx, |this, cx| {
+                // its project's window, which needn't be the active one
+                let window = this
+                    .workspace
+                    .upgrade()
+                    .and_then(|workspace| crate::window_of(&workspace, cx));
+                if let Some(window) = window.filter(|_| !this.running) {
+                    window
+                        .update(cx, |_, window, cx| (this.actions.rerun)(window, cx))
+                        .log_err();
+                }
+            })
+            .log_err();
+        });
+    }
+
+    /// Selects a node, its console scrolled as Scroll To says.
+    fn select(&mut self, ix: usize) {
+        if self.selected != ix {
+            self.scroll_pending = true;
+        }
+        self.selected = ix;
     }
 
     fn visible(&self, ix: usize) -> bool {
@@ -857,8 +1225,8 @@ impl TestRunView {
             (false, Some(at)) if at > 0 => failed.get(at - 1),
             (false, _) => failed.last(),
         };
-        if let Some(target) = target {
-            self.selected = *target;
+        if let Some(target) = target.copied() {
+            self.select(target);
             cx.notify();
         }
     }
@@ -895,8 +1263,9 @@ impl TestRunView {
             .when_some(self.node_menu(ix, cx), |item, menu| item.context_menu(menu))
             .on_click(move |event, window, cx| {
                 this.update(cx, |this, cx| {
-                    this.selected = ix;
-                    if event.click_count() == 2
+                    this.select(ix);
+                    // Navigate with Single Click opens it as a double click does
+                    if (event.click_count() == 2 || this.options.navigate_single_click)
                         && let Some(location) = &location
                     {
                         this.jump_to_source(location, window, cx);
@@ -918,21 +1287,45 @@ impl TestRunView {
     {
         let location = self.results.nodes[ix].location.clone()?;
         let (class, method) = location_parts(&location)?;
-        // the run's own type: TestNG's tests rerun as TestNG
-        let adapter = self
+        let configurations = self
             .workspace
             .upgrade()
-            .and_then(|workspace| crate::ProjectConfigurations::of(workspace.read(cx), cx))
-            .and_then(|configurations| {
-                configurations
-                    .read(cx)
-                    .list
-                    .iter()
-                    .find(|c| c.name() == self.name)
-                    .and_then(|c| c.adapter.clone())
-            })
+            .and_then(|workspace| crate::ProjectConfigurations::of(workspace.read(cx), cx));
+        let run = configurations.as_ref().and_then(|configurations| {
+            configurations
+                .read(cx)
+                .list
+                .iter()
+                .find(|c| c.name() == self.name)
+                .cloned()
+        });
+        // the run's own type: TestNG's tests rerun as TestNG
+        let adapter = run
+            .as_ref()
+            .and_then(|c| c.adapter.clone())
             .filter(|adapter| crate::configurations::is_test(Some(adapter)))
             .unwrap_or_else(|| crate::configurations::JUNIT.into());
+        // Exclude from Suite: a class of a Pattern configuration's patterns, out of them
+        let exclude = run
+            .filter(|run| {
+                method.is_none()
+                    && crate::configurations::test_kind(run) == "pattern"
+                    && crate::configurations::test_patterns(run)
+                        .iter()
+                        .any(|pattern| pattern == class)
+            })
+            .zip(configurations)
+            .map(|(mut run, configurations)| {
+                let patterns: Vec<String> = crate::configurations::test_patterns(&run)
+                    .into_iter()
+                    .filter(|pattern| pattern != class)
+                    .collect();
+                run.set_text(
+                    crate::configurations::Field::TestPattern,
+                    &patterns.join("||"),
+                );
+                (run, configurations)
+            });
         let configuration = crate::configurations::test_configuration(&adapter, class, method);
         let name = configuration.name();
         let view = cx.entity().downgrade();
@@ -955,6 +1348,7 @@ impl TestRunView {
                     }
                 };
                 let (view, location) = (view.clone(), location.clone());
+                let exclude = exclude.clone();
                 menu.item(PopupMenuItem::new(format!("Run '{name}'")).on_click(run(false)))
                     .item(PopupMenuItem::new(format!("Debug '{name}'")).on_click(run(true)))
                     .separator()
@@ -964,15 +1358,50 @@ impl TestRunView {
                                 .log_err();
                         }),
                     )
+                    .when_some(exclude, |menu, (run, configurations)| {
+                        menu.separator()
+                            .item(PopupMenuItem::new("Exclude from Suite").on_click(
+                                move |_, _, cx| {
+                                    configurations.update(cx, |configurations, cx| {
+                                        let mut list = configurations.list.clone();
+                                        for listed in &mut list {
+                                            if listed.name() == run.name() {
+                                                *listed = run.clone();
+                                            }
+                                        }
+                                        configurations.save(list, cx).detach_and_log_err(cx);
+                                    })
+                                },
+                            ))
+                    })
             },
         )
     }
 
-    /// Jump to Source: the test's method, or the suite's class.
+    /// Jump to Source: the test's method, or the suite's class; a failed test's line that failed
+    /// with Open Source at Exception (its stack trace's frame in the test's class).
     fn jump_to_source(&self, location: &str, window: &mut Window, cx: &mut Context<Self>) {
         let Some((class, method)) = location_parts(location) else {
             return;
         };
+        let failure = self
+            .results
+            .nodes
+            .iter()
+            .find(|node| node.location.as_deref() == Some(location))
+            .and_then(|node| node.failure.as_ref())
+            .filter(|_| self.options.open_failure_line && method.is_some());
+        let failed_at = failure.and_then(|failure| {
+            failure.details.lines().find_map(|line| {
+                let (frame_class, file, number) = parse_frame(line)?;
+                (frame_class.split('$').next() == class.split('$').next())
+                    .then(|| Some((self.source_of(class, Some(file), cx)?, number)))?
+            })
+        });
+        if let Some((path, number)) = failed_at {
+            self.open(path, number.saturating_sub(1), window, cx);
+            return;
+        }
         let Some(path) = self.source_of(class, None, cx) else {
             return;
         };
@@ -1066,19 +1495,77 @@ impl TestRunView {
         .detach_and_log_err(cx);
     }
 
-    /// Export Test Results…: the run in IntelliJ's XML format, in the project's folder.
-    fn export(&self, cx: &mut Context<Self>) {
-        let Some(workspace) = self.workspace.upgrade() else {
-            return;
-        };
-        let Some(root) = workspace
+    /// The project's folder, where its test history and exports go.
+    fn root(&self, cx: &App) -> Option<PathBuf> {
+        let workspace = self.workspace.upgrade()?;
+        let worktree = workspace
             .read(cx)
             .project()
             .read(cx)
             .visible_worktrees(cx)
-            .next()
-            .map(|worktree| worktree.read(cx).abs_path().to_path_buf())
-        else {
+            .next()?;
+        Some(worktree.read(cx).abs_path().to_path_buf())
+    }
+
+    /// Keeps the run's results in the test history, the oldest ones beyond its size deleted.
+    fn save_history(&self, cx: &mut Context<Self>) {
+        let Some(root) = self.root(cx) else {
+            return;
+        };
+        if self.results.tests(0).is_empty() {
+            return;
+        }
+        let folder = history_folder(&root);
+        let file_name: String = self
+            .name
+            .chars()
+            .map(|c| match c {
+                '/' | '\\' | ':' => '_',
+                c => c,
+            })
+            .collect();
+        let path = folder.join(format!(
+            "{file_name} - {}.xml",
+            chrono::Local::now().format(HISTORY_DATE_FORMAT)
+        ));
+        let text = export_xml(&self.results, &self.name);
+        cx.background_spawn(async move {
+            std::fs::create_dir_all(&folder)?;
+            std::fs::write(&path, text)?;
+            for (old, _) in history(&root).into_iter().skip(HISTORY_SIZE) {
+                std::fs::remove_file(old)?;
+            }
+            anyhow::Ok(())
+        })
+        .detach_and_log_err(cx);
+    }
+
+    /// Import Tests from File…: an XML file of a run's results, chosen in the file chooser.
+    fn import_from_file(&self, window: &mut Window, cx: &mut Context<Self>) {
+        let paths = spork_workbench::prompt_for_paths(
+            gpui_kit::PathPromptOptions {
+                files: true,
+                directories: false,
+                multiple: false,
+                prompt: Some("Choose a File with Tests Result".into()),
+            },
+            cx,
+        );
+        let import = self.actions.import.clone();
+        cx.spawn_in(window, async move |_, cx| {
+            let Ok(Ok(Some(paths))) = paths.await else {
+                return;
+            };
+            if let Some(path) = paths.into_iter().next() {
+                cx.update(|window, cx| import(path, window, cx)).log_err();
+            }
+        })
+        .detach();
+    }
+
+    /// Export Test Results…: the run in IntelliJ's XML format, in the project's folder.
+    fn export(&self, cx: &mut Context<Self>) {
+        let (Some(workspace), Some(root)) = (self.workspace.upgrade(), self.root(cx)) else {
             return;
         };
         let path = root.join(format!("Test Results - {}.xml", self.name));
@@ -1108,7 +1595,7 @@ impl TestRunView {
     fn toolbar(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let tokens = Tokens::get(cx);
         let separator = || div().w(px(1.)).h(px(20.)).mx(px(3.)).bg(tokens.separator);
-        let failed = self.results.failed_tests();
+        let failed = self.results.failed_tests(self.options.include_non_started);
         let this = cx.entity().downgrade();
         let toggle = |id: &'static str,
                       icon: &'static str,
@@ -1168,13 +1655,23 @@ impl TestRunView {
                     ))
                 }
             });
-        let settings = (
-            self.options.track_running,
-            self.options.inline_statistics,
-            self.options.select_first_failed,
-        );
+        let settings = self.options;
         let any_failed = !failed.is_empty();
         let settings_view = this.clone();
+        let history_root = self.root(cx);
+        let import = self.actions.import.clone();
+        let test_history = ActionButton::new("tests-history", "general/history")
+            .tooltip("Test History")
+            .dropdown_menu(move |menu, _, _| {
+                let runs = history_root.as_deref().map(history).unwrap_or_default();
+                runs.into_iter().fold(menu, |menu, (path, text)| {
+                    let import = import.clone();
+                    menu.item(
+                        PopupMenuItem::new(text)
+                            .on_click(move |_, window, cx| import(path.clone(), window, cx)),
+                    )
+                })
+            });
         let more = ActionButton::new("tests-more", "general/moreVertical")
             .tooltip("More")
             .dropdown_menu(move |menu, window, cx| {
@@ -1196,7 +1693,6 @@ impl TestRunView {
                             },
                         )
                     };
-                let (track, statistics, first_failed) = settings;
                 let settings_view = settings_view.clone();
                 menu.item(item("Expand All", true, |this, _, _| {
                     this.expanded = true;
@@ -1213,6 +1709,11 @@ impl TestRunView {
                 .item(item("Next Failed Test", any_failed, |this, _, cx| {
                     this.select_failed(true, cx)
                 }))
+                .item(item(
+                    "Import Tests from File…",
+                    true,
+                    |this, window, cx| this.import_from_file(window, cx),
+                ))
                 .item(item("Export Test Results…", true, |this, _, cx| {
                     this.export(cx)
                 }))
@@ -1221,10 +1722,13 @@ impl TestRunView {
                     "Test Runner Settings",
                     window,
                     cx,
-                    move |menu, _, _| {
-                        let check =
-                            |label: &'static str, checked: bool, change: fn(&mut TestRunView)| {
-                                let this = settings_view.clone();
+                    move |menu, window, cx| {
+                        let check = {
+                            let view = settings_view.clone();
+                            move |label: &'static str,
+                                  checked: bool,
+                                  change: fn(&mut TestRunView)| {
+                                let this = view.clone();
                                 PopupMenuItem::new(label).checked(checked).on_click(
                                     move |_, _, cx| {
                                         this.update(cx, |this, cx| {
@@ -1234,22 +1738,86 @@ impl TestRunView {
                                         .log_err();
                                     },
                                 )
-                            };
-                        menu.item(check("Track Running Test", track, |this| {
-                            this.options.track_running = !this.options.track_running
-                        }))
-                        .item(check("Show Inline Statistics", statistics, |this| {
-                            this.options.inline_statistics = !this.options.inline_statistics
-                        }))
+                            }
+                        };
+                        let scroll_check = check.clone();
+                        // IntelliJ's `ToolbarPanel` secondary group
+                        menu.item(check(
+                            "Track Running Test",
+                            settings.track_running,
+                            |this| this.options.track_running = !this.options.track_running,
+                        ))
+                        .item(check(
+                            "Show Inline Statistics",
+                            settings.inline_statistics,
+                            |this| this.options.inline_statistics = !this.options.inline_statistics,
+                        ))
                         .separator()
-                        .item(PopupMenuItem::new("Scroll To").disabled(true))
-                        .item(PopupMenuItem::new("Open Source at Exception").disabled(true))
+                        .submenu("Scroll To", window, cx, move |menu, _, _| {
+                            menu.item(scroll_check(
+                                "Stack Trace",
+                                settings.scroll_to_stack_trace,
+                                |this| {
+                                    this.options.scroll_to_stack_trace =
+                                        !this.options.scroll_to_stack_trace
+                                },
+                            ))
+                            .separator()
+                            .item(scroll_check("Top", !settings.scroll_to_bottom, |this| {
+                                this.options.scroll_to_bottom = false
+                            }))
+                            .item(scroll_check(
+                                "Bottom",
+                                settings.scroll_to_bottom,
+                                |this| this.options.scroll_to_bottom = true,
+                            ))
+                        })
+                        .item(check(
+                            "Open Source at Exception",
+                            settings.open_failure_line,
+                            |this| this.options.open_failure_line = !this.options.open_failure_line,
+                        ))
+                        .item(check(
+                            "Navigate with Single Click",
+                            settings.navigate_single_click,
+                            |this| {
+                                this.options.navigate_single_click =
+                                    !this.options.navigate_single_click
+                            },
+                        ))
+                        .submenu("Set Auto-Test Delay", window, cx, {
+                            let view = settings_view.clone();
+                            move |menu, _, _| {
+                                (1..=10).fold(menu, |menu, seconds| {
+                                    let view = view.clone();
+                                    menu.item(
+                                        PopupMenuItem::new(format!("{seconds}s"))
+                                            .checked(settings.auto_test_delay == seconds)
+                                            .on_click(move |_, _, cx| {
+                                                view.update(cx, |this, cx| {
+                                                    this.options.auto_test_delay = seconds;
+                                                    cx.notify();
+                                                })
+                                                .log_err();
+                                            }),
+                                    )
+                                })
+                            }
+                        })
                         .separator()
                         .item(check(
                             "Select First Failed Test When Finished",
-                            first_failed,
+                            settings.select_first_failed,
                             |this| {
                                 this.options.select_first_failed = !this.options.select_first_failed
+                            },
+                        ))
+                        .separator()
+                        .item(check(
+                            "Include Non-Started Tests in Rerun Failed",
+                            settings.include_non_started,
+                            |this| {
+                                this.options.include_non_started = !this.options.include_non_started
                             },
                         ))
                     },
@@ -1263,26 +1831,49 @@ impl TestRunView {
             .h(px(32.))
             .px(px(5.))
             .gap(px(4.))
-            .child(
-                ActionButton::new("tests-rerun", "run/rerun")
-                    .tooltip(format!("Rerun '{}' (⌘R)", self.name))
-                    .on_click(cx.listener(|this, _, window, cx| (this.actions.rerun)(window, cx))),
-            )
+            .when(!self.debugged, |toolbar| {
+                toolbar.child(
+                    ActionButton::new("tests-rerun", "run/rerun")
+                        .tooltip(format!("Rerun '{}' (⌘R)", self.name))
+                        .on_click(
+                            cx.listener(|this, _, window, cx| (this.actions.rerun)(window, cx)),
+                        ),
+                )
+            })
             .child(
                 ActionButton::new("tests-rerun-failed", "run/restartFailedTests")
                     .tooltip("Rerun Failed Tests")
                     .disabled(!any_failed || self.running)
                     .on_click(cx.listener(move |this, _, window, cx| {
-                        let failed = this.results.failed_tests();
+                        let failed = this.results.failed_tests(this.options.include_non_started);
                         (this.actions.rerun_failed)(failed, window, cx)
                     })),
             )
-            .child(
-                ActionButton::new("tests-stop", "run/stop")
-                    .tooltip(format!("Stop '{}' (⌘F2)", self.name))
-                    .disabled(!self.running)
-                    .on_click(cx.listener(|this, _, window, cx| (this.actions.stop)(window, cx))),
-            )
+            .when(!self.debugged, |toolbar| {
+                toolbar.child(
+                    ActionButton::new("tests-auto-test", "actions/rerunAutomatically")
+                        .tooltip("Rerun Automatically")
+                        .selected(self.auto_test(cx))
+                        .on_click(cx.listener(|this, _, _, cx| {
+                            let name = this.name.clone();
+                            let auto = cx.default_global::<AutoTests>();
+                            if !auto.0.remove(&name) {
+                                auto.0.insert(name);
+                            }
+                            cx.notify();
+                        })),
+                )
+            })
+            .when(!self.debugged, |toolbar| {
+                toolbar.child(
+                    ActionButton::new("tests-stop", "run/stop")
+                        .tooltip(format!("Stop '{}' (⌘F2)", self.name))
+                        .disabled(!self.running)
+                        .on_click(
+                            cx.listener(|this, _, window, cx| (this.actions.stop)(window, cx)),
+                        ),
+                )
+            })
             .child(separator())
             .child(toggle(
                 "tests-show-passed",
@@ -1302,6 +1893,7 @@ impl TestRunView {
             ))
             .child(separator())
             .child(sorting)
+            .child(test_history)
             .child(separator())
             .child(more)
     }
@@ -1344,14 +1936,16 @@ impl TestRunView {
             .child(div().text_color(tokens.text_secondary).child(description))
     }
 
-    /// The selected node's console: its output and failures, its tests' for a suite.
-    fn node_console(&self, ix: usize, cx: &mut Context<Self>) -> AnyElement {
+    /// The selected node's console: its output and failures, its tests' for a suite, scrolled
+    /// to the stack trace, the top or the bottom as Scroll To says.
+    fn node_console(&mut self, ix: usize, cx: &mut Context<Self>) -> AnyElement {
         let tokens = Tokens::get(cx);
         let mut lines: Vec<AnyElement> = Vec::new();
         let tests = match self.results.nodes[ix].suite {
             true => self.results.tests(ix),
             false => vec![ix],
         };
+        let mut failure_line = None;
         let mono = |line: String, color| {
             div()
                 .whitespace_nowrap()
@@ -1394,6 +1988,7 @@ impl TestRunView {
             let Some(failure) = &node.failure else {
                 continue;
             };
+            failure_line.get_or_insert(lines.len());
             let mut details = failure.details.lines();
             if let Some(first) = details.next() {
                 lines.push(mono(first.to_owned(), tokens.console_error));
@@ -1422,12 +2017,20 @@ impl TestRunView {
                 lines.push(self.trace_line(test, row, line, cx));
             }
         }
+        if std::mem::take(&mut self.scroll_pending) {
+            match (self.options.scroll_to_stack_trace, failure_line) {
+                (true, Some(line)) => self.console_scroll.scroll_to_top_of_item(line),
+                _ if self.options.scroll_to_bottom => self.console_scroll.scroll_to_bottom(),
+                _ => self.console_scroll.set_offset(gpui::Point::default()),
+            }
+        }
         div()
             .id(("tests-node-console", ix))
             .role(Role::Log)
             .aria_label("Test Output")
             .size_full()
             .p(px(8.))
+            .track_scroll(&self.console_scroll)
             .overflow_y_scroll()
             .font_family(SharedString::from("JetBrains Mono"))
             .text_size(px(13.))
@@ -1482,7 +2085,7 @@ impl TestRunView {
 
     /// What the end-to-end tests read: the tree's rows (`"name state duration"`, indented by
     /// depth), the status line, the selected node and its console's text.
-    pub fn e2e_state(&self) -> Value {
+    pub fn e2e_state(&self, cx: &App) -> Value {
         let mut rows = Vec::new();
         self.e2e_rows(0, 0, &mut rows);
         let (parts, description) = status_text(
@@ -1499,7 +2102,15 @@ impl TestRunView {
             "running": self.running,
             "selected": selected.name,
             "output": self.node_text(self.selected),
-            "failed": self.results.failed_tests(),
+            "failed": self.results.failed_tests(self.options.include_non_started),
+            "console_top": self.console_scroll.logical_scroll_top().0,
+            "auto_test": self.auto_test(cx),
+            // the Test History popup's items
+            "history": self
+                .root(cx)
+                .map(|root| history(&root).into_iter().map(|(_, text)| text).collect::<Vec<_>>())
+                .unwrap_or_default()
+                .join("\n"),
         })
     }
 
@@ -1552,7 +2163,7 @@ impl TestRunView {
     pub fn e2e_select(&mut self, name: &str, cx: &mut Context<Self>) -> bool {
         match self.results.nodes.iter().position(|node| node.name == name) {
             Some(ix) => {
-                self.selected = ix;
+                self.select(ix);
                 cx.notify();
                 true
             }
@@ -1694,7 +2305,8 @@ impl Render for TestRunView {
 #[cfg(test)]
 mod tests {
     use super::{
-        Counts, TestResults, TestState, format_duration, parse_frame, parse_message, status_text,
+        Counts, TestResults, TestState, export_xml, format_duration, parse_frame, parse_message,
+        status_text,
     };
 
     #[test]
@@ -1746,13 +2358,42 @@ mod tests {
             }
         );
         assert_eq!(
-            results.failed_tests(),
+            results.failed_tests(false),
             vec!["com.example.GreetingTest#fails"]
         );
         let (parts, description) = status_text(results.counts(), Some(15), true);
         let text: String = parts.iter().map(|(t, _)| t.as_str()).collect();
         assert_eq!(text, "1 test failed, 1 passed, 1 ignored");
         assert_eq!(description, "3 tests total, 15\u{2009}ms");
+    }
+
+    #[test]
+    fn reads_back_the_xml_it_exports() {
+        let mut results = TestResults::default();
+        for line in [
+            "##teamcity[testSuiteStarted nodeId='1' parentNodeId='0' name='GreetingTest' locationHint='java:suite://com.example.GreetingTest']",
+            "##teamcity[testStarted nodeId='2' parentNodeId='1' name='greets' locationHint='java:test://com.example.GreetingTest/greets']",
+            "##teamcity[testStdOut nodeId='2' out='a < b|n']",
+            "##teamcity[testFinished nodeId='2' duration='12']",
+            "##teamcity[testStarted nodeId='3' parentNodeId='1' name='fails' locationHint='java:test://com.example.GreetingTest/fails']",
+            "##teamcity[testFailed nodeId='3' message='m' details='java.lang.AssertionError: m|n\tat x(<init>)']",
+            "##teamcity[testFinished nodeId='3' duration='3']",
+            "##teamcity[testSuiteFinished nodeId='1']",
+        ] {
+            results.apply(line);
+        }
+        results.end();
+        let (name, read) =
+            TestResults::from_xml(&export_xml(&results, "GreetingTest")).expect("its own XML");
+        assert_eq!(name, "GreetingTest");
+        assert_eq!(read.counts(), results.counts());
+        assert_eq!(read.state(1), TestState::Failed);
+        assert_eq!(read.nodes[2].output, vec![("a < b\n".to_owned(), false)]);
+        assert_eq!(
+            read.nodes[3].failure.as_ref().map(|f| f.details.as_str()),
+            Some("java.lang.AssertionError: m\n\tat x(<init>)")
+        );
+        assert_eq!(read.failed_tests(false), ["com.example.GreetingTest#fails"]);
     }
 
     #[test]

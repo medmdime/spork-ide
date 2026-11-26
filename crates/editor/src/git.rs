@@ -118,6 +118,36 @@ pub struct RunMenuModify(pub Rc<dyn Fn(&task::ResolvedTask, &mut Window, &mut Ap
 
 impl Global for RunMenuModify {}
 
+/// Spork IDE: the run icon popup's Run '…' with Coverage, after its tasks (IntelliJ's coverage
+/// executor), set once by the app: given the popup's first task, the row's text when it runs with
+/// coverage, and what choosing it does.
+#[derive(Clone)]
+pub struct RunMenuCoverage {
+    pub label: Rc<dyn Fn(&task::ResolvedTask, &App) -> Option<SharedString>>,
+    pub run: Rc<dyn Fn(&task::ResolvedTask, &mut Window, &mut App)>,
+}
+
+impl Global for RunMenuCoverage {}
+
+/// Spork IDE: a mark the app draws on a line in the gutter's left free painters area, between the
+/// line numbers and the icons (IntelliJ's `LineMarkerRendererEx.Position.LEFT`: its coverage),
+/// the area showing while an editor has one; a click on it goes to [`FreePainterMarkClick`].
+#[derive(Clone, Debug)]
+pub struct FreePainterMark {
+    /// The line's start and end, which follow the edits.
+    pub range: Range<Anchor>,
+    pub color: Hsla,
+}
+
+/// Spork IDE: what a click on a [`FreePainterMark`] does, set once by the app: given the mark's
+/// index in the editor's marks and the display row clicked, whether it took the click.
+#[derive(Clone)]
+pub struct FreePainterMarkClick(
+    pub Rc<dyn Fn(&mut Editor, usize, DisplayRow, &mut Window, &mut Context<Editor>) -> bool>,
+);
+
+impl Global for FreePainterMarkClick {}
+
 /// Spork IDE: how a breakpoint stands, for the app's gutter icon.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct BreakpointLook {
@@ -184,6 +214,9 @@ impl Global for IntellijGutter {}
 pub struct IntellijGutterAreas {
     pub icons: Pixels,
     pub folds: Pixels,
+    /// The left free painters area ([`FreePainterMark`]s), before the icons; `None` without
+    /// marks.
+    pub painters: Option<Pixels>,
 }
 
 impl IntellijGutterAreas {
@@ -200,26 +233,39 @@ impl IntellijGutterAreas {
     const FOLDS: Pixels = px(11.);
     /// The change markers' area (`FREE_PAINTERS_EXTRA_RIGHT_AREA_WIDTH`) and the last pixel.
     const MARKERS: Pixels = px(9.);
+    /// The left free painters area in the New UI: 8 px and 2 (`max(8, reserve) + 2`).
+    const PAINTERS: Pixels = px(10.);
+    /// A free painter mark's width (`CoverageLineMarkerRenderer.THICKNESS`).
+    pub(crate) const PAINTER_MARK: Pixels = px(8.);
 
-    /// The gutter's left and right padding around the line numbers, and where its areas start.
+    /// The gutter's left and right padding around the line numbers, and where its areas start;
+    /// `painters` when the editor has [`FreePainterMark`]s.
     pub(crate) fn layout(
         blame_width: Pixels,
         numbers_width: Pixels,
         icons: bool,
         folds: bool,
+        painters: bool,
     ) -> (Pixels, Pixels, Self) {
         let left = blame_width + Self::BEFORE_NUMBERS;
-        let icons_start = left + numbers_width + Self::GAP;
+        let painters_start = left + numbers_width + Self::GAP;
+        let painters_width = if painters {
+            Self::PAINTERS
+        } else {
+            Pixels::ZERO
+        };
+        let icons_start = painters_start + painters_width;
         let icons_width = if icons {
             Self::ICONS + Self::GAP
         } else {
             Pixels::ZERO
         };
         let folds_width = if folds { Self::FOLDS } else { Pixels::ZERO };
-        let right = Self::GAP + icons_width + folds_width + Self::MARKERS;
+        let right = Self::GAP + painters_width + icons_width + folds_width + Self::MARKERS;
         let areas = Self {
             icons: icons_start,
             folds: icons_start + icons_width,
+            painters: painters.then_some(painters_start),
         };
         (left, right, areas)
     }
@@ -565,6 +611,20 @@ impl Editor {
         }
     }
 
+    /// Spork IDE: hands a click on a free painter mark to the app's [`FreePainterMarkClick`].
+    pub(crate) fn free_painter_mark_clicked(
+        &mut self,
+        ix: usize,
+        row: DisplayRow,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> bool {
+        match cx.try_global::<FreePainterMarkClick>().cloned() {
+            Some(FreePainterMarkClick(handler)) => handler(self, ix, row, window, cx),
+            None => false,
+        }
+    }
+
     pub(crate) fn change_marker_clicked(
         &mut self,
         hunk: Range<Anchor>,
@@ -628,6 +688,23 @@ impl Editor {
         let rows_down = (f64::from(row.0) + 1. - map.scroll_position.y) as f32;
         Some(gpui::point(
             map.content_origin.x - Pixels::from(map.scroll_pixel_position.x),
+            map.text_hitbox.bounds.origin.y + map.line_height * rows_down,
+        ))
+    }
+
+    /// Spork IDE: the middle of a buffer row's free painter mark in the window, for the
+    /// end-to-end tests' clicks; `None` before the editor is drawn or without marks.
+    pub fn free_painter_mark_point(&self, row: u32, cx: &mut App) -> Option<gpui::Point<Pixels>> {
+        let map = self.last_position_map.as_ref()?;
+        let painters = self.gutter_dimensions.intellij?.painters?;
+        let display_row = crate::display_map::ToDisplayPoint::to_display_point(
+            &text::Point::new(row, 0),
+            &self.display_snapshot(cx),
+        )
+        .row();
+        let rows_down = (f64::from(display_row.0) + 0.5 - map.scroll_position.y) as f32;
+        Some(gpui::point(
+            map.gutter_hitbox.bounds.origin.x + painters + IntellijGutterAreas::PAINTER_MARK / 2.,
             map.text_hitbox.bounds.origin.y + map.line_height * rows_down,
         ))
     }

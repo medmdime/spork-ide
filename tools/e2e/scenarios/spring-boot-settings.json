@@ -57,6 +57,7 @@
   {
    "toolbar": "Settings page",
    "items": [
+    "Reformat code when creating a new project",
     "Create run configuration automatically"
    ],
    "within": 5000

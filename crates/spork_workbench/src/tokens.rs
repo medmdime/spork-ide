@@ -145,6 +145,14 @@ pub struct Tokens {
     pub control_border_over_accent: Hsla,
     /// `VersionControl.MarkerPopup.borderColor`: the editor's line-status popup.
     pub marker_popup_border: Hsla,
+    /// The editor scheme's `LINE_FULL_COVERAGE`, `LINE_PARTIAL_COVERAGE` and
+    /// `LINE_NONE_COVERAGE` (Islands Dark's `IslandSchemeDark.xml`, Light's `Default`): the
+    /// coverage marks in the gutter.
+    pub line_full_coverage: Hsla,
+    pub line_partial_coverage: Hsla,
+    pub line_none_coverage: Hsla,
+    /// The coverage popup's border (`CoverageLineMarkerRenderer`: `JBColor(Gray._206, Gray._75)`).
+    pub coverage_hint_border: Hsla,
     /// The editor scheme's `ANNOTATIONS_COLOR` and `ANNOTATIONS_LAST_COMMIT_COLOR`: Annotate's
     /// text, and that of the lines of the file's last commit.
     pub annotation: Hsla,
@@ -309,6 +317,10 @@ static DARK: LazyLock<Tokens> = LazyLock::new(|| Tokens {
     icon_over_accent: color(0xFFFFFF),
     control_border_over_accent: alpha(0xFFFFFF80),
     marker_popup_border: color(0x43454A),
+    line_full_coverage: color(0x375239),
+    line_partial_coverage: color(0x5E4D33),
+    line_none_coverage: color(0x5E3838),
+    coverage_hint_border: color(0x4B4B4B),
     annotation: color(0x8D9199),
     annotation_last_commit: color(0xCED0D6),
     annotation_order: [
@@ -429,6 +441,10 @@ static LIGHT: LazyLock<Tokens> = LazyLock::new(|| Tokens {
     icon_over_accent: color(0xFFFFFF),
     control_border_over_accent: alpha(0xFFFFFF80),
     marker_popup_border: color(0xDFE1E5),
+    line_full_coverage: color(0xCCFFCC),
+    line_partial_coverage: color(0xFFFFCC),
+    line_none_coverage: color(0xFFCCCC),
+    coverage_hint_border: color(0xCECECE),
     annotation: color(0x5A5D6B),
     annotation_last_commit: color(0x000000),
     annotation_order: [

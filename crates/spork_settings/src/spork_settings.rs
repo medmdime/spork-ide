@@ -8,6 +8,7 @@
 //! window. Which of IntelliJ's pages and options it has, and why the others are left out:
 //! `docs/spork-settings-pages.md`.
 
+pub mod coverage;
 pub mod debugger;
 mod export_import;
 mod file_types;
@@ -243,6 +244,15 @@ const TREE: &[Node] = &[
                  kotlin to javascript generate source maps embed source code into source map \
                  copy library runtime files destination directory module kind",
             )]),
+        Node::new("Coverage", Content::Options(pages::COVERAGE))
+            .project()
+            .words(
+                "when new coverage is gathered show options before applying coverage to the \
+                 editor do not apply collected coverage replace active suites with the new one \
+                 add to the active suites activate coverage view show coverage in the project \
+                 view java coverage branch coverage track per test coverage collect coverage in \
+                 test folders exclude annotations",
+            ),
         Node::new("Debugger", Content::Options(pages::DEBUGGER)).children(&[
             Node::new("Data Views", Content::Options(pages::DATA_VIEWS)).children(&[Node::new(
                 "Java",
@@ -308,6 +318,23 @@ pub fn spring_boot_creates_run_configurations(cx: &App) -> bool {
         .is_none_or(|value| value != "false")
 }
 
+/// Languages & Frameworks › Spring › Spring Initializr › "Reformat code when creating a new
+/// project", which New Project ▸ Spring Boot reads.
+pub(crate) const SPRING_INITIALIZR_REFORMAT: &str = "/spork/spring_initializr/reformat";
+
+/// The key "Reformat code when creating a new project" is kept under.
+const SPRING_INITIALIZR_REFORMAT_KEY: &str = "spork_spring_initializr_reformat";
+
+/// Whether New Project ▸ Spring Boot reformats the sources it receives (on unless turned off).
+// shortcut: one setting for every project, where IntelliJ keeps it in each project's workspace
+pub fn spring_initializr_reformats(cx: &App) -> bool {
+    db::kvp::KeyValueStore::global(cx)
+        .read_kvp(SPRING_INITIALIZR_REFORMAT_KEY)
+        .log_err()
+        .flatten()
+        .is_none_or(|value| value != "false")
+}
+
 /// An option of [`debugger::DebuggerSettings`], by its field: read from and written to the
 /// debugger's options.
 macro_rules! debugger_option {
@@ -324,7 +351,29 @@ macro_rules! debugger_option {
     };
 }
 
+/// An option of [`coverage::CoverageSettings`], by its field.
+macro_rules! coverage_option {
+    ($path:literal, $field:ident) => {
+        Owned {
+            path: $path,
+            get: |cx| serde_json::json!(coverage::settings(cx).$field),
+            set: |value, cx| {
+                let mut options = coverage::settings(cx);
+                options.$field = serde_json::from_value(value.clone())?;
+                coverage::set_settings(options, cx)
+            },
+        }
+    };
+}
+
 pub(crate) const OWNED: &[Owned] = &[
+    coverage_option!("/spork/coverage/when_gathered", when_gathered),
+    coverage_option!("/spork/coverage/activate_view", activate_view),
+    coverage_option!("/spork/coverage/show_in_project_view", show_in_project_view),
+    coverage_option!("/spork/coverage/branch_coverage", branch_coverage),
+    coverage_option!("/spork/coverage/track_per_test", track_per_test),
+    coverage_option!("/spork/coverage/test_folders", test_folders),
+    coverage_option!("/spork/coverage/exclude_annotations", exclude_annotations),
     debugger_option!(
         "/spork/debugger/click_line_number_runs_to_cursor",
         click_line_number_runs_to_cursor
@@ -354,6 +403,21 @@ pub(crate) const OWNED: &[Owned] = &[
         set: |days, cx| {
             let days = days.as_i64().context("a number of days")?;
             spork_local_history::set_days_to_keep(days, cx)
+        },
+    },
+    Owned {
+        path: SPRING_INITIALIZR_REFORMAT,
+        get: |cx| serde_json::json!(spring_initializr_reformats(cx)),
+        set: |on, cx| {
+            let on = on.as_bool().context("on or off")?;
+            let store = db::kvp::KeyValueStore::global(cx);
+            cx.background_spawn(async move {
+                store
+                    .write_kvp(SPRING_INITIALIZR_REFORMAT_KEY.into(), on.to_string())
+                    .await
+            })
+            .detach_and_log_err(cx);
+            Ok(())
         },
     },
     Owned {
@@ -401,6 +465,7 @@ gpui::actions!(
 );
 
 pub fn init(cx: &mut App) {
+    coverage::init(cx);
     debugger::init(cx);
     follow_ui_options(cx);
     plugins::apply_themes_of_installed_plugins(cx);
@@ -611,7 +676,7 @@ fn dialog_of(root: AnyView, cx: &App) -> Option<Entity<SettingsDialog>> {
 }
 
 /// The workbench's colors follow the IDE's theme, light or dark, in the dialog.
-fn follow_ide_theme(window: &mut Window, cx: &mut App) {
+pub(crate) fn follow_ide_theme(window: &mut Window, cx: &mut App) {
     use theme::ActiveTheme as _;
     let mode = match cx.theme().appearance {
         theme::Appearance::Light => gpui_kit::component::ThemeMode::Light,
@@ -819,6 +884,8 @@ pub struct SettingsDialog {
     /// The collapsible groups open, by title.
     expanded: HashSet<&'static str>,
     file_types: file_types::FileTypesState,
+    /// The class pattern selected in a list of patterns (Stepping's), for its Remove.
+    selected_pattern: Option<usize>,
     tree_focus: FocusHandle,
     tree_scroll: ScrollHandle,
     reveal: bool,
@@ -921,6 +988,7 @@ impl SettingsDialog {
             vcs_seen: String::new(),
             expanded: HashSet::default(),
             file_types: Default::default(),
+            selected_pattern: None,
             tree_focus: cx.focus_handle(),
             tree_scroll: ScrollHandle::new(),
             reveal: true,

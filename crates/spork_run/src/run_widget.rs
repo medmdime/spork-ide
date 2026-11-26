@@ -29,7 +29,10 @@ gpui::actions!(
         /// Runs the configuration the run widget shows.
         Run,
         /// Debugs the configuration the run widget shows.
-        Debug
+        Debug,
+        /// Runs the configuration the run widget shows with coverage (IntelliJ's Run with
+        /// Coverage).
+        RunWithCoverage
     ]
 );
 
@@ -40,12 +43,124 @@ pub(crate) fn register(workspace: &mut Workspace) {
     workspace.register_action(|workspace, _: &Debug, window, cx| {
         launch_selected(true, workspace, window, cx)
     });
+    // greyed while the selected configuration gathers no coverage, as IntelliJ's executor
+    workspace.register_action_renderer(|div, workspace, _, cx| {
+        let selected = ProjectConfigurations::of(workspace, cx)
+            .and_then(|configurations| configurations.read(cx).selected().cloned());
+        match can_cover(selected.as_ref(), cx) {
+            true => div.on_action(cx.listener(|workspace, _: &RunWithCoverage, window, cx| {
+                let Some(configurations) = ProjectConfigurations::of(workspace, cx) else {
+                    return;
+                };
+                if let Some(selected) = configurations.read(cx).selected().cloned() {
+                    launch_with_coverage(&selected, workspace, window, cx);
+                }
+            })),
+            false => div,
+        }
+    });
     workspace.register_action(|workspace, _: &run::ChooseRunConfiguration, window, cx| {
         choose(false, workspace, window, cx)
     });
     workspace.register_action(|workspace, _: &run::ChooseDebugConfiguration, window, cx| {
         choose(true, workspace, window, cx)
     });
+    workspace.register_action(|workspace, _: &run::RunContextConfiguration, window, cx| {
+        launch_context(false, workspace, window, cx)
+    });
+    workspace.register_action(
+        |workspace, _: &run::DebugContextConfiguration, window, cx| {
+            launch_context(true, workspace, window, cx)
+        },
+    );
+}
+
+/// IntelliJ's Run and Debug context configuration (⌃⇧R, ⌃⇧D): the Project tool window's file or
+/// folder when it has the focus, the caret's test method, test class or `main` otherwise.
+fn launch_context(
+    debug: bool,
+    workspace: &mut Workspace,
+    window: &mut Window,
+    cx: &mut Context<Workspace>,
+) {
+    if let Some(panel) = workspace.panel::<project_panel::ProjectPanel>(cx)
+        && panel.focus_handle(cx).contains_focused(window, cx)
+    {
+        let path = panel
+            .read(cx)
+            .selected_entry_project_path(cx)
+            .and_then(|path| workspace.project().read(cx).absolute_path(&path, cx));
+        let item = path.and_then(|path| {
+            project_panel::run_items(&path, cx)
+                .into_iter()
+                .nth(usize::from(debug))
+        });
+        // the item updates the workspace, which this action's handler is updating
+        if let Some(item) = item {
+            window.defer(cx, move |window, cx| (item.run)(window, cx));
+        }
+        return;
+    }
+    if let Some(editor) = workspace.active_item_as::<editor::Editor>(cx) {
+        launch_editor_context(&editor, true, debug, window, cx);
+    }
+}
+
+/// Runs or debugs the editor's context configuration as the gutter's popup does: a test's
+/// configuration made temporary and selected, a `main`'s task; false when it has none.
+fn launch_editor_context(
+    editor: &Entity<editor::Editor>,
+    at_caret: bool,
+    debug: bool,
+    window: &mut Window,
+    cx: &mut Context<Workspace>,
+) -> bool {
+    if editor.read(cx).context_runnable(at_caret, cx).is_none() {
+        return false;
+    }
+    let context = editor.update(cx, |editor, cx| editor.context_run(at_caret, cx));
+    cx.spawn_in(window, async move |workspace, cx| {
+        let Some(run) = context.await else {
+            return;
+        };
+        workspace
+            .update_in(cx, |workspace, window, cx| {
+                let configuration = run
+                    .task
+                    .resolved
+                    .env
+                    .get(crate::configurations::CONFIGURATION_ENV)
+                    .and_then(|entry| {
+                        serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(entry)
+                            .log_err()
+                    })
+                    .map(Configuration::from_entry);
+                match (debug, configuration) {
+                    (false, Some(configuration)) => {
+                        crate::run_temporary(configuration, false, workspace, window, cx)
+                    }
+                    (false, None) => {
+                        workspace.schedule_resolved_task(run.kind, run.task, false, window, cx)
+                    }
+                    // the debug adapter makes a test's configuration temporary as it runs it
+                    (true, _) => {
+                        if let Some(scenario) = run.scenario {
+                            workspace.start_debug_session(
+                                scenario,
+                                run.context.into(),
+                                Some(run.buffer),
+                                None,
+                                window,
+                                cx,
+                            );
+                        }
+                    }
+                }
+            })
+            .log_err();
+    })
+    .detach();
+    true
 }
 
 /// Run or Debug on the run widget's configuration.
@@ -75,6 +190,31 @@ fn can(configuration: Option<&Configuration>, debug: bool, cx: &gpui::App) -> bo
     }
 }
 
+/// Whether a configuration runs with coverage (its runner gathers it).
+pub(crate) fn can_cover(configuration: Option<&Configuration>, cx: &gpui::App) -> bool {
+    configuration
+        .and_then(|configuration| crate::configurations::runner(configuration, cx))
+        .is_some_and(|runner| runner.can_cover())
+}
+
+/// Runs a configuration with coverage (IntelliJ's Run 'X' with Coverage).
+pub(crate) fn launch_with_coverage(
+    configuration: &Configuration,
+    workspace: &mut Workspace,
+    window: &mut Window,
+    cx: &mut Context<Workspace>,
+) {
+    if !can_cover(Some(configuration), cx) {
+        return;
+    }
+    let mut covered = configuration.clone();
+    covered.entry.insert(
+        crate::configurations::WITH_COVERAGE.into(),
+        serde_json::Value::Bool(true),
+    );
+    launch(Some(&covered), false, workspace, window, cx);
+}
+
 /// Runs or debugs a configuration in `workspace`, or the current file without one.
 pub(crate) fn launch(
     configuration: Option<&Configuration>,
@@ -93,9 +233,12 @@ pub(crate) fn launch(
         configurations.update(cx, |configurations, cx| configurations.started(&name, cx));
     }
     let Some(configuration) = configuration else {
-        // IntelliJ's Current File: the runnable nearest the caret in the active editor
-        // shortcut: Debug on the current file asks for a debug scenario; start one from the
-        // file's runnable once the debug locators can say which
+        // IntelliJ's Current File: the configuration of the active editor's file
+        if let Some(editor) = workspace.active_item_as::<editor::Editor>(cx)
+            && launch_editor_context(&editor, false, debug, window, cx)
+        {
+            return;
+        }
         match (debug, workspace.active_item_as::<editor::Editor>(cx)) {
             (false, Some(editor)) => editor.update(cx, |editor, cx| {
                 editor.spawn_nearest_task(&editor::actions::SpawnNearestTask::default(), window, cx)
@@ -176,6 +319,10 @@ pub(crate) fn launch(
 pub struct RunWidget {
     workspace: gpui::WeakEntity<Workspace>,
     configurations: Option<Entity<ProjectConfigurations>>,
+    /// The active editor, whose changes (its runnables) name the Run menu's items.
+    observed_editor: Option<gpui::EntityId>,
+    _editor: Option<Subscription>,
+    _workspace: Option<Subscription>,
     _subscription: Option<Subscription>,
 }
 
@@ -185,9 +332,20 @@ impl RunWidget {
         let _subscription = configurations
             .as_ref()
             .map(|configurations| cx.observe(configurations, |_, _, cx| cx.notify()));
+        // the current file's run follows the active editor
+        let _workspace = workspace.weak_handle().upgrade().map(|workspace| {
+            cx.subscribe(&workspace, |_, _, event, cx| {
+                if matches!(event, workspace::Event::ActiveItemChanged) {
+                    cx.notify();
+                }
+            })
+        });
         Self {
             workspace: workspace.weak_handle(),
             configurations,
+            observed_editor: None,
+            _editor: None,
+            _workspace,
             _subscription,
         }
     }
@@ -202,6 +360,62 @@ impl RunWidget {
             self.configurations = Some(configurations);
         }
         self.configurations.clone()
+    }
+}
+
+impl RunWidget {
+    /// The Run menu's texts for the configuration, or the current file's (IntelliJ's
+    /// `ExecutorAction`): `Run 'GreetingTest.java'` when its editor has something to run, `The
+    /// file in the editor is not runnable` greyed otherwise.
+    fn update_menu(&mut self, selected: Option<&Configuration>, cx: &mut Context<Self>) {
+        let update = crate::run_menu(cx).update;
+        let named = |name: &str, enabled: bool| crate::RunMenu {
+            run: format!("Run '{name}'").into(),
+            debug: format!("Debug '{name}'").into(),
+            coverage: format!("Run '{name}' with Coverage").into(),
+            enabled,
+            update: update.clone(),
+        };
+        let greyed = |text: &str| crate::RunMenu {
+            run: text.to_owned().into(),
+            debug: text.to_owned().into(),
+            coverage: text.to_owned().into(),
+            enabled: false,
+            update: update.clone(),
+        };
+        let menu = match selected {
+            Some(configuration) => named(&configuration.name(), true),
+            None => {
+                let editor = self
+                    .workspace
+                    .upgrade()
+                    .and_then(|workspace| workspace.read(cx).active_item_as::<editor::Editor>(cx));
+                // the editor's runnables come once it's parsed: its changes draw the widget again
+                if editor.as_ref().map(|e| e.entity_id()) != self.observed_editor {
+                    self.observed_editor = editor.as_ref().map(|e| e.entity_id());
+                    self._editor = editor
+                        .as_ref()
+                        .map(|editor| cx.observe(editor, |_, _, cx| cx.notify()));
+                }
+                let file = editor.as_ref().and_then(|editor| {
+                    let editor = editor.read(cx);
+                    editor.context_runnable(false, cx)?;
+                    let buffer = editor.buffer().read(cx).as_singleton()?;
+                    let name = buffer.read(cx).file()?.file_name(cx).to_owned();
+                    Some(name)
+                });
+                match (file, editor.is_some()) {
+                    (Some(name), _) => named(&name, true),
+                    (None, true) => greyed("The file in the editor is not runnable"),
+                    (None, false) => {
+                        greyed("Cannot run the current file: the editor is not in focus")
+                    }
+                }
+            }
+        };
+        if crate::run_menu(cx) != menu {
+            cx.set_global(menu);
+        }
     }
 }
 
@@ -234,6 +448,7 @@ impl Render for RunWidget {
             Some(configuration) => format!(" '{}'", configuration.name()),
             None => String::new(),
         };
+        self.update_menu(selected.as_ref(), cx);
         let running = self
             .workspace
             .upgrade()
@@ -283,12 +498,23 @@ impl Render for RunWidget {
                 .tooltip(format!("Stop{quoted}"))
                 .on_click(dispatch(run::Stop.boxed_clone()))
         });
-        // IntelliJ's More Actions (`MoreRunToolbarActions`): the configuration's editing
+        // IntelliJ's More Actions (`MoreRunToolbarActions`): the executors the widget doesn't
+        // show (Run with Coverage), then the configuration's editing
         let configured = selected.is_some();
+        let coverage = can_cover(selected.as_ref(), cx)
+            .then(|| SharedString::from(format!("Run{quoted} with Coverage")));
         let more = ActionButton::new("run-more", "general/moreVertical")
             .size(ActionSize::MainToolbar)
             .tooltip("More Actions")
             .dropdown_menu_with_anchor(gpui::Anchor::TopRight, move |menu, _, _| {
+                let menu = match &coverage {
+                    Some(text) => menu.menu_with_icon(
+                        text.clone(),
+                        spork_workbench::icon("run/runWithCoverage"),
+                        RunWithCoverage.boxed_clone(),
+                    ),
+                    None => menu,
+                };
                 if configured {
                     menu.label("Configuration")
                         .menu("Edit…", run::EditConfigurations.boxed_clone())

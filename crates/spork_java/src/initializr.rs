@@ -15,7 +15,7 @@ use gpui::prelude::FluentBuilder as _;
 use gpui::{
     AnyElement, App, AppContext as _, Context, Entity, FontWeight, InteractiveElement as _,
     IntoElement, ParentElement as _, Render, SharedString, StatefulInteractiveElement as _,
-    Styled as _, Subscription, Task, Window, div, px,
+    Styled as _, Subscription, Task, TaskExt as _, Window, div, px,
 };
 use gpui_kit::component::input::{InputEvent, InputState};
 use gpui_kit::component::menu::PopupMenuItem;
@@ -32,6 +32,9 @@ use crate::jdk::Jdk;
 /// recorded answers).
 const SERVER: &str = "https://start.spring.io";
 pub const SERVER_VARIABLE: &str = "SPORK_IDE_INITIALIZR";
+/// The server URL last set in the Server URL dialog, which IntelliJ keeps
+/// (`SpringInitializr.service.url.last`).
+const SERVER_KEY: &str = "spork_spring_initializr_server_url";
 /// The metadata IntelliJ asks for.
 const ACCEPT: &str =
     "application/vnd.initializr.v2.3+json,application/vnd.initializr.v2.1+json;q=0.9";
@@ -85,11 +88,52 @@ struct Group {
 }
 
 #[derive(Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct Dependency {
     id: String,
     name: String,
     #[serde(default)]
     description: Option<String>,
+    /// The Spring Boot versions it takes (`[4.0.0,4.3.0-M1)`, `4.0.0` for that one and later).
+    #[serde(default)]
+    version_range: Option<String>,
+    #[serde(default, rename = "_links")]
+    links: serde_json::Map<String, serde_json::Value>,
+}
+
+impl Dependency {
+    /// IntelliJ's links under the description: its guides, reference and web site, titled by
+    /// the server or by their kind; a URL template is left out, as IntelliJ's
+    /// `LibraryDescriptionPanel` leaves it.
+    fn links(&self) -> Vec<(String, String)> {
+        let mut links = Vec::new();
+        for (kind, title) in [
+            ("guide", "Guide"),
+            ("reference", "Reference"),
+            ("home", "Web site"),
+        ] {
+            let found = match self.links.get(kind) {
+                Some(serde_json::Value::Array(links)) => links.iter().collect(),
+                Some(link) => vec![link],
+                None => Vec::new(),
+            };
+            for link in found {
+                let Some(href) = link["href"].as_str().filter(|href| !href.contains('{')) else {
+                    continue;
+                };
+                let title = link["title"].as_str().unwrap_or(title);
+                links.push((title.to_owned(), href.to_owned()));
+            }
+        }
+        links
+    }
+
+    /// "Requires Spring Boot version >=4.0.0 and <4.3.0-M1" when `boot` can't take it.
+    fn unavailable(&self, boot: &str) -> Option<String> {
+        let range = self.version_range.as_deref()?;
+        (!in_range(range, boot))
+            .then(|| format!("Requires Spring Boot version {}", range_text(range)))
+    }
 }
 
 impl<T> Options<T> {
@@ -218,7 +262,12 @@ impl Wizard {
             .max_by_key(|(_, jdk)| jdk.major)
             .map(|(ix, _)| ix);
         let mut this = Self {
-            server: std::env::var(SERVER_VARIABLE).unwrap_or_else(|_| SERVER.to_owned()),
+            server: db::kvp::KeyValueStore::global(cx)
+                .read_kvp(SERVER_KEY)
+                .log_err()
+                .flatten()
+                .or_else(|| std::env::var(SERVER_VARIABLE).ok())
+                .unwrap_or_else(|| SERVER.to_owned()),
             metadata: Server::Loading,
             _load: Task::ready(()),
             second_page: false,
@@ -290,6 +339,78 @@ impl Wizard {
         });
         self.metadata = Server::Loading;
         cx.notify();
+    }
+
+    /// The ⚙ beside the Server URL: IntelliJ's "Server URL" input dialog, OK for a URL only; a
+    /// new one is kept for the next wizard and its options are read.
+    fn configure_server(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let input = cx.new(|cx| InputState::new(window, cx).default_value(self.server.clone()));
+        window
+            .subscribe(&input, cx, |_, event: &InputEvent, window, _| {
+                if matches!(event, InputEvent::Change) {
+                    window.refresh();
+                }
+            })
+            .detach();
+        let this = cx.entity().downgrade();
+        let focused = input.clone();
+        window.open_dialog(cx, move |dialog, _, cx| {
+            let url = input.read(cx).value().trim().to_owned();
+            let valid = Url::parse(&url).is_ok();
+            let ok = {
+                let this = this.clone();
+                move |window: &mut Window, cx: &mut App| {
+                    window.close_dialog(cx);
+                    this.update(cx, |this, cx| this.set_server(url.clone(), cx))
+                        .log_err();
+                }
+            };
+            let on_enter = ok.clone();
+            dialog
+                .title(div().child("Server URL"))
+                .w(px(420.))
+                .close_button(false)
+                .on_ok(move |_, window, cx| {
+                    if valid {
+                        on_enter(window, cx);
+                    }
+                    false
+                })
+                .child(
+                    v_flex()
+                        .gap(px(12.))
+                        .child(spork_workbench::TextField::new(&input).aria_label("Server URL")),
+                )
+                .footer(
+                    h_flex()
+                        .w_full()
+                        .gap(px(8.))
+                        .justify_end()
+                        .child(
+                            spork_workbench::Button::new("initializr-server-cancel", "Cancel")
+                                .on_click(|_, window, cx| window.close_dialog(cx)),
+                        )
+                        .child(
+                            spork_workbench::Button::new("initializr-server-ok", "OK")
+                                .primary(true)
+                                .disabled(!valid)
+                                .on_click(move |_, window, cx| ok(window, cx)),
+                        ),
+                )
+        });
+        focused.update(cx, |input, cx| input.focus(window, cx));
+    }
+
+    fn set_server(&mut self, url: String, cx: &mut Context<Self>) {
+        if url == self.server {
+            return;
+        }
+        let store = db::kvp::KeyValueStore::global(cx);
+        let kept = url.clone();
+        cx.background_spawn(async move { store.write_kvp(SERVER_KEY.into(), kept).await })
+            .detach_and_log_err(cx);
+        self.server = url;
+        self.load(cx);
     }
 
     /// The server's defaults.
@@ -376,6 +497,31 @@ impl Wizard {
     }
 
     fn create(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if let Server::Loaded(metadata) = &self.metadata {
+            let unavailable: Vec<&str> = metadata
+                .dependencies
+                .values
+                .iter()
+                .flat_map(|group| &group.values)
+                .filter(|dependency| self.added.contains(&dependency.id))
+                .filter(|dependency| dependency.unavailable(&self.boot).is_some())
+                .map(|dependency| dependency.name.as_str())
+                .collect();
+            if !unavailable.is_empty() {
+                let version = metadata
+                    .boot_version
+                    .values
+                    .iter()
+                    .find(|choice| choice.id == self.boot)
+                    .map_or(self.boot.as_str(), |choice| choice.name.as_str());
+                self.problem = Some(format!(
+                    "Selected dependencies: {} are not available for version {version}.",
+                    unavailable.join(", ")
+                ));
+                cx.notify();
+                return;
+            }
+        }
         let url = match self.starter_url(cx) {
             Ok(url) => url,
             Err(error) => {
@@ -395,6 +541,11 @@ impl Wizard {
                 Ok(()) => {
                     if let Some(jdk) = jdk {
                         crate::jdk::choose(&folder, &jdk).log_err();
+                    }
+                    if spork_settings::spring_initializr_reformats(cx) {
+                        cx.default_global::<crate::spring_boot::PendingReformat>()
+                            .0
+                            .insert(folder.clone());
                     }
                     window.close_dialog(cx);
                     spork_projects::create_project(folder.clone(), git, window, cx);
@@ -629,32 +780,42 @@ impl Wizard {
             }
             for dependency in shown {
                 let (id, added) = (dependency.id.clone(), self.added.contains(&dependency.id));
+                let check_id = SharedString::from(format!("initializr-dependency-{id}"));
+                // one the chosen Spring Boot can't take is greyed and only described
+                let check = match dependency.unavailable(&self.boot) {
+                    Some(_) => div()
+                        .id(SharedString::from(format!("initializr-unavailable-{id}")))
+                        .child(controls::disabled_check(
+                            check_id,
+                            dependency.name.clone(),
+                            added,
+                            cx,
+                        ))
+                        .on_click(cx.listener(move |this, _, _, cx| {
+                            this.described = Some(id.clone());
+                            cx.notify();
+                        }))
+                        .into_any_element(),
+                    None => controls::labeled_check(check_id, dependency.name.clone(), added, cx)
+                        .on_click(cx.listener(move |this, _, _, cx| {
+                            match this.added.iter().position(|added| *added == id) {
+                                Some(ix) => {
+                                    this.added.remove(ix);
+                                }
+                                None => this.added.push(id.clone()),
+                            }
+                            this.described = Some(id.clone());
+                            cx.notify();
+                        }))
+                        .into_any_element(),
+                };
                 tree.push(
                     div()
                         .pl(px(45.))
                         .h(px(24.))
                         .flex()
                         .items_center()
-                        .child(
-                            controls::labeled_check(
-                                SharedString::from(format!("initializr-dependency-{id}")),
-                                dependency.name.clone(),
-                                added,
-                                cx,
-                            )
-                            .on_click(cx.listener(
-                                move |this, _, _, cx| {
-                                    match this.added.iter().position(|added| *added == id) {
-                                        Some(ix) => {
-                                            this.added.remove(ix);
-                                        }
-                                        None => this.added.push(id.clone()),
-                                    }
-                                    this.described = Some(id.clone());
-                                    cx.notify();
-                                },
-                            )),
-                        )
+                        .child(check)
                         .into_any_element(),
                 );
             }
@@ -673,16 +834,60 @@ impl Wizard {
             .as_deref()
             .and_then(dependency)
             .map(|(_, dependency)| {
+                let links = dependency
+                    .links()
+                    .into_iter()
+                    .enumerate()
+                    .map(|(ix, (title, url))| {
+                        controls::link(
+                            SharedString::from(format!("initializr-link-{ix}")),
+                            title,
+                            cx,
+                        )
+                        .text_ui_small()
+                        .on_click(move |_, _, cx| cx.open_url(&url))
+                    });
                 v_flex()
+                    .id("initializr-description")
+                    .role(gpui::Role::Group)
+                    .aria_label("Description")
                     .gap(px(6.))
                     .child(
                         div()
+                            .id("initializr-described")
+                            .role(gpui::Role::Label)
+                            .aria_label(dependency.name.clone())
                             .font_weight(FontWeight::BOLD)
                             .child(dependency.name.clone()),
                     )
+                    .children(dependency.unavailable(&self.boot).map(|requires| {
+                        h_flex()
+                            .items_start()
+                            .gap(px(4.))
+                            .child(
+                                spork_workbench::image("status/warning", cx)
+                                    .size(px(16.))
+                                    .flex_none(),
+                            )
+                            .child(
+                                div()
+                                    .id("initializr-requires")
+                                    .role(gpui::Role::Label)
+                                    .aria_label(requires.clone())
+                                    .flex_1()
+                                    .min_w_0()
+                                    .whitespace_normal()
+                                    .child(requires),
+                            )
+                    }))
                     .children(dependency.description.clone())
+                    .child(h_flex().pt(px(6.)).flex_wrap().gap(px(8.)).children(links))
             });
-        let mut added = v_flex().gap(px(2.));
+        let mut added = v_flex()
+            .id("initializr-added")
+            .role(gpui::Role::Group)
+            .aria_label("Added dependencies")
+            .gap(px(2.));
         let mut last_group = None;
         for id in &self.added {
             let Some((group, dependency)) = dependency(id) else {
@@ -699,6 +904,9 @@ impl Wizard {
             let id = id.clone();
             added = added.child(
                 h_flex()
+                    .id(SharedString::from(format!("initializr-added-{id}")))
+                    .role(gpui::Role::Group)
+                    .aria_label(dependency.name.clone())
                     .gap(px(4.))
                     .child(controls::form_label(dependency.name.clone()))
                     .child(
@@ -752,17 +960,19 @@ impl Wizard {
                 )
                 .child(
                     v_flex()
+                        .id("initializr-side")
                         .flex_1()
                         .min_w_0()
                         .h_full()
+                        .overflow_y_scroll()
                         .gap(px(12.))
-                        .child(div().min_h(px(96.)).children(description))
-                        .child(controls::form_label("Added dependencies:"))
+                        .child(div().flex_none().min_h(px(96.)).children(description))
+                        .child(controls::form_label("Added dependencies:").flex_none())
                         .child(match self.added.is_empty() {
                             true => controls::form_label("No dependencies added")
                                 .text_color(tokens.text_secondary)
                                 .into_any_element(),
-                            false => added.into_any_element(),
+                            false => added.flex_none().into_any_element(),
                         }),
                 )
                 .into_any_element(),
@@ -825,28 +1035,34 @@ fn choice_combo(
 impl Render for Wizard {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let tokens = Tokens::get(cx);
-        let server = Url::parse(&self.server)
-            .ok()
-            .and_then(|url| {
-                Some(match url.port() {
-                    Some(port) => format!("{}:{port}", url.host_str()?),
-                    None => url.host_str()?.to_owned(),
-                })
-            })
-            .unwrap_or_else(|| self.server.clone());
         let mut body = v_flex().gap(px(10.));
         if !self.second_page {
+            let url = self.server.clone();
             body = body.child(row(
                 "Server URL:",
                 h_flex()
                     .gap(px(6.))
-                    .child(controls::link("initializr-server", server, cx))
+                    .child(
+                        controls::link("initializr-server", url_preview(&self.server), cx)
+                            .on_click(move |_, _, cx| cx.open_url(&url)),
+                    )
+                    .child(
+                        spork_workbench::ActionButton::new(
+                            "initializr-configure",
+                            "inline/inlineSettings",
+                        )
+                        .tooltip("Configure")
+                        .on_click(
+                            cx.listener(|this, _, window, cx| this.configure_server(window, cx)),
+                        ),
+                    )
                     .when(matches!(self.metadata, Server::Failed(_)), |row| {
                         row.child(
                             spork_workbench::ActionButton::new(
                                 "initializr-retry",
-                                "general/refresh",
+                                "nodes/errorIntroduction",
                             )
+                            .colored()
                             .tooltip("Retry")
                             .on_click(cx.listener(|this, _, _, cx| this.load(cx))),
                         )
@@ -921,6 +1137,9 @@ impl Render for Wizard {
             )
             .children(self.problem.clone().map(|problem| {
                 div()
+                    .id("initializr-problem")
+                    .role(gpui::Role::Label)
+                    .aria_label(problem.clone())
                     .pt(px(6.))
                     .text_ui_small()
                     .text_color(tokens.text_error)
@@ -928,6 +1147,85 @@ impl Render for Wizard {
                     .child(problem)
             }))
             .child(buttons)
+    }
+}
+
+/// A Spring version's order: its numbers, then its qualifier as Spring Initializr ranks them
+/// (milestones, release candidates, snapshots, then the release).
+fn version_key(version: &str) -> (Vec<u64>, u8, u64) {
+    let (numbers, qualifier) = match version.split_once('-') {
+        Some((numbers, qualifier)) => (numbers, qualifier),
+        None => (version, ""),
+    };
+    let mut parts: Vec<&str> = numbers.split('.').collect();
+    // the old `2.7.0.RELEASE` form puts the qualifier after a dot
+    let qualifier = match parts.get(3) {
+        Some(old) if qualifier.is_empty() => {
+            let old = *old;
+            parts.truncate(3);
+            old
+        }
+        _ => qualifier,
+    };
+    let numbers = parts.iter().map(|part| part.parse().unwrap_or(0)).collect();
+    let digits = |prefix: &str| qualifier[prefix.len()..].parse().unwrap_or(0);
+    let (rank, number) = if qualifier.is_empty() || qualifier == "RELEASE" {
+        (4, 0)
+    } else if qualifier.ends_with("SNAPSHOT") {
+        (3, 0)
+    } else if qualifier.starts_with("RC") {
+        (2, digits("RC"))
+    } else if qualifier.starts_with('M') {
+        (1, digits("M"))
+    } else {
+        (0, 0)
+    };
+    (numbers, rank, number)
+}
+
+/// Whether `version` is in Spring Initializr's `range`: `[low,high)` with `[`/`]` inclusive and
+/// `(`/`)` exclusive, or a version alone for it and later.
+fn in_range(range: &str, version: &str) -> bool {
+    let version = version_key(version);
+    let Some((low, high)) = range.trim().split_once(',') else {
+        return version >= version_key(range.trim());
+    };
+    let (low_inclusive, low) = (low.starts_with('['), &low[1..]);
+    let (high_inclusive, high) = (high.ends_with(']'), &high[..high.len() - 1]);
+    let (low, high) = (version_key(low.trim()), version_key(high.trim()));
+    let above = match low_inclusive {
+        true => version >= low,
+        false => version > low,
+    };
+    let below = match high_inclusive {
+        true => version <= high,
+        false => version < high,
+    };
+    above && below
+}
+
+/// A range as IntelliJ's `VersionRange` writes it: `>=4.0.0 and <4.3.0-M1`.
+fn range_text(range: &str) -> String {
+    let Some((low, high)) = range.trim().split_once(',') else {
+        return format!(">={}", range.trim());
+    };
+    let low_sign = if low.starts_with('[') { ">=" } else { ">" };
+    let high_sign = if high.ends_with(']') { "<=" } else { "<" };
+    format!(
+        "{low_sign}{} and {high_sign}{}",
+        low[1..].trim(),
+        high[..high.len() - 1].trim()
+    )
+}
+
+/// The server's URL as IntelliJ's link shows it: without `https://` and the last `/`, cut
+/// after 30 characters when longer than 35.
+fn url_preview(url: &str) -> String {
+    let url = url.strip_prefix("https://").unwrap_or(url);
+    let url = url.strip_suffix('/').unwrap_or(url);
+    match url.chars().count() > 35 {
+        true => format!("{}...", url.chars().take(30).collect::<String>()),
+        false => url.to_owned(),
     }
 }
 
@@ -977,7 +1275,7 @@ async fn download(http: &Arc<dyn HttpClient>, url: &Url, folder: &Path) -> Resul
 
 #[cfg(test)]
 mod tests {
-    use super::{Metadata, is_package_name};
+    use super::{Metadata, in_range, is_package_name, range_text, url_preview};
 
     #[test]
     fn package_names_are_identifiers_between_dots() {
@@ -1001,5 +1299,46 @@ mod tests {
                 .any(|group| group.name == "Web"
                     && group.values.iter().any(|dependency| dependency.id == "web"))
         );
+    }
+
+    #[test]
+    fn version_ranges_as_spring_initializr_reads_them() {
+        assert!(in_range("[4.0.0,4.3.0-M1)", "4.2.0"));
+        assert!(in_range("[4.0.0,4.3.0-M1)", "4.2.1-SNAPSHOT"));
+        assert!(!in_range("[4.0.0,4.3.0-M1)", "4.3.0-SNAPSHOT"));
+        assert!(!in_range("[4.1.0,4.2.0-M1)", "4.2.0"));
+        assert!(in_range("4.0.0", "4.2.0") && !in_range("4.0.0", "3.5.6"));
+        assert!(in_range("[4.0.0-M1,4.0.0]", "4.0.0-RC1"));
+        assert_eq!(range_text("[4.0.0,4.3.0-M1)"), ">=4.0.0 and <4.3.0-M1");
+        assert_eq!(range_text("4.0.0"), ">=4.0.0");
+    }
+
+    #[test]
+    fn the_server_link_shows_the_url_short() {
+        assert_eq!(url_preview("https://start.spring.io"), "start.spring.io");
+        assert_eq!(
+            url_preview("http://127.0.0.1:8080/"),
+            "http://127.0.0.1:8080"
+        );
+        assert_eq!(
+            url_preview("https://initializr.example.com/a/very/long/path"),
+            "initializr.example.com/a/very/..."
+        );
+    }
+
+    #[test]
+    fn a_dependencys_links_without_templates() {
+        let text = include_str!("../../../tools/e2e/fixtures/initializr/metadata.json");
+        let metadata: Metadata = serde_json::from_str(text).expect("the metadata");
+        let web = metadata
+            .dependencies
+            .values
+            .iter()
+            .flat_map(|group| &group.values)
+            .find(|dependency| dependency.id == "web")
+            .expect("Spring Web");
+        let titles: Vec<String> = web.links().into_iter().map(|(title, _)| title).collect();
+        assert_eq!(titles[0], "Building a RESTful Web Service");
+        assert!(web.links().iter().all(|(_, url)| !url.contains('{')));
     }
 }

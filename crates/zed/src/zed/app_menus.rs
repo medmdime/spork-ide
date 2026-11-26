@@ -12,6 +12,8 @@ use zed_actions::{Quit, assistant, debug_panel, project_panel};
 // shortcut: IntelliJ's items without an action yet are left out, open tasks in
 // reference/idea/tasks; its dynamic texts (Run 'Main') read as the action's own
 pub fn app_menus(cx: &mut App) -> Vec<Menu> {
+    // IntelliJ names Run and Debug after what they run: `Run 'GreetingTest'`
+    let run_menu = spork_run::run_menu(cx);
     // IntelliJ lists the tool windows by name; AI Chat is the agent panel, there while AI is on
     let mut tool_windows = Vec::new();
     if !DisableAiSettings::get_global(cx).disable_ai {
@@ -38,6 +40,12 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
         MenuItem::action("Terminal", terminal_panel::ToggleFocus),
         MenuItem::action("TODO", spork_tool_windows::todo_panel::ToggleFocus),
     ]);
+
+    // IntelliJ's `UpdateRunningApplicationAction` names the one application it updates
+    let update_text = run_menu
+        .update
+        .clone()
+        .unwrap_or_else(|| "Update Running Application…".into());
 
     vec![
         Menu {
@@ -312,6 +320,7 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
             MenuItem::action("Symbol…", spork_navigate::navigate::GoToSymbol),
             MenuItem::action("Text…", spork_navigate::navigate::GoToText),
             MenuItem::action("Line:Column…", spork_navigate::navigate::GoToLine),
+            MenuItem::action("Endpoint…", spork_navigate::navigate::GoToEndpoint),
             MenuItem::separator(),
             MenuItem::action(
                 "Next Highlighted Error",
@@ -446,8 +455,10 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
             MenuItem::action("Rebuild Project", spork_java::build::RebuildProject),
         ]),
         Menu::new("Run").items([
-            MenuItem::action("Run", run_widget::Run),
-            MenuItem::action("Debug", run_widget::Debug),
+            MenuItem::action(run_menu.run, run_widget::Run).disabled(!run_menu.enabled),
+            MenuItem::action(run_menu.debug, run_widget::Debug).disabled(!run_menu.enabled),
+            MenuItem::action(run_menu.coverage, run_widget::RunWithCoverage)
+                .disabled(!run_menu.enabled),
             MenuItem::separator(),
             MenuItem::action("Run…", run::ChooseRunConfiguration),
             MenuItem::action("Debug…", run::ChooseDebugConfiguration),
@@ -459,7 +470,7 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
             MenuItem::action("Show Running List", run::ShowRunningList),
             MenuItem::separator(),
             MenuItem::submenu(Menu::new("Debugging Actions").items([
-                MenuItem::action("Update Running Application…", run::UpdateRunningApplication),
+                MenuItem::action(update_text, run::UpdateRunningApplication),
                 MenuItem::separator(),
                 MenuItem::action("Step Over", debugger_ui::StepOver),
                 MenuItem::action("Force Step Over", run::ForceStepOver),
@@ -475,6 +486,8 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
                 MenuItem::separator(),
                 MenuItem::action("Evaluate Expression…", run::EvaluateExpression),
                 MenuItem::action("Show Execution Point", run::ShowExecutionPoint),
+                MenuItem::separator(),
+                MenuItem::action("Get Thread Dump", run::GetThreadDump),
             ])),
             MenuItem::submenu(Menu::new("Toggle Breakpoint").items([
                 MenuItem::action("Line Breakpoint", editor::actions::ToggleBreakpoint),
@@ -487,6 +500,17 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
                 MenuItem::action("Toggle Breakpoint Enabled", run::ToggleBreakpointEnabled),
             ])),
             MenuItem::action("View Breakpoints…", run::ViewBreakpoints),
+            MenuItem::separator(),
+            // IntelliJ's CoveragePlatformMenu, in RunTestGroup
+            MenuItem::action(
+                "Manage Coverage Reports…",
+                spork_coverage::ManageCoverageReports,
+            ),
+            MenuItem::action(
+                "Generate Coverage Report…",
+                spork_coverage::GenerateCoverageReport,
+            ),
+            MenuItem::action("Hide Coverage", spork_coverage::HideCoverage),
         ]),
         // Spork IDE: its one item installs the CLI, which Windows doesn't have (as upstream's Install CLI)
         #[cfg(not(target_os = "windows"))]

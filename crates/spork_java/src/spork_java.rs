@@ -4,10 +4,12 @@
 
 mod actuator;
 mod application;
+mod beans;
 mod breakpoints;
 pub mod build_files;
 mod build_tool_window;
 mod build_view;
+pub mod coverage;
 mod debugger;
 mod endpoints;
 mod generate;
@@ -32,6 +34,8 @@ pub mod spring_boot;
 pub mod spring_boot_ls;
 mod spring_markers;
 pub mod testing;
+mod thread_dump;
+mod values;
 
 pub use application::{TEST_CONFIGURATION, jre_combo, test_template, test_variables};
 pub use build_tool_window::{gradle_tool_window, maven_tool_window};
@@ -104,12 +108,15 @@ fn queries() -> LanguageQueries {
 pub fn init(languages: Arc<LanguageRegistry>, cx: &mut App) {
     application::init(cx);
     testing::init(cx);
+    coverage::init(cx);
     debugger::init(cx);
     breakpoints::init(cx);
     hotswap::init(cx);
+    values::init(cx);
     spring_boot::init(cx);
     initializr::init(cx);
     spring_markers::init(cx);
+    endpoints::init(cx);
     generate::init(cx);
     kotlin_compiler::init(cx);
     language_level_fix::init(cx);

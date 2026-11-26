@@ -1,0 +1,387 @@
+{
+ "id": "java-debug-values",
+ "fixture": "maven",
+ "covers": [
+  "action:XDebugger.JumpToTypeSource",
+  "action:Debugger.ShowTypes",
+  "action:XDebugger.Inspect"
+ ],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "sh": "mkdir -p .zed && printf '%s' '[{\"label\": \"Debuggee\", \"adapter\": \"Java\", \"request\": \"launch\", \"mainClass\": \"com.example.Debuggee\"}]' > .zed/debug.json"
+  },
+  {
+   "expect": {
+    "java.tool": "Maven"
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 600000
+  },
+  {
+   "expect": {
+    "run.configurations.selected": "Debuggee"
+   },
+   "within": 10000
+  },
+  {
+   "do": "open",
+   "path": "src/main/java/com/example/Debuggee.java"
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/Debuggee.java",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   },
+   "within": 5000
+  },
+  {
+   "do": "type",
+   "text": "26:1"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "find": {
+    "label": "Debug 'Debuggee'",
+    "role": "AXButton",
+    "enabled": true
+   },
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-d"
+  },
+  {
+   "expect": {
+    "run.debug.status": "Stopped"
+   },
+   "within": 120000
+  },
+  {
+   "expect": {
+    "run.debug.variables": [
+     "args = {String[0]@10}",
+     "names = {ImmutableCollections$ListN@11}  size = 3",
+     "total = 13",
+     "lengths = {HashMap@12}  size = 3",
+     "point = {Debuggee$Point@13}"
+    ]
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "total = 13",
+   "button": "right"
+  },
+  {
+   "menu": "context-menu:XDebugger.Variables.Tree.Popup",
+   "items": [
+    "New Class Level Watch… (disabled)",
+    "Inspect…",
+    "Mark Object… (disabled)",
+    "Set Value…",
+    "Copy Value",
+    "Compare Value with Clipboard (disabled)",
+    "Copy Name",
+    "Evaluate Expression…",
+    "Add to Watches",
+    "Show Referring Objects… (disabled)",
+    "Jump To Source",
+    "Jump To Type Source (disabled)",
+    "View Text (disabled)",
+    "View as",
+    "Filter… (disabled)",
+    "Adjust Range… (disabled)",
+    "Show types",
+    "Mute Renderers (disabled)",
+    "Customize Data Views… (disabled)"
+   ],
+   "checked": [
+    "Show types"
+   ]
+  },
+  {
+   "do": "click",
+   "label": "View as"
+  },
+  {
+   "find": [
+    {
+     "label": "Create…",
+     "enabled": false
+    },
+    {
+     "label": "Auto"
+    },
+    {
+     "label": "Primitive"
+    },
+    {
+     "label": "Hex"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Hex"
+  },
+  {
+   "expect": {
+    "run.debug.variables.2": "total = 0xD"
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "names = {ImmutableCollections$ListN@11}  size = 3",
+   "button": "right"
+  },
+  {
+   "do": "click",
+   "label": "View as"
+  },
+  {
+   "find": [
+    {
+     "label": "Create…",
+     "enabled": false
+    },
+    {
+     "label": "Auto"
+    },
+    {
+     "label": "Collection"
+    },
+    {
+     "label": "toString"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "toString"
+  },
+  {
+   "expect": {
+    "run.debug.variables.1": "names = {ImmutableCollections$ListN@11} \"[Ada, Grace, Linus]\""
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "total = 0xD",
+   "button": "right"
+  },
+  {
+   "do": "click",
+   "label": "Show types"
+  },
+  {
+   "expect": {
+    "run.debug.variables": [
+     "args = ",
+     "names = \"[Ada, Grace, Linus]\"",
+     "total = 0xD",
+     "lengths = size = 3",
+     "point = "
+    ]
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "total = 0xD",
+   "button": "right"
+  },
+  {
+   "do": "click",
+   "label": "Show types"
+  },
+  {
+   "expect": {
+    "run.debug.variables.4": "point = {Debuggee$Point@13}"
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "point = {Debuggee$Point@13}",
+   "button": "right"
+  },
+  {
+   "do": "click",
+   "label": "Mark Object…"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Select Object Label"
+   },
+   "within": 5000
+  },
+  {
+   "do": "activate",
+   "window": "Select Object Label"
+  },
+  {
+   "do": "type",
+   "text": "P",
+   "window": "Select Object Label"
+  },
+  {
+   "do": "keys",
+   "keys": "enter",
+   "window": "Select Object Label"
+  },
+  {
+   "expect": {
+    "run.debug.variables.4": "[P] point = {Debuggee$Point@13}"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "point = {Debuggee$Point@13}",
+   "button": "right"
+  },
+  {
+   "find": {
+    "label": "Unmark Object"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Inspect…"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Inspect 'point'"
+   },
+   "within": 5000
+  },
+  {
+   "find": [
+    {
+     "label": "point = {Debuggee$Point@13}"
+    },
+    {
+     "label": "x = 1"
+    },
+    {
+     "label": "y = 2"
+    }
+   ],
+   "within": 10000
+  },
+  {
+   "do": "activate",
+   "window": "Inspect 'point'"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "shot": "inspect",
+   "window": "smallest"
+  },
+  {
+   "do": "keys",
+   "keys": "escape",
+   "window": "Inspect 'point'"
+  },
+  {
+   "expect": {
+    "windows.1": null
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "names = {ImmutableCollections$ListN@11} \"[Ada, Grace, Linus]\"",
+   "button": "right"
+  },
+  {
+   "do": "click",
+   "label": "Jump To Type Source"
+  },
+  {
+   "expect": {
+    "active": {
+     "contains": "ImmutableCollections.java"
+    }
+   },
+   "within": 30000
+  },
+  {
+   "do": "click",
+   "label": "total = 0xD",
+   "button": "right"
+  },
+  {
+   "do": "click",
+   "label": "Jump To Source"
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/Debuggee.java",
+    "editor.caret": "19:1"
+   },
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f2"
+  },
+  {
+   "expect": {
+    "run.debug.terminated": true
+   },
+   "within": 30000
+  }
+ ]
+}

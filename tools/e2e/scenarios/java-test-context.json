@@ -1,0 +1,372 @@
+{
+ "id": "java-test-context",
+ "fixture": "tests-maven",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven"
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 600000
+  },
+  {
+   "do": "open",
+   "path": "src/test/java/com/example/CalculatorTest.java"
+  },
+  {
+   "find": {
+    "label": "Run test 'CalculatorTest'",
+    "role": "AXButton"
+   },
+   "within": 30000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "type",
+   "text": "12:9"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-shift-r"
+  },
+  {
+   "expect": {
+    "run.configurations.selected": "CalculatorTest.adds",
+    "run.tabs.0.title": "CalculatorTest.adds",
+    "run.tabs.0.running": false,
+    "run.tabs.0.tests.rows": [
+     "Test Results passed",
+     "  CalculatorTest passed",
+     "    adds() passed"
+    ]
+   },
+   "within": 300000
+  },
+  {
+   "menu": "menu:RunMenu",
+   "path": [
+    "Run"
+   ],
+   "items": [
+    "Run 'CalculatorTest.adds'",
+    "Debug 'CalculatorTest.adds'"
+   ],
+   "part": true
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "type",
+   "text": "8:3"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-shift-r"
+  },
+  {
+   "expect": {
+    "run.configurations.selected": "CalculatorTest",
+    "run.tabs.1.title": "CalculatorTest",
+    "run.tabs.1.running": false,
+    "run.tabs.1.tests.rows": [
+     "Test Results failed",
+     "  CalculatorTest failed",
+     "    adds() passed",
+     "    divides() ignored",
+     "    greetsAda() failed"
+    ]
+   },
+   "within": 300000
+  },
+  {
+   "do": "open",
+   "path": "src/test/java/com/example/OrderTest.java"
+  },
+  {
+   "expect": {
+    "active": "src/test/java/com/example/OrderTest.java"
+   },
+   "within": 5000
+  },
+  {
+   "do": "action",
+   "name": "pane::RevealInProjectPanel"
+  },
+  {
+   "find": {
+    "label": "OrderTest.java",
+    "role": "AXRow",
+    "selected": true
+   },
+   "within": 3000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-shift-r"
+  },
+  {
+   "expect": {
+    "run.configurations.selected": "OrderTest",
+    "run.tabs.2.title": "OrderTest",
+    "run.tabs.2.running": false,
+    "run.tabs.2.tests.rows": [
+     "Test Results passed",
+     "  OrderTest passed",
+     "    countsItems passed"
+    ]
+   },
+   "within": 300000
+  },
+  {
+   "do": "keys",
+   "keys": "left"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-shift-r"
+  },
+  {
+   "expect": {
+    "run.configurations.selected": "Tests in 'com.example'",
+    "run.tabs.3.title": "Tests in 'com.example'"
+   },
+   "within": 30000
+  },
+  {
+   "expect": {
+    "run.tabs.3.running": false
+   },
+   "within": 300000
+  },
+  {
+   "do": "open",
+   "path": "src/main/java/com/example/Debuggee.java"
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/Debuggee.java"
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "type",
+   "text": "44:1"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "do": "open",
+   "path": "src/test/java/com/example/DebuggeeTest.java"
+  },
+  {
+   "find": {
+    "label": "Run test 'DebuggeeTest'",
+    "role": "AXButton"
+   },
+   "within": 30000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "type",
+   "text": "10:9"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-shift-d"
+  },
+  {
+   "expect": {
+    "run.debug.status": "Stopped"
+   },
+   "within": 180000
+  },
+  {
+   "expect": {
+    "run.debug.frames.1": "measuresANameByItsLength:10, DebuggeeTest (com.example)",
+    "run.configurations.selected": "DebuggeeTest.measuresANameByItsLength"
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "Resume Program"
+  },
+  {
+   "expect": {
+    "run.debug.tests.status": "1 test passed"
+   },
+   "within": 60000
+  },
+  {
+   "do": "open",
+   "path": "src/main/java/com/example/Main.java"
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/Main.java"
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "type",
+   "text": "6:1"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "do": "click",
+   "label": "DebuggeeTest.measuresANameByItsLength, Run / Debug Configurations"
+  },
+  {
+   "find": "Current File",
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Current File"
+  },
+  {
+   "expect": {
+    "run.configurations.selected": null
+   },
+   "within": 5000
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "menu": "menu:RunMenu",
+   "path": [
+    "Run"
+   ],
+   "items": [
+    "Run 'Main.java'",
+    "Debug 'Main.java'"
+   ],
+   "part": true
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-d"
+  },
+  {
+   "expect": {
+    "run.debug.status": "Stopped",
+    "run.debug.label": "Main"
+   },
+   "within": 180000
+  },
+  {
+   "expect": {
+    "run.debug.frames.0": "main:6, Main (com.example)"
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "Resume Program"
+  }
+ ]
+}

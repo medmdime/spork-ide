@@ -1,0 +1,109 @@
+{
+ "id": "coverage-spring-boot",
+ "fixture": "spring-maven",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   },
+   "Spring Boot Properties": {
+    "enable_language_server": true
+   },
+   "Spring Boot YAML": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven"
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "run.configurations.names": [
+     "DemoApplication"
+    ],
+    "run.configurations.selected": "DemoApplication"
+   },
+   "within": 60000
+  },
+  {
+   "expect": {
+    "java.spring.classpath": true
+   },
+   "within": 300000
+  },
+  {
+   "do": "action",
+   "name": "run_widget::RunWithCoverage"
+  },
+  {
+   "expect": {
+    "run.services.services.DemoApplication.starting": false,
+    "run.services.services.DemoApplication.link": [
+     ":18081/",
+     "http://localhost:18081/"
+    ]
+   },
+   "within": 180000
+  },
+  {
+   "sh": "curl -s -m 10 http://localhost:18081/hello",
+   "is": "Hello, world!"
+  },
+  {
+   "do": "action",
+   "name": "run::Stop"
+  },
+  {
+   "expect": {
+    "run.tabs.0.running": false,
+    "coverage.active": [
+     "DemoApplication"
+    ]
+   },
+   "within": 60000
+  },
+  {
+   "expect": {
+    "coverage.view.rows": [
+     "com.example.demo | 100% (2/2) | 100% (4/4) | 100% (5/5) | 100% (0/0)",
+     "  DemoApplication | 100% (1/1) | 100% (2/2) | 100% (2/2) | 100% (0/0)",
+     "  HelloController | 100% (1/1) | 100% (2/2) | 100% (3/3) | 100% (0/0)"
+    ]
+   },
+   "within": 30000
+  },
+  {
+   "do": "open",
+   "path": "src/main/java/com/example/demo/HelloController.java"
+  },
+  {
+   "expect": {
+    "coverage.marks": [
+     "8 full",
+     "12 full",
+     "13 full"
+    ]
+   },
+   "within": 10000
+  }
+ ]
+}

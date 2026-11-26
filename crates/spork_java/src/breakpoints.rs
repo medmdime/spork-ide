@@ -7,11 +7,13 @@
 use std::time::Duration;
 
 use anyhow::{Context as _, anyhow};
-use gpui::{App, Context, Entity, TaskExt as _};
+use gpui::{App, AppContext as _, Context, Entity, Task, TaskExt as _};
+use project::Project;
 use project::debugger::breakpoint_store::{
     Breakpoint, BreakpointEditAction, BreakpointKind, BreakpointStore, BreakpointWithPosition,
 };
 use project::debugger::session::Session;
+use util::ResultExt as _;
 use workspace::Workspace;
 
 use crate::java_project::JavaProject;
@@ -23,12 +25,15 @@ pub(crate) fn init(cx: &mut App) {
     cx.observe_new(|workspace: &mut Workspace, _, _| {
         workspace.register_action(
             |workspace, _: &spork_run::run::ToggleMethodBreakpoint, _, cx| {
-                toggle_member_breakpoint(workspace, false, cx)
+                // another language's editor (Kotlin's) has its own
+                if !toggle_member_breakpoint(workspace, false, cx) {
+                    cx.propagate();
+                }
             },
         );
         workspace.register_action(
             |workspace, _: &spork_run::run::ToggleFieldWatchpoint, _, cx| {
-                toggle_member_breakpoint(workspace, true, cx)
+                toggle_member_breakpoint(workspace, true, cx);
             },
         );
     })
@@ -37,27 +42,40 @@ pub(crate) fn init(cx: &mut App) {
 
 /// Toggle Method Breakpoint and Toggle Field Watchpoint (`ToggleMethodBreakpoint`,
 /// `ToggleFieldBreakpoint`) in a Java editor: a breakpoint of that kind on the declaration line of
-/// the method or field at the caret, or the breakpoint of that line removed.
-fn toggle_member_breakpoint(workspace: &mut Workspace, field: bool, cx: &mut Context<Workspace>) {
+/// the method or field at the caret, or the breakpoint of that line removed; false outside a Java
+/// editor.
+fn toggle_member_breakpoint(
+    workspace: &mut Workspace,
+    field: bool,
+    cx: &mut Context<Workspace>,
+) -> bool {
     let Some(editor) = workspace.active_item_as::<editor::Editor>(cx) else {
-        return;
+        return false;
     };
     let editor = editor.read(cx);
     let multibuffer = editor.buffer().read(cx);
     let head = editor.selections.newest_anchor().head();
     let Some((anchor, _)) = multibuffer.snapshot(cx).anchor_to_buffer_anchor(head) else {
-        return;
+        return false;
     };
     let Some(buffer) = multibuffer.buffer(anchor.buffer_id) else {
-        return;
+        return false;
     };
+    let is_java = buffer
+        .read(cx)
+        .language()
+        .is_some_and(|language| language.name().as_ref() == "Java");
+    if !is_java {
+        return false;
+    }
     let snapshot = buffer.read(cx).snapshot();
     let offset = text::ToOffset::to_offset(&anchor, &snapshot);
     let Some((row, kind)) = member_at(&snapshot, offset, field) else {
-        return;
+        return true;
     };
     let store = workspace.project().read(cx).breakpoint_store();
     toggle_kind(&store, buffer, row, kind, cx);
+    true
 }
 
 /// The breakpoint of `row` removed, or one of `kind` set there.
@@ -230,4 +248,59 @@ fn toggle_field_of_data_id(session: &Entity<Session>, data_id: &str, cx: &mut Ap
     })
     .detach_and_log_err(cx);
     true
+}
+
+/// The exception classes the Breakpoints dialog's class chooser lists: JDT LS's classes whose
+/// name holds the text, from the project, its libraries and the JDK, by their JVM name.
+// shortcut: a class is known as a Throwable by its name (…Exception, …Error, Throwable); ask JDT
+// LS's type hierarchy once a project names one otherwise
+pub(crate) fn exception_classes(
+    project: &Entity<Project>,
+    query: String,
+    cx: &mut App,
+) -> Task<Vec<String>> {
+    let Some(server) = crate::java_project::language_server(project, cx) else {
+        return Task::ready(Vec::new());
+    };
+    cx.background_spawn(async move {
+        let symbols = server
+            .request::<lsp::request::WorkspaceSymbolRequest>(
+                lsp::WorkspaceSymbolParams {
+                    query,
+                    ..Default::default()
+                },
+                Duration::from_secs(30),
+            )
+            .await
+            .into_response()
+            .log_err()
+            .flatten();
+        let classes: Vec<(String, Option<String>)> = match symbols {
+            Some(lsp::WorkspaceSymbolResponse::Flat(symbols)) => symbols
+                .into_iter()
+                .filter(|symbol| symbol.kind == lsp::SymbolKind::CLASS)
+                .map(|symbol| (symbol.name, symbol.container_name))
+                .collect(),
+            Some(lsp::WorkspaceSymbolResponse::Nested(symbols)) => symbols
+                .into_iter()
+                .filter(|symbol| symbol.kind == lsp::SymbolKind::CLASS)
+                .map(|symbol| (symbol.name, symbol.container_name))
+                .collect(),
+            None => Vec::new(),
+        };
+        classes
+            .into_iter()
+            .filter(|(name, _)| is_throwable_name(name))
+            .map(
+                |(name, container)| match container.filter(|c| !c.is_empty()) {
+                    Some(container) => format!("{container}.{name}"),
+                    None => name,
+                },
+            )
+            .collect()
+    })
+}
+
+fn is_throwable_name(name: &str) -> bool {
+    name.ends_with("Exception") || name.ends_with("Error") || name == "Throwable"
 }

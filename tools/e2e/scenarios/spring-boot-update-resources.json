@@ -1,0 +1,258 @@
+{
+ "id": "spring-boot-update-resources",
+ "fixture": "spring-maven",
+ "covers": [],
+ "prepare": "mkdir -p src/main/resources/static && printf Hello > src/main/resources/static/greeting.txt",
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   },
+   "Spring Boot Properties": {
+    "enable_language_server": true
+   },
+   "Spring Boot YAML": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "run.configurations.names": [
+     "DemoApplication"
+    ],
+    "run.configurations.selected": "DemoApplication"
+   },
+   "within": 60000
+  },
+  {
+   "expect": {
+    "java.spring.classpath": true
+   },
+   "within": 300000
+  },
+  {
+   "do": "action",
+   "name": "run::EditConfigurations"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Run/Debug Configurations"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "Modify options",
+   "role": "AXLink"
+  },
+  {
+   "do": "click",
+   "label": "On 'Update' action",
+   "role": "AXMenuItem",
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "On 'Update' action:",
+   "role": "AXPopUpButton",
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Update resources",
+   "role": "AXMenuItem",
+   "within": 3000
+  },
+  {
+   "find": {
+    "label": "On 'Update' action:",
+    "role": "AXPopUpButton",
+    "value": "Update resources"
+   },
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "windows.1": null
+   },
+   "within": 5000
+  },
+  {
+   "sh": "cat \"../home/Library/Application Support/Spork IDE/workspace/\"*/debug.json",
+   "contains": "\"updateAction\": \"UpdateResources\"",
+   "within": 8000
+  },
+  {
+   "menu": "Debugging Actions",
+   "path": [
+    "Run",
+    "Debugging Actions"
+   ],
+   "items": [
+    "Update Running Application… (disabled)"
+   ],
+   "part": true
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-r"
+  },
+  {
+   "expect": {
+    "run.services.services.DemoApplication.starting": false
+   },
+   "within": 120000
+  },
+  {
+   "toolbar": "ServiceViewItemToolbar",
+   "items": [
+    "Run 'DemoApplication'",
+    "Debug 'DemoApplication'",
+    "Stop 'DemoApplication'",
+    "Update 'DemoApplication' application",
+    "Scroll to End",
+    "Clear All"
+   ],
+   "within": 5000
+  },
+  {
+   "menu": "Debugging Actions",
+   "path": [
+    "Run",
+    "Debugging Actions"
+   ],
+   "items": [
+    "Update 'DemoApplication' application"
+   ],
+   "part": true
+  },
+  {
+   "sh": "curl -s -m 10 http://localhost:18081/greeting.txt",
+   "is": "Hello",
+   "within": 20000
+  },
+  {
+   "file": "src/main/resources/static/greeting.txt",
+   "text": "Updated"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "click",
+   "label": "Update 'DemoApplication' application",
+   "role": "AXButton",
+   "in": "ServiceViewItemToolbar"
+  },
+  {
+   "sh": "curl -s -m 10 http://localhost:18081/greeting.txt",
+   "is": "Updated",
+   "within": 20000
+  },
+  {
+   "sh": "cat target/classes/static/greeting.txt",
+   "is": "Updated"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f2"
+  },
+  {
+   "expect": {
+    "run.tabs.0.running": false,
+    "run.updaters": []
+   },
+   "within": 20000
+  },
+  {
+   "toolbar": "ServiceViewItemToolbar",
+   "items": [
+    "Run 'DemoApplication'",
+    "Debug 'DemoApplication'",
+    "Stop 'DemoApplication' (disabled)",
+    "Scroll to End",
+    "Clear All"
+   ],
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-d"
+  },
+  {
+   "expect": {
+    "run.services.services.DemoApplication.starting": false,
+    "run.debug.label": "DemoApplication"
+   },
+   "within": 120000
+  },
+  {
+   "find": {
+    "label": "Update 'DemoApplication' application",
+    "role": "AXButton",
+    "in": "XDebugger.ToolWindow.TopToolbar3"
+   },
+   "within": 5000
+  },
+  {
+   "file": "src/main/resources/static/greeting.txt",
+   "text": "Debugged"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "click",
+   "label": "Update 'DemoApplication' application",
+   "role": "AXButton",
+   "in": "XDebugger.ToolWindow.TopToolbar3"
+  },
+  {
+   "sh": "curl -s -m 10 http://localhost:18081/greeting.txt",
+   "is": "Debugged",
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "Stop 'DemoApplication'",
+   "role": "AXButton",
+   "in": "XDebugger.ToolWindow.TopToolbar3"
+  },
+  {
+   "expect": {
+    "run.debug.terminated": true
+   },
+   "within": 20000
+  }
+ ]
+}

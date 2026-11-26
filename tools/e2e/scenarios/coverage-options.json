@@ -1,0 +1,399 @@
+{
+ "id": "coverage-options",
+ "fixture": "coverage-maven",
+ "covers": [
+  "action:GenerateCoverageReport"
+ ],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven"
+   },
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-,"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings \u2013 fixture"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "do": "click",
+   "label": "Build, Execution, Deployment",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "do": "click",
+   "label": "Coverage",
+   "role": "AXRow",
+   "in": "Settings categories"
+  },
+  {
+   "expect": {
+    "settings.page": "Build, Execution, Deployment/Coverage"
+   },
+   "within": 5000
+  },
+  {
+   "toolbar": "Settings page",
+   "items": [
+    "Show options before applying coverage to the editor",
+    "Do not apply collected coverage",
+    "Replace active suites with the new one",
+    "Add to the active suites",
+    "Activate Coverage View",
+    "Show coverage in the project view",
+    "Branch coverage",
+    "Track per test coverage",
+    "Collect coverage in test folders",
+    "Add",
+    "Remove (disabled)",
+    "*Generated*"
+   ],
+   "within": 5000
+  },
+  {
+   "do": "activate",
+   "window": "Settings \u2013 fixture"
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "settings",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "Track per test coverage",
+   "role": "AXCheckBox"
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "value": true
+   },
+   "of": {
+    "do": "setting",
+    "path": "/spork/coverage/track_per_test"
+   },
+   "within": 8000
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 600000
+  },
+  {
+   "do": "open",
+   "path": "src/test/java/com/example/CalculatorTest.java"
+  },
+  {
+   "find": {
+    "label": "Run test 'CalculatorTest'",
+    "role": "AXButton"
+   },
+   "within": 30000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "click",
+   "label": "Run test 'CalculatorTest'",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    "Run 'CalculatorTest' with Coverage",
+    "Modify Run Configuration\u2026"
+   ],
+   "ordered": true,
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Modify Run Configuration\u2026"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Run/Debug Configurations"
+   },
+   "within": 8000
+  },
+  {
+   "do": "ui"
+  },
+  {
+   "find": {
+    "label": "Modify options",
+    "role": "AXLink"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Modify options",
+   "role": "AXLink"
+  },
+  {
+   "menu": "Modify options",
+   "items": [
+    "Tests (disabled)",
+    "Fork mode",
+    "Code Coverage (disabled)",
+    "Coverage settings"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Coverage settings",
+   "role": "AXMenuItem"
+  },
+  {
+   "menu": "Coverage settings",
+   "items": [
+    "Specify classes and packages",
+    "Exclude classes and packages"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Specify classes and packages",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": [
+    "Packages and classes to include in coverage data",
+    "No class patterns configured"
+   ],
+   "ordered": true,
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Add\u2026",
+   "role": "AXButton"
+  },
+  {
+   "menu": "Add\u2026",
+   "items": [
+    "Add Class\u2026",
+    "Add Package\u2026"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Add Class\u2026",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Pattern",
+    "role": "AXTextField"
+   },
+   "within": 3000
+  },
+  {
+   "do": "type",
+   "text": "com.example.Calculator",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "do": "activate",
+   "window": "Run/Debug Configurations"
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "patterns",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "windows.1": null
+   },
+   "within": 5000
+  },
+  {
+   "do": "action",
+   "name": "run_widget::RunWithCoverage"
+  },
+  {
+   "expect": {
+    "run.tabs.0.running": false,
+    "coverage.active": [
+     "CalculatorTest"
+    ]
+   },
+   "within": 180000
+  },
+  {
+   "expect": {
+    "coverage.view.rows": [
+     "com.example | 100% (1/1) | 66% (2/3) | 62% (5/8) | 75% (3/4)",
+     "  Calculator | 100% (1/1) | 66% (2/3) | 62% (5/8) | 75% (3/4)"
+    ]
+   },
+   "within": 30000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleBottomDock"
+  },
+  {
+   "expect": {
+    "docks.bottom.open": false
+   },
+   "within": 5000
+  },
+  {
+   "do": "open",
+   "path": "src/main/java/com/example/Calculator.java"
+  },
+  {
+   "expect": {
+    "coverage.marks": {
+     "contains": "14 full"
+    }
+   },
+   "within": 10000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "click",
+   "gutter_mark": 14
+  },
+  {
+   "expect": {
+    "coverage.popup.line": 14,
+    "coverage.popup.tests": [
+     "CalculatorTest.signs"
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Show Tests Covering Line",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    {
+     "label": "Tests Covering Line com.example.Calculator:14"
+    },
+    {
+     "label": "CalculatorTest.signs"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 60000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "do": "front"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "click",
+   "label": "Hits: 2",
+   "hover": true
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "tests"
+  },
+  {
+   "do": "click",
+   "label": "CalculatorTest.signs"
+  },
+  {
+   "expect": {
+    "active": "src/test/java/com/example/CalculatorTest.java",
+    "editor.caret": "14:1"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Generate Coverage Report\u2026",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    "Generate Coverage Report for: 'CalculatorTest Coverage Results'",
+    "Output directory:",
+    "Open generated HTML in browser",
+    "Cancel",
+    "Save"
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Open generated HTML in browser"
+  },
+  {
+   "do": "click",
+   "label": "Save",
+   "role": "AXButton"
+  },
+  {
+   "sh": "test -f htmlReport/index.html && echo written",
+   "within": 60000,
+   "is": "written"
+  }
+ ]
+}

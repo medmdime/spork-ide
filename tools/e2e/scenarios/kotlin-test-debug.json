@@ -116,17 +116,39 @@
    "shot": "stopped"
   },
   {
-   "do": "keys",
-   "keys": "cmd-alt-r"
+   "do": "click",
+   "label": "Console",
+   "role": "AXRadioButton"
+  },
+  {
+   "find": {
+    "label": "Test Results",
+    "in": "Console"
+   },
+   "within": 10000
   },
   {
    "expect": {
-    "run.tabs.0.running": false,
-    "run.tabs.0.tests.rows": [
+    "run.debug.tests.rows": [
+     "Test Results running",
+     "  GreetingTest running",
+     "    greets() running"
+    ]
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Resume Program"
+  },
+  {
+   "expect": {
+    "run.debug.tests.rows": [
      "Test Results passed",
      "  GreetingTest passed",
      "    greets() passed"
-    ]
+    ],
+    "run.tabs": []
    },
    "within": 120000
   }

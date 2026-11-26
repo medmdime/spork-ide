@@ -181,7 +181,8 @@
     "Pause Program (disabled)",
     "Resume Program",
     "Evaluate Expression…",
-    "Show Execution Point"
+    "Show Execution Point",
+    "Get Thread Dump (disabled)"
    ]
   },
   {

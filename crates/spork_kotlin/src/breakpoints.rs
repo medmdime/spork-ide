@@ -11,8 +11,10 @@ use editor::{Anchor, BreakpointToggle, Editor};
 use gpui::{App, Context, Window};
 use project::debugger::breakpoint_store::{
     Breakpoint, BreakpointEditAction, BreakpointKind, BreakpointProperties, BreakpointStore,
+    BreakpointWithPosition,
 };
 use spork_navigate::list_popup::{Row, RowIcon, show_list_popup};
+use workspace::Workspace;
 
 /// What a line can have a breakpoint on beyond the line itself.
 #[derive(Debug, Default, PartialEq)]
@@ -60,6 +62,95 @@ fn jvm_class(node: tree_sitter::Node<'_>, text: &str, file_name: &str) -> String
     }
     classes.reverse();
     classes.join("$")
+}
+
+/// The function declared around the 0-based `row` of a Kotlin file: its name's row and the JVM
+/// name the adapter takes (`com.example.MainKt.greet`).
+fn function_around(text: &str, row: usize, file_name: &str) -> Option<(usize, String)> {
+    let mut parser = tree_sitter::Parser::new();
+    parser
+        .set_language(&tree_sitter_kotlin::LANGUAGE.into())
+        .ok()?;
+    let tree = parser.parse(text, None)?;
+    let mut innermost = None;
+    let mut stack = vec![tree.root_node()];
+    while let Some(node) = stack.pop() {
+        if node.start_position().row > row || node.end_position().row < row {
+            continue;
+        }
+        if node.kind() == "function_declaration" {
+            innermost = Some(node);
+        }
+        let mut cursor = node.walk();
+        stack.extend(node.children(&mut cursor));
+    }
+    let function = innermost?;
+    let name = child_of_kind(function, "simple_identifier")?;
+    let package = child_of_kind(tree.root_node(), "package_header")
+        .and_then(|header| child_of_kind(header, "identifier"))
+        .map(|identifier| text_of(identifier, text).to_owned());
+    let class = jvm_class(function, text, file_name);
+    let qualified = format!("{class}.{}", text_of(name, text));
+    let qualified = match package {
+        Some(package) => format!("{package}.{qualified}"),
+        None => qualified,
+    };
+    Some((name.start_position().row, qualified))
+}
+
+/// Toggle Method Breakpoint in a Kotlin editor: the function breakpoint of the function around
+/// the caret on its name's line, or the breakpoint there removed; false in another file's editor.
+fn toggle_method_breakpoint(workspace: &mut Workspace, cx: &mut Context<Workspace>) -> bool {
+    let Some(editor) = workspace.active_item_as::<Editor>(cx) else {
+        return false;
+    };
+    let editor = editor.read(cx);
+    let multibuffer = editor.buffer().read(cx);
+    let head = editor.selections.newest_anchor().head();
+    let Some((anchor, _)) = multibuffer.snapshot(cx).anchor_to_buffer_anchor(head) else {
+        return false;
+    };
+    let Some(buffer) = multibuffer.buffer(anchor.buffer_id) else {
+        return false;
+    };
+    let is_kotlin = buffer
+        .read(cx)
+        .language()
+        .is_some_and(|language| language.name().as_ref() == "Kotlin");
+    let Some(path) = BreakpointStore::abs_path_from_buffer(&buffer, cx).filter(|_| is_kotlin)
+    else {
+        return false;
+    };
+    let snapshot = buffer.read(cx).snapshot();
+    let row = text::ToPoint::to_point(&anchor, &snapshot).row as usize;
+    let file_name = path
+        .file_name()
+        .map(|name| name.to_string_lossy().into_owned())
+        .unwrap_or_default();
+    let Some((row, function)) = function_around(&snapshot.text(), row, &file_name) else {
+        return true;
+    };
+    let store = workspace.project().read(cx).breakpoint_store();
+    store.update(cx, |store, cx| {
+        let breakpoint = match store.breakpoint_at_row(&path, row as u32, cx) {
+            Some((_, existing)) => existing,
+            None => BreakpointWithPosition {
+                position: snapshot.anchor_after(text::Point::new(row as u32, 0)),
+                bp: Breakpoint {
+                    properties: BreakpointProperties {
+                        kind: BreakpointKind::Method {
+                            name: function.clone(),
+                            function: Some(function),
+                        },
+                        ..BreakpointProperties::default()
+                    },
+                    ..Breakpoint::new_standard()
+                },
+            },
+        };
+        store.toggle_breakpoint(buffer, breakpoint, BreakpointEditAction::Toggle, cx);
+    });
+    true
 }
 
 /// The breakpoint variants of the 0-based `row` of a Kotlin file.
@@ -260,11 +351,49 @@ fn toggle(
 
 pub(crate) fn init(cx: &mut App) {
     cx.set_global(BreakpointToggle(Rc::new(toggle)));
+    // the server's filters, IntelliJ's "Any exception" before the first session
+    let filter = |filter: &str, label: &str| dap::ExceptionBreakpointsFilter {
+        filter: filter.into(),
+        label: label.into(),
+        description: None,
+        default: Some(false),
+        supports_condition: None,
+        condition_description: None,
+    };
+    spork_run::register_exception_filters(
+        spork_run::configurations::KOTLIN,
+        vec![
+            filter("caught", "Caught Exceptions"),
+            filter("uncaught", "Uncaught Exceptions"),
+        ],
+        Some(("caught", "uncaught")),
+        cx,
+    );
+    cx.observe_new(|workspace: &mut Workspace, _, _| {
+        workspace.register_action(
+            |workspace, _: &spork_run::run::ToggleMethodBreakpoint, _, cx| {
+                if !toggle_method_breakpoint(workspace, cx) {
+                    cx.propagate();
+                }
+            },
+        );
+    })
+    .detach();
 }
 
 #[cfg(test)]
 mod tests {
     use super::line_variants;
+
+    #[test]
+    fn finds_the_function_around_a_line() {
+        let text = "package com.example\n\nfun greet(name: String): String {\n    val g = Greeting(name)\n    return g.text()\n}\n";
+        assert_eq!(
+            super::function_around(text, 4, "Main.kt"),
+            Some((2, "com.example.MainKt.greet".to_owned()))
+        );
+        assert_eq!(super::function_around(text, 0, "Main.kt"), None);
+    }
 
     #[test]
     fn finds_a_lines_lambdas_and_the_function_it_declares() {

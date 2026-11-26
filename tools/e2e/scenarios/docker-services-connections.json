@@ -55,6 +55,11 @@
    ]
   },
   {
+   "do": "click",
+   "label": "Double-click on the server node to connect",
+   "hover": true
+  },
+  {
    "wait": 1000
   },
   {

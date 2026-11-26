@@ -1,0 +1,313 @@
+{
+ "id": "coverage-application",
+ "fixture": "coverage-maven",
+ "covers": [
+  "action:Coverage",
+  "action:HideCoverage",
+  "context-menu:CoverageMenu",
+  "context-menu:CoveragePlatformMenu"
+ ],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven"
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 600000
+  },
+  {
+   "do": "open",
+   "path": "src/main/java/com/example/Main.java"
+  },
+  {
+   "find": {
+    "label": "Run line marker",
+    "role": "AXButton"
+   },
+   "within": 30000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "click",
+   "label": "Run line marker",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    "Run 'Main'",
+    "Debug 'Main'",
+    "Run 'Main' with Coverage"
+   ],
+   "ordered": true,
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Run 'Main' with Coverage"
+  },
+  {
+   "expect": {
+    "run.tabs.0.running": false,
+    "run.tabs.0.output": {
+     "contains": "Hello, world!"
+    },
+    "coverage.active": [
+     "Main"
+    ],
+    "run.configurations.selected": "Main"
+   },
+   "within": 180000
+  },
+  {
+   "expect": {
+    "coverage.view.rows": [
+     "com.example | 66% (2/3) | 33% (2/6) | 18% (2/11) | 0% (0/4)",
+     "  Calculator | 0% (0/1) | 0% (0/3) | 0% (0/8) | 0% (0/4)",
+     "  Greeting | 100% (1/1) | 100% (1/1) | 100% (1/1) | 100% (0/0)",
+     "  Main | 100% (1/1) | 50% (1/2) | 50% (1/2) | 100% (0/0)"
+    ],
+    "coverage.marks": [
+     "4 none",
+     "6 full"
+    ]
+   },
+   "within": 30000
+  },
+  {
+   "menu": "Run",
+   "path": [
+    "Run"
+   ],
+   "items": [
+    "Run 'Main'",
+    "Debug 'Main'",
+    "Run 'Main' with Coverage"
+   ],
+   "part": true
+  },
+  {
+   "menu": "Run",
+   "path": [
+    "Run"
+   ],
+   "items": [
+    "Manage Coverage Reports\u2026",
+    "Generate Coverage Report\u2026",
+    "Hide Coverage"
+   ],
+   "part": true
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "do": "click",
+   "label": "More Actions",
+   "role": "AXButton"
+  },
+  {
+   "find": [
+    "Run 'Main' with Coverage",
+    "Edit\u2026"
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 60000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "do": "front"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "click",
+   "label": "Configuration",
+   "hover": true
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "more-actions"
+  },
+  {
+   "do": "click",
+   "label": "Run 'Main' with Coverage"
+  },
+  {
+   "expect": {
+    "coverage.dialog.question": true
+   },
+   "within": 180000
+  },
+  {
+   "find": [
+    "Do you want to display coverage data for 'Main Coverage Results'?",
+    "Don't ask again",
+    "Do Not Apply Collected Coverage",
+    "Add to Active Suites",
+    "Replace Active Suites"
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 60000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "do": "front"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "question"
+  },
+  {
+   "do": "click",
+   "label": "Add to Active Suites"
+  },
+  {
+   "expect": {
+    "coverage.dialog.question": false,
+    "coverage.active": [
+     "Main"
+    ],
+    "coverage.loading": false
+   },
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "alt-cmd-f6"
+  },
+  {
+   "expect": {
+    "coverage.dialog.suites": [
+     {
+      "name": "Main",
+      "checked": true
+     }
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "find": [
+    "Choose Coverage Suite to Display",
+    "Main",
+    "Cancel",
+    "No Coverage",
+    "Show Selected"
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "No Coverage"
+  },
+  {
+   "expect": {
+    "coverage.active": [],
+    "coverage.marks": []
+   },
+   "within": 5000
+  },
+  {
+   "menu": "Run",
+   "path": [
+    "Run"
+   ],
+   "items": [
+    "Manage Coverage Reports\u2026",
+    "Generate Coverage Report\u2026 (disabled)",
+    "Hide Coverage (disabled)"
+   ],
+   "part": true
+  },
+  {
+   "do": "keys",
+   "keys": "alt-cmd-f6"
+  },
+  {
+   "expect": {
+    "coverage.dialog.suites": [
+     {
+      "name": "Main",
+      "checked": false
+     }
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Main",
+   "role": "AXCheckBox"
+  },
+  {
+   "do": "click",
+   "label": "Show Selected"
+  },
+  {
+   "expect": {
+    "coverage.active": [
+     "Main"
+    ],
+    "coverage.marks": [
+     "4 none",
+     "6 full"
+    ]
+   },
+   "within": 30000
+  },
+  {
+   "do": "action",
+   "name": "coverage::HideCoverage"
+  },
+  {
+   "expect": {
+    "coverage.active": [],
+    "coverage.marks": []
+   },
+   "within": 5000
+  }
+ ]
+}

@@ -55,6 +55,188 @@ pub(crate) enum Notice {
         text: String,
         written: oneshot::Sender<bool>,
     },
+    /// The exception breakpoints' classes and class filters, which java-debug reads from its
+    /// settings (`exceptionFilters`) when it sets the exception breakpoints; the answer comes
+    /// once JDT LS has them.
+    ExceptionFilters {
+        filters: Value,
+        applied: oneshot::Sender<()>,
+    },
+}
+
+/// The app's request that gives the proxy Java's exception breakpoints of a class
+/// (`spork_run::ExceptionBreakpoints`), which it sends java-debug with "Any exception"'s.
+pub(crate) const SET_EXCEPTION_CLASSES: &str = "spork.exceptionClasses";
+
+/// The app's request that gives the proxy how the variables view shows values (`Presentation`).
+pub(crate) const SET_PRESENTATION: &str = "spork.presentation";
+
+/// How the variables view shows a session's values: IntelliJ's Show types, and the renderer
+/// View as chose for a value, by the value's expression.
+#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+pub(crate) struct Presentation {
+    pub(crate) show_types: bool,
+    pub(crate) renderers: HashMap<String, Renderer>,
+}
+
+impl Default for Presentation {
+    fn default() -> Self {
+        Self {
+            show_types: true,
+            renderers: HashMap::new(),
+        }
+    }
+}
+
+/// The renderers of IntelliJ's View as that java-debug's values take.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub(crate) enum Renderer {
+    Primitive,
+    Hex,
+    Object,
+    ToString,
+    /// java-debug's logical view of a collection (its size, its elements).
+    Collection,
+}
+
+/// Java's exception breakpoints as java-debug takes them: one Caught/Uncaught pair, a list of
+/// classes (all of them for "Any exception") and one set of class filters for a session. The
+/// proxy sends the union of the breakpoints' and, where they differ, decides at each stop which
+/// breakpoint it is and whether its notifications and class filters want it.
+#[derive(Default)]
+struct Exceptions {
+    /// "Any exception"'s notifications as Zed's last `setExceptionBreakpoints` sent them, once
+    /// it sent one.
+    any: Option<Vec<String>>,
+    model: spork_run::ExceptionBreakpoints,
+}
+
+/// One exception breakpoint as a stop is checked against it.
+#[derive(Clone, PartialEq)]
+struct ExceptionRule {
+    caught: bool,
+    uncaught: bool,
+    filters: Option<String>,
+}
+
+impl Exceptions {
+    fn any_rule(&self) -> Option<ExceptionRule> {
+        let any = self.any.as_ref()?;
+        let on = |filter: &str| any.iter().any(|f| f == filter);
+        (on("caught") || on("uncaught")).then(|| ExceptionRule {
+            caught: on("caught"),
+            uncaught: on("uncaught"),
+            filters: self.model.any_filters.clone(),
+        })
+    }
+
+    /// The enabled breakpoints of a class, by their class.
+    fn class_rules(&self) -> impl Iterator<Item = (&str, ExceptionRule)> {
+        self.model
+            .classes
+            .iter()
+            .filter(|class| class.enabled)
+            .map(|class| {
+                (
+                    class.class.as_str(),
+                    ExceptionRule {
+                        caught: class.caught,
+                        uncaught: class.uncaught,
+                        filters: class.filters.clone(),
+                    },
+                )
+            })
+    }
+
+    fn rules(&self) -> Vec<ExceptionRule> {
+        self.any_rule()
+            .into_iter()
+            .chain(self.class_rules().map(|(_, rule)| rule))
+            .collect()
+    }
+
+    /// The filters java-debug's `setExceptionBreakpoints` takes: every breakpoint's.
+    fn filters(&self) -> Vec<&'static str> {
+        let rules = self.rules();
+        let mut filters = Vec::new();
+        if rules.iter().any(|rule| rule.caught) {
+            filters.push("caught");
+        }
+        if rules.iter().any(|rule| rule.uncaught) {
+            filters.push("uncaught");
+        }
+        filters
+    }
+
+    /// The breakpoints differ in what they stop at: the proxy checks each stop.
+    fn checks_stops(&self) -> bool {
+        let rules = self.rules();
+        rules.windows(2).any(|pair| pair[0] != pair[1])
+    }
+
+    /// java-debug's `exceptionFilters` setting: the classes (all of them while "Any exception"
+    /// is on) and the class filters the breakpoints share.
+    fn settings(&self) -> Value {
+        let types: Vec<&str> = match self.any_rule() {
+            Some(_) => Vec::new(),
+            None => self.class_rules().map(|(class, _)| class).collect(),
+        };
+        let rules = self.rules();
+        let shared = match rules.split_first() {
+            Some((first, rest)) if rest.iter().all(|rule| rule.filters == first.filters) => {
+                first.filters.clone()
+            }
+            _ => None,
+        };
+        let (allow, skip) = class_filters(shared.as_deref().unwrap_or_default());
+        json!({"exceptionTypes": types, "allowClasses": allow, "skipClasses": skip})
+    }
+
+    /// Whether the breakpoint for an exception of `class` thrown in `location` wants the stop.
+    fn wants(&self, class: &str, uncaught: bool, location: &str) -> bool {
+        let rule = self
+            .class_rules()
+            .find(|(name, _)| *name == class)
+            .map(|(_, rule)| rule)
+            .or_else(|| self.any_rule());
+        // shortcut: a subclass of a breakpoint's class stops as java-debug stops it; match the
+        // class hierarchy once one breakpoint's notifications must win over another's
+        let Some(rule) = rule else {
+            return true;
+        };
+        let notified = match uncaught {
+            true => rule.uncaught,
+            false => rule.caught,
+        };
+        let (allow, skip) = class_filters(rule.filters.as_deref().unwrap_or_default());
+        notified
+            && (allow.is_empty() || allow.iter().any(|pattern| class_matches(pattern, location)))
+            && !skip.iter().any(|pattern| class_matches(pattern, location))
+    }
+}
+
+/// IntelliJ's class filters field, `com.example.* -com.example.impl.*`: the classes included and
+/// the ones excluded.
+fn class_filters(text: &str) -> (Vec<String>, Vec<String>) {
+    let (skip, allow): (Vec<&str>, Vec<&str>) = text
+        .split_whitespace()
+        .partition(|pattern| pattern.starts_with('-'));
+    (
+        allow.into_iter().map(str::to_owned).collect(),
+        skip.into_iter()
+            .map(|pattern| pattern.trim_start_matches('-').to_owned())
+            .filter(|pattern| !pattern.is_empty())
+            .collect(),
+    )
+}
+
+/// A class filter's pattern as the JVM matches it: a name, or `*` at its start or end.
+fn class_matches(pattern: &str, class: &str) -> bool {
+    match (pattern.strip_prefix('*'), pattern.strip_suffix('*')) {
+        (Some(suffix), _) => class.ends_with(suffix),
+        (_, Some(prefix)) => class.starts_with(prefix),
+        _ => class == pattern,
+    }
 }
 
 /// A request the app sends java-debug through the proxy, answered with its body.
@@ -180,11 +362,31 @@ async fn serve(
         failed_conditions: HashMap::new(),
         packages: HashMap::new(),
         resume_only_current,
+        exceptions: Exceptions::default(),
+        presentation: Presentation::default(),
+        asked: HashMap::new(),
+        frames: HashMap::new(),
     };
     while let Some(input) = inputs.next().await {
         match input {
             Input::Client(message) => proxy.from_client(message).await?,
             Input::Adapter(message) => proxy.from_adapter(message).await?,
+            Input::App(request) if request.command == SET_PRESENTATION => {
+                proxy.presentation = serde_json::from_value(request.arguments)
+                    .log_err()
+                    .unwrap_or_default();
+                request.answer.send(Ok(Value::Null)).ok();
+            }
+            Input::App(request) if request.command == SET_EXCEPTION_CLASSES => {
+                proxy.exceptions.model = serde_json::from_value(request.arguments)
+                    .log_err()
+                    .unwrap_or_default();
+                // a session that set its exception breakpoints sets them again
+                if proxy.exceptions.any.is_some() {
+                    proxy.apply_exceptions(None).await?;
+                }
+                request.answer.send(Ok(Value::Null)).ok();
+            }
             Input::App(request) => {
                 let seq = proxy
                     .send_adapter(&request.command, request.arguments)
@@ -214,6 +416,22 @@ enum Pending {
     LogMessage {
         thread: i64,
     },
+    /// A value's `toString()` for View as ▸ toString: the `variables` answer it goes in, the
+    /// value's index there, and the values after it still to evaluate.
+    ToString {
+        variables: Value,
+        index: usize,
+        rest: Vec<(usize, String)>,
+        frame: Value,
+    },
+    /// An exception's class and whether it is caught, for the breakpoint that wants it.
+    ExceptionInfo(Value),
+    /// Where the exception was thrown, for the breakpoint's class filters.
+    ExceptionFrame {
+        stopped: Value,
+        class: String,
+        uncaught: bool,
+    },
     Ignore,
 }
 
@@ -238,6 +456,13 @@ struct Proxy {
     /// The package each source file declares.
     packages: HashMap<String, Option<String>>,
     resume_only_current: Arc<AtomicBool>,
+    exceptions: Exceptions,
+    presentation: Presentation,
+    /// The client's requests whose answers the presentation needs: a `scopes` request's frame,
+    /// a `variables` request's reference.
+    asked: HashMap<i64, Value>,
+    /// The frame each variables reference belongs to, for a value's `toString()`.
+    frames: HashMap<i64, Value>,
 }
 
 impl Proxy {
@@ -282,9 +507,53 @@ impl Proxy {
                 self.pending.insert(seq, Pending::Ignore);
             }
             "setBreakpoints" => self.keep_log_points(&mut message),
+            "scopes" | "variables" => {
+                let seq = message["seq"].as_i64().unwrap_or_default();
+                self.asked.insert(seq, message["arguments"].clone());
+            }
+            "setExceptionBreakpoints" => {
+                let any = message["arguments"]["filters"]
+                    .as_array()
+                    .map(|filters| {
+                        filters
+                            .iter()
+                            .filter_map(|filter| filter.as_str().map(str::to_owned))
+                            .collect()
+                    })
+                    .unwrap_or_default();
+                self.exceptions.any = Some(any);
+                return self.apply_exceptions(Some(message)).await;
+            }
             _ => {}
         }
         write_message(&mut self.adapter, &message).await
+    }
+
+    /// Sets the exception breakpoints: JDT LS gets their classes and class filters first, then
+    /// java-debug the filters of every breakpoint, as Zed's request (`request`) or the proxy's own.
+    async fn apply_exceptions(&mut self, request: Option<Value>) -> Result<()> {
+        let (applied, done) = oneshot::channel();
+        self.notices
+            .unbounded_send(Notice::ExceptionFilters {
+                filters: self.exceptions.settings(),
+                applied,
+            })
+            .ok();
+        done.await.ok();
+        let filters = self.exceptions.filters();
+        match request {
+            Some(mut request) => {
+                request["arguments"]["filters"] = json!(filters);
+                write_message(&mut self.adapter, &request).await
+            }
+            None => {
+                let seq = self
+                    .send_adapter("setExceptionBreakpoints", json!({"filters": filters}))
+                    .await?;
+                self.pending.insert(seq, Pending::Ignore);
+                Ok(())
+            }
+        }
     }
 
     /// A breakpoint that logs is the proxy's: java-debug would drop its condition, and its
@@ -330,7 +599,8 @@ impl Proxy {
                     return self.answered(pending, message).await;
                 }
                 self.present(&mut message).await;
-                self.send_client(&message).await
+                let asked = self.asked.remove(&seq);
+                self.render_values(message, asked).await
             }
             Some("event") => self.event(message).await,
             _ => self.send_client(&message).await,
@@ -377,6 +647,8 @@ impl Proxy {
     }
 
     async fn stopped(&mut self, message: Value) -> Result<()> {
+        // java-debug's variables references are the stop's
+        self.frames.clear();
         let body = &message["body"];
         let reason = body["reason"].as_str().unwrap_or_default();
         if reason == "pause" {
@@ -387,6 +659,13 @@ impl Proxy {
             return self.send_client(&message).await;
         }
         let thread = body["threadId"].clone();
+        if reason == "exception" && self.exceptions.checks_stops() {
+            let seq = self
+                .send_adapter("exceptionInfo", json!({"threadId": thread}))
+                .await?;
+            self.pending.insert(seq, Pending::ExceptionInfo(message));
+            return Ok(());
+        }
         if self.condition_error.is_some()
             || !self.log_points.is_empty()
             || !self.thread_points.is_empty()
@@ -521,8 +800,182 @@ impl Proxy {
                 self.pending.insert(seq, Pending::Ignore);
                 Ok(())
             }
+            Pending::ToString {
+                mut variables,
+                index,
+                rest,
+                frame,
+            } => {
+                if succeeded {
+                    let text = response["body"]["result"].as_str().unwrap_or_default();
+                    let variable = &mut variables["body"]["variables"][index];
+                    let value = variable["value"].as_str().unwrap_or_default();
+                    variable["value"] = match typed_reference(value) {
+                        Some(reference) => format!("{reference} {text}"),
+                        None => text.to_owned(),
+                    }
+                    .into();
+                }
+                self.next_to_string(variables, rest, frame).await
+            }
+            Pending::ExceptionInfo(stopped) => {
+                let body = &response["body"];
+                let class = body["exceptionId"].as_str().unwrap_or_default().to_owned();
+                // java-debug's break mode: `always` for a caught exception
+                let uncaught = body["breakMode"]
+                    .as_str()
+                    .is_some_and(|mode| mode != "always");
+                let seq = self
+                    .send_adapter(
+                        "stackTrace",
+                        json!({"threadId": stopped["body"]["threadId"], "startFrame": 0, "levels": 1}),
+                    )
+                    .await?;
+                self.pending.insert(
+                    seq,
+                    Pending::ExceptionFrame {
+                        stopped,
+                        class,
+                        uncaught,
+                    },
+                );
+                Ok(())
+            }
+            Pending::ExceptionFrame {
+                stopped,
+                class,
+                uncaught,
+            } => {
+                let frame = &response["body"]["stackFrames"][0];
+                let package = match frame["source"]["path"].as_str() {
+                    Some(path) => self.package_of(path).await,
+                    None => None,
+                };
+                let name = qualified_frame_name(
+                    frame["name"].as_str().unwrap_or_default(),
+                    package.as_deref(),
+                );
+                let signature = name.split('(').next().unwrap_or_default();
+                let location = signature.rsplit_once('.').map_or("", |(class, _)| class);
+                if self.exceptions.wants(&class, uncaught, location) {
+                    return self.stop_all(stopped).await;
+                }
+                let seq = self
+                    .send_adapter("continue", json!({"threadId": stopped["body"]["threadId"]}))
+                    .await?;
+                self.pending.insert(seq, Pending::Ignore);
+                Ok(())
+            }
             Pending::Ignore => Ok(()),
         }
+    }
+
+    /// The values of a response as the variables view shows them (View as, Show types); a value
+    /// shown with its `toString()` is evaluated first, in the frame its reference belongs to.
+    async fn render_values(&mut self, mut response: Value, asked: Option<Value>) -> Result<()> {
+        let command = response["command"].as_str().unwrap_or_default().to_owned();
+        match command.as_str() {
+            "scopes" => {
+                let frame = asked.map(|asked| asked["frameId"].clone());
+                for scope in response["body"]["scopes"].as_array().into_iter().flatten() {
+                    if let (Some(frame), Some(reference)) =
+                        (&frame, scope["variablesReference"].as_i64())
+                    {
+                        self.frames.insert(reference, frame.clone());
+                    }
+                }
+            }
+            "variables" => {
+                let frame = asked
+                    .and_then(|asked| asked["variablesReference"].as_i64())
+                    .and_then(|reference| self.frames.get(&reference).cloned());
+                let mut to_string = Vec::new();
+                let variables = response["body"]["variables"].as_array_mut();
+                for (ix, variable) in variables.into_iter().flatten().enumerate() {
+                    if let (Some(frame), Some(reference)) =
+                        (&frame, variable["variablesReference"].as_i64())
+                        && reference > 0
+                    {
+                        self.frames.insert(reference, frame.clone());
+                    }
+                    let Some(expression) = variable["evaluateName"].as_str().map(str::to_owned)
+                    else {
+                        continue;
+                    };
+                    let value = variable["value"].as_str().unwrap_or_default().to_owned();
+                    let ty = variable["type"].as_str().unwrap_or_default().to_owned();
+                    match self.presentation.renderers.get(&expression) {
+                        Some(Renderer::Hex) => {
+                            if let Some(hex) = hex_text(&value, &ty) {
+                                variable["value"] = hex.into();
+                            }
+                        }
+                        Some(Renderer::Object) => {
+                            if let Some(reference) = typed_reference(&value) {
+                                variable["value"] = reference.into();
+                            }
+                        }
+                        Some(Renderer::ToString) => to_string.push((ix, expression)),
+                        _ => {}
+                    }
+                }
+                if let Some(frame) = frame.filter(|_| !to_string.is_empty()) {
+                    return self.next_to_string(response, to_string, frame).await;
+                }
+            }
+            _ => {}
+        }
+        self.finish(response).await
+    }
+
+    /// The next value View as ▸ toString shows: its `toString()` evaluated, or the answer sent.
+    async fn next_to_string(
+        &mut self,
+        variables: Value,
+        mut rest: Vec<(usize, String)>,
+        frame: Value,
+    ) -> Result<()> {
+        if rest.is_empty() {
+            return self.finish(variables).await;
+        }
+        let (index, expression) = rest.remove(0);
+        let seq = self
+            .send_adapter(
+                "evaluate",
+                json!({"expression": format!("String.valueOf({expression})"), "frameId": frame,
+                    "context": "repl"}),
+            )
+            .await?;
+        self.pending.insert(
+            seq,
+            Pending::ToString {
+                variables,
+                index,
+                rest,
+                frame,
+            },
+        );
+        Ok(())
+    }
+
+    /// Show types off: the values without their `{Type@id}`; then the answer goes to Zed.
+    async fn finish(&mut self, mut response: Value) -> Result<()> {
+        if !self.presentation.show_types {
+            let strip = |value: &mut Value| {
+                if let Some(text) = value.as_str()
+                    && let Some(reference) = typed_reference(text)
+                {
+                    *value = text[reference.len()..].trim_start().to_owned().into();
+                }
+            };
+            let body = &mut response["body"];
+            for variable in body["variables"].as_array_mut().into_iter().flatten() {
+                strip(&mut variable["value"]);
+            }
+            strip(&mut body["result"]);
+            strip(&mut body["value"]);
+        }
+        self.send_client(&response).await
     }
 
     /// A response as IntelliJ shows its contents: thread names, frames, values.
@@ -583,19 +1036,10 @@ impl Proxy {
 
     /// The package of a frame's source: a `jdt://` class's, or the one its file declares.
     async fn package_of(&mut self, path: &str) -> Option<String> {
-        if let Some(rest) = path.strip_prefix("jdt://contents/") {
-            let rest = rest.split('?').next()?;
-            let mut segments = rest.rsplit('/');
-            segments.next()?;
-            return segments.next().map(str::to_owned);
-        }
         if let Some(package) = self.packages.get(path) {
             return package.clone();
         }
-        let package = smol::fs::read_to_string(Path::new(path))
-            .await
-            .ok()
-            .and_then(|text| crate::application::package_of(&text));
+        let package = source_package(path).await;
         self.packages.insert(path.to_owned(), package.clone());
         package
     }
@@ -650,6 +1094,7 @@ pub(crate) async fn connect(
             .0
             .insert(port, handle.clone());
         cx.background_spawn(run).detach();
+        send_exception_classes(&handle, cx);
         cx.spawn(async move |cx| {
             while let Some(notice) = notices.next().await {
                 cx.update(|cx| notify(&workspace, &handle, port, &session, notice, cx));
@@ -661,11 +1106,22 @@ pub(crate) async fn connect(
     Ok(port)
 }
 
+/// Gives a session's proxy Java's exception breakpoints of a class.
+fn send_exception_classes(proxy: &ProxyHandle, cx: &mut App) {
+    let model = spork_run::exception_breakpoints(spork_run::configurations::JAVA, cx);
+    let proxy = proxy.clone();
+    cx.background_spawn(async move {
+        let model = serde_json::to_value(model)?;
+        proxy.request(SET_EXCEPTION_CLASSES, model).await.map(drop)
+    })
+    .detach_and_log_err(cx);
+}
+
 /// java-debug's settings (`vscode.java.updateDebugSettings`) from IntelliJ's Data Views › Java and
 /// Stepping options: values with their `toString()` and collections' views, the stepping filters
 /// ("Do not step into the classes") and "Skip synthetic methods" unless `stepping_filters` is off
 /// (Force Step Into). java-debug's settings are JDT LS's, its sessions share them.
-fn settings(options: &DebuggerSettings, stepping_filters: bool) -> String {
+fn settings(options: &DebuggerSettings, stepping_filters: bool, exceptions: &Value) -> String {
     let filters = stepping_filters && options.step_filters_enabled;
     let skip: Vec<&str> = options
         .step_filters
@@ -688,20 +1144,37 @@ fn settings(options: &DebuggerSettings, stepping_filters: bool) -> String {
             "skipStaticInitializers": false,
             "skipConstructors": stepping_filters && options.skip_constructors,
         },
+        // every update sets the sessions' exception breakpoints again with these
+        "exceptionFilters": exceptions,
+        "exceptionFiltersUpdated": true,
     })
     .to_string()
 }
+
+/// The exception breakpoints' classes and class filters java-debug was last given: its settings
+/// are replaced whole on each update, these with them.
+// shortcut: one value for every JDT LS; keep one per server once two Java projects debug at once
+#[derive(Default)]
+struct ExceptionFilters(Value);
+
+impl Global for ExceptionFilters {}
 
 pub(crate) async fn update_settings(
     server: &LanguageServer,
     stepping_filters: bool,
     cx: &mut AsyncApp,
 ) -> Result<()> {
-    let options = cx.update(|cx| spork_settings::debugger::settings(cx));
+    let (options, exceptions) = cx.update(|cx| {
+        let exceptions = cx
+            .try_global::<ExceptionFilters>()
+            .map(|filters| filters.0.clone())
+            .unwrap_or_else(|| json!({}));
+        (spork_settings::debugger::settings(cx), exceptions)
+    });
     execute_command(
         server,
         "vscode.java.updateDebugSettings",
-        vec![settings(&options, stepping_filters).into()],
+        vec![settings(&options, stepping_filters, &exceptions).into()],
     )
     .await
     .map(drop)
@@ -754,12 +1227,26 @@ fn notify(
     cx: &mut App,
 ) {
     let Some(workspace) = workspace.upgrade() else {
-        if let Notice::Log { written, .. } = notice {
-            written.send(false).ok();
-        }
+        match notice {
+            Notice::Log { written, .. } => written.send(false).ok(),
+            Notice::ExceptionFilters { applied, .. } => applied.send(()).ok(),
+            _ => None,
+        };
         return;
     };
     match notice {
+        Notice::ExceptionFilters { filters, applied } => {
+            cx.set_global(ExceptionFilters(filters));
+            let server = JavaProject::of(workspace.read(cx), cx)
+                .and_then(|java| java.read(cx).language_server(cx));
+            cx.spawn(async move |cx| {
+                if let Some(server) = server {
+                    update_settings(&server, true, cx).await.log_err();
+                }
+                applied.send(()).ok();
+            })
+            .detach();
+        }
         Notice::Log { text, written } => {
             let dap_store = workspace.read(cx).project().read(cx).dap_store();
             let debugged = dap_store.read(cx).sessions().find(|debugged| {
@@ -834,6 +1321,13 @@ fn notify(
         Notice::HotCodeReplace { change, .. }
             if change == "BUILD_COMPLETE" && !proxy.reloading.load(Ordering::Relaxed) =>
         {
+            // JDT LS builds a library's source opened from a frame too: only a change of the
+            // project's Java files asks
+            // shortcut: a file changed outside the IDE's editors isn't seen; ask JDT LS which
+            // classes it built once java-debug's event tells
+            if !crate::hotswap::has_changes(workspace.read(cx).project(), cx) {
+                return;
+            }
             match spork_settings::debugger::settings(cx).reload_after_compilation {
                 Reload::Never => return,
                 Reload::Always => {
@@ -958,6 +1452,16 @@ pub(crate) fn init(cx: &mut App) {
         });
     })
     .detach();
+    cx.observe_global::<spork_run::ExceptionClasses>(|cx| {
+        let proxies: Vec<ProxyHandle> = cx
+            .try_global::<Proxies>()
+            .map(|proxies| proxies.0.values().cloned().collect())
+            .unwrap_or_default();
+        for proxy in &proxies {
+            send_exception_classes(proxy, cx);
+        }
+    })
+    .detach();
     cx.observe_global::<spork_settings::debugger::DebuggerSettingsGlobal>(|cx| {
         let options = spork_settings::debugger::settings(cx);
         if let Some(proxies) = cx.try_global::<Proxies>() {
@@ -967,19 +1471,35 @@ pub(crate) fn init(cx: &mut App) {
                     .store(options.resume_only_current_thread, Ordering::Relaxed);
             }
         }
-        let servers: Vec<_> = cx
+        let projects: Vec<_> = cx
             .try_global::<crate::java_project::Projects>()
-            .map(|projects| {
-                projects
-                    .0
-                    .values()
-                    .filter_map(|java| java.read(cx).language_server(cx))
-                    .collect()
-            })
+            .map(|projects| projects.0.values().cloned().collect())
             .unwrap_or_default();
-        for server in servers {
-            cx.spawn(async move |cx| update_settings(&server, true, cx).await)
-                .detach_and_log_err(cx);
+        for java in projects {
+            let Some(server) = java.read(cx).language_server(cx) else {
+                continue;
+            };
+            // the stopped sessions show their values with the options at once (Data Views)
+            let sessions: Vec<_> = java
+                .read(cx)
+                .project
+                .read(cx)
+                .dap_store()
+                .read(cx)
+                .sessions()
+                .filter(|session| proxy_of(session.read(cx), cx).is_some())
+                .map(|session| session.downgrade())
+                .collect();
+            cx.spawn(async move |cx| {
+                update_settings(&server, true, cx).await?;
+                for session in sessions {
+                    session
+                        .update(cx, |session, cx| session.refresh_variables(cx))
+                        .ok();
+                }
+                anyhow::Ok(())
+            })
+            .detach_and_log_err(cx);
         }
     })
     .detach();
@@ -1127,20 +1647,49 @@ fn qualified_frame_name(name: &str, package: Option<&str>) -> String {
     }
 }
 
-/// IntelliJ's frame label from a qualified frame name: `hello:9, Greeting (com.example)`; a
-/// frame without a line shows -1, as IntelliJ's.
-pub(crate) fn frame_label(name: &str, line: u64) -> String {
-    let signature = name.split('(').next().unwrap_or(name);
+/// IntelliJ's frame label from a qualified frame name, as the threads view shows it:
+/// `hello:9, Greeting (com.example)`; a frame without a line shows -1, as IntelliJ's.
+pub(crate) fn frame_label(
+    name: &str,
+    line: u64,
+    source: Option<&str>,
+    view: &spork_run::ThreadsView,
+) -> String {
+    let (signature, args) = match name.split_once('(') {
+        Some((signature, args)) => (signature, Some(args.trim_end_matches(')'))),
+        None => (name, None),
+    };
     let (class, method) = signature.rsplit_once('.').unwrap_or(("", signature));
     let line = match line {
-        0 => "-1".to_owned(),
-        line => line.to_string(),
+        0 => -1,
+        line => line as i64,
     };
-    match class.rsplit_once('.') {
-        Some((package, class)) => format!("{method}:{line}, {class} ({package})"),
-        None if class.is_empty() => format!("{method}:{line}"),
-        None => format!("{method}:{line}, {class}"),
+    let (package, class) = match class.rsplit_once('.') {
+        Some((package, class)) => (Some(package), class),
+        None => (None, class),
+    };
+    spork_run::jvm_frame_label(method, args, line, class, package, source, view)
+}
+
+/// The class of a qualified frame name: `com.example.Greeting.hello(String)` → `com.example.Greeting`.
+pub(crate) fn frame_class(name: &str) -> Option<String> {
+    let signature = name.split('(').next()?;
+    let (class, _) = signature.rsplit_once('.')?;
+    Some(class.to_owned())
+}
+
+/// The package of a source java-debug names: a `jdt://` class's, or the one its file declares.
+pub(crate) async fn source_package(path: &str) -> Option<String> {
+    if let Some(rest) = path.strip_prefix("jdt://contents/") {
+        let rest = rest.split('?').next()?;
+        let mut segments = rest.rsplit('/');
+        segments.next()?;
+        return segments.next().map(str::to_owned);
     }
+    smol::fs::read_to_string(Path::new(path))
+        .await
+        .ok()
+        .and_then(|text| crate::application::package_of(&text))
 }
 
 /// A value as IntelliJ shows it: an object `{Type@id}` and what java-debug says of it after,
@@ -1178,6 +1727,33 @@ fn object_reference(value: &str) -> Option<(String, &str)> {
         format!("{short}@{}", &value[at + 1..digits]),
         &value[digits..],
     ))
+}
+
+/// The `{Type@id}` a value shows first.
+pub(crate) fn typed_reference(value: &str) -> Option<&str> {
+    let end = value.strip_prefix('{')?.find('}')?;
+    Some(&value[..end + 2])
+}
+
+/// A primitive as IntelliJ's hex renderer writes it (`HexRenderer`): `0xD`, a byte's last two
+/// digits, a short's last four, a char after itself (`'a' 0x61`).
+fn hex_text(value: &str, ty: &str) -> Option<String> {
+    let hex = match ty {
+        "int" => format!("{:X}", value.parse::<i64>().ok()? as i32 as u32),
+        "long" => format!("{:X}", value.parse::<i64>().ok()? as u64),
+        "short" => format!("{:X}", value.parse::<i64>().ok()? as i16 as u16),
+        "byte" => format!("{:X}", value.parse::<i64>().ok()? as i8 as u8),
+        "char" => {
+            let character = value
+                .strip_prefix('\'')?
+                .strip_suffix('\'')?
+                .chars()
+                .next()?;
+            return Some(format!("{value} 0x{:X}", character as u32));
+        }
+        _ => return None,
+    };
+    Some(format!("0x{hex}"))
 }
 
 /// A log message, which IntelliJ's breakpoints write as text with `{expression}`s, as the Java
@@ -1219,15 +1795,70 @@ fn unquote(result: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{frame_label, java_string, qualified_frame_name, thread_name, value_text};
+    use super::{
+        Exceptions, frame_label, java_string, qualified_frame_name, thread_name, value_text,
+    };
+    use serde_json::json;
+
+    #[test]
+    fn exception_breakpoints_go_to_java_debug_as_one_request() {
+        let class = |class: &str, caught: bool, uncaught: bool, filters: Option<&str>| {
+            spork_run::ExceptionClassBreakpoint {
+                class: class.into(),
+                enabled: true,
+                caught,
+                uncaught,
+                filters: filters.map(str::to_owned),
+            }
+        };
+        let mut exceptions = Exceptions {
+            any: Some(Vec::new()),
+            model: spork_run::ExceptionBreakpoints {
+                any_filters: None,
+                classes: vec![class(
+                    "java.lang.NumberFormatException",
+                    true,
+                    false,
+                    Some("java.lang.* -java.lang.Integer"),
+                )],
+            },
+        };
+        // one breakpoint: java-debug does it all
+        assert_eq!(exceptions.filters(), ["caught"]);
+        assert!(!exceptions.checks_stops());
+        assert_eq!(
+            exceptions.settings(),
+            json!({"exceptionTypes": ["java.lang.NumberFormatException"],
+                "allowClasses": ["java.lang.*"], "skipClasses": ["java.lang.Integer"]})
+        );
+        // "Any exception" on too: every class, the stops checked against each breakpoint
+        exceptions.any = Some(vec!["uncaught".into()]);
+        assert_eq!(exceptions.filters(), ["caught", "uncaught"]);
+        assert!(exceptions.checks_stops());
+        assert_eq!(exceptions.settings()["exceptionTypes"], json!([]));
+        assert_eq!(exceptions.settings()["allowClasses"], json!([]));
+        let nfe = "java.lang.NumberFormatException";
+        assert!(exceptions.wants(nfe, false, "java.lang.Long"));
+        assert!(!exceptions.wants(nfe, false, "java.lang.Integer"));
+        assert!(!exceptions.wants(nfe, true, "java.lang.Long"));
+        assert!(exceptions.wants("java.lang.IllegalStateException", true, "com.example.Main"));
+        assert!(!exceptions.wants("java.lang.IllegalStateException", false, "com.example.Main"));
+    }
 
     #[test]
     fn writes_threads_frames_and_values_as_intellij() {
         assert_eq!(thread_name("Thread [main]"), "main");
         let name = qualified_frame_name("Greeting.hello(String)", Some("com.example"));
-        assert_eq!(frame_label(&name, 9), "hello:9, Greeting (com.example)");
+        let view = spork_run::ThreadsView::default();
+        assert_eq!(
+            frame_label(&name, 9, None, &view),
+            "hello:9, Greeting (com.example)"
+        );
         let native = qualified_frame_name("Thread.sleep(long)[native method]", Some("java.lang"));
-        assert_eq!(frame_label(&native, 0), "sleep:-1, Thread (java.lang)");
+        assert_eq!(
+            frame_label(&native, 0, None, &view),
+            "sleep:-1, Thread (java.lang)"
+        );
         assert_eq!(
             value_text("ArrayList@23 size=3"),
             "{ArrayList@23}  size = 3"

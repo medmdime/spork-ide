@@ -1,0 +1,452 @@
+{
+ "id": "java-debug-leftovers",
+ "fixture": "maven",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "sh": "mkdir -p .zed && printf '%s' '[{\"label\": \"Debuggee\", \"adapter\": \"Java\", \"request\": \"launch\", \"mainClass\": \"com.example.Debuggee\"}]' > .zed/debug.json"
+  },
+  {
+   "expect": {
+    "java.tool": "Maven"
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 600000
+  },
+  {
+   "expect": {
+    "run.configurations.selected": "Debuggee"
+   },
+   "within": 10000
+  },
+  {
+   "do": "open",
+   "path": "src/main/java/com/example/Debuggee.java"
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/Debuggee.java",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   }
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   },
+   "within": 5000
+  },
+  {
+   "do": "type",
+   "text": "21:1"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "expect": {
+    "run.breakpoints.0.at": "Debuggee.java:21",
+    "run.breakpoints.0.suspend": "all"
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-f8"
+  },
+  {
+   "find": {
+    "label": "Make Default",
+    "role": "AXButton"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Thread",
+   "role": "AXRadioButton"
+  },
+  {
+   "find": {
+    "label": "Make Default",
+    "role": "AXButton"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Make Default",
+   "role": "AXButton"
+  },
+  {
+   "find": {
+    "label": "Make Default",
+    "role": "AXButton"
+   },
+   "absent": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Done",
+   "role": "AXButton"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   },
+   "within": 5000
+  },
+  {
+   "do": "type",
+   "text": "45:1"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "expect": {
+    "run.breakpoints.1.at": "Debuggee.java:45",
+    "run.breakpoints.1.suspend": "thread"
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "expect": {
+    "run.breakpoints.1": null
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-,"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture"
+   },
+   "within": 8000
+  },
+  {
+   "do": "activate",
+   "window": "Settings – fixture"
+  },
+  {
+   "find": {
+    "label": "Build, Execution, Deployment",
+    "role": "AXRow",
+    "in": "Settings categories"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "role": "AXRow",
+   "in": "Settings categories",
+   "label": "Build, Execution, Deployment"
+  },
+  {
+   "do": "click",
+   "role": "AXRow",
+   "in": "Settings categories",
+   "label": "Debugger"
+  },
+  {
+   "do": "click",
+   "role": "AXRow",
+   "in": "Settings categories",
+   "label": "Stepping"
+  },
+  {
+   "expect": {
+    "settings.page": "Build, Execution, Deployment/Debugger/Stepping"
+   },
+   "within": 8000
+  },
+  {
+   "find": [
+    {
+     "label": "Add",
+     "role": "AXButton",
+     "in": "Do not step into the classes Toolbar"
+    },
+    {
+     "label": "Remove",
+     "role": "AXButton",
+     "enabled": false,
+     "in": "Do not step into the classes Toolbar"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Add",
+   "role": "AXButton",
+   "in": "Do not step into the classes Toolbar"
+  },
+  {
+   "find": [
+    {
+     "label": "Add Class…",
+     "enabled": false
+    },
+    {
+     "label": "Add Pattern…"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Add Pattern…"
+  },
+  {
+   "expect": {
+    "windows.2.title": "New Filter"
+   },
+   "within": 5000
+  },
+  {
+   "find": {
+    "label": "Enter the filter pattern:",
+    "role": "AXTextField"
+   },
+   "within": 5000
+  },
+  {
+   "do": "type",
+   "text": "com.example.*",
+   "window": "New Filter"
+  },
+  {
+   "do": "keys",
+   "keys": "enter",
+   "window": "New Filter"
+  },
+  {
+   "find": {
+    "label": "com.example.*",
+    "role": "AXCheckBox",
+    "value": "1"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "com.sun.*",
+   "role": "AXGroup"
+  },
+  {
+   "do": "click",
+   "label": "Remove",
+   "role": "AXButton",
+   "in": "Do not step into the classes Toolbar"
+  },
+  {
+   "find": {
+    "label": "com.sun.*",
+    "role": "AXCheckBox"
+   },
+   "absent": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "role": "AXRow",
+   "in": "Settings categories",
+   "label": "HotSwap"
+  },
+  {
+   "expect": {
+    "settings.page": "Build, Execution, Deployment/Debugger/HotSwap"
+   },
+   "within": 8000
+  },
+  {
+   "do": "activate",
+   "window": "Settings – fixture"
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "hotswap",
+   "window": "smallest"
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "value": {
+     "contains": [
+      "com.example.*",
+      true
+     ]
+    }
+   },
+   "of": {
+    "do": "setting",
+    "path": "/spork/debugger/step_filters"
+   },
+   "within": 8000
+  },
+  {
+   "expect": {
+    "value.0": [
+     "java.*",
+     true
+    ]
+   },
+   "of": {
+    "do": "setting",
+    "path": "/spork/debugger/step_filters"
+   },
+   "within": 8000
+  },
+  {
+   "find": {
+    "label": "Debug 'Debuggee'",
+    "role": "AXButton",
+    "enabled": true
+   },
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-d"
+  },
+  {
+   "expect": {
+    "run.debug.status": "Stopped"
+   },
+   "within": 120000
+  },
+  {
+   "expect": {
+    "run.debug.frames.0": "main:21, Debuggee (com.example)",
+    "run.debug.variables.2": "total = 0"
+   },
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-,"
+  },
+  {
+   "expect": {
+    "windows.1.title": "Settings – fixture"
+   },
+   "within": 8000
+  },
+  {
+   "do": "activate",
+   "window": "Settings – fixture"
+  },
+  {
+   "find": {
+    "label": "Build, Execution, Deployment",
+    "role": "AXRow",
+    "in": "Settings categories"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "role": "AXRow",
+   "in": "Settings categories",
+   "label": "Data Views"
+  },
+  {
+   "do": "click",
+   "role": "AXRow",
+   "in": "Settings categories",
+   "label": "Java"
+  },
+  {
+   "expect": {
+    "settings.page": "Build, Execution, Deployment/Debugger/Data Views/Java"
+   },
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "Show hex value for primitives",
+   "role": "AXCheckBox"
+  },
+  {
+   "do": "click",
+   "label": "OK",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "run.debug.variables.2": {
+     "contains": "0x"
+    },
+    "run.debug.status": "Stopped"
+   },
+   "within": 20000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f2"
+  },
+  {
+   "expect": {
+    "run.debug.terminated": true
+   },
+   "within": 30000
+  }
+ ]
+}

@@ -79,7 +79,7 @@ mod selection;
 
 pub(crate) use actions::*;
 pub use clipboard::ClipboardSelection;
-pub use code_actions::CodeActionProvider;
+pub use code_actions::{CodeActionProvider, ContextRun};
 use collections::TypeIdHashMap;
 pub use completions::CompletionProvider;
 #[cfg(test)]
@@ -116,10 +116,10 @@ pub use git::blame::{BlameRenderer, GitBlame, MAX_RELATIVE_TIMESTAMP};
 pub use git::{
     AnnotationMenu, BookmarkGutterIcon, BreakpointGutterIcon, BreakpointLook, BreakpointMenu,
     BreakpointToggle, ChangeMarkerClick, DefaultDiffHunkRenderer, DiffHunkRenderer,
-    EditorCornerWidget, FoldPlaceholderLook, FoldToggleIcon, HiddenDiffHunkRenderer,
-    HiddenUnstagedDiffHunkRenderer, IntellijGutter, IntellijGutterAreas, LineMarkers,
-    LineNumberClick, RunIndicatorIcon, RunIndicatorLook, RunMenuModify, render_diff_hunk_controls,
-    set_blame_renderer,
+    EditorCornerWidget, FoldPlaceholderLook, FoldToggleIcon, FreePainterMark, FreePainterMarkClick,
+    HiddenDiffHunkRenderer, HiddenUnstagedDiffHunkRenderer, IntellijGutter, IntellijGutterAreas,
+    LineMarkers, LineNumberClick, RunIndicatorIcon, RunIndicatorLook, RunMenuCoverage,
+    RunMenuModify, render_diff_hunk_controls, set_blame_renderer,
 };
 pub(crate) use git::{DiffHunkKey, StoredReviewComment};
 use git::{DiffReviewDragState, DiffReviewOverlay, InlineBlamePopover};
@@ -1062,6 +1062,8 @@ pub struct Editor {
     background_highlights: HashMap<HighlightKey, BackgroundHighlight>,
     navigation_overlays: HashMap<NavigationOverlayKey, Arc<[NavigationTargetOverlay]>>,
     gutter_highlights: TypeIdHashMap<GutterHighlight>,
+    /// Spork IDE: the app's marks in the left free painters area (IntelliJ's coverage).
+    free_painter_marks: Vec<FreePainterMark>,
     allow_git_diff_scrollbar_markers: bool,
     scrollbar_marker_state: ScrollbarMarkerState,
     active_indent_guides_state: ActiveIndentGuidesState,
@@ -1291,6 +1293,8 @@ pub struct EditorSnapshot {
     current_line_highlight: CurrentLineHighlight,
     gutter_hovered: bool,
     semantic_tokens_enabled: bool,
+    /// Spork IDE: whether the editor has free painter marks, which widen the gutter.
+    free_painter_marks: bool,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -2461,6 +2465,7 @@ impl Editor {
             background_highlights: HashMap::default(),
             navigation_overlays: HashMap::default(),
             gutter_highlights: Default::default(),
+            free_painter_marks: Vec::new(),
             allow_git_diff_scrollbar_markers: false,
             scrollbar_marker_state: ScrollbarMarkerState::default(),
             active_indent_guides_state: ActiveIndentGuidesState::default(),
@@ -3203,6 +3208,7 @@ impl Editor {
                 .current_line_highlight
                 .unwrap_or_else(|| EditorSettings::get_global(cx).current_line_highlight),
             gutter_hovered: self.gutter_hovered,
+            free_painter_marks: !self.free_painter_marks.is_empty(),
         }
     }
 
@@ -9722,6 +9728,17 @@ impl Editor {
         self.gutter_highlights.remove(&TypeId::of::<T>())
     }
 
+    /// Spork IDE: sets the app's marks in the left free painters area ([`FreePainterMark`]).
+    pub fn set_free_painter_marks(&mut self, marks: Vec<FreePainterMark>, cx: &mut Context<Self>) {
+        self.free_painter_marks = marks;
+        cx.notify();
+    }
+
+    /// Spork IDE: the app's marks in the left free painters area.
+    pub fn free_painter_marks(&self) -> &[FreePainterMark] {
+        &self.free_painter_marks
+    }
+
     pub fn insert_gutter_highlight<T: 'static>(
         &mut self,
         range: Range<Anchor>,
@@ -12820,6 +12837,7 @@ impl EditorSnapshot {
                         numbers,
                         show_runnables || show_breakpoints || show_bookmarks,
                         shows_folds,
+                        self.free_painter_marks,
                     );
                     (numbers, left, right, Some(areas))
                 } else {

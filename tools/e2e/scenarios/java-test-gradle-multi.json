@@ -1,0 +1,170 @@
+{
+ "id": "java-test-gradle-multi",
+ "fixture": "tests-gradle-multi",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Gradle"
+   },
+   "within": 20000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 600000
+  },
+  {
+   "do": "open",
+   "path": "app/src/test/java/com/example/app/AppTest.java"
+  },
+  {
+   "find": {
+    "label": "Run test 'AppTest'",
+    "role": "AXButton"
+   },
+   "within": 30000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "click",
+   "label": "Run test 'AppTest'",
+   "role": "AXButton"
+  },
+  {
+   "find": "Run 'AppTest'",
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Run 'AppTest'"
+  },
+  {
+   "expect": {
+    "run.tabs.0.running": false,
+    "run.tabs.0.text": {
+     "contains": ":app:cleanTest :app:test --tests com.example.app.AppTest"
+    },
+    "run.tabs.0.tests.rows": [
+     "Test Results passed",
+     "  AppTest passed",
+     "    countsLetters() passed"
+    ]
+   },
+   "within": 300000
+  },
+  {
+   "do": "open",
+   "path": "src/main/java/com/example/Greeting.java"
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/Greeting.java"
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "type",
+   "text": "9:1"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f8"
+  },
+  {
+   "do": "open",
+   "path": "src/test/java/com/example/GreetingTest.java"
+  },
+  {
+   "find": {
+    "label": "Run test 'GreetingTest'",
+    "role": "AXButton"
+   },
+   "within": 30000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "click",
+   "label": "Run test 'GreetingTest'",
+   "role": "AXButton"
+  },
+  {
+   "find": "Debug 'GreetingTest'",
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Debug 'GreetingTest'"
+  },
+  {
+   "expect": {
+    "run.debug.status": "Stopped"
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "run.debug.frames.0": "hello:9, Greeting (com.example)",
+    "run.debug.variables": [
+     "name = \"Ada\"",
+     "greeting = \"Hello, Ada!\""
+    ],
+    "run.debug.console": {
+     "contains": ":cleanTest :test --tests com.example.GreetingTest"
+    }
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "Resume Program"
+  },
+  {
+   "expect": {
+    "run.debug.tests.rows": [
+     "Test Results passed",
+     "  GreetingTest passed",
+     "    greetsAda() passed"
+    ]
+   },
+   "within": 120000
+  }
+ ]
+}

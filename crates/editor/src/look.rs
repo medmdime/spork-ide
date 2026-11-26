@@ -67,6 +67,8 @@ pub enum CodeActionRowKind {
     Run,
     /// A debug scenario to debug.
     Debug,
+    /// IntelliJ's Run '…' with Coverage, after the run icon's tasks.
+    RunWithCoverage,
     /// IntelliJ's Modify Run Configuration…, the run icon popup's last row.
     ModifyRunConfiguration,
 }

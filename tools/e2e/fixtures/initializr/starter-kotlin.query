@@ -1,0 +1,1 @@
+type=gradle-project-kotlin&language=kotlin&bootVersion=4.2.0&groupId=com.example&artifactId=demo&name=demo&packageName=com.example.demo&packaging=jar&javaVersion=17&configurationFileFormat=properties&dependencies=web

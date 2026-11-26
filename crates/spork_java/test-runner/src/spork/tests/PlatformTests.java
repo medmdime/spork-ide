@@ -15,6 +15,7 @@ import org.junit.platform.engine.support.descriptor.ClassSource;
 import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
+import org.junit.platform.launcher.TagFilter;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
@@ -27,6 +28,7 @@ final class PlatformTests {
     static boolean run(List<String> selectors, TestRunner.Events events) {
         List<DiscoverySelector> discovery = new ArrayList<>();
         List<String> patterns = new ArrayList<>();
+        List<String> tags = new ArrayList<>();
         for (String selector : selectors) {
             if (selector.startsWith("method:")) {
                 discovery.add(DiscoverySelectors.selectMethod(
@@ -37,12 +39,22 @@ final class PlatformTests {
                 discovery.add(DiscoverySelectors.selectPackage(TestRunner.value(selector)));
             } else if (selector.startsWith("pattern:")) {
                 patterns.add(".*(" + TestRunner.value(selector) + ").*");
+            } else if (selector.startsWith("tags:")) {
+                tags.add(TestRunner.value(selector));
+            } else if (selector.startsWith("uniqueId:")) {
+                discovery.add(DiscoverySelectors.selectUniqueId(TestRunner.value(selector)));
             }
         }
         LauncherDiscoveryRequestBuilder builder = LauncherDiscoveryRequestBuilder.request();
         if (!patterns.isEmpty()) {
-            discovery.add(DiscoverySelectors.selectPackage(""));
             builder.filters(ClassNameFilter.includeClassNamePatterns(patterns.toArray(new String[0])));
+        }
+        // the tests whose tags the expressions match, among all of them
+        if (!tags.isEmpty()) {
+            builder.filters(TagFilter.includeTags(tags.toArray(new String[0])));
+        }
+        if ((!patterns.isEmpty() || !tags.isEmpty()) && discovery.isEmpty()) {
+            discovery.add(DiscoverySelectors.selectPackage(""));
         }
         LauncherDiscoveryRequest request = builder.selectors(discovery).build();
         Launcher launcher = LauncherFactory.create();

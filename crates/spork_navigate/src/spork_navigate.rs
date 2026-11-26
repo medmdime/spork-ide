@@ -20,6 +20,7 @@ mod switcher;
 pub use find_in_files::{Occurrence, find_occurrences};
 pub use find_panel::{Usages, show_usages};
 pub use navigation_bar::NavigationBar;
+pub use search_everywhere::{EndpointItem, register_endpoints};
 
 use editor::{Editor, EditorEvent, SelectionEffects, scroll::Autoscroll};
 use gpui::{Action, App, Context, Entity, Global, SharedString, TaskExt as _, Window};
@@ -48,6 +49,8 @@ pub mod navigate {
             GoToText,
             /// Opens Search Everywhere on its Actions tab.
             FindAction,
+            /// Opens Search Everywhere on its Endpoints tab (IntelliJ's Go to Endpoint…).
+            GoToEndpoint,
             /// Shows the files opened lately and the tool windows.
             RecentFiles,
             /// Shows the files edited lately and the tool windows.

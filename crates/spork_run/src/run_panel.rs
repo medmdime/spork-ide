@@ -106,6 +106,7 @@ fn stop(workspace: &mut Workspace, window: &mut Window, cx: &mut Context<Workspa
         .panel::<debugger_ui::debugger_panel::DebugPanel>(cx)
         .is_some_and(|panel| panel.focus_handle(cx).contains_focused(window, cx));
     if debug_session_running(workspace, cx) && (debug_focused || !runs_running(workspace, cx)) {
+        stop_debugged_run(workspace, cx);
         window.dispatch_action(debugger_ui::Stop.boxed_clone(), cx);
         return;
     }
@@ -127,6 +128,11 @@ struct RunTab {
     ended: Option<Option<i32>>,
     /// A test run's tree, toolbar and consoles, in place of the console alone.
     tests: Option<Entity<TestRunView>>,
+    /// The debug adapter attached to a debugged test run, whose session in the Debug tool
+    /// window shows its tests; the Run tool window doesn't show it.
+    debugged: Option<SharedString>,
+    /// Stop has asked the process to end; another Stop kills it.
+    stopping: bool,
 }
 
 impl RunTab {
@@ -310,6 +316,10 @@ impl RunPanel {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Task<Result<Entity<Terminal>>> {
+        let debugged: Option<SharedString> = task
+            .env
+            .get(crate::test_runner::DEBUGGED_RUN)
+            .map(|adapter| adapter.clone().into());
         // a test run's tree listens for its runner's events
         let tests = match task.env.contains_key(crate::test_runner::TEST_RUN) {
             true => match self.test_view(&task, cx) {
@@ -334,7 +344,11 @@ impl RunPanel {
         let reuse = self
             .tabs
             .iter()
-            .position(|tab| tab.task.label == task.label && !tab.pinned)
+            .position(|tab| {
+                tab.task.label == task.label
+                    && !tab.pinned
+                    && tab.debugged.is_some() == debugged.is_some()
+            })
             .filter(|ix| !(task.allow_concurrent_runs && self.tabs[*ix].running(cx)));
         if let Some(ix) = reuse {
             self.stop(ix, cx);
@@ -351,7 +365,12 @@ impl RunPanel {
                     terminal.write_output(&command_line, cx)
                 });
                 let (reveal, label) = (task.reveal, task.label.clone());
-                this.add_tab(task, terminal.clone(), reuse, tests, window, cx);
+                // a debugged run shows in the Debug tool window
+                let reveal = match debugged.is_some() {
+                    true => RevealStrategy::Never,
+                    false => reveal,
+                };
+                this.add_tab(task, terminal.clone(), reuse, tests, debugged, window, cx);
                 this.reveal(reveal, label, window, cx);
             })?;
             Ok(terminal)
@@ -370,59 +389,83 @@ impl RunPanel {
         let panel = cx.entity().downgrade();
         let name: SharedString = task.label.clone().into();
         let workspace = self.workspace.clone();
+        let debugged = task.env.contains_key(crate::test_runner::DEBUGGED_RUN);
         let view = cx.new(|cx: &mut Context<TestRunView>| {
-            let view = cx.entity().downgrade();
-            // the tab of this view, found again each time: tabs close and move
-            let tab = move |panel: &RunPanel| {
-                let view = view.upgrade()?;
-                panel
-                    .tabs
-                    .iter()
-                    .position(|tab| tab.tests.as_ref() == Some(&view))
-            };
-            let (rerun_panel, rerun_tab) = (panel.clone(), tab.clone());
-            let (failed_panel, failed_tab) = (panel.clone(), tab.clone());
-            let (stop_panel, stop_tab) = (panel, tab);
-            let actions = TabActions {
-                rerun: Box::new(move |window, cx| {
-                    rerun_panel
-                        .update(cx, |panel, cx| {
-                            if let Some(ix) = rerun_tab(panel) {
-                                panel.rerun(ix, window, cx);
-                            }
-                        })
-                        .log_err();
-                }),
-                rerun_failed: Box::new(move |tests, window, cx| {
-                    failed_panel
-                        .update(cx, |panel, cx| {
-                            if let Some(ix) = failed_tab(panel) {
-                                panel.rerun_tests(ix, Some(tests), window, cx);
-                            }
-                        })
-                        .log_err();
-                }),
-                stop: Box::new(move |_, cx| {
-                    stop_panel
-                        .update(cx, |panel, cx| {
-                            if let Some(ix) = stop_tab(panel) {
-                                panel.stop(ix, cx);
-                            }
-                        })
-                        .log_err();
-                }),
-            };
-            TestRunView::new(name, workspace, actions, listener, cx)
+            let actions = tab_actions(panel, cx.entity().downgrade());
+            TestRunView::new(name, workspace, actions, listener, debugged, cx)
         });
         Ok((view, port))
     }
 
+    /// A run's results from an XML file in a tab of their own, as IntelliJ opens an imported
+    /// test session (Test History, Import Tests from File…): its tree, its Rerun running its
+    /// configuration.
+    pub(crate) fn import_tests(
+        &mut self,
+        path: std::path::PathBuf,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let read = std::fs::read_to_string(&path)
+            .map_err(anyhow::Error::from)
+            .and_then(|text| crate::test_runner::TestResults::from_xml(&text));
+        let (name, results) = match read {
+            Ok(read) => read,
+            Err(error) => {
+                let name = path.display().to_string();
+                self.workspace
+                    .update(cx, |workspace, cx| {
+                        workspace
+                            .show_error(anyhow::anyhow!("Failed to Parse {name}: {error:#}"), cx)
+                    })
+                    .log_err();
+                return;
+            }
+        };
+        let name = match name.is_empty() {
+            true => path
+                .file_stem()
+                .map(|stem| stem.to_string_lossy().into_owned())
+                .unwrap_or_default(),
+            false => name,
+        };
+        let settings =
+            <terminal::terminal_settings::TerminalSettings as settings::Settings>::get_global(cx)
+                .clone();
+        let path_style = self.project.read(cx).path_style(cx);
+        let builder = terminal::TerminalBuilder::new_display_only(
+            settings.cursor_shape,
+            settings.alternate_scroll,
+            settings.max_scroll_history_lines,
+            cx.entity_id().as_u64(),
+            cx.background_executor(),
+            path_style,
+        );
+        let terminal = cx.new(|cx| builder.subscribe(cx));
+        let (panel, workspace) = (cx.entity().downgrade(), self.workspace.clone());
+        let tests = cx.new(|cx: &mut Context<TestRunView>| {
+            let actions = tab_actions(panel, cx.entity().downgrade());
+            TestRunView::imported(name.clone().into(), results, workspace, actions, cx)
+        });
+        let task = SpawnInTerminal {
+            label: name.clone(),
+            ..SpawnInTerminal::default()
+        };
+        self.add_tab(task, terminal, None, Some(tests), None, window, cx);
+        if let Some(tab) = self.tabs.last_mut() {
+            tab.ended = Some(Some(0));
+        }
+        self.reveal(RevealStrategy::Always, name, window, cx);
+    }
+
+    #[allow(clippy::too_many_arguments)]
     fn add_tab(
         &mut self,
         task: SpawnInTerminal,
         terminal: Entity<Terminal>,
         reuse: Option<usize>,
         tests: Option<Entity<TestRunView>>,
+        debugged: Option<SharedString>,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
@@ -454,15 +497,22 @@ impl RunPanel {
             pinned: false,
             ended: None,
             tests,
+            debugged,
+            stopping: false,
         };
+        let shown = tab.debugged.is_none();
         match reuse.filter(|ix| *ix < self.tabs.len()) {
             Some(ix) => {
                 self.tabs[ix] = tab;
-                self.active = ix;
+                if shown {
+                    self.active = ix;
+                }
             }
             None => {
                 self.tabs.push(tab);
-                self.active = self.tabs.len() - 1;
+                if shown {
+                    self.active = self.tabs.len() - 1;
+                }
             }
         }
         self.changed(cx);
@@ -470,7 +520,11 @@ impl RunPanel {
 
     /// IntelliJ names a second tab of one configuration "Main (1)".
     fn unique_title(&self, label: &str) -> SharedString {
-        let taken = |title: &str| self.tabs.iter().any(|tab| tab.title.as_ref() == title);
+        let taken = |title: &str| {
+            self.tabs
+                .iter()
+                .any(|tab| tab.debugged.is_none() && tab.title.as_ref() == title)
+        };
         if !taken(label) {
             return label.to_owned().into();
         }
@@ -538,6 +592,18 @@ impl RunPanel {
         message.extend_from_slice(b"\x1b[?25l");
         terminal.update(cx, |terminal, cx| terminal.write_output(&message, cx));
         self.changed(cx);
+        let env = self
+            .tabs
+            .iter()
+            .find(|tab| &tab.terminal == terminal)
+            .map(|tab| tab.task.env.clone());
+        if let (Some(env), Some(workspace), Some(crate::RunEnded(ended))) = (
+            env,
+            self.workspace.upgrade(),
+            cx.try_global::<crate::RunEnded>().cloned(),
+        ) {
+            cx.defer(move |cx| ended(&workspace, &env, cx));
+        }
     }
 
     fn changed(&mut self, cx: &mut Context<Self>) {
@@ -552,7 +618,32 @@ impl RunPanel {
     }
 
     pub(crate) fn stop(&mut self, ix: usize, cx: &mut Context<Self>) {
-        if let Some(tab) = self.tabs.get(ix) {
+        let Some(tab) = self.tabs.get_mut(ix) else {
+            return;
+        };
+        // a run with coverage stops softly, as IntelliJ stops a JVM (SIGINT): the coverage
+        // agent saves its data as the JVM exits; a second Stop kills it
+        if tab
+            .task
+            .env
+            .contains_key(configurations::COVERAGE_SUITE_ENV)
+            && !tab.stopping
+            && tab.running(cx)
+        {
+            tab.stopping = true;
+            tab.terminal
+                .update(cx, |terminal, _| terminal.input(b"\x03".to_vec()));
+            let terminal = tab.terminal.downgrade();
+            cx.spawn(async move |_, cx| {
+                cx.background_executor()
+                    .timer(std::time::Duration::from_secs(10))
+                    .await;
+                terminal
+                    .update(cx, |terminal, _| terminal.kill_active_task())
+                    .ok();
+            })
+            .detach();
+        } else {
             tab.terminal
                 .update(cx, |terminal, _| terminal.kill_active_task());
         }
@@ -586,13 +677,38 @@ impl RunPanel {
                 Value::Array(tests.into_iter().map(Value::from).collect()),
             );
         }
+        let debugged = tab.debugged.clone();
         if let Some(tab) = self.tabs.get_mut(ix) {
             tab.pinned = false;
         }
-        // the workspace runs it once this panel's update is over
+        // the workspace runs it once this panel's update is over; a debugged run under its
+        // debugger again
         window.defer(cx, move |window, cx| {
-            workspace.update(cx, |workspace, cx| {
-                crate::run_widget::launch(Some(&configuration), false, workspace, window, cx)
+            workspace.update(cx, |workspace, cx| match debugged {
+                Some(adapter) => {
+                    let scenario = task::DebugScenario {
+                        adapter,
+                        label: configuration.name(),
+                        build: None,
+                        config: serde_json::json!({
+                            "request": "attach",
+                            configurations::TEST_CONFIGURATION:
+                                Value::Object(configuration.entry.clone()).to_string(),
+                        }),
+                        tcp_connection: None,
+                    };
+                    workspace.start_debug_session(
+                        scenario,
+                        task::TaskContext::default().into(),
+                        None,
+                        None,
+                        window,
+                        cx,
+                    )
+                }
+                None => {
+                    crate::run_widget::launch(Some(&configuration), false, workspace, window, cx)
+                }
             })
         });
         true
@@ -621,7 +737,8 @@ impl RunPanel {
     fn close(&mut self, keep: impl Fn(usize, &RunTab) -> bool, cx: &mut Context<Self>) {
         let mut ix = 0;
         self.tabs.retain(|tab| {
-            let kept = keep(ix, tab);
+            // a debugged run goes with its debug session
+            let kept = tab.debugged.is_some() || keep(ix, tab);
             if !kept {
                 tab.terminal
                     .update(cx, |terminal, _| terminal.kill_active_task());
@@ -637,74 +754,86 @@ impl RunPanel {
         let tokens = Tokens::get(cx);
         let panel = std::sync::Arc::new(cx.entity());
         let this = cx.entity().downgrade();
-        let tabs = self.tabs.iter().enumerate().map(|(ix, tab)| {
-            let on = ix == self.active;
-            let pinned = tab.pinned;
-            let this = this.clone();
-            h_flex()
-                .id(("run-tab", ix))
-                .role(Role::Tab)
-                .aria_label(tab.title.clone())
-                .aria_selected(on)
-                .h(px(28.))
-                .px(px(8.))
-                .gap(px(4.))
-                .rounded(px(6.))
-                .border_1()
-                .cursor_pointer()
-                .map(|t| match on {
-                    true => t
-                        .bg(tokens.tab_selected)
-                        .border_color(tokens.tab_selected_border),
-                    false => t
-                        .border_color(gpui::transparent_black())
-                        .hover(move |t| t.bg(tokens.hover)),
-                })
-                .child(spork_workbench::image(tab.icon, cx).size(px(16.)))
-                .child(div().max_w(px(260.)).truncate().child(tab.title.clone()))
-                .when(pinned, |t| {
-                    t.child(spork_workbench::icon("general/pin").size(px(12.)))
-                })
-                .child(
-                    ActionButton::new(("close-run-tab", ix), "general/closeSmall")
-                        .tooltip("Close")
-                        .on_click(cx.listener(move |this, _, _, cx| {
+        let tabs = self
+            .tabs
+            .iter()
+            .enumerate()
+            .filter(|(_, tab)| tab.debugged.is_none())
+            .map(|(ix, tab)| {
+                let on = ix == self.active;
+                let pinned = tab.pinned;
+                let this = this.clone();
+                h_flex()
+                    .id(("run-tab", ix))
+                    .role(Role::Tab)
+                    .aria_label(tab.title.clone())
+                    .aria_selected(on)
+                    .h(px(28.))
+                    .px(px(8.))
+                    .gap(px(4.))
+                    .rounded(px(6.))
+                    .border_1()
+                    .cursor_pointer()
+                    .map(|t| match on {
+                        true => t
+                            .bg(tokens.tab_selected)
+                            .border_color(tokens.tab_selected_border),
+                        false => t
+                            .border_color(gpui::transparent_black())
+                            .hover(move |t| t.bg(tokens.hover)),
+                    })
+                    .child(spork_workbench::image(tab.icon, cx).size(px(16.)))
+                    .child(div().max_w(px(260.)).truncate().child(tab.title.clone()))
+                    .when(pinned, |t| {
+                        t.child(spork_workbench::icon("general/pin").size(px(12.)))
+                    })
+                    .child(
+                        ActionButton::new(("close-run-tab", ix), "general/closeSmall")
+                            .tooltip("Close")
+                            .on_click(cx.listener(move |this, _, _, cx| {
+                                this.close(|other, _| other != ix, cx)
+                            })),
+                    )
+                    .on_click(cx.listener(move |this, _, _, cx| {
+                        this.active = ix;
+                        cx.notify();
+                    }))
+                    .context_menu(move |menu, _, _| {
+                        let item = |label: &'static str,
+                                        action: fn(
+                                &mut RunPanel,
+                                usize,
+                                &mut Context<RunPanel>,
+                            )| {
+                                let this = this.clone();
+                                PopupMenuItem::new(label).on_click(move |_, _, cx| {
+                                    this.update(cx, |this, cx| action(this, ix, cx)).log_err();
+                                })
+                            };
+                        menu.item(item("Close Tab", |this, ix, cx| {
                             this.close(|other, _| other != ix, cx)
-                        })),
-                )
-                .on_click(cx.listener(move |this, _, _, cx| {
-                    this.active = ix;
-                    cx.notify();
-                }))
-                .context_menu(move |menu, _, _| {
-                    let item = |label: &'static str, action: fn(&mut RunPanel, usize, &mut Context<RunPanel>)| {
-                        let this = this.clone();
-                        PopupMenuItem::new(label).on_click(move |_, _, cx| {
-                            this.update(cx, |this, cx| action(this, ix, cx)).log_err();
-                        })
-                    };
-                    menu.item(item("Close Tab", |this, ix, cx| {
-                        this.close(|other, _| other != ix, cx)
-                    }))
-                    .item(item("Close All Tabs", |this, _, cx| this.close(|_, _| false, cx)))
-                    .item(item("Close Other Tabs", |this, ix, cx| {
-                        this.close(|other, _| other == ix, cx)
-                    }))
-                    .separator()
-                    .item(item(
-                        match pinned {
-                            true => "Unpin Tab",
-                            false => "Pin Tab",
-                        },
-                        |this, ix, cx| {
-                            if let Some(tab) = this.tabs.get_mut(ix) {
-                                tab.pinned = !tab.pinned;
-                            }
-                            cx.notify();
-                        },
-                    ))
-                })
-        });
+                        }))
+                        .item(item("Close All Tabs", |this, _, cx| {
+                            this.close(|_, _| false, cx)
+                        }))
+                        .item(item("Close Other Tabs", |this, ix, cx| {
+                            this.close(|other, _| other == ix, cx)
+                        }))
+                        .separator()
+                        .item(item(
+                            match pinned {
+                                true => "Unpin Tab",
+                                false => "Pin Tab",
+                            },
+                            |this, ix, cx| {
+                                if let Some(tab) = this.tabs.get_mut(ix) {
+                                    tab.pinned = !tab.pinned;
+                                }
+                                cx.notify();
+                            },
+                        ))
+                    })
+            });
         let title = h_flex()
             .gap(px(12.))
             .child(workspace::frame::tool_window_title_label("Run"))
@@ -714,11 +843,25 @@ impl RunPanel {
             .into_any_element()
     }
 
+    /// The tab shown: the selected one, unless a debugged run (which shows in the Debug tool
+    /// window) is all there is.
+    fn shown_tab(&self) -> Option<&RunTab> {
+        self.tabs
+            .get(self.active)
+            .filter(|tab| tab.debugged.is_none())
+    }
+
     fn top_toolbar(&self, cx: &mut Context<Self>) -> impl IntoElement {
-        let tab = self.tabs.get(self.active);
+        let tab = self.shown_tab();
         let name = tab.map(|tab| tab.title.clone()).unwrap_or_default();
         let running = tab.is_some_and(|tab| tab.running(cx));
         let ix = self.active;
+        let update = tab
+            .filter(|_| running)
+            .zip(self.workspace.upgrade())
+            .and_then(|(tab, workspace)| {
+                crate::services::update_button(&workspace, &tab.task.label, None, cx)
+            });
         h_flex()
             .id("run-top-toolbar")
             .role(Role::Toolbar)
@@ -733,6 +876,7 @@ impl RunPanel {
                     .disabled(tab.is_none())
                     .on_click(cx.listener(move |this, _, window, cx| this.rerun(ix, window, cx))),
             )
+            .children(update)
             .child(
                 ActionButton::new("run-stop", "run/stop")
                     .tooltip(format!("Stop '{name}' (⌘F2)"))
@@ -742,7 +886,7 @@ impl RunPanel {
     }
 
     fn left_toolbar(&self) -> impl IntoElement {
-        let terminal = self.tabs.get(self.active).map(|tab| tab.terminal.clone());
+        let terminal = self.shown_tab().map(|tab| tab.terminal.clone());
         let missing = terminal.is_none();
         let button = |id: &'static str, icon: &'static str, tooltip: &'static str| {
             ActionButton::new(id, icon)
@@ -796,8 +940,8 @@ impl Render for RunPanel {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let tokens = Tokens::get(cx);
         let header = self.header(cx);
-        let console = self.tabs.get(self.active).map(|tab| tab.view.clone());
-        let tests = self.tabs.get(self.active).and_then(|tab| tab.tests.clone());
+        let console = self.shown_tab().map(|tab| tab.view.clone());
+        let tests = self.shown_tab().and_then(|tab| tab.tests.clone());
         spork_vcs::spork_look(cx).size_full().child(
             v_flex()
                 .size_full()
@@ -845,7 +989,7 @@ impl Render for RunPanel {
 
 impl Focusable for RunPanel {
     fn focus_handle(&self, cx: &App) -> FocusHandle {
-        match self.tabs.get(self.active) {
+        match self.shown_tab() {
             Some(tab) => tab.view.focus_handle(cx),
             None => self.focus.clone(),
         }
@@ -928,6 +1072,54 @@ pub(crate) fn runs(workspace: &Workspace, cx: &App) -> Vec<Run> {
         .collect()
 }
 
+/// What a test tab's toolbar does to its tab, found again each time: tabs close and move.
+fn tab_actions(panel: WeakEntity<RunPanel>, view: WeakEntity<TestRunView>) -> TabActions {
+    let tab = move |panel: &RunPanel| {
+        let view = view.upgrade()?;
+        panel
+            .tabs
+            .iter()
+            .position(|tab| tab.tests.as_ref() == Some(&view))
+    };
+    let (rerun_panel, rerun_tab) = (panel.clone(), tab.clone());
+    let (failed_panel, failed_tab) = (panel.clone(), tab.clone());
+    let (stop_panel, stop_tab) = (panel.clone(), tab);
+    TabActions {
+        rerun: Box::new(move |window, cx| {
+            rerun_panel
+                .update(cx, |panel, cx| {
+                    if let Some(ix) = rerun_tab(panel) {
+                        panel.rerun(ix, window, cx);
+                    }
+                })
+                .log_err();
+        }),
+        rerun_failed: Box::new(move |tests, window, cx| {
+            failed_panel
+                .update(cx, |panel, cx| {
+                    if let Some(ix) = failed_tab(panel) {
+                        panel.rerun_tests(ix, Some(tests), window, cx);
+                    }
+                })
+                .log_err();
+        }),
+        stop: Box::new(move |_, cx| {
+            stop_panel
+                .update(cx, |panel, cx| {
+                    if let Some(ix) = stop_tab(panel) {
+                        panel.stop(ix, cx);
+                    }
+                })
+                .log_err();
+        }),
+        import: std::rc::Rc::new(move |path, window, cx| {
+            panel
+                .update(cx, |panel, cx| panel.import_tests(path, window, cx))
+                .log_err();
+        }),
+    }
+}
+
 /// The latest run of the configuration `name`.
 pub(crate) fn run_of(workspace: &Workspace, name: &str, cx: &App) -> Option<Run> {
     let panel = workspace.panel::<RunPanel>(cx)?;
@@ -939,6 +1131,39 @@ pub(crate) fn run_of(workspace: &Workspace, name: &str, cx: &App) -> Option<Run>
         .collect();
     let ix = labels.iter().rposition(|of| *of)?;
     runs(workspace, cx).into_iter().nth(ix)
+}
+
+/// The tests of the latest debugged run of the configuration `name`, which its debug session
+/// shows, and that run's terminal.
+pub(crate) fn debugged_tests(
+    workspace: &Workspace,
+    name: &str,
+    cx: &App,
+) -> Option<(Entity<TestRunView>, Entity<Terminal>)> {
+    let panel = workspace.panel::<RunPanel>(cx)?;
+    panel
+        .read(cx)
+        .tabs
+        .iter()
+        .rev()
+        .find(|tab| tab.debugged.is_some() && tab.task.label == name)
+        .and_then(|tab| Some((tab.tests.clone()?, tab.terminal.clone())))
+}
+
+/// Stop on a debugged test's session ends its run too, as IntelliJ's Stop ends the test JVM (the
+/// debugger detaches from a JVM it attached to and leaves it running).
+pub(crate) fn stop_debugged_run(workspace: &Workspace, cx: &mut App) {
+    if let Some(terminal) = debugged_run(workspace, cx) {
+        terminal.update(cx, |terminal, _| terminal.kill_active_task());
+    }
+}
+
+/// The run of the active debug session, when it debugs a test.
+pub(crate) fn debugged_run(workspace: &Workspace, cx: &App) -> Option<Entity<Terminal>> {
+    let label = crate::debug_window::active_debug_session(workspace, cx)?
+        .read(cx)
+        .label()?;
+    debugged_tests(workspace, &label, cx).map(|(_, terminal)| terminal)
 }
 
 /// Stops the runs of the configuration `name`.
@@ -1031,10 +1256,12 @@ pub(crate) fn e2e_tabs(workspace: &Workspace, cx: &App) -> Value {
     let error = Tokens::get(cx).console_error.to_rgb();
     let [r, g, b] = [error.r, error.g, error.b].map(|c| (c * 255.).round() as u8);
     let error = terminal::Rgb { r, g, b };
+    // a debugged run is its debug session's (`run.debug.tests`)
     panel
         .tabs
         .iter()
         .enumerate()
+        .filter(|(_, tab)| tab.debugged.is_none())
         .map(|(ix, tab)| {
             let text = tab.terminal.read(cx).get_content();
             let last_line = text.lines().rev().find(|line| !line.trim().is_empty());
@@ -1052,7 +1279,7 @@ pub(crate) fn e2e_tabs(workspace: &Workspace, cx: &App) -> Value {
                     .filter(|(_, color)| *color == Some(error))
                     .map(|(line, _)| line.trim_end().to_owned())
                     .collect::<Vec<_>>(),
-                "tests": tab.tests.as_ref().map(|tests| tests.read(cx).e2e_state()),
+                "tests": tab.tests.as_ref().map(|tests| tests.read(cx).e2e_state(cx)),
             })
         })
         .collect()

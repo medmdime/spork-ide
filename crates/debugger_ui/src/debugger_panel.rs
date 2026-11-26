@@ -250,7 +250,9 @@ impl DebugPanel {
                 let definition = debug_session
                     .update_in(cx, |debug_session, window, cx| {
                         debug_session.running_state().update(cx, |running, cx| {
-                            if scenario.build.is_some() {
+                            // Spork IDE: kept for every scenario: a rerun of an adapter that
+                            // can't restart its session starts the scenario again
+                            {
                                 running.scenario = Some(scenario.clone());
                                 running.scenario_context = Some(DebugScenarioContext {
                                     active_buffer: active_buffer

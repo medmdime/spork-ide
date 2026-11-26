@@ -1,0 +1,205 @@
+{
+ "id": "coverage-gradle",
+ "fixture": "coverage-gradle",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Gradle"
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 600000
+  },
+  {
+   "find": {
+    "label": "src",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "src",
+   "role": "AXRow",
+   "in": "Project Panel"
+  },
+  {
+   "find": {
+    "label": "test",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "test",
+   "role": "AXRow",
+   "in": "Project Panel"
+  },
+  {
+   "find": {
+    "label": "java",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "java",
+   "role": "AXRow",
+   "in": "Project Panel"
+  },
+  {
+   "find": {
+    "label": "com.example",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "com.example",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Project Panel"
+  },
+  {
+   "find": [
+    "Run 'Tests in 'com.example''",
+    "Debug 'Tests in 'com.example''",
+    "Run 'Tests in 'com.example'' with Coverage"
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Run 'Tests in 'com.example'' with Coverage"
+  },
+  {
+   "expect": {
+    "run.tabs.0.running": false,
+    "run.tabs.0.text": {
+     "contains": "-Dspork.coverage.agent=-javaagent:"
+    }
+   },
+   "within": 240000
+  },
+  {
+   "expect": {
+    "run.tabs.0.tests.status": "2 tests passed",
+    "coverage.active": [
+     "Tests in 'com.example'"
+    ]
+   },
+   "within": 30000
+  },
+  {
+   "expect": {
+    "coverage.view.title": "Tests in 'com.example'",
+    "coverage.view.rows": [
+     "com.example | 50% (1/2) | 50% (2/4) | 55% (5/9) | 75% (3/4)",
+     "  Calculator | 100% (1/1) | 66% (2/3) | 62% (5/8) | 75% (3/4)",
+     "  Greeting | 0% (0/1) | 0% (0/1) | 0% (0/1) | 100% (0/0)"
+    ]
+   },
+   "within": 30000
+  },
+  {
+   "do": "click",
+   "label": "main",
+   "role": "AXRow",
+   "in": "Project Panel"
+  },
+  {
+   "find": [
+    {
+     "label": "50% classes, 55% lines covered",
+     "in": "Project Panel"
+    }
+   ],
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Flatten Packages",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "coverage.view.flatten": true
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Calculator",
+   "role": "AXRow",
+   "in": "Coverage",
+   "count": 2
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/Calculator.java",
+    "editor.caret": "4:1"
+   },
+   "within": 10000
+  },
+  {
+   "expect": {
+    "coverage.marks": [
+     "9 full",
+     "13 full",
+     "14 full",
+     "16 partial",
+     "18 full",
+     "20 none",
+     "22 none",
+     "27 none"
+    ]
+   },
+   "within": 10000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 60000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "do": "front"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "gradle"
+  }
+ ]
+}

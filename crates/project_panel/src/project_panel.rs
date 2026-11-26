@@ -19,7 +19,9 @@ use editor::{
 };
 use file_diff_view::FileDiffView;
 use file_icons::FileIcons;
-pub use folder_roles::{FolderRoles, NewItem, set_folder_roles};
+pub use folder_roles::{
+    FolderRoles, NewItem, RowDecoration, add_new_items, run_items, set_folder_roles,
+};
 use fs::TrashId;
 use git::status::GitSummary;
 use gpui::{
@@ -47,6 +49,7 @@ use project::{
 use project_panel_settings::ProjectPanelSettings;
 use rayon::slice::ParallelSliceMut;
 use schemars::JsonSchema;
+pub use scratches::folder as scratches_folder;
 use serde::Deserialize;
 use settings::{
     DockSide, ProjectPanelEntrySpacing, Settings, SettingsStore, ShowDiagnostics, ShowIndentGuides,
@@ -1185,20 +1188,21 @@ impl ProjectPanel {
             };
 
             let has_pasteable_content = self.has_pasteable_content(cx);
-            // Spork IDE: what the folder's role adds to New (Java Class)
-            let new_items: std::rc::Rc<Vec<folder_roles::NewItem>> = std::rc::Rc::new(
-                folder_roles::folder_roles(cx)
-                    .map(|roles| {
-                        let path = worktree.absolutize(&entry.path);
-                        let folder = if is_dir {
-                            path.as_path()
-                        } else {
-                            path.parent().unwrap_or(&path)
-                        };
-                        roles.new_items(folder)
-                    })
-                    .unwrap_or_default(),
-            );
+            // Spork IDE: what the folder's role and other tools add to New (Java Class, HTTP
+            // Request)
+            let new_items: std::rc::Rc<Vec<folder_roles::NewItem>> = {
+                let path = worktree.absolutize(&entry.path);
+                let folder = if is_dir {
+                    path.as_path()
+                } else {
+                    path.parent().unwrap_or(&path)
+                };
+                let mut items = folder_roles::folder_roles(cx)
+                    .map(|roles| roles.new_items(folder))
+                    .unwrap_or_default();
+                items.extend(folder_roles::extra_new_items(folder, cx));
+                std::rc::Rc::new(items)
+            };
             // Spork IDE: what the file's or folder's role runs (Run 'Tests in …')
             let run_items: Vec<folder_roles::NewItem> = folder_roles::folder_roles(cx)
                 .map(|roles| roles.run_items(&worktree.absolutize(&entry.path)))
@@ -6994,7 +6998,22 @@ impl ProjectPanel {
                                                             .color(Color::Muted),
                                                     )
                                             }),
-                                    ),
+                                    )
+                                    // Spork IDE: then the app's text (coverage), greyed
+                                    .children(self.row_decoration(worktree_id, &path, cx).map(
+                                        |text| {
+                                            div()
+                                                .id("row-decoration")
+                                                .role(gpui::Role::Label)
+                                                .aria_label(text.clone())
+                                                .ml_1p5()
+                                                .child(
+                                                    Label::new(text)
+                                                        .single_line()
+                                                        .color(Color::Muted),
+                                                )
+                                        },
+                                    )),
                             }
                         })
                     })
@@ -7889,6 +7908,20 @@ impl ProjectPanel {
     }
 
     /// Where a root folder is, as IntelliJ's root node shows it: `~/…` under the home folder.
+    /// Spork IDE: the app's text after a row's name ([`RowDecoration`]).
+    fn row_decoration(
+        &self,
+        worktree_id: WorktreeId,
+        path: &RelPath,
+        cx: &App,
+    ) -> Option<SharedString> {
+        let RowDecoration(decoration) = cx.try_global::<RowDecoration>()?.clone();
+        let workspace = self.workspace.upgrade()?;
+        let worktree = self.project.read(cx).worktree_for_id(worktree_id, cx)?;
+        let abs_path = worktree.read(cx).absolutize(path);
+        decoration(workspace.read(cx), &abs_path, cx)
+    }
+
     fn root_location(&self, worktree_id: WorktreeId, cx: &App) -> Option<SharedString> {
         if self.is_scratches(worktree_id, cx) {
             return None;

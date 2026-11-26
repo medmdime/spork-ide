@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.experimental.categories.Categories;
 import org.junit.runner.Description;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Request;
@@ -40,7 +41,19 @@ final class JUnit4Tests {
                 methods.add(type.getName());
             }
         }
-        Request request = Request.classes(classes.toArray(new Class<?>[0])).filterWith(new Filter() {
+        Request request = Request.classes(classes.toArray(new Class<?>[0]));
+        // a category's tests: those of the classes and methods marked with it
+        for (String selector : selectors) {
+            if (selector.startsWith("category:")) {
+                Class<?> category = TestRunner.load(TestRunner.value(selector));
+                if (category == null) {
+                    System.err.println("Class not found: \"" + TestRunner.value(selector) + "\"");
+                    return false;
+                }
+                request = request.filterWith(Categories.CategoryFilter.include(category));
+            }
+        }
+        request = request.filterWith(new Filter() {
             @Override
             public boolean shouldRun(Description description) {
                 if (description.getMethodName() == null) {

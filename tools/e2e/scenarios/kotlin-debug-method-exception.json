@@ -1,0 +1,268 @@
+{
+ "id": "kotlin-debug-method-exception",
+ "fixture": "kotlin-gradle",
+ "covers": [],
+ "prepare": "printf '%s' 'package com.example\n\n/** Prints the greetings. */\nfun main() {\n    val names = listOf(\"world\", \"Kotlin\")\n    names.forEach { name ->\n        val line = greet(name)\n        println(line)\n    }\n    println(\"x\".toInt())\n}\n\nfun greet(name: String): String {\n    val greeting = Greeting(name)\n    return greeting.text()\n}\n' > src/main/kotlin/com/example/Main.kt",
+ "settings": {
+  "languages": {
+   "Kotlin": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "sh": "mkdir -p .zed && printf '[{\"label\": \"MainKt\", \"adapter\": \"Kotlin\", \"request\": \"launch\", \"mainClass\": \"com.example.MainKt\"}]' > .zed/debug.json"
+  },
+  {
+   "expect": {
+    "java.tool": "Gradle",
+    "kotlin.detected": true
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "kotlin.server.running": true
+   },
+   "within": 600000
+  },
+  {
+   "expect": {
+    "kotlin.server.busy": false
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "run.configurations.names": [
+     "MainKt"
+    ],
+    "run.configurations.selected": "MainKt"
+   },
+   "within": 10000
+  },
+  {
+   "do": "open",
+   "path": "src/main/kotlin/com/example/Main.kt"
+  },
+  {
+   "expect": {
+    "active": "src/main/kotlin/com/example/Main.kt"
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-f8"
+  },
+  {
+   "find": [
+    {
+     "label": "Java Exception Breakpoints",
+     "role": "AXCheckBox"
+    },
+    {
+     "label": "Any exception",
+     "role": "AXCheckBox"
+    },
+    {
+     "label": "Kotlin Exception Breakpoints",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "Any exception",
+     "role": "AXCheckBox",
+     "value": "0"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Any exception",
+   "role": "AXRow",
+   "nth": 1
+  },
+  {
+   "find": [
+    {
+     "label": "Any exception breakpoint"
+    },
+    {
+     "label": "Enabled",
+     "role": "AXCheckBox",
+     "value": "0"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "find": {
+    "label": "Class filters:",
+    "role": "AXCheckBox"
+   },
+   "absent": true
+  },
+  {
+   "do": "click",
+   "label": "Enabled",
+   "role": "AXCheckBox"
+  },
+  {
+   "find": [
+    {
+     "label": "Caught exception",
+     "role": "AXCheckBox",
+     "value": "1"
+    },
+    {
+     "label": "Uncaught exception",
+     "role": "AXCheckBox",
+     "value": "1"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Caught exception",
+   "role": "AXCheckBox"
+  },
+  {
+   "find": [
+    {
+     "label": "Caught exception",
+     "role": "AXCheckBox",
+     "value": "0"
+    },
+    {
+     "label": "Uncaught exception",
+     "role": "AXCheckBox",
+     "value": "1"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Done",
+   "role": "AXButton"
+  },
+  {
+   "do": "open",
+   "path": "src/main/kotlin/com/example/Main.kt"
+  },
+  {
+   "expect": {
+    "active": "src/main/kotlin/com/example/Main.kt"
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-l"
+  },
+  {
+   "find": {
+    "label": "[Line] [:column]:",
+    "role": "AXTextField"
+   },
+   "within": 5000
+  },
+  {
+   "do": "type",
+   "text": "15:5"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "wait": 300
+  },
+  {
+   "do": "action",
+   "name": "run::ToggleMethodBreakpoint"
+  },
+  {
+   "expect": {
+    "run.breakpoints.0.at": "Main.kt:13",
+    "run.breakpoints.0.kind": "method",
+    "run.breakpoints.0.function": "com.example.MainKt.greet"
+   },
+   "within": 5000
+  },
+  {
+   "find": {
+    "label": "Debug 'MainKt'",
+    "role": "AXButton",
+    "enabled": true
+   },
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-d"
+  },
+  {
+   "expect": {
+    "run.debug.status": "Stopped",
+    "run.debug.frames.0": {
+     "contains": "greet:"
+    }
+   },
+   "within": 180000
+  },
+  {
+   "expect": {
+    "run.exceptions.Kotlin": {
+     "Caught Exceptions": false,
+     "Uncaught Exceptions": true
+    }
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "alt-cmd-r"
+  },
+  {
+   "expect": {
+    "run.debug.status": "Stopped",
+    "run.debug.frames.0": {
+     "contains": "greet:"
+    }
+   },
+   "within": 60000
+  },
+  {
+   "do": "keys",
+   "keys": "alt-cmd-r"
+  },
+  {
+   "expect": {
+    "run.debug.frames": {
+     "contains": "main:10, MainKt (com.example)"
+    }
+   },
+   "within": 60000
+  },
+  {
+   "do": "keys",
+   "keys": "alt-cmd-r"
+  },
+  {
+   "expect": {
+    "run.debug.terminated": true
+   },
+   "within": 60000
+  }
+ ]
+}

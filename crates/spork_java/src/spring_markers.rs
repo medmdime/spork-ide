@@ -260,7 +260,8 @@ fn icon(java: &Entity<JavaProject>, beans: &Rc<[Bean]>, marker: Marker, row: u32
         .into_any_element()
 }
 
-/// A request mapping's popup: Show all endpoints of module, and Open in web browser for a GET.
+/// A request mapping's popup: Open in HTTP Client, Navigate to related views for a handler that
+/// renders a view, Show all endpoints of module, and Open in web browser for a GET.
 fn mapping_menu(
     menu: gpui_kit::component::menu::PopupMenu,
     java: &Entity<JavaProject>,
@@ -268,6 +269,50 @@ fn mapping_menu(
     cx: &App,
 ) -> gpui_kit::component::menu::PopupMenu {
     let workspace = java.read(cx).workspace.clone();
+    let port = java
+        .read(cx)
+        .root
+        .as_deref()
+        .and_then(server_port)
+        .unwrap_or(8080);
+    let request = crate::endpoints::request_line(endpoint, &format!("http://localhost:{port}"));
+    let menu = {
+        let workspace = workspace.clone();
+        menu.item(
+            PopupMenuItem::new("Open in HTTP Client").on_click(move |_, window, cx| {
+                let Some((method, url)) = request.split_once(' ') else {
+                    return;
+                };
+                workspace
+                    .update(cx, |workspace, cx| {
+                        spork_http::open_in_http_client(workspace, method, url, window, cx)
+                    })
+                    .log_err();
+            }),
+        )
+    };
+    let views = java
+        .read(cx)
+        .root
+        .as_deref()
+        .map(|root| related_views(&endpoint.file, endpoint.line, root))
+        .unwrap_or_default();
+    let menu = match views.into_iter().next() {
+        Some(view) => {
+            let workspace = workspace.clone();
+            menu.item(PopupMenuItem::new("Navigate to related views").on_click(
+                move |_, window, cx| {
+                    let view = view.clone();
+                    workspace
+                        .update(cx, |workspace, cx| {
+                            crate::endpoints::open_at(workspace, view, 0, window, cx)
+                        })
+                        .log_err();
+                },
+            ))
+        }
+        None => menu,
+    };
     let path = endpoint.path.clone();
     let menu = menu.item(PopupMenuItem::new("Show all endpoints of module").on_click(
         move |_, window, cx| {
@@ -283,20 +328,65 @@ fn mapping_menu(
     if !browsable || endpoint.path.contains('{') {
         return menu;
     }
-    let port = java
-        .read(cx)
-        .root
-        .as_deref()
-        .and_then(server_port)
-        .unwrap_or(8080);
     menu.link(
         "Open in web browser",
         format!("http://localhost:{port}{}", endpoint.path),
     )
 }
 
+/// The views a request mapping's handler renders (IntelliJ's "Related views"): the templates
+/// named by the view names it returns, in a `@Controller` that isn't a `@RestController`.
+// shortcut: the handler's text, its `return "view"` and `new ModelAndView("view")`, and Spring
+// Boot's template folder, where IntelliJ resolves the views with the configured view resolvers;
+// the first view goes, where IntelliJ lists several
+pub(crate) fn related_views(file: &Path, line: u32, root: &Path) -> Vec<PathBuf> {
+    static VIEW: std::sync::LazyLock<Option<regex::Regex>> = std::sync::LazyLock::new(|| {
+        regex::Regex::new(r#"(?:return\s+|ModelAndView\(\s*)"([^"]+)""#).log_err()
+    });
+    let Ok(text) = std::fs::read_to_string(file) else {
+        return Vec::new();
+    };
+    if text.contains("@RestController") {
+        return Vec::new();
+    }
+    let mut body = String::new();
+    let mut depth = 0;
+    let mut opened = false;
+    for line in text.lines().skip(line as usize) {
+        body.push_str(line);
+        body.push('\n');
+        for c in line.chars() {
+            match c {
+                '{' => {
+                    depth += 1;
+                    opened = true;
+                }
+                '}' => depth -= 1,
+                _ => {}
+            }
+        }
+        if opened && depth <= 0 {
+            break;
+        }
+    }
+    let templates = root.join("src/main/resources/templates");
+    let Some(view) = VIEW.as_ref() else {
+        return Vec::new();
+    };
+    view.captures_iter(&body)
+        .filter_map(|captures| Some(captures.get(1)?.as_str().to_owned()))
+        .filter(|name| !name.starts_with("redirect:") && !name.starts_with("forward:"))
+        .filter_map(|name| {
+            ["html", "ftlh", "mustache", "tpl"]
+                .iter()
+                .map(|extension| templates.join(format!("{name}.{extension}")))
+                .find(|path| path.is_file())
+        })
+        .collect()
+}
+
 /// The application's `server.port`, as its `application.properties` sets it.
-fn server_port(root: &Path) -> Option<u16> {
+pub(crate) fn server_port(root: &Path) -> Option<u16> {
     let text =
         std::fs::read_to_string(root.join("src/main/resources/application.properties")).ok()?;
     text.lines().find_map(|line| {
@@ -333,7 +423,7 @@ fn places_menu(
 
 #[cfg(test)]
 mod tests {
-    use super::{Marker, beans, markers_of};
+    use super::{Marker, beans, markers_of, related_views};
     use crate::endpoints::Endpoint;
     use serde_json::json;
     use std::path::{Path, PathBuf};
@@ -374,5 +464,24 @@ mod tests {
         assert_eq!(lines, [11, 6, 9]);
         assert!(matches!(found[2].1, Marker::Autowired(ref point) if point.name == "service"));
         assert!(markers_of(&[], &all, Path::new("/elsewhere.java")).is_empty());
+    }
+
+    #[test]
+    fn a_controllers_handler_names_its_view() -> anyhow::Result<()> {
+        let root = tempfile::tempdir()?;
+        let templates = root.path().join("src/main/resources/templates");
+        std::fs::create_dir_all(&templates)?;
+        std::fs::write(templates.join("greeting.html"), "<p>Hi</p>")?;
+        let file = root.path().join("GreetingController.java");
+        std::fs::write(
+            &file,
+            "@Controller\nclass GreetingController {\n    @GetMapping(\"/greeting\")\n    String greeting() {\n        return \"greeting\";\n    }\n\n    @GetMapping(\"/away\")\n    String away() {\n        return \"redirect:/greeting\";\n    }\n}\n",
+        )?;
+        assert_eq!(
+            related_views(&file, 2, root.path()),
+            [templates.join("greeting.html")]
+        );
+        assert!(related_views(&file, 7, root.path()).is_empty());
+        Ok(())
     }
 }

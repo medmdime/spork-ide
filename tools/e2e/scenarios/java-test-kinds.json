@@ -1,0 +1,344 @@
+{
+ "id": "java-test-kinds",
+ "fixture": "tests-maven",
+ "covers": [],
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "sh": "mkdir -p src/test/java/com/example/kinds src/test/resources .zed"
+  },
+  {
+   "file": "src/test/java/com/example/kinds/TaggedTest.java",
+   "text": "package com.example.kinds;\n\nimport static org.junit.jupiter.api.Assertions.assertEquals;\n\nimport org.junit.jupiter.api.Tag;\nimport org.junit.jupiter.api.Test;\n\nclass TaggedTest {\n    @Tag(\"fast\")\n    @Test\n    void fast() {\n        assertEquals(2, 1 + 1);\n    }\n\n    @Test\n    void untagged() {\n        assertEquals(4, 2 + 2);\n    }\n}\n"
+  },
+  {
+   "file": "src/test/java/com/example/kinds/Slow.java",
+   "text": "package com.example.kinds;\n\npublic interface Slow {\n}\n"
+  },
+  {
+   "file": "src/test/java/com/example/kinds/CategoryTest.java",
+   "text": "package com.example.kinds;\n\nimport static org.junit.Assert.assertEquals;\n\nimport org.junit.Test;\nimport org.junit.experimental.categories.Category;\n\npublic class CategoryTest {\n    @Category(Slow.class)\n    @Test\n    public void slow() {\n        assertEquals(6, 2 * 3);\n    }\n\n    @Test\n    public void quick() {\n        assertEquals(1, 1);\n    }\n}\n"
+  },
+  {
+   "file": "src/test/java/com/example/kinds/GroupedTest.java",
+   "text": "package com.example.kinds;\n\nimport static org.testng.Assert.assertEquals;\n\nimport org.testng.annotations.Test;\n\npublic class GroupedTest {\n    @Test(groups = \"smoke\")\n    public void smokes() {\n        assertEquals(1 + 1, 2);\n    }\n\n    @Test\n    public void ungrouped() {\n        assertEquals(2 + 2, 4);\n    }\n}\n"
+  },
+  {
+   "file": "src/test/resources/testng.xml",
+   "text": "<!DOCTYPE suite SYSTEM \"https://testng.org/testng-1.0.dtd\">\n<suite name=\"Kinds\">\n    <test name=\"Grouped\">\n        <classes>\n            <class name=\"com.example.kinds.GroupedTest\"/>\n        </classes>\n    </test>\n</suite>\n"
+  },
+  {
+   "file": ".zed/debug.json",
+   "text": "[\n  {\n    \"label\": \"Fast tests\",\n    \"adapter\": \"JUnit\",\n    \"request\": \"launch\",\n    \"testKind\": \"tags\",\n    \"testTags\": \"fast\"\n  },\n  {\n    \"label\": \"Slow tests\",\n    \"adapter\": \"JUnit\",\n    \"request\": \"launch\",\n    \"testKind\": \"category\",\n    \"testCategory\": \"com.example.kinds.Slow\"\n  },\n  {\n    \"label\": \"One test\",\n    \"adapter\": \"JUnit\",\n    \"request\": \"launch\",\n    \"testKind\": \"uniqueId\",\n    \"testUniqueId\": \"[engine:junit-jupiter]/[class:com.example.kinds.TaggedTest]/[method:untagged()]\"\n  },\n  {\n    \"label\": \"Kinds\",\n    \"adapter\": \"JUnit\",\n    \"request\": \"launch\",\n    \"testKind\": \"directory\",\n    \"testDirectory\": \"src/test/java/com/example/kinds\"\n  },\n  {\n    \"label\": \"Smoke\",\n    \"adapter\": \"TestNG\",\n    \"request\": \"launch\",\n    \"testKind\": \"group\",\n    \"testGroup\": \"smoke\"\n  },\n  {\n    \"label\": \"Suite\",\n    \"adapter\": \"TestNG\",\n    \"request\": \"launch\",\n    \"testKind\": \"suite\",\n    \"testSuite\": \"src/test/resources/testng.xml\"\n  },\n  {\n    \"label\": \"Patterns\",\n    \"adapter\": \"JUnit\",\n    \"request\": \"launch\",\n    \"testKind\": \"pattern\",\n    \"testPattern\": \"com.example.kinds.TaggedTest||com.example.CalculatorTest\"\n  },\n  {\n    \"label\": \"Forked\",\n    \"adapter\": \"JUnit\",\n    \"request\": \"launch\",\n    \"testKind\": \"package\",\n    \"testPackage\": \"com.example.kinds\",\n    \"forkMode\": \"class\"\n  }\n]\n"
+  },
+  {
+   "expect": {
+    "java.tool": "Maven"
+   },
+   "within": 20000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 600000
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "expect": {
+    "run.configurations.names": [
+     "Fast tests",
+     "Slow tests",
+     "One test",
+     "Kinds",
+     "Smoke",
+     "Suite",
+     "Patterns",
+     "Forked"
+    ]
+   },
+   "within": 10000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-alt-r"
+  },
+  {
+   "wait": 800
+  },
+  {
+   "do": "keys",
+   "keys": "1"
+  },
+  {
+   "expect": {
+    "run.tabs.0.title": "Fast tests",
+    "run.tabs.0.running": false,
+    "run.tabs.0.tests.rows": [
+     "Test Results passed",
+     "  TaggedTest passed",
+     "    fast() passed"
+    ]
+   },
+   "within": 300000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-alt-r"
+  },
+  {
+   "wait": 800
+  },
+  {
+   "do": "keys",
+   "keys": "2"
+  },
+  {
+   "expect": {
+    "run.tabs.1.title": "Slow tests",
+    "run.tabs.1.running": false,
+    "run.tabs.1.tests.rows": [
+     "Test Results passed",
+     "  CategoryTest passed",
+     "    slow passed"
+    ]
+   },
+   "within": 300000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-alt-r"
+  },
+  {
+   "wait": 800
+  },
+  {
+   "do": "keys",
+   "keys": "3"
+  },
+  {
+   "expect": {
+    "run.tabs.2.title": "One test",
+    "run.tabs.2.running": false,
+    "run.tabs.2.tests.rows": [
+     "Test Results passed",
+     "  TaggedTest passed",
+     "    untagged() passed"
+    ]
+   },
+   "within": 300000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-alt-r"
+  },
+  {
+   "wait": 800
+  },
+  {
+   "do": "keys",
+   "keys": "4"
+  },
+  {
+   "expect": {
+    "run.tabs.3.title": "Kinds",
+    "run.tabs.3.running": false,
+    "run.tabs.3.tests.status": "2 tests passed"
+   },
+   "within": 300000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-alt-r"
+  },
+  {
+   "wait": 800
+  },
+  {
+   "do": "keys",
+   "keys": "5"
+  },
+  {
+   "expect": {
+    "run.tabs.4.title": "Smoke",
+    "run.tabs.4.running": false,
+    "run.tabs.4.tests.rows": [
+     "Test Results passed",
+     "  GroupedTest passed",
+     "    smokes passed"
+    ]
+   },
+   "within": 300000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-alt-r"
+  },
+  {
+   "wait": 800
+  },
+  {
+   "do": "keys",
+   "keys": "6"
+  },
+  {
+   "expect": {
+    "run.tabs.5.title": "Suite",
+    "run.tabs.5.running": false,
+    "run.tabs.5.tests.rows": [
+     "Test Results passed",
+     "  GroupedTest passed",
+     "    smokes passed",
+     "    ungrouped passed"
+    ]
+   },
+   "within": 300000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-alt-r"
+  },
+  {
+   "wait": 800
+  },
+  {
+   "do": "keys",
+   "keys": "7"
+  },
+  {
+   "expect": {
+    "run.tabs.6.title": "Patterns",
+    "run.tabs.6.running": false,
+    "run.tabs.6.tests.status": "1 test failed, 3 passed, 1 ignored"
+   },
+   "within": 300000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "find": {
+    "label": "CalculatorTest",
+    "role": "AXRow"
+   },
+   "within": 15000
+  },
+  {
+   "do": "click",
+   "label": "CalculatorTest",
+   "role": "AXRow",
+   "button": "right"
+  },
+  {
+   "find": "Exclude from Suite",
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Exclude from Suite"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-alt-r"
+  },
+  {
+   "wait": 800
+  },
+  {
+   "do": "keys",
+   "keys": "7"
+  },
+  {
+   "expect": {
+    "run.tabs.6.running": false,
+    "run.tabs.6.tests.status": "2 tests passed"
+   },
+   "within": 300000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-alt-r"
+  },
+  {
+   "wait": 800
+  },
+  {
+   "do": "keys",
+   "keys": "8"
+  },
+  {
+   "expect": {
+    "run.tabs.7.title": "Forked",
+    "run.tabs.7.running": false,
+    "run.tabs.7.tests.status": "6 tests passed"
+   },
+   "within": 300000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "action",
+   "name": "run::EditConfigurations"
+  },
+  {
+   "find": {
+    "label": "Forked",
+    "role": "AXRow"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "Forked",
+   "role": "AXRow"
+  },
+  {
+   "find": {
+    "label": "Fork mode:"
+   },
+   "within": 5000
+  },
+  {
+   "find": {
+    "label": "Package:"
+   },
+   "within": 5000
+  },
+  {
+   "wait": 300
+  },
+  {
+   "shot": "fork-mode-form",
+   "window": "smallest"
+  }
+ ]
+}

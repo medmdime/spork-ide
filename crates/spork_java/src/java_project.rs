@@ -225,6 +225,7 @@ pub(crate) fn register(
                 crate::build_view::add(workspace, window, cx);
                 if spring {
                     crate::endpoints::add(workspace, window, cx);
+                    crate::beans::add(workspace, window, cx);
                 }
             });
         }
@@ -526,6 +527,9 @@ impl JavaProject {
                 }
             };
             let Some(java_file) = found else {
+                // a Kotlin project's applications, which JDT LS wouldn't see
+                this.update(cx, crate::spring_boot::imported_without_java)
+                    .ok();
                 return;
             };
             let opened = project
@@ -1266,13 +1270,15 @@ impl project_panel::FolderRoles for JavaFolderRoles {
     }
 
     fn run_items(&self, abs_path: &Path) -> Vec<project_panel::NewItem> {
-        let Some(test_root) = self
-            .source_root_of(abs_path)
-            .filter(|root| root.ends_with("src/test/java") || root.ends_with("src/test/kotlin"))
-        else {
+        let Some(source_root) = self.source_root_of(abs_path) else {
             return Vec::new();
         };
-        crate::testing::run_items(&test_root, abs_path)
+        if source_root.ends_with("src/test/java") || source_root.ends_with("src/test/kotlin") {
+            return crate::testing::run_items(&source_root, abs_path);
+        }
+        // `src/main/java`'s project
+        let project_root = source_root.ancestors().nth(3).unwrap_or(&source_root);
+        crate::testing::main_items(project_root, &source_root, abs_path)
     }
 
     fn extra_roots(&self) -> Vec<PathBuf> {

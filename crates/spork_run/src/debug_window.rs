@@ -29,6 +29,7 @@ use util::ResultExt as _;
 use workspace::Workspace;
 
 use crate::run;
+use crate::threads::{DumpThread, DumpView, ThreadInfo, ThreadsView, jvm_frame_label};
 
 pub(crate) fn init(cx: &mut App) {
     cx.set_global(DebugToolWindow(Rc::new(|_, window, cx| {
@@ -219,14 +220,24 @@ pub fn write_program_console(session: &Entity<Session>, text: &str, cx: &mut App
     true
 }
 
+/// A language's answer about a stopped session's threads, evaluated in a frame.
+pub type ThreadsTask<T> = fn(&Entity<Session>, u64, &mut App) -> Task<anyhow::Result<Vec<T>>>;
+
 /// What a debug adapter's language adds to the Debug tool window (Java's comes from
 /// `spork_java`).
 #[derive(Clone, Copy)]
 pub struct AdapterHooks {
-    /// IntelliJ's label of a frame, `hello:9, Greeting (com.example)`.
-    pub frame_label: fn(&dap::StackFrame) -> String,
+    /// IntelliJ's label of a frame as the threads view shows it, `hello:9, Greeting
+    /// (com.example)`.
+    pub frame_label: fn(&dap::StackFrame, &ThreadsView) -> String,
     /// Force Step Into: a step into past the stepping filters.
     pub force_step_into: fn(&Entity<Session>, ThreadId, &mut App),
+    /// The threads' groups and states (Show thread groups).
+    pub thread_infos: Option<ThreadsTask<ThreadInfo>>,
+    /// Get Thread Dump's and Export Threads…' threads.
+    pub thread_dump: Option<ThreadsTask<DumpThread>>,
+    /// The class of a frame, for Add Stepping Filter….
+    pub frame_class: Option<fn(&dap::StackFrame) -> Option<String>>,
 }
 
 /// The adapters' hooks, by adapter name.
@@ -262,6 +273,7 @@ pub(crate) fn register(workspace: &mut Workspace) {
             .supports_step_in_targets_request
             .unwrap_or_default();
         let restart_frame = capabilities.supports_restart_frame.unwrap_or_default();
+        let thread_dump = hooks(session, cx).is_some_and(|hooks| hooks.thread_dump.is_some());
         div.on_action(
             cx.listener(|workspace, _: &run::ShowExecutionPoint, window, cx| {
                 if let Some(running) = running_state(workspace, cx) {
@@ -269,6 +281,18 @@ pub(crate) fn register(workspace: &mut Workspace) {
                 }
             }),
         )
+        .when(stopped && thread_dump, |div| {
+            div.on_action(
+                cx.listener(|workspace, _: &run::GetThreadDump, window, cx| {
+                    let view = workspace.panel::<DebugPanel>(cx).and_then(|panel| {
+                        cx.try_global::<Views>()?.0.get(&panel.entity_id()).cloned()
+                    });
+                    if let Some(view) = view {
+                        view.update(cx, |view, cx| view.get_thread_dump(window, cx));
+                    }
+                }),
+            )
+        })
         .when(stopped, |div| {
             div.on_action(
                 cx.listener(|workspace, _: &run::EvaluateExpression, window, cx| {
@@ -280,6 +304,9 @@ pub(crate) fn register(workspace: &mut Workspace) {
                     crate::evaluate_dialog::quick_evaluate(workspace, window, cx)
                 }),
             )
+            .on_action(cx.listener(|workspace, _: &run::Inspect, window, cx| {
+                crate::evaluate_dialog::inspect(workspace, window, cx)
+            }))
             .on_action(cx.listener(|workspace, _: &run::ForceStepOver, _, cx| {
                 if let Some(running) = running_state(workspace, cx) {
                     skipping_breakpoints(&running, |running, cx| running.step_over(cx), cx);
@@ -491,10 +518,7 @@ pub fn active_debug_session(workspace: &Workspace, cx: &App) -> Option<Entity<Se
     Some(running_state(workspace, cx)?.read(cx).session().clone())
 }
 
-pub(crate) fn running_state(
-    workspace: &Workspace,
-    cx: &App,
-) -> Option<Entity<debugger_ui::RunningState>> {
+pub fn running_state(workspace: &Workspace, cx: &App) -> Option<Entity<debugger_ui::RunningState>> {
     let session = workspace
         .panel::<DebugPanel>(cx)?
         .read(cx)
@@ -516,24 +540,46 @@ struct FrameRows {
 fn frame_rows(
     running: &Entity<debugger_ui::RunningState>,
     hide_library_frames: bool,
+    infos: &HashMap<String, ThreadInfo>,
     cx: &mut App,
 ) -> FrameRows {
+    let view = crate::threads::threads_view(cx);
     let session = running.read(cx).session().clone();
     let thread_id = running.read(cx).selected_thread_id();
-    let threads = session.update(cx, |session, cx| session.threads(cx));
+    let mut threads = session.update(cx, |session, cx| session.threads(cx));
+    // Move current thread to the top
+    if view.current_thread_on_top
+        && let Some(at) = threads
+            .iter()
+            .position(|(thread, _)| Some(ThreadId(thread.id)) == thread_id)
+    {
+        let current = threads.remove(at);
+        threads.insert(0, current);
+    }
     let status = running.read(cx).thread_status(cx);
-    // `JavaDebuggerBundle`'s `label.thread.node`; the Kotlin server names a thread so itself,
-    // with its state: `"main"@1 in group "main": RUNNING`
-    let thread_label =
-        |(thread, status): &(dap::Thread, ThreadStatus)| match thread.name.starts_with('"') {
-            true => thread.name.clone(),
-            false => format!(
+    // `JavaDebuggerBundle`'s `label.thread.node` and, with the thread groups,
+    // `label.thread.node.in.group`; the Kotlin server names a thread so itself, with its state:
+    // `"main"@1 in group "main": RUNNING`
+    let thread_label = |(thread, status): &(dap::Thread, ThreadStatus)| {
+        if thread.name.starts_with('"') {
+            return thread.name.clone();
+        }
+        match infos.get(&thread.name).filter(|_| view.show_thread_groups) {
+            Some(info) => format!(
+                "\"{}\"@{} in group \"{}\": {}",
+                thread.name,
+                thread.id,
+                info.group,
+                crate::threads::thread_status(&info.state)
+            ),
+            None => format!(
                 "\"{}\"@{}: {}",
                 thread.name,
                 thread.id,
                 status.label().to_uppercase()
             ),
-        };
+        }
+    };
     let thread = thread_id
         .and_then(|id| threads.iter().find(|(thread, _)| thread.id == id.0))
         .map(thread_label)
@@ -560,7 +606,20 @@ fn frame_rows(
     // IntelliJ folds each run of hidden library frames into one row; the top frame shows, and
     // the separators between a stack and its async stack trace
     let mut shown: Vec<Result<dap::StackFrame, usize>> = Vec::new();
-    for (ix, frame) in frames.into_iter().map(|frame| frame.dap).enumerate() {
+    // shortcut: a synthetic method is known by the `$` in its name (`lambda$1`, `access$000`);
+    // ask the adapter once one tells
+    let synthetic = |frame: &dap::StackFrame| {
+        let method = frame.name.split('(').next().unwrap_or_default();
+        method
+            .rsplit('.')
+            .next()
+            .is_some_and(|method| method.contains('$'))
+    };
+    let frames = frames
+        .into_iter()
+        .map(|frame| frame.dap)
+        .filter(|frame| view.show_synthetic_frames || !synthetic(frame));
+    for (ix, frame) in frames.enumerate() {
         match (
             hide_library_frames && ix > 0 && !in_project(&frame) && !is_separator(&frame),
             shown.last_mut(),
@@ -575,13 +634,21 @@ fn frame_rows(
         .map(|row| match row {
             Ok(frame) if is_separator(frame) => frame.name.clone(),
             Ok(frame) => match label {
-                Some(label) => label(frame),
+                Some(label) => label(frame, &view),
                 // the Kotlin server's stack trace names
                 None => match jvm_frame(&frame.name) {
-                    Some((method, class, Some(package))) => {
-                        format!("{method}:{}, {class} ({package})", frame.line)
+                    Some((method, class, package)) => {
+                        let source = frame.source.as_ref().and_then(|s| s.name.as_deref());
+                        jvm_frame_label(
+                            method,
+                            None,
+                            frame.line as i64,
+                            class,
+                            package,
+                            source,
+                            &view,
+                        )
                     }
-                    Some((method, class, None)) => format!("{method}:{}, {class}", frame.line),
                     None => {
                         let file = frame.source.as_ref().and_then(|s| s.name.clone());
                         let file = file.unwrap_or_default();
@@ -623,7 +690,13 @@ pub fn e2e_frames(workspace: &Entity<Workspace>, cx: &mut App) -> serde_json::Va
         .panel::<DebugPanel>(cx)
         .and_then(|panel| cx.try_global::<Views>()?.0.get(&panel.entity_id()).cloned())
         .is_none_or(|view| view.read(cx).hide_library_frames);
-    let rows = frame_rows(&running, hide, cx);
+    let infos = workspace
+        .read(cx)
+        .panel::<DebugPanel>(cx)
+        .and_then(|panel| cx.try_global::<Views>()?.0.get(&panel.entity_id()).cloned())
+        .map(|view| view.read(cx).thread_infos.clone())
+        .unwrap_or_default();
+    let rows = frame_rows(&running, hide, &infos, cx);
     serde_json::json!({
         "thread": rows.thread,
         "threads": rows.threads,
@@ -641,6 +714,94 @@ impl Global for Views {}
 enum ContentTab {
     ThreadsAndVariables,
     Console,
+    /// A thread dump's tab, by its place among the dumps.
+    Dump(usize),
+}
+
+/// How the Threads & Variables tab shows the threads and frames (`XDebugFramesAndThreadsLayoutOptions`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+enum FramesLayout {
+    /// The thread chooser over the frames.
+    Combined,
+    /// The threads as a tree, the current one open on its frames.
+    Threads,
+    /// The threads beside the frames.
+    SideBySide,
+    /// The frames alone.
+    FramesOnly,
+    /// Don't Show.
+    Hidden,
+}
+
+/// The Debug tool window's Layout Settings, IntelliJ's by default; kept for the next sessions as
+/// IntelliJ keeps a runner's layout.
+#[derive(Clone, Copy, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
+struct DebugLayout {
+    frames: FramesLayout,
+    variables: bool,
+    console: bool,
+    separate_watches: bool,
+    tab_labels: bool,
+}
+
+impl Default for DebugLayout {
+    fn default() -> Self {
+        Self {
+            frames: FramesLayout::Combined,
+            variables: true,
+            console: true,
+            separate_watches: false,
+            tab_labels: true,
+        }
+    }
+}
+
+struct DebugLayoutGlobal(DebugLayout);
+
+impl Global for DebugLayoutGlobal {}
+
+const DEBUG_LAYOUT_KEY: &str = "spork_debug_layout";
+
+fn debug_layout(cx: &mut App) -> DebugLayout {
+    if let Some(layout) = cx.try_global::<DebugLayoutGlobal>() {
+        return layout.0;
+    }
+    let layout: DebugLayout = db::kvp::KeyValueStore::global(cx)
+        .read_kvp(DEBUG_LAYOUT_KEY)
+        .log_err()
+        .flatten()
+        .and_then(|json| serde_json::from_str(&json).log_err())
+        .unwrap_or_default();
+    cx.set_global(DebugLayoutGlobal(layout));
+    cx.set_global(debugger_ui::SeparateWatches(layout.separate_watches));
+    layout
+}
+
+fn set_debug_layout(layout: DebugLayout, cx: &mut App) {
+    let separate = cx
+        .try_global::<debugger_ui::SeparateWatches>()
+        .is_some_and(|separate| separate.0);
+    cx.set_global(DebugLayoutGlobal(layout));
+    if separate != layout.separate_watches {
+        cx.set_global(debugger_ui::SeparateWatches(layout.separate_watches));
+        // the variables trees take the watches in or out
+        let views: Vec<_> = cx
+            .try_global::<Views>()
+            .map(|views| views.0.values().cloned().collect())
+            .unwrap_or_default();
+        for view in views {
+            if let Some(running) = view.read(cx).running(cx) {
+                let variables = running.read(cx).variables().clone();
+                variables.update(cx, |variables, cx| variables.rebuild(cx));
+            }
+        }
+    }
+    let json = serde_json::to_string(&layout);
+    let store = db::kvp::KeyValueStore::global(cx);
+    cx.background_spawn(async move { store.write_kvp(DEBUG_LAYOUT_KEY.into(), json?).await })
+        .detach_and_log_err(cx);
+    cx.refresh_windows();
 }
 
 struct DebugWindow {
@@ -653,6 +814,15 @@ struct DebugWindow {
     /// The last expression evaluated with ⏎ and what it gave, shown over the variables.
     result: Option<(SharedString, Result<SharedString, SharedString>)>,
     hide_library_frames: bool,
+    /// The watch selected in Separate Watches' view.
+    selected_watch: Option<SharedString>,
+    /// The thread dumps' tabs.
+    dumps: Vec<Entity<DumpView>>,
+    /// The stopped threads' groups and states, by name, while Show thread groups wants them;
+    /// `None` until asked at this stop.
+    thread_infos: HashMap<String, ThreadInfo>,
+    infos_asked: bool,
+    _thread_infos: Task<()>,
     /// The session whose changes redraw the view.
     observed: Option<EntityId>,
     _session: Vec<Subscription>,
@@ -699,6 +869,11 @@ impl DebugWindow {
                 new_watch: false,
                 result: None,
                 hide_library_frames: true,
+                selected_watch: None,
+                dumps: Vec::new(),
+                thread_infos: HashMap::default(),
+                infos_asked: false,
+                _thread_infos: Task::ready(()),
                 observed: None,
                 _session: Vec::new(),
                 _subscriptions: vec![entered, redraw, release],
@@ -774,12 +949,86 @@ impl DebugWindow {
         self.observed = Some(id);
         self.result = None;
         let variables = running.read(cx).variables().clone();
+        self.thread_infos.clear();
+        self.infos_asked = false;
         self._session = vec![
             cx.observe(&running, |_, _, cx| cx.notify()),
             cx.observe(&session, |_, _, cx| cx.notify()),
+            // a stop's threads are asked about again
+            cx.subscribe(&session, |this, _, event: &SessionEvent, cx| {
+                if let SessionEvent::Stopped(_) = event {
+                    this.thread_infos.clear();
+                    this.infos_asked = false;
+                    cx.notify();
+                }
+            }),
             // the watches toolbar follows the tree's selection
             cx.observe(&variables, |_, _, cx| cx.notify()),
         ];
+    }
+
+    /// Show thread groups: the stopped threads' groups and states, asked once per stop of the
+    /// language that tells them.
+    fn ask_thread_infos(
+        &mut self,
+        running: &Entity<debugger_ui::RunningState>,
+        cx: &mut Context<Self>,
+    ) {
+        if self.infos_asked || !crate::threads::threads_view(cx).show_thread_groups {
+            return;
+        }
+        let session = running.read(cx).session().clone();
+        let (Some(ask), Some(frame), Some(ThreadStatus::Stopped)) = (
+            hooks(session.read(cx), cx).and_then(|hooks| hooks.thread_infos),
+            running.read(cx).opened_stack_frame(cx),
+            running.read(cx).thread_status(cx),
+        ) else {
+            return;
+        };
+        self.infos_asked = true;
+        let infos = ask(&session, frame, cx);
+        self._thread_infos = cx.spawn(async move |this, cx| {
+            let Some(infos) = infos.await.log_err() else {
+                return;
+            };
+            this.update(cx, |this, cx| {
+                this.thread_infos = infos
+                    .into_iter()
+                    .map(|info| (info.name.clone(), info))
+                    .collect();
+                cx.notify();
+            })
+            .log_err();
+        });
+    }
+
+    /// Get Thread Dump: the threads in a new "Dump HH:MM:SS" tab, shown.
+    fn get_thread_dump(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let Some(running) = self.running(cx) else {
+            return;
+        };
+        let session = running.read(cx).session().clone();
+        let (Some(dump), Some(frame)) = (
+            hooks(session.read(cx), cx).and_then(|hooks| hooks.thread_dump),
+            running.read(cx).opened_stack_frame(cx),
+        ) else {
+            return;
+        };
+        let folder = session
+            .read(cx)
+            .worktree()
+            .map(|worktree| worktree.read(cx).abs_path().to_path_buf());
+        let threads = dump(&session, frame, cx);
+        cx.spawn_in(window, async move |this, cx| {
+            let threads = threads.await?;
+            this.update_in(cx, |this, window, cx| {
+                let view = cx.new(|cx| DumpView::new(threads, folder, window, cx));
+                this.dumps.push(view);
+                this.tab = ContentTab::Dump(this.dumps.len() - 1);
+                cx.notify();
+            })
+        })
+        .detach_and_log_err(cx);
     }
 
     fn header(&self, cx: &mut Context<Self>) -> AnyElement {
@@ -865,6 +1114,8 @@ impl DebugWindow {
         muted: bool,
         name: &str,
         capabilities: &dap::Capabilities,
+        update: Option<ActionButton>,
+        dumps: bool,
         cx: &mut Context<Self>,
     ) -> AnyElement {
         let stopped = status == Some(ThreadStatus::Stopped);
@@ -873,6 +1124,7 @@ impl DebugWindow {
                 .supports_step_in_targets_request
                 .unwrap_or_default();
         let restart_frame = stopped && capabilities.supports_restart_frame.unwrap_or_default();
+        let thread_dump = stopped && dumps;
         let running = status == Some(ThreadStatus::Running);
         let live = status
             .is_some_and(|status| !matches!(status, ThreadStatus::Exited | ThreadStatus::Ended));
@@ -946,6 +1198,11 @@ impl DebugWindow {
                     restart_frame,
                     run::ResetFrame.boxed_clone(),
                 ))
+                .item(item(
+                    "Get Thread Dump",
+                    thread_dump,
+                    run::GetThreadDump.boxed_clone(),
+                ))
             });
         h_flex()
             .id("debug-toolbar")
@@ -960,13 +1217,27 @@ impl DebugWindow {
                 true,
                 debugger_ui::RerunSession.boxed_clone(),
             ))
-            .child(button(
-                "debug-stop",
-                "run/stop",
-                format!("Stop '{name}' (⌘F2)"),
-                live,
-                debugger_ui::Stop.boxed_clone(),
-            ))
+            .children(update.filter(|_| live))
+            .child(
+                button(
+                    "debug-stop",
+                    "run/stop",
+                    format!("Stop '{name}' (⌘F2)"),
+                    live,
+                    debugger_ui::Stop.boxed_clone(),
+                )
+                // a debugged test's run ends with its session
+                .on_click(|_, window, cx| {
+                    if let Some(terminal) =
+                        Workspace::for_window(window, cx).and_then(|workspace| {
+                            crate::run_panel::debugged_run(workspace.read(cx), cx)
+                        })
+                    {
+                        terminal.update(cx, |terminal, _| terminal.kill_active_task());
+                    }
+                    window.dispatch_action(debugger_ui::Stop.boxed_clone(), cx)
+                }),
+            )
             .child(separator())
             .child(button(
                 "debug-resume",
@@ -1025,9 +1296,15 @@ impl DebugWindow {
 
     fn content_tabs(&self, cx: &mut Context<Self>) -> AnyElement {
         let tokens = Tokens::get(cx);
+        let layout = debug_layout(cx);
+        // Show Tab Labels off: a tab with an icon shows it alone (`RunnerContentUi`)
         let tab =
             |id: &'static str, label: &'static str, which: ContentTab, cx: &mut Context<Self>| {
                 let on = self.tab == which;
+                let icon = match which {
+                    ContentTab::Console => Some("fileTypes/shell"),
+                    _ => None,
+                };
                 div()
                     .id(id)
                     .role(Role::Tab)
@@ -1041,7 +1318,14 @@ impl DebugWindow {
                     .cursor_pointer()
                     .when(on, |t| t.bg(tokens.tab_selected))
                     .when(!on, |t| t.hover(move |t| t.bg(tokens.hover)))
-                    .child(label)
+                    .map(|t| match icon.filter(|_| !layout.tab_labels) {
+                        Some(icon) => t
+                            .child(spork_workbench::image(icon, cx).size(px(16.)))
+                            .tooltip(move |window, cx| {
+                                gpui_kit::component::tooltip::Tooltip::new(label).build(window, cx)
+                            }),
+                        None => t.child(label),
+                    })
                     .on_click(cx.listener(move |this, _, window, cx| {
                         this.tab = which;
                         // the program's console takes the input, as IntelliJ's; otherwise the
@@ -1074,23 +1358,122 @@ impl DebugWindow {
                 ContentTab::ThreadsAndVariables,
                 cx,
             ))
-            .child(tab("debug-console", "Console", ContentTab::Console, cx))
+            .when(layout.console, |tabs| {
+                tabs.child(tab("debug-console", "Console", ContentTab::Console, cx))
+            })
+            .children(self.dumps.iter().enumerate().map(|(ix, dump)| {
+                let title = dump.read(cx).title.clone();
+                let on = self.tab == ContentTab::Dump(ix);
+                h_flex()
+                    .id(("debug-dump-tab", ix))
+                    .role(Role::Tab)
+                    .aria_label(title.clone())
+                    .aria_selected(on)
+                    .h(px(28.))
+                    .pl(px(10.))
+                    .pr(px(4.))
+                    .gap(px(2.))
+                    .rounded(px(6.))
+                    .cursor_pointer()
+                    .when(on, |t| t.bg(tokens.tab_selected))
+                    .when(!on, |t| t.hover(move |t| t.bg(tokens.hover)))
+                    .child(title)
+                    .child(
+                        ActionButton::new(("close-dump-tab", ix), "general/closeSmall")
+                            .tooltip("Close")
+                            .on_click(cx.listener(move |this, _, _, cx| {
+                                cx.stop_propagation();
+                                this.dumps.remove(ix);
+                                this.tab = ContentTab::ThreadsAndVariables;
+                                cx.notify();
+                            })),
+                    )
+                    .on_click(cx.listener(move |this, _, _, cx| {
+                        this.tab = ContentTab::Dump(ix);
+                        cx.notify();
+                    }))
+            }))
+            .child(self.layout_button(layout))
             .into_any_element()
+    }
+
+    /// Layout Settings (`RunnerContentUi`'s view actions): Threads & Frames ▸ its layouts or Don't
+    /// Show, Variables, Console, Separate Watches, Show Tab Labels, Restore Default Layout.
+    fn layout_button(&self, layout: DebugLayout) -> impl IntoElement {
+        ActionButton::new("debug-layout-settings", "general/layout")
+            .tooltip("Layout Settings")
+            .dropdown_menu(move |menu, window, cx| {
+                let set = |change: fn(&mut DebugLayout)| {
+                    move |_: &gpui::ClickEvent, _: &mut Window, cx: &mut App| {
+                        let mut layout = debug_layout(cx);
+                        change(&mut layout);
+                        set_debug_layout(layout, cx);
+                    }
+                };
+                menu.submenu("Threads & Frames", window, cx, move |menu, _, _| {
+                    let frames = |label: &'static str, frames: FramesLayout| {
+                        PopupMenuItem::new(label)
+                            .checked(layout.frames == frames)
+                            .disabled(frames == FramesLayout::Hidden && !layout.variables)
+                            .on_click(move |_, _, cx| {
+                                let mut layout = debug_layout(cx);
+                                layout.frames = frames;
+                                set_debug_layout(layout, cx);
+                            })
+                    };
+                    menu.item(frames("Combined", FramesLayout::Combined))
+                        .item(frames("Threads", FramesLayout::Threads))
+                        .item(frames("Side-by-Side", FramesLayout::SideBySide))
+                        .item(frames("Show Frames Only", FramesLayout::FramesOnly))
+                        .item(frames("Don't Show", FramesLayout::Hidden))
+                })
+                .item(
+                    PopupMenuItem::new("Variables")
+                        .checked(layout.variables)
+                        .disabled(layout.frames == FramesLayout::Hidden)
+                        .on_click(set(|layout| layout.variables = !layout.variables)),
+                )
+                .item(
+                    PopupMenuItem::new("Console")
+                        .checked(layout.console)
+                        .on_click(set(|layout| layout.console = !layout.console)),
+                )
+                .separator()
+                .item(
+                    PopupMenuItem::new("Separate Watches")
+                        .checked(layout.separate_watches)
+                        .on_click(set(|layout| {
+                            layout.separate_watches = !layout.separate_watches
+                        })),
+                )
+                .separator()
+                .item(
+                    PopupMenuItem::new("Show Tab Labels")
+                        .checked(layout.tab_labels)
+                        .on_click(set(|layout| layout.tab_labels = !layout.tab_labels)),
+                )
+                .item(
+                    PopupMenuItem::new("Restore Default Layout")
+                        .on_click(set(|layout| *layout = DebugLayout::default())),
+                )
+            })
     }
 
     fn frames(
         &mut self,
         running: &Entity<debugger_ui::RunningState>,
+        layout: DebugLayout,
         cx: &mut Context<Self>,
     ) -> AnyElement {
         let tokens = Tokens::get(cx);
+        self.ask_thread_infos(running, cx);
         let FrameRows {
             thread,
             threads,
             thread_ids,
             shown,
             labels,
-        } = frame_rows(running, self.hide_library_frames, cx);
+        } = frame_rows(running, self.hide_library_frames, &self.thread_infos, cx);
         let stack = labels
             .iter()
             .map(|label| format!("{label}\n"))
@@ -1168,56 +1551,154 @@ impl DebugWindow {
             .collect();
         let hide = self.hide_library_frames;
         let empty = rows.is_empty();
+        let current = running.read(cx).selected_thread_id();
+        // a thread's row for the Threads and Side-by-Side layouts: a click shows its frames
+        let thread_row = |ix: usize, label: &String, cx: &mut Context<Self>| {
+            let id = thread_ids.get(ix).copied();
+            let selected = id.is_some() && id == current;
+            let running = running.downgrade();
+            h_flex()
+                .id(("debug-thread-row", ix))
+                .role(Role::TreeItem)
+                .aria_label(SharedString::from(label.clone()))
+                .aria_selected(selected)
+                .aria_expanded(selected)
+                .flex_none()
+                .h(px(24.))
+                .mx(px(6.))
+                .px(px(6.))
+                .gap(px(4.))
+                .rounded(px(4.))
+                .cursor_pointer()
+                .when(selected, |row| row.bg(tokens.selection))
+                .when(!selected, |row| {
+                    row.hover(move |row| row.bg(tokens.selection_hover))
+                })
+                .child(spork_workbench::image("debugger/threadRunning", cx).size(px(16.)))
+                .child(div().truncate().child(label.clone()))
+                .on_click(move |_, window, cx| {
+                    if let Some(id) = id {
+                        running
+                            .update(cx, |running, cx| running.choose_thread(id, window, cx))
+                            .log_err();
+                    }
+                })
+                .into_any_element()
+        };
+        let not_available = || {
+            div()
+                .px(px(12.))
+                .text_color(tokens.text_secondary)
+                .child("Frames are not available")
+        };
+        let hide_button = ActionButton::new("debug-hide-library-frames", "general/filter")
+            // a toggle, as IntelliJ's (`hide.library.frames.tooltip`)
+            .tooltip("Hide Frames from Libraries")
+            .selected(hide)
+            .on_click(cx.listener(|this, _, _, cx| {
+                this.hide_library_frames = !this.hide_library_frames;
+                cx.notify();
+            }));
+        let header =
+            h_flex()
+                .flex_none()
+                .h(px(32.))
+                .px(px(8.))
+                .gap(px(4.))
+                .border_b_1()
+                .border_color(tokens.separator)
+                .child(div().flex_1().min_w_0().when(
+                    layout.frames == FramesLayout::Combined,
+                    |slot| {
+                        slot.child(self.thread_chooser(
+                            running,
+                            thread,
+                            threads.clone(),
+                            thread_ids.clone(),
+                        ))
+                    },
+                ))
+                .child(hide_button);
+        let list = |id: &'static str, label: &'static str| {
+            v_flex()
+                .id(id)
+                .role(Role::List)
+                .aria_label(label)
+                .flex_1()
+                .min_w_0()
+                .py(px(4.))
+                .overflow_y_scroll()
+        };
+        let body = match layout.frames {
+            FramesLayout::SideBySide => {
+                let thread_rows: Vec<AnyElement> = threads
+                    .iter()
+                    .enumerate()
+                    .map(|(ix, label)| thread_row(ix, label, cx))
+                    .collect();
+                h_flex()
+                    .flex_1()
+                    .min_h_0()
+                    .items_start()
+                    .child(
+                        list("debug-threads", "Threads")
+                            .h_full()
+                            .border_r_1()
+                            .border_color(tokens.separator)
+                            .children(thread_rows),
+                    )
+                    .child(
+                        list("debug-frames", "Frames")
+                            .h_full()
+                            .children(rows)
+                            .when(empty, |list| list.child(not_available()))
+                            .context_menu(menu),
+                    )
+                    .into_any_element()
+            }
+            // each thread a node, the current one open on its frames
+            FramesLayout::Threads => {
+                let mut tree: Vec<AnyElement> = Vec::new();
+                let mut frames = Some(rows);
+                for (ix, label) in threads.iter().enumerate() {
+                    tree.push(thread_row(ix, label, cx));
+                    if thread_ids.get(ix).copied() == current
+                        && let Some(frames) = frames.take()
+                    {
+                        tree.extend(
+                            frames
+                                .into_iter()
+                                .map(|frame| div().pl(px(20.)).child(frame).into_any_element()),
+                        );
+                    }
+                }
+                list("debug-frames", "Frames")
+                    .role(Role::Tree)
+                    .children(tree)
+                    .context_menu(menu)
+                    .into_any_element()
+            }
+            _ => list("debug-frames", "Frames")
+                .children(rows)
+                .when(empty, |list| list.child(not_available()))
+                .context_menu(menu)
+                .into_any_element(),
+        };
+        let width = match layout.frames {
+            FramesLayout::SideBySide => 480.,
+            FramesLayout::Threads => 340.,
+            _ => 280.,
+        };
         v_flex()
-            .w(px(280.))
-            .flex_none()
+            .map(|pane| match layout.variables {
+                true => pane.w(px(width)).flex_none(),
+                false => pane.flex_1(),
+            })
             .h_full()
             .border_r_1()
             .border_color(tokens.separator)
-            .child(
-                h_flex()
-                    .flex_none()
-                    .h(px(32.))
-                    .px(px(8.))
-                    .gap(px(4.))
-                    .border_b_1()
-                    .border_color(tokens.separator)
-                    .child(
-                        div()
-                            .flex_1()
-                            .min_w_0()
-                            .child(self.thread_chooser(running, thread, threads, thread_ids)),
-                    )
-                    .child(
-                        // a toggle, as IntelliJ's (`hide.library.frames.tooltip`)
-                        ActionButton::new("debug-hide-library-frames", "general/filter")
-                            .tooltip("Hide Frames from Libraries")
-                            .selected(hide)
-                            .on_click(cx.listener(|this, _, _, cx| {
-                                this.hide_library_frames = !this.hide_library_frames;
-                                cx.notify();
-                            })),
-                    ),
-            )
-            .child(
-                v_flex()
-                    .id("debug-frames")
-                    .role(Role::List)
-                    .aria_label("Frames")
-                    .flex_1()
-                    .py(px(4.))
-                    .overflow_y_scroll()
-                    .children(rows)
-                    .when(empty, |list| {
-                        list.child(
-                            div()
-                                .px(px(12.))
-                                .text_color(tokens.text_secondary)
-                                .child("Frames are not available"),
-                        )
-                    })
-                    .context_menu(menu),
-            )
+            .child(header)
+            .child(body)
             .into_any_element()
     }
 
@@ -1279,10 +1760,33 @@ impl DebugWindow {
                 .unwrap_or_default();
         let hide = self.hide_library_frames;
         let this = cx.entity().downgrade();
+        let session = running.read(cx).session().clone();
+        let stopped = running.read(cx).thread_status(cx) == Some(ThreadStatus::Stopped);
+        let adapter = hooks(session.read(cx), cx);
+        let frame = running.read(cx).opened_stack_frame(cx);
+        // the opened frame's class, for Add Stepping Filter…
+        let class = frame.and_then(|frame| {
+            let thread = running.read(cx).selected_thread_id()?;
+            let frames = session
+                .update(cx, |session, cx| session.stack_frames(thread, cx))
+                .ok()?;
+            let frame = frames.into_iter().find(|f| f.dap.id == frame)?;
+            (adapter?.frame_class?)(&frame.dap)
+        });
+        let dump = adapter
+            .and_then(|hooks| hooks.thread_dump)
+            .zip(frame)
+            .filter(|_| stopped);
+        let folder = session
+            .read(cx)
+            .worktree()
+            .map(|worktree| worktree.read(cx).abs_path().to_path_buf());
         move |menu, _, _| {
             let greyed = |label: &'static str| PopupMenuItem::new(label).disabled(true);
             let stack = stack.clone();
             let this = this.clone();
+            let class = class.clone();
+            let (session, folder) = (session.clone(), folder.clone());
             menu.item(PopupMenuItem::new("Reset Frame").disabled(!reset).on_click(
                 |_, window, cx| window.dispatch_action(run::ResetFrame.boxed_clone(), cx),
             ))
@@ -1310,15 +1814,48 @@ impl DebugWindow {
             )
             .item(greyed("Async Stack Traces"))
             .separator()
-            .item(greyed("Customize Threads View…"))
-            .item(greyed("Add Stepping Filter…"))
-            .item(greyed("Export Threads…"))
+            .item(
+                PopupMenuItem::new("Customize Threads View…")
+                    .on_click(|_, _, cx| crate::threads::customize_threads_view(cx)),
+            )
+            .item(
+                PopupMenuItem::new("Add Stepping Filter…")
+                    .disabled(class.is_none())
+                    .on_click(move |_, _, cx| {
+                        if let Some(class) = &class {
+                            add_stepping_filter(class.clone(), cx)
+                        }
+                    }),
+            )
+            .item(
+                PopupMenuItem::new("Export Threads…")
+                    .disabled(dump.is_none())
+                    .on_click(move |_, _, cx| {
+                        if let Some((dump, frame)) = dump {
+                            let threads = dump(&session, frame, cx);
+                            let folder = folder.clone();
+                            cx.spawn(async move |cx| {
+                                let threads = threads.await?;
+                                cx.update(|cx| {
+                                    crate::threads::export_preview(
+                                        folder,
+                                        crate::threads::dump_text(&threads),
+                                        cx,
+                                    )
+                                });
+                                anyhow::Ok(())
+                            })
+                            .detach_and_log_err(cx);
+                        }
+                    }),
+            )
         }
     }
 
     fn variables(
         &self,
         running: &Entity<debugger_ui::RunningState>,
+        layout: DebugLayout,
         cx: &mut Context<Self>,
     ) -> AnyElement {
         let tokens = Tokens::get(cx);
@@ -1381,7 +1918,10 @@ impl DebugWindow {
                     .flex_1()
                     .min_h_0()
                     .items_start()
-                    .child(self.watches_toolbar(running, cx))
+                    .when(!layout.separate_watches, |pane| {
+                        let selected = running.read(cx).variables().read(cx).selected_value();
+                        pane.child(self.watches_toolbar(running, selected, cx))
+                    })
                     .child(
                         div()
                             .id("debug-variables")
@@ -1402,11 +1942,11 @@ impl DebugWindow {
     fn watches_toolbar(
         &self,
         running: &Entity<debugger_ui::RunningState>,
+        selected: Option<(SharedString, bool)>,
         cx: &mut Context<Self>,
     ) -> AnyElement {
         let tokens = Tokens::get(cx);
         let session = running.read(cx).session().clone();
-        let selected = running.read(cx).variables().read(cx).selected_value();
         let watches: Vec<SharedString> = session.read(cx).watchers().keys().cloned().collect();
         let (watch, position) = match &selected {
             Some((expression, true)) => (
@@ -1504,6 +2044,110 @@ impl DebugWindow {
             .into_any_element()
     }
 
+    /// Separate Watches' view (`XSplitterWatchesViewImpl` beside the variables): its toolbar and
+    /// the watches, each `expression = value`, a click selecting one for the toolbar.
+    fn separate_watches(
+        &self,
+        running: &Entity<debugger_ui::RunningState>,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
+        let tokens = Tokens::get(cx);
+        let session = running.read(cx).session().clone();
+        let watches: Vec<(SharedString, SharedString)> = session
+            .read(cx)
+            .watchers()
+            .values()
+            .map(|watch| (watch.expression.clone(), watch.value.clone()))
+            .collect();
+        let selected = self
+            .selected_watch
+            .clone()
+            .filter(|watch| watches.iter().any(|(expression, _)| expression == watch));
+        let toolbar =
+            self.watches_toolbar(running, selected.clone().map(|watch| (watch, true)), cx);
+        let rows: Vec<AnyElement> = watches
+            .into_iter()
+            .enumerate()
+            .map(|(ix, (expression, value))| {
+                let label = SharedString::from(format!("{expression} = {value}"));
+                let on = selected.as_ref() == Some(&expression);
+                h_flex()
+                    .id(("debug-watch", ix))
+                    .role(Role::TreeItem)
+                    .aria_label(label.clone())
+                    .aria_selected(on)
+                    .flex_none()
+                    .h(px(24.))
+                    .mx(px(6.))
+                    .px(px(6.))
+                    .rounded(px(4.))
+                    .cursor_pointer()
+                    .when(on, |row| row.bg(tokens.selection))
+                    .when(!on, |row| {
+                        row.hover(move |row| row.bg(tokens.selection_hover))
+                    })
+                    .child(div().truncate().child(label))
+                    .on_click(cx.listener(move |this, _, _, cx| {
+                        this.selected_watch = Some(expression.clone());
+                        cx.notify();
+                    }))
+                    .into_any_element()
+            })
+            .collect();
+        let empty = rows.is_empty();
+        v_flex()
+            .id("debug-watches")
+            .role(Role::Group)
+            .aria_label("Watches")
+            .w(px(300.))
+            .flex_none()
+            .h_full()
+            .border_l_1()
+            .border_color(tokens.separator)
+            .child(
+                div()
+                    .flex_none()
+                    .h(px(32.))
+                    .px(px(10.))
+                    .flex()
+                    .items_center()
+                    .border_b_1()
+                    .border_color(tokens.separator)
+                    .child("Watches"),
+            )
+            .child(
+                h_flex()
+                    .flex_1()
+                    .min_h_0()
+                    .items_start()
+                    .child(toolbar)
+                    .child(
+                        v_flex()
+                            .id("debug-watches-tree")
+                            .role(Role::Tree)
+                            .aria_label("Watches")
+                            .flex_1()
+                            .min_w_0()
+                            .py(px(4.))
+                            .overflow_y_scroll()
+                            .children(rows)
+                            // `debugger.no.watches`
+                            .when(empty, |tree| {
+                                tree.child(
+                                    div()
+                                        .id("debug-no-watches")
+                                        .role(Role::Label)
+                                        .aria_label("No watches")
+                                        .px(px(12.))
+                                        .text_color(tokens.text_secondary)
+                                        .child("No watches"),
+                                )
+                            }),
+                    ),
+            )
+            .into_any_element()
+    }
+
     /// New Watch…: the evaluate field takes the watch's expression, ⏎ adding it.
     fn new_watch(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         self.tab = ContentTab::ThreadsAndVariables;
@@ -1517,12 +2161,17 @@ impl DebugWindow {
 }
 
 impl Render for DebugWindow {
-    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let tokens = Tokens::get(cx);
         self.observe_session(cx);
+        let workspace = Workspace::for_window(window, cx);
         let header = self.header(cx);
         let running = self.running(cx);
         let muted = crate::breakpoints::muted(cx);
+        let layout = debug_layout(cx);
+        if self.tab == ContentTab::Console && !layout.console {
+            self.tab = ContentTab::ThreadsAndVariables;
+        }
         let body = running.map(|running| {
             let status = running.read(cx).thread_status(cx);
             let name = running
@@ -1532,24 +2181,52 @@ impl Render for DebugWindow {
                 .label()
                 .unwrap_or_default();
             let capabilities = running.read(cx).session().read(cx).capabilities().clone();
-            let toolbar = self.toolbar(status, muted, &name, &capabilities, cx);
+            let session = running.read(cx).session().clone();
+            let update = workspace.as_ref().and_then(|workspace| {
+                crate::services::update_button(workspace, &name, Some(session), cx)
+            });
+            let dumps = hooks(running.read(cx).session().read(cx), cx)
+                .is_some_and(|hooks| hooks.thread_dump.is_some());
+            let toolbar = self.toolbar(status, muted, &name, &capabilities, update, dumps, cx);
             let tabs = self.content_tabs(cx);
             let content = match self.tab {
-                ContentTab::ThreadsAndVariables => h_flex()
-                    .size_full()
-                    .items_start()
-                    .child(self.frames(&running, cx))
-                    .child(self.variables(&running, cx))
-                    .into_any_element(),
+                ContentTab::ThreadsAndVariables => {
+                    let frames = (layout.frames != FramesLayout::Hidden)
+                        .then(|| self.frames(&running, layout, cx));
+                    let variables = layout
+                        .variables
+                        .then(|| self.variables(&running, layout, cx));
+                    let watches = layout
+                        .separate_watches
+                        .then(|| self.separate_watches(&running, cx));
+                    h_flex()
+                        .size_full()
+                        .items_start()
+                        .children(frames)
+                        .children(variables)
+                        .children(watches)
+                        .into_any_element()
+                }
+                ContentTab::Dump(ix) => match self.dumps.get(ix) {
+                    Some(dump) => dump.clone().into_any_element(),
+                    None => div().into_any_element(),
+                },
+                // a debugged test's tree and consoles, as IntelliJ's test runner in the session
                 ContentTab::Console => div()
                     .id("debug-console-content")
                     .role(Role::Group)
                     .aria_label("Console")
                     .size_full()
-                    .child(match running.read(cx).program_terminal(cx) {
-                        Some(terminal) => terminal.into_any_element(),
-                        None => running.read(cx).console_view().into_any_element(),
-                    })
+                    .child(
+                        match (
+                            debugged_tests(window, &name, cx),
+                            running.read(cx).program_terminal(cx),
+                        ) {
+                            (Some(tests), _) => tests.into_any_element(),
+                            (None, Some(terminal)) => terminal.into_any_element(),
+                            (None, None) => running.read(cx).console_view().into_any_element(),
+                        },
+                    )
                     .into_any_element(),
             };
             v_flex()
@@ -1578,6 +2255,38 @@ impl Render for DebugWindow {
     }
 }
 
+/// The tests of the debugged run a session of that name attached to.
+fn debugged_tests(
+    window: &Window,
+    name: &str,
+    cx: &App,
+) -> Option<Entity<crate::test_runner::TestRunView>> {
+    let workspace = Workspace::for_window(window, cx)?;
+    crate::run_panel::debugged_tests(workspace.read(cx), name, cx).map(|(tests, _)| tests)
+}
+
+/// Add Stepping Filter… (`AddSteppingFilterAction`): IntelliJ's question with the frame's class,
+/// then the pattern among Settings › Stepping's "Do not step into the classes".
+fn add_stepping_filter(class: String, cx: &mut App) {
+    spork_settings::debugger::ask_text(
+        "Add Stepping Filter",
+        None,
+        class,
+        Rc::new(|pattern, cx| {
+            let mut settings = spork_settings::debugger::settings(cx);
+            if !settings
+                .step_filters
+                .iter()
+                .any(|(known, _)| *known == pattern)
+            {
+                settings.step_filters.push((pattern, true));
+            }
+            spork_settings::debugger::set_settings(settings, cx).log_err();
+        }),
+        cx,
+    );
+}
+
 /// The active debug session, for the end-to-end tests: its thread's status, its watches with their
 /// values and in their order, whether it skips the breakpoints, the thread and frames shown, and
 /// the variables tree's rows.
@@ -1597,8 +2306,23 @@ pub(crate) fn e2e_debug(workspace: &Workspace, cx: &App) -> serde_json::Value {
     let Some(running) = running_state(workspace, cx) else {
         return serde_json::Value::Null;
     };
-    let variables = running.read(cx).variables().read(cx).rows();
+    let variables = running.read(cx).variables().read(cx).rows(cx);
+    let label = running
+        .read(cx)
+        .session()
+        .read(cx)
+        .label()
+        .unwrap_or_default();
+    let tests = crate::run_panel::debugged_tests(workspace, &label, cx);
     let console: Vec<String> = match running.read(cx).program_terminal(cx) {
+        // a debugged test's run: its terminal's text
+        _ if tests.is_some() => tests
+            .as_ref()
+            .map(|(_, terminal)| terminal.read(cx).get_content())
+            .unwrap_or_default()
+            .lines()
+            .map(|line| line.trim_end().to_owned())
+            .collect(),
         // the terminal's own text: its view may not have been drawn
         Some(view) => view
             .read(cx)
@@ -1625,7 +2349,31 @@ pub(crate) fn e2e_debug(workspace: &Workspace, cx: &App) -> serde_json::Value {
         .values()
         .map(|watch| (watch.expression.to_string(), watch.value.to_string().into()))
         .collect();
+    let view = workspace
+        .panel::<DebugPanel>(cx)
+        .and_then(|panel| cx.try_global::<Views>()?.0.get(&panel.entity_id()).cloned());
+    let dumps: Vec<String> = view
+        .as_ref()
+        .map(|view| {
+            view.read(cx)
+                .dumps
+                .iter()
+                .map(|dump| dump.read(cx).title.to_string())
+                .collect()
+        })
+        .unwrap_or_default();
+    let dump = view.as_ref().and_then(|view| match view.read(cx).tab {
+        ContentTab::Dump(ix) => view.read(cx).dumps.get(ix)?.read(cx).selected_text(cx),
+        _ => None,
+    });
+    let layout = cx
+        .try_global::<DebugLayoutGlobal>()
+        .map(|layout| layout.0)
+        .unwrap_or_default();
     serde_json::json!({
+        "layout": serde_json::to_value(layout).unwrap_or_default(),
+        "dumps": dumps,
+        "dump": dump,
         "status": running.thread_status(cx).map(|status| status.label()),
         "terminated": session.is_terminated(),
         "watches": watches,
@@ -1634,6 +2382,7 @@ pub(crate) fn e2e_debug(workspace: &Workspace, cx: &App) -> serde_json::Value {
         "label": session.label().map(|label| label.to_string()),
         "variables": variables,
         "console": console,
+        "tests": tests.map(|(tests, _)| tests.read(cx).e2e_state(cx)),
     })
 }
 

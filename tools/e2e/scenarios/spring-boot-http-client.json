@@ -1,0 +1,474 @@
+{
+ "id": "spring-boot-http-client",
+ "fixture": "spring-maven",
+ "covers": [],
+ "prepare": "cat > requests.http <<'EOF'\n@who = Spork\n\n### Hello\n# @name Hello\nGET http://{{host}}/hello?name={{who}}\nAccept: text/plain\n\n###\nGET http://{{host}}/hello\nEOF\ncat > http-client.env.json <<'EOF'\n{\n  \"dev\": {\n    \"host\": \"localhost:18081\"\n  },\n  \"prod\": {\n    \"host\": \"localhost:1\"\n  }\n}\nEOF",
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   },
+   "Spring Boot Properties": {
+    "enable_language_server": true
+   },
+   "Spring Boot YAML": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "run.configurations.names": [
+     "DemoApplication"
+    ]
+   },
+   "within": 60000
+  },
+  {
+   "expect": {
+    "java.spring.classpath": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.spring.index.loaded": true,
+    "java.spring.index.endpoints": [
+     "GET /hello"
+    ]
+   },
+   "within": 120000
+  },
+  {
+   "do": "keys",
+   "keys": "ctrl-r"
+  },
+  {
+   "expect": {
+    "run.services.services.DemoApplication.starting": false
+   },
+   "within": 120000
+  },
+  {
+   "do": "open",
+   "path": "requests.http"
+  },
+  {
+   "expect": {
+    "active": "requests.http",
+    "editor.language": "HTTP Request"
+   },
+   "within": 5000
+  },
+  {
+   "find": [
+    {
+     "label": "Run All Requests in File",
+     "role": "AXButton",
+     "in": "HTTP Client"
+    },
+    {
+     "label": "Run with:",
+     "role": "AXPopUpButton",
+     "value": "No Environment"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "find": [
+    {
+     "label": "Run HTTP Request",
+     "role": "AXButton"
+    }
+   ],
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Run with:",
+   "role": "AXPopUpButton"
+  },
+  {
+   "menu": "Run with",
+   "items": [
+    "No Environment",
+    "dev",
+    "prod"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "dev",
+   "role": "AXMenuItem"
+  },
+  {
+   "find": {
+    "label": "Run with:",
+    "role": "AXPopUpButton",
+    "value": "dev"
+   },
+   "within": 3000
+  },
+  {
+   "do": "action",
+   "name": "workspace::CloseAllDocks"
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "requests"
+  },
+  {
+   "do": "click",
+   "label": "Run All Requests in File",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "http.runs.0.name": "Hello",
+    "http.runs.0.status": 200,
+    "http.runs.0.text": {
+     "contains": "Hello, Spork!"
+    },
+    "http.runs.1.name": "requests | #2",
+    "http.runs.1.text": {
+     "contains": "Response code: 200; Time: "
+    }
+   },
+   "within": 20000
+  },
+  {
+   "expect": {
+    "docks.bottom.open": true,
+    "docks.bottom.panel": "Services",
+    "run.services.contributed": "http-request-2"
+   },
+   "within": 5000
+  },
+  {
+   "find": [
+    {
+     "label": "HTTP Request",
+     "role": "AXRow"
+    },
+    {
+     "label": "Hello",
+     "role": "AXRow"
+    },
+    {
+     "label": "requests | #2",
+     "role": "AXRow"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "find": [
+    {
+     "label": "GET http://localhost:18081/hello",
+     "in": "Response"
+    },
+    {
+     "label": "Hello, world!",
+     "in": "Response"
+    },
+    {
+     "label": "Response file saved.",
+     "in": "Response"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "sh": "grep -c '^<> ' requests.http",
+   "is": "2",
+   "within": 10000
+  },
+  {
+   "sh": "ls \"../home/Library/Application Support/Spork IDE/workspace/\"*/httpRequests/ | grep -c '\\.200\\.txt$'",
+   "is": "2"
+  },
+  {
+   "do": "open",
+   "path": "requests.http"
+  },
+  {
+   "expect": {
+    "active": "requests.http",
+    "focused": [
+     "Workspace",
+     "Pane",
+     "Editor"
+    ]
+   },
+   "within": 5000
+  },
+  {
+   "wait": 500
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-end"
+  },
+  {
+   "do": "keys",
+   "keys": "enter enter"
+  },
+  {
+   "do": "type",
+   "text": "###"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "do": "type",
+   "text": "PO"
+  },
+  {
+   "expect": {
+    "editor.completions": {
+     "contains": "POST"
+    }
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "type",
+   "text": "ST http://localhost:18081/hello"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "do": "type",
+   "text": "Acc"
+  },
+  {
+   "expect": {
+    "editor.completions": {
+     "contains": "Accept"
+    }
+   },
+   "within": 5000
+  },
+  {
+   "do": "keys",
+   "keys": "escape"
+  },
+  {
+   "do": "action",
+   "name": "endpoints_tool_window::ToggleFocus"
+  },
+  {
+   "expect": {
+    "docks.right.open": true,
+    "docks.right.panel": "Endpoints"
+   },
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "/hello"
+  },
+  {
+   "find": [
+    {
+     "label": "HTTP Client",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "GET http://localhost:18081/hello",
+     "in": "HTTP Client"
+    },
+    {
+     "label": "Submit Request",
+     "role": "AXButton"
+    },
+    {
+     "label": "Open in HTTP Client",
+     "role": "AXLink"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "Submit Request",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "http.runs.2.name": "Endpoints | #1",
+    "http.runs.2.text": {
+     "contains": "Hello, world!"
+    }
+   },
+   "within": 20000
+  },
+  {
+   "do": "click",
+   "label": "Open in HTTP Client",
+   "role": "AXLink"
+  },
+  {
+   "expect": {
+    "editor.file": "generated-requests.http"
+   },
+   "within": 10000
+  },
+  {
+   "sh": "cat \"../home/.config/spork-ide/scratches/generated-requests.http\"",
+   "contains": "###\nGET http://localhost:18081/hello"
+  },
+  {
+   "do": "action",
+   "name": "workspace::CloseAllDocks"
+  },
+  {
+   "do": "click",
+   "label": "Run HTTP Request",
+   "role": "AXButton"
+  },
+  {
+   "expect": {
+    "http.runs.3.name": "generated-requests | #1",
+    "http.runs.3.text": {
+     "contains": "Hello, world!"
+    }
+   },
+   "within": 20000
+  },
+  {
+   "sh": "grep -c '^<> ' \"../home/.config/spork-ide/scratches/generated-requests.http\"",
+   "is": "1",
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "workspace::CloseAllDocks"
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "find": {
+    "label": "src",
+    "role": "AXRow",
+    "in": "Project Panel"
+   },
+   "within": 10000
+  },
+  {
+   "do": "click",
+   "label": "src",
+   "role": "AXRow",
+   "button": "right",
+   "in": "Project Panel"
+  },
+  {
+   "find": "New",
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "New",
+   "hover": true
+  },
+  {
+   "wait": 600
+  },
+  {
+   "find": [
+    "File",
+    "Scratch File",
+    "Directory",
+    "HTTP Request"
+   ],
+   "ordered": true,
+   "within": 8000
+  },
+  {
+   "do": "click",
+   "label": "HTTP Request"
+  },
+  {
+   "find": [
+    "New HTTP Request",
+    {
+     "label": "Name:",
+     "role": "AXTextField"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "type",
+   "text": "api"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "active": "src/api.http",
+    "editor.language": "HTTP Request"
+   },
+   "within": 10000
+  },
+  {
+   "sh": "head -2 src/api.http",
+   "is": "### GET request to example server\nGET http://localhost:8080/"
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-f2"
+  },
+  {
+   "expect": {
+    "run.tabs.0.running": false
+   },
+   "within": 20000
+  }
+ ]
+}

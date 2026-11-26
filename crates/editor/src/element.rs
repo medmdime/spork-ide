@@ -1948,6 +1948,63 @@ impl EditorElement {
         display_hunks
     }
 
+    /// Spork IDE: the editor's free painter marks on the visible rows, in IntelliJ's left free
+    /// painters area: 8 px wide, its 10 px taking their clicks.
+    fn layout_free_painter_marks(
+        &self,
+        line_height: Pixels,
+        gutter_hitbox: &Hitbox,
+        display_rows: Range<DisplayRow>,
+        snapshot: &EditorSnapshot,
+        scroll_position: gpui::Point<ScrollOffset>,
+        window: &mut Window,
+        cx: &mut App,
+    ) -> Vec<(usize, Bounds<Pixels>, Hsla, Hitbox)> {
+        let editor = self.editor.read(cx);
+        let Some(painters) = editor
+            .gutter_dimensions
+            .intellij
+            .and_then(|areas| areas.painters)
+        else {
+            return Vec::new();
+        };
+        let icons = editor
+            .gutter_dimensions
+            .intellij
+            .map_or(painters, |areas| areas.icons);
+        let scroll_top = scroll_position.y * ScrollPixelOffset::from(line_height);
+        let marks = editor.free_painter_marks().to_vec();
+        marks
+            .into_iter()
+            .enumerate()
+            .filter_map(|(ix, mark)| {
+                let start = mark
+                    .range
+                    .start
+                    .to_display_point(&snapshot.display_snapshot);
+                let end = mark.range.end.to_display_point(&snapshot.display_snapshot);
+                let rows = start.row()..end.row() + DisplayRow(1);
+                if rows.end <= display_rows.start || rows.start >= display_rows.end {
+                    return None;
+                }
+                let top = Pixels::from(
+                    rows.start.as_f64() * ScrollPixelOffset::from(line_height) - scroll_top,
+                );
+                let bottom = Pixels::from(
+                    rows.end.as_f64() * ScrollPixelOffset::from(line_height) - scroll_top,
+                );
+                let origin = gutter_hitbox.origin + point(painters, top);
+                let bounds = Bounds::new(
+                    origin,
+                    size(crate::IntellijGutterAreas::PAINTER_MARK, bottom - top),
+                );
+                let target = Bounds::new(origin, size(icons - painters, bottom - top));
+                let hitbox = window.insert_hitbox(target, HitboxBehavior::BlockMouse);
+                Some((ix, bounds, mark.color, hitbox))
+            })
+            .collect()
+    }
+
     fn layout_inline_diagnostics(
         &self,
         line_layouts: &[LineWithInvisibles],
@@ -5748,6 +5805,14 @@ impl EditorElement {
             self.paint_gutter_diff_hunks(layout, self.split_side, window, cx)
         }
 
+        // Spork IDE: the app's free painter marks, IntelliJ's filled rectangles
+        window.paint_layer(|window| {
+            for (_, bounds, color, hitbox) in &layout.position_map.free_painter_marks {
+                window.set_cursor_style(CursorStyle::PointingHand, hitbox);
+                window.paint_quad(fill(*bounds, *color));
+            }
+        });
+
         let highlight_width = 0.275 * layout.position_map.line_height;
         let highlight_corner_radii = Corners::all(0.05 * layout.position_map.line_height);
         window.paint_layer(|window| {
@@ -9012,6 +9077,16 @@ impl Element for EditorElement {
                         window,
                         cx,
                     );
+                    // Spork IDE: the app's free painter marks, over the hunks' hitboxes
+                    let free_painter_marks = self.layout_free_painter_marks(
+                        line_height,
+                        &gutter_hitbox,
+                        start_row..end_row,
+                        &snapshot,
+                        scroll_position,
+                        window,
+                        cx,
+                    );
 
                     Self::layout_word_diff_highlights(
                         &display_hunks,
@@ -9916,6 +9991,7 @@ impl Element for EditorElement {
                             .map(|layout| (layout.bounds, layout.buffer_id, layout.entry.clone())),
                         display_hunks: display_hunks.clone(),
                         diff_hunk_control_bounds,
+                        free_painter_marks,
                     });
 
                     let visible_horizontal_scrollbar =
@@ -10680,6 +10756,8 @@ pub(crate) struct PositionMap {
     pub inline_blame_bounds: Option<(Bounds<Pixels>, BufferId, BlameEntry)>,
     pub display_hunks: Vec<(DisplayDiffHunk, Option<Hitbox>)>,
     pub diff_hunk_control_bounds: Vec<(DisplayRow, Bounds<Pixels>)>,
+    /// Spork IDE: the shown free painter marks: their index, bounds, colour and hitbox.
+    pub free_painter_marks: Vec<(usize, Bounds<Pixels>, Hsla, Hitbox)>,
 }
 
 #[derive(Debug, Copy, Clone)]

@@ -1,8 +1,11 @@
 //! The Evaluate dialog (⌥F8, `XDebuggerEvaluationDialog`): "Expression:" over the field with its
 //! history (50 expressions, newest first), IntelliJ's hint "Use ⇧⌘⏎ to add to Watches", "Result:"
 //! over the result tree (`result = value`, its children loaded as they open, an error in red with
-//! the error icon), Evaluate (the default button, ⏎) and Close. It evaluates in the Debug tool
-//! window's selected frame and closes when the session ends, as IntelliJ's.
+//! the error icon), Evaluate (the default button, ⏎) and Close. Expand (⇧⏎, or ⌥M) turns the field
+//! into the code fragment mode's editor ("Code fragment:", statements evaluated with ⌘⏎, the
+//! value of the last one or of its `return`), Collapse back; the dialog opens in the mode it was
+//! left in. It evaluates in the Debug tool window's selected frame and closes when the session
+//! ends, as IntelliJ's. Inspect… (`XInspectDialog`) shows a value's tree in a window of its own.
 
 use std::collections::BTreeSet;
 
@@ -16,7 +19,7 @@ use gpui::{
     Render, Role, SharedString, StatefulInteractiveElement as _, Styled as _, Subscription, Task,
     TaskExt as _, WeakEntity, Window, WindowBounds, WindowOptions, anchored, div, point, px, size,
 };
-use gpui_kit::component::input::{InputEvent, InputState};
+use gpui_kit::component::input::{InputEvent, InputState, Textarea, TextareaState};
 use gpui_kit::component::menu::{DropdownMenu as _, PopupMenuItem};
 use gpui_kit::component::{h_flex, v_flex};
 use project::debugger::session::Session;
@@ -46,6 +49,13 @@ fn remember(expression: &str, cx: &mut App) {
     history.insert(0, expression.to_owned());
     history.truncate(HISTORY_SIZE);
 }
+
+/// The dialog is in code fragment mode, kept for the next one as IntelliJ keeps it
+/// (`XDebuggerSettingsManager`'s evaluation dialog mode).
+#[derive(Default)]
+struct FragmentMode(bool);
+
+impl Global for FragmentMode {}
 
 /// The dialog's one window.
 struct OpenDialog(AnyWindowHandle, WeakEntity<EvaluateDialog>);
@@ -198,13 +208,28 @@ impl Evaluation {
                 while ix < nodes.len() {
                     let (depth, _, reference) = nodes[ix].clone();
                     if reference > 0 && self.expanded.contains(&reference) {
-                        let variables = self
-                            .session
-                            .as_ref()
-                            .map(|session| {
-                                session.update(cx, |session, cx| session.variables(reference, cx))
-                            })
-                            .unwrap_or_default();
+                        let fetch = |reference: u64, cx: &mut Context<V>| {
+                            self.session
+                                .as_ref()
+                                .map(|session| {
+                                    session
+                                        .update(cx, |session, cx| session.variables(reference, cx))
+                                })
+                                .unwrap_or_default()
+                        };
+                        let mut variables = fetch(reference, cx);
+                        // java-debug's lazy value (its `toString()` taken when it opens): one
+                        // child without a name, which is the node's value and holds its children
+                        if let [lazy] = variables.as_slice()
+                            && lazy.name.is_empty()
+                        {
+                            let (label, _) = nodes[ix].1.split_once(" = ").unwrap_or_default();
+                            nodes[ix].1 = format!("{label} = {}", lazy.value).into();
+                            variables = match lazy.variables_reference {
+                                0 => Vec::new(),
+                                resolved => fetch(resolved, cx),
+                            };
+                        }
                         let under: Vec<_> = variables
                             .into_iter()
                             .map(|variable| {
@@ -275,6 +300,9 @@ impl Evaluation {
 struct EvaluateDialog {
     running: WeakEntity<debugger_ui::RunningState>,
     expression: Entity<InputState>,
+    /// The code fragment mode's editor.
+    fragment: Entity<TextareaState>,
+    code_fragment: bool,
     evaluation: Evaluation,
     focus: FocusHandle,
     _subscriptions: Vec<Subscription>,
@@ -292,13 +320,29 @@ impl EvaluateDialog {
             window,
             |this, _, event: &InputEvent, window, cx| {
                 if let InputEvent::PressEnter { secondary, shift } = event {
-                    match secondary & shift {
-                        true => this.add_to_watches(window, cx),
-                        false => this.evaluate(cx),
+                    match (secondary, shift) {
+                        (true, true) => this.add_to_watches(window, cx),
+                        // IntelliJ's Expand (`ExpandExpandableComponent`)
+                        (false, true) => this.switch_mode(window, cx),
+                        _ => this.evaluate(cx),
                     }
                 }
             },
         )];
+        let fragment = cx.new(|cx| TextareaState::new(window, cx));
+        subscriptions.push(cx.subscribe_in(
+            &fragment,
+            window,
+            |this, _, event: &InputEvent, _, cx| {
+                // ⌘⏎ evaluates the fragment; ⏎ is its next line
+                if let InputEvent::PressEnter {
+                    secondary: true, ..
+                } = event
+                {
+                    this.evaluate(cx)
+                }
+            },
+        ));
         let session = running
             .upgrade()
             .map(|running| running.read(cx).session().clone());
@@ -311,10 +355,16 @@ impl EvaluateDialog {
                 cx.notify();
             }));
         }
-        expression.update(cx, |field, cx| field.focus(window, cx));
+        let code_fragment = cx.try_global::<FragmentMode>().is_some_and(|mode| mode.0);
+        match code_fragment {
+            true => fragment.update(cx, |field, cx| field.focus(window, cx)),
+            false => expression.update(cx, |field, cx| field.focus(window, cx)),
+        }
         Self {
             running,
             expression,
+            fragment,
+            code_fragment,
             evaluation: Evaluation::new(session),
             focus: cx.focus_handle(),
             _subscriptions: subscriptions,
@@ -322,7 +372,29 @@ impl EvaluateDialog {
     }
 
     fn text(&self, cx: &App) -> String {
-        self.expression.read(cx).value().trim().to_owned()
+        match self.code_fragment {
+            true => self.fragment.read(cx).value().trim().to_owned(),
+            false => self.expression.read(cx).value().trim().to_owned(),
+        }
+    }
+
+    /// Expand and Collapse: the text goes to the other mode's field, which takes the focus.
+    fn switch_mode(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let text = self.text(cx);
+        self.code_fragment = !self.code_fragment;
+        cx.set_global(FragmentMode(self.code_fragment));
+        match self.code_fragment {
+            true => self.fragment.update(cx, |field, cx| {
+                field.set_value(text, window, cx);
+                field.focus(window, cx);
+            }),
+            false => self.expression.update(cx, |field, cx| {
+                // an expression is one line
+                field.set_value(text.lines().collect::<Vec<_>>().join(" "), window, cx);
+                field.focus(window, cx);
+            }),
+        }
+        cx.notify();
     }
 
     fn frame(&self, cx: &App) -> Option<u64> {
@@ -360,6 +432,57 @@ impl EvaluateDialog {
     fn close(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         remember(&self.text(cx), cx);
         window.remove_window();
+    }
+
+    /// The expression or the code fragment, as the mode has it.
+    fn input(&self, cx: &mut Context<Self>) -> AnyElement {
+        if self.code_fragment {
+            return div()
+                .relative()
+                .child(
+                    Textarea::new(&self.fragment)
+                        .h(px(96.))
+                        .aria_label("Code fragment"),
+                )
+                .child(
+                    div().absolute().top(px(4.)).right(px(4.)).child(
+                        ActionButton::new("evaluate-collapse", "general/collapseComponent")
+                            .tooltip("Collapse")
+                            .on_click(
+                                cx.listener(|this, _, window, cx| this.switch_mode(window, cx)),
+                            ),
+                    ),
+                )
+                .into_any_element();
+        }
+        // the field's own keys have no ⇧⌘⏎: it adds the watch before them
+        div()
+            .capture_key_down(cx.listener(|this, event: &gpui::KeyDownEvent, window, cx| {
+                let keystroke = &event.keystroke;
+                if keystroke.key == "enter"
+                    && keystroke.modifiers.shift
+                    && keystroke.modifiers.platform
+                {
+                    cx.stop_propagation();
+                    this.add_to_watches(window, cx);
+                }
+            }))
+            .child(
+                spork_workbench::TextField::new(&self.expression)
+                    .aria_label("Expression")
+                    .suffix(
+                        h_flex()
+                            .child(
+                                ActionButton::new("evaluate-expand", "general/expandComponent")
+                                    .tooltip("Expand (⇧⏎)")
+                                    .on_click(cx.listener(|this, _, window, cx| {
+                                        this.switch_mode(window, cx)
+                                    })),
+                            )
+                            .child(self.history_button()),
+                    ),
+            )
+            .into_any_element()
     }
 
     fn history_button(&self) -> impl IntoElement {
@@ -422,6 +545,7 @@ impl Render for EvaluateDialog {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let tokens = Tokens::get(cx);
         let tree = self.tree(cx);
+        let input = self.input(cx);
         let empty = self.text(cx).is_empty();
         v_flex()
             .id("evaluate-dialog")
@@ -436,6 +560,14 @@ impl Render for EvaluateDialog {
                     this.close(window, cx);
                 }
             }))
+            // the old mode switch key IntelliJ keeps, before the fields type it
+            .capture_key_down(cx.listener(|this, event: &gpui::KeyDownEvent, window, cx| {
+                let keystroke = &event.keystroke;
+                if keystroke.key == "m" && keystroke.modifiers.alt {
+                    cx.stop_propagation();
+                    this.switch_mode(window, cx);
+                }
+            }))
             .child(spork_workbench::shell::window_title("Evaluate", cx))
             .child(
                 v_flex()
@@ -444,28 +576,11 @@ impl Render for EvaluateDialog {
                     .px(px(16.))
                     .pt(px(10.))
                     .gap(px(4.))
-                    .child(div().child("Expression:"))
-                    // the field's own keys have no ⇧⌘⏎: it adds the watch before them
-                    .child(
-                        div()
-                            .capture_key_down(cx.listener(
-                                |this, event: &gpui::KeyDownEvent, window, cx| {
-                                    let keystroke = &event.keystroke;
-                                    if keystroke.key == "enter"
-                                        && keystroke.modifiers.shift
-                                        && keystroke.modifiers.platform
-                                    {
-                                        cx.stop_propagation();
-                                        this.add_to_watches(window, cx);
-                                    }
-                                },
-                            ))
-                            .child(
-                                spork_workbench::TextField::new(&self.expression)
-                                    .aria_label("Expression")
-                                    .suffix(self.history_button()),
-                            ),
-                    )
+                    .child(div().child(match self.code_fragment {
+                        true => "Code fragment:",
+                        false => "Expression:",
+                    }))
+                    .child(input)
                     .child(
                         div()
                             .id("evaluate-watches-hint")
@@ -611,6 +726,261 @@ impl Render for QuickEvaluate {
     }
 }
 
+/// Inspect… (`XInspectDialog`): the selected value's tree in a window of its own, "Inspect
+/// 'name'", its node open; it stays when the session ends, as IntelliJ's.
+pub(crate) fn inspect(workspace: &mut Workspace, _: &mut Window, cx: &mut Context<Workspace>) {
+    let Some(running) = running_state(workspace, cx) else {
+        return;
+    };
+    let Some((variable, _)) = running.read(cx).variables().read(cx).selected_variable() else {
+        return;
+    };
+    let session = running.read(cx).session().clone();
+    let title = SharedString::from(format!("Inspect '{}'", variable.name));
+    let options = WindowOptions {
+        window_bounds: Some(WindowBounds::centered(None, size(px(500.), px(350.)), cx)),
+        window_min_size: Some(size(px(300.), px(200.))),
+        titlebar: Some(gpui::TitlebarOptions {
+            title: Some(title.clone()),
+            appears_transparent: true,
+            traffic_light_position: Some(point(px(12.), px(8.))),
+        }),
+        ..Default::default()
+    };
+    cx.defer(move |cx| {
+        let opened = gpui_kit::open_window(options, cx, move |window, cx| {
+            crate::configurations_dialog::follow_ide_theme(window, cx);
+            cx.new(|cx| {
+                let mut evaluation = Evaluation::new(Some(session.clone()));
+                let reference = variable.variables_reference;
+                evaluation.outcome = Some(Outcome::Value {
+                    value: variable.value.clone().into(),
+                    reference,
+                });
+                if reference > 0 {
+                    evaluation.expanded.insert(reference);
+                }
+                let observe = cx.observe(&session, |_, _, cx| cx.notify());
+                let focus = cx.focus_handle();
+                window.focus(&focus, cx);
+                InspectDialog {
+                    title,
+                    name: variable.name,
+                    evaluation,
+                    focus,
+                    _session: observe,
+                }
+            })
+        });
+        if let Some((handle, _)) = opened.log_err() {
+            handle
+                .update(cx, |_, window, _| window.activate_window())
+                .log_err();
+        }
+    });
+}
+
+struct InspectDialog {
+    title: SharedString,
+    name: String,
+    evaluation: Evaluation,
+    focus: FocusHandle,
+    _session: Subscription,
+}
+
+impl Focusable for InspectDialog {
+    fn focus_handle(&self, _: &App) -> FocusHandle {
+        self.focus.clone()
+    }
+}
+
+impl Render for InspectDialog {
+    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let tokens = Tokens::get(cx);
+        let name = self.name.clone();
+        let rows = self
+            .evaluation
+            .rows(&name, |this: &mut Self| &mut this.evaluation, cx);
+        v_flex()
+            .id("inspect-dialog")
+            .key_context("InspectDialog")
+            .track_focus(&self.focus)
+            .size_full()
+            .bg(tokens.panel)
+            .text_color(tokens.text)
+            .on_key_down(|event: &gpui::KeyDownEvent, window, cx| {
+                if event.keystroke.key == "escape" {
+                    cx.stop_propagation();
+                    window.remove_window();
+                }
+            })
+            .child(spork_workbench::shell::window_title(self.title.clone(), cx))
+            .child(
+                v_flex()
+                    .id("inspect-tree")
+                    .role(Role::Tree)
+                    .aria_label(self.title.clone())
+                    .flex_1()
+                    .min_h_0()
+                    .m(px(8.))
+                    .py(px(4.))
+                    .border_1()
+                    .border_color(tokens.separator)
+                    .rounded(px(4.))
+                    .bg(tokens.island)
+                    .overflow_y_scroll()
+                    .children(rows),
+            )
+    }
+}
+
+/// Mark Object…'s "Select Object Label" (`ValueMarkerPresentationDialog`): "Label:", its
+/// preview in the label's colour, Cancel and OK; `marked` takes the label.
+// shortcut: the label is IntelliJ's default red; its colour chooser isn't built
+pub fn ask_object_label(marked: std::rc::Rc<dyn Fn(String, &mut App)>, cx: &mut App) {
+    let options = WindowOptions {
+        window_bounds: Some(WindowBounds::centered(None, size(px(360.), px(170.)), cx)),
+        titlebar: Some(gpui::TitlebarOptions {
+            title: Some("Select Object Label".into()),
+            appears_transparent: true,
+            traffic_light_position: Some(point(px(12.), px(8.))),
+        }),
+        ..Default::default()
+    };
+    cx.defer(move |cx| {
+        let opened = gpui_kit::open_window(options, cx, move |window, cx| {
+            crate::configurations_dialog::follow_ide_theme(window, cx);
+            cx.new(|cx| {
+                let label = cx.new(|cx| InputState::new(window, cx));
+                label.update(cx, |field, cx| field.focus(window, cx));
+                let entered = cx.subscribe_in(
+                    &label,
+                    window,
+                    |this: &mut LabelDialog, _, event, window, cx| match event {
+                        InputEvent::PressEnter { .. } => this.confirm(window, cx),
+                        InputEvent::Change => cx.notify(),
+                        _ => {}
+                    },
+                );
+                LabelDialog {
+                    label,
+                    marked,
+                    focus: cx.focus_handle(),
+                    _entered: entered,
+                }
+            })
+        });
+        if let Some((handle, _)) = opened.log_err() {
+            handle
+                .update(cx, |_, window, _| window.activate_window())
+                .log_err();
+        }
+    });
+}
+
+/// IntelliJ's colour of a new label (`ValueMarkerPresentationDialogBase.DEFAULT_COLOR`).
+pub fn object_label_color() -> gpui::Hsla {
+    gpui::rgb(0xFF0000).into()
+}
+
+struct LabelDialog {
+    label: Entity<InputState>,
+    marked: std::rc::Rc<dyn Fn(String, &mut App)>,
+    focus: FocusHandle,
+    _entered: Subscription,
+}
+
+impl LabelDialog {
+    fn text(&self, cx: &App) -> String {
+        self.label.read(cx).value().trim().to_owned()
+    }
+
+    fn confirm(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let text = self.text(cx);
+        if text.is_empty() {
+            return;
+        }
+        (self.marked)(text, cx);
+        window.remove_window();
+    }
+}
+
+impl Focusable for LabelDialog {
+    fn focus_handle(&self, _: &App) -> FocusHandle {
+        self.focus.clone()
+    }
+}
+
+impl Render for LabelDialog {
+    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let tokens = Tokens::get(cx);
+        let text = self.text(cx);
+        v_flex()
+            .id("label-dialog")
+            .key_context("LabelDialog")
+            .track_focus(&self.focus)
+            .size_full()
+            .bg(tokens.panel)
+            .text_color(tokens.text)
+            .on_key_down(|event: &gpui::KeyDownEvent, window, cx| {
+                if event.keystroke.key == "escape" {
+                    cx.stop_propagation();
+                    window.remove_window();
+                }
+            })
+            .child(spork_workbench::shell::window_title(
+                "Select Object Label",
+                cx,
+            ))
+            .child(
+                v_flex()
+                    .flex_1()
+                    .px(px(16.))
+                    .pt(px(10.))
+                    .gap(px(8.))
+                    .child(
+                        h_flex()
+                            .gap(px(8.))
+                            .child(div().w(px(60.)).child("Label:"))
+                            .child(div().flex_1().child(
+                                spork_workbench::TextField::new(&self.label).aria_label("Label"),
+                            )),
+                    )
+                    .child(
+                        h_flex()
+                            .gap(px(8.))
+                            .child(div().w(px(60.)).child("Preview:"))
+                            .child(
+                                div()
+                                    .id("label-preview")
+                                    .role(Role::Label)
+                                    .aria_label(SharedString::from(text.clone()))
+                                    .font_weight(gpui::FontWeight::BOLD)
+                                    .text_color(object_label_color())
+                                    .child(text),
+                            ),
+                    ),
+            )
+            .child(
+                h_flex()
+                    .flex_none()
+                    .justify_end()
+                    .gap(px(8.))
+                    .px(px(16.))
+                    .py(px(10.))
+                    .child(
+                        spork_workbench::Button::new("label-cancel", "Cancel")
+                            .on_click(|_, window, _| window.remove_window()),
+                    )
+                    .child(
+                        spork_workbench::Button::new("label-ok", "OK")
+                            .primary(true)
+                            .on_click(cx.listener(|this, _, window, cx| this.confirm(window, cx))),
+                    ),
+            )
+    }
+}
+
 /// What the open Evaluate dialog shows, for the end-to-end tests: its result or error.
 pub(crate) fn e2e_evaluate(cx: &App) -> serde_json::Value {
     let Some(dialog) = cx
@@ -619,10 +989,16 @@ pub(crate) fn e2e_evaluate(cx: &App) -> serde_json::Value {
     else {
         return serde_json::Value::Null;
     };
+    let mode = match dialog.read(cx).code_fragment {
+        true => "code fragment",
+        false => "expression",
+    };
     match &dialog.read(cx).evaluation.outcome {
-        None => serde_json::json!({}),
-        Some(Outcome::Evaluating) => serde_json::json!({"evaluating": true}),
-        Some(Outcome::Error(error)) => serde_json::json!({"error": error.as_ref()}),
-        Some(Outcome::Value { value, .. }) => serde_json::json!({"result": value.as_ref()}),
+        None => serde_json::json!({"mode": mode}),
+        Some(Outcome::Evaluating) => serde_json::json!({"mode": mode, "evaluating": true}),
+        Some(Outcome::Error(error)) => serde_json::json!({"mode": mode, "error": error.as_ref()}),
+        Some(Outcome::Value { value, .. }) => {
+            serde_json::json!({"mode": mode, "result": value.as_ref()})
+        }
     }
 }

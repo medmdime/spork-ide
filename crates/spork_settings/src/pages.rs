@@ -78,6 +78,8 @@ pub(crate) enum Kind {
     Choice(&'static [(&'static str, Lit)]),
     /// Radio buttons under the label.
     Radios(&'static [(&'static str, Lit)]),
+    /// Radio buttons on the label's row (`JavaHotSwapConfigurableUi`'s).
+    InlineRadios(&'static [(&'static str, Lit)]),
     /// A number field: the setting is its text over `scale`, with `decimals`.
     Number {
         min: f64,
@@ -637,7 +639,7 @@ pub(crate) const HOTSWAP: &[Row] = &[
     opt(
         "Reload classes after compilation:",
         "/spork/debugger/reload_after_compilation",
-        Kind::Radios(&[
+        Kind::InlineRadios(&[
             ("Always", Lit::Str("always")),
             ("Never", Lit::Str("never")),
             ("Ask", Lit::Str("ask")),
@@ -658,6 +660,48 @@ pub(crate) const STEPPING: &[Row] = &[
     check(
         "Resume only the current thread",
         "/spork/debugger/resume_only_current_thread",
+    ),
+];
+
+/// Build, Execution, Deployment › Coverage (`CoverageOptionsConfigurable`, Java's
+/// `JavaCoverageOptionsProvider` section); its coverage runner combo box is left out, Spork IDE
+/// has one runner.
+pub(crate) const COVERAGE: &[Row] = &[
+    Row::Title("When New Coverage Is Gathered"),
+    opt(
+        "",
+        "/spork/coverage/when_gathered",
+        Kind::Radios(&[
+            (
+                "Show options before applying coverage to the editor",
+                Lit::Str("ask"),
+            ),
+            ("Do not apply collected coverage", Lit::Str("do_not_apply")),
+            (
+                "Replace active suites with the new one",
+                Lit::Str("replace"),
+            ),
+            ("Add to the active suites", Lit::Str("add")),
+        ]),
+    ),
+    check("Activate Coverage View", "/spork/coverage/activate_view"),
+    check(
+        "Show coverage in the project view",
+        "/spork/coverage/show_in_project_view",
+    ),
+    Row::Title("Java Coverage"),
+    check("Branch coverage", "/spork/coverage/branch_coverage"),
+    Row::Comment("Collect coverage for all branches of if/switch statements"),
+    check("Track per test coverage", "/spork/coverage/track_per_test"),
+    Row::Comment("Collect data about which code lines were covered by specific tests"),
+    check(
+        "Collect coverage in test folders",
+        "/spork/coverage/test_folders",
+    ),
+    opt(
+        "Exclude annotations:",
+        "/spork/coverage/exclude_annotations",
+        Kind::Patterns,
     ),
 ];
 
@@ -756,9 +800,14 @@ pub(crate) const TERMINAL: &[Row] = &[
     ),
 ];
 
-/// Languages & Frameworks › Spring (`spring`): its Spring Boot section's Project Import, the one
-/// option Spork IDE backs.
+/// Languages & Frameworks › Spring (`spring`): its Spring Initializr section and its Spring Boot
+/// section's Project Import, the options Spork IDE backs.
 pub(crate) const SPRING: &[Row] = &[
+    Row::Title("Spring Initializr"),
+    check(
+        "Reformat code when creating a new project",
+        crate::SPRING_INITIALIZR_REFORMAT,
+    ),
     Row::Title("Spring Boot"),
     Row::Title("Project Import"),
     help(
@@ -845,7 +894,7 @@ fn opt_labels(opt: &'static Opt) -> impl Iterator<Item = &'static str> {
         _ => &[],
     };
     let radios: &'static [(&'static str, Lit)] = match opt.kind {
-        Kind::Radios(choices) => choices,
+        Kind::Radios(choices) | Kind::InlineRadios(choices) => choices,
         _ => &[],
     };
     std::iter::once(opt.label)
@@ -1278,7 +1327,8 @@ impl SettingsDialog {
                 });
                 combo
             }
-            Kind::Radios(choices) => {
+            Kind::Radios(choices) | Kind::InlineRadios(choices) => {
+                let inline = matches!(opt.kind, Kind::InlineRadios(_));
                 let current = self.draft.get(path).cloned();
                 let radios = choices.iter().map(|(text, value)| {
                     let on = Some(value.value()) == current;
@@ -1293,11 +1343,22 @@ impl SettingsDialog {
                         cx.notify();
                     }))
                 });
-                v_flex()
-                    .gap(px(6.))
-                    .child(label(opt.label, query, cx))
-                    .child(v_flex().pl(px(INDENT)).gap(px(6.)).children(radios))
-                    .into_any_element()
+                if inline {
+                    return h_flex()
+                        .gap(px(12.))
+                        .child(label(opt.label, query, cx))
+                        .children(radios)
+                        .into_any_element();
+                }
+                // radios under a group's title have no label of their own
+                match opt.label.is_empty() {
+                    true => v_flex().gap(px(6.)).children(radios).into_any_element(),
+                    false => v_flex()
+                        .gap(px(6.))
+                        .child(label(opt.label, query, cx))
+                        .child(v_flex().pl(px(INDENT)).gap(px(6.)).children(radios))
+                        .into_any_element(),
+                }
             }
             Kind::Number {
                 min,
@@ -1619,7 +1680,14 @@ impl SettingsDialog {
                 )
             }
             Kind::Intentions => self.intentions(path, cx),
-            Kind::Patterns => self.patterns(path, enabled, cx),
+            Kind::Patterns => match opt.label.is_empty() {
+                true => self.patterns(path, "Do not step into the classes", enabled, cx),
+                false => v_flex()
+                    .gap(px(6.))
+                    .child(label(opt.label, query, cx))
+                    .child(self.patterns(path, opt.label.trim_end_matches(':'), enabled, cx))
+                    .into_any_element(),
+            },
             Kind::Env => {
                 let shown = self
                     .draft
@@ -1975,28 +2043,104 @@ impl SettingsDialog {
 
     /// The intentions turned off, as saved and as edited: unchecking one turns it off, checking
     /// it turns it back on.
-    /// The class patterns' list, each pattern's check box turning it on or off.
-    fn patterns(&self, path: &'static str, enabled: bool, cx: &mut Context<Self>) -> AnyElement {
+    /// The class patterns' list (`ClassFilterEditor`): each pattern's check box turning it on or
+    /// off, a click selecting it; + ▸ Add Pattern… asks for a new one ("New Filter"), − removes
+    /// the selected one.
+    fn patterns(
+        &self,
+        path: &'static str,
+        name: &'static str,
+        enabled: bool,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
         let patterns: Vec<(String, bool)> = self
             .draft
             .get(path)
             .and_then(|value| serde_json::from_value(value.clone()).ok())
             .unwrap_or_default();
         let tokens = Tokens::get(cx);
-        v_flex()
+        let selected = self.selected_pattern.filter(|ix| *ix < patterns.len());
+        let this = cx.entity().downgrade();
+        let edit = move |this: &mut Self, change: &dyn Fn(&mut Vec<(String, bool)>)| {
+            let mut patterns: Vec<(String, bool)> = this
+                .draft
+                .get(path)
+                .and_then(|value| serde_json::from_value(value.clone()).ok())
+                .unwrap_or_default();
+            change(&mut patterns);
+            this.draft.set(path, Some(json!(patterns)));
+        };
+        let toolbar = h_flex()
+            .id(SharedString::from(format!("{path}-toolbar")))
+            .role(Role::Toolbar)
+            .aria_label(SharedString::from(format!("{name} Toolbar")))
+            .gap(px(4.))
+            .child(
+                spork_workbench::ActionButton::new("patterns-add", "general/add")
+                    .tooltip("Add")
+                    .disabled(!enabled)
+                    .dropdown_menu(move |menu, _, _| {
+                        let this = this.clone();
+                        // shortcut: Add Class… needs the Java class chooser of the Breakpoints
+                        // dialog, in a crate Settings doesn't reach
+                        menu.item(PopupMenuItem::new("Add Class…").disabled(true))
+                            .item(
+                                PopupMenuItem::new("Add Pattern…").on_click(move |_, _, cx| {
+                                    let this = this.clone();
+                                    crate::debugger::ask_text(
+                                        "New Filter",
+                                        Some("Enter the filter pattern:"),
+                                        String::new(),
+                                        std::rc::Rc::new(move |pattern, cx| {
+                                            this.update(cx, |this, cx| {
+                                                edit(this, &|patterns| {
+                                                    patterns.push((pattern.clone(), true))
+                                                });
+                                                let added = this
+                                                    .draft
+                                                    .get(path)
+                                                    .and_then(Value::as_array)
+                                                    .map_or(0, Vec::len);
+                                                this.selected_pattern = added.checked_sub(1);
+                                                cx.notify();
+                                            })
+                                            .ok();
+                                        }),
+                                        cx,
+                                    )
+                                }),
+                            )
+                    }),
+            )
+            .child(
+                spork_workbench::ActionButton::new("patterns-remove", "general/remove")
+                    .tooltip("Remove")
+                    .disabled(!enabled || selected.is_none())
+                    .on_click(cx.listener(move |this, _, _, cx| {
+                        if let Some(ix) = selected {
+                            edit(this, &|patterns| {
+                                if ix < patterns.len() {
+                                    patterns.remove(ix);
+                                }
+                            });
+                            this.selected_pattern = None;
+                            cx.notify();
+                        }
+                    })),
+            );
+        let list = v_flex()
             .id(SharedString::from(path))
             .role(Role::List)
-            .aria_label("Do not step into the classes")
+            .aria_label(name)
             .w_full()
             .max_h(px(180.))
             .overflow_y_scroll()
             .p(px(6.))
             .gap(px(4.))
-            .border_1()
-            .border_color(tokens.separator)
             .children(patterns.iter().enumerate().map(|(ix, (pattern, on))| {
                 let label = SharedString::from(pattern.clone());
-                let row = h_flex()
+                let is_selected = selected == Some(ix);
+                let check = h_flex()
                     .id(SharedString::from(format!("pattern-{pattern}")))
                     .role(Role::CheckBox)
                     .aria_label(label.clone())
@@ -2006,26 +2150,55 @@ impl SettingsDialog {
                         SharedString::from(format!("pattern-box-{pattern}")),
                         Some(*on),
                         cx,
-                    ))
+                    ));
+                let check = match enabled {
+                    false => check,
+                    true => check
+                        .cursor_pointer()
+                        .on_click(cx.listener(move |this, _, _, cx| {
+                            cx.stop_propagation();
+                            edit(this, &|patterns| {
+                                if let Some((_, on)) = patterns.get_mut(ix) {
+                                    *on = !*on;
+                                }
+                            });
+                            cx.notify();
+                        })),
+                };
+                let row = h_flex()
+                    .id(SharedString::from(format!("pattern-row-{pattern}")))
+                    .role(Role::ListItem)
+                    .aria_label(label.clone())
+                    .aria_selected(is_selected)
+                    .px(px(2.))
+                    .gap(px(4.))
+                    .rounded(px(3.))
+                    .when(is_selected, |row| row.bg(tokens.selection))
+                    .child(check)
                     .child(label);
                 match enabled {
                     false => row.text_color(tokens.text_disabled),
                     true => row
                         .cursor_pointer()
                         .on_click(cx.listener(move |this, _, _, cx| {
-                            let mut patterns: Vec<(String, bool)> = this
-                                .draft
-                                .get(path)
-                                .and_then(|value| serde_json::from_value(value.clone()).ok())
-                                .unwrap_or_default();
-                            if let Some((_, on)) = patterns.get_mut(ix) {
-                                *on = !*on;
-                            }
-                            this.draft.set(path, Some(json!(patterns)));
+                            this.selected_pattern = Some(ix);
                             cx.notify();
                         })),
                 }
-            }))
+            }));
+        v_flex()
+            .w_full()
+            .border_1()
+            .border_color(tokens.separator)
+            .child(
+                div()
+                    .px(px(4.))
+                    .py(px(2.))
+                    .border_b_1()
+                    .border_color(tokens.separator)
+                    .child(toolbar),
+            )
+            .child(list)
             .into_any_element()
     }
 
@@ -2524,7 +2697,9 @@ pub(crate) fn samples(rows: &'static [Row]) -> Vec<(&'static str, Value)> {
         let Row::Opt(opt) = row else { continue };
         let value = match opt.kind {
             Kind::Check(on, _) => on.value(),
-            Kind::Choice(choices) | Kind::Radios(choices) => choices[0].1.value(),
+            Kind::Choice(choices) | Kind::Radios(choices) | Kind::InlineRadios(choices) => {
+                choices[0].1.value()
+            }
             Kind::Number { min, decimals, .. } => number_value(min, decimals),
             Kind::Font => json!("Menlo"),
             Kind::Fallback => json!(["Menlo"]),

@@ -96,7 +96,8 @@
     "Force Run to Cursor",
     "Show Execution Point",
     "Evaluate Expression…",
-    "Reset Frame"
+    "Reset Frame",
+    "Get Thread Dump (disabled)"
    ]
   },
   {
@@ -123,7 +124,8 @@
     "Pause Program (disabled)",
     "Resume Program",
     "Evaluate Expression…",
-    "Show Execution Point"
+    "Show Execution Point",
+    "Get Thread Dump (disabled)"
    ]
   },
   {

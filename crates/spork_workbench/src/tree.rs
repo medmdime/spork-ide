@@ -70,6 +70,8 @@ pub struct TreeItem {
     hint: Option<SharedString>,
     /// An element right after the label: a link, as IntelliJ's Services node's port.
     after_label: Option<Suffix>,
+    /// A second line in gray, under the label.
+    subtitle: Option<SharedString>,
     children: Vec<TreeItem>,
 }
 
@@ -88,6 +90,7 @@ impl TreeItem {
             suffix: None,
             hint: None,
             after_label: None,
+            subtitle: None,
             children: Vec::new(),
         }
     }
@@ -168,6 +171,13 @@ impl TreeItem {
         self
     }
 
+    /// A second line under the label, in gray, as IntelliJ's two-line list items (Endpoints'
+    /// type and framework when its items aren't compact); the row grows to hold it.
+    pub fn subtitle(mut self, subtitle: impl Into<SharedString>) -> Self {
+        self.subtitle = Some(subtitle.into());
+        self
+    }
+
     pub fn children(mut self, children: impl IntoIterator<Item = TreeItem>) -> Self {
         self.children = children.into_iter().collect();
         self
@@ -217,13 +227,28 @@ impl TreeItem {
             TreeIcon::Colored(name) => crate::image(name, cx).into_any_element(),
         });
         let (handler, click_to_toggle, state) = (self.handler, self.click_to_toggle, open);
+        let subtitle = self.subtitle.map(|subtitle| {
+            div()
+                .id("subtitle")
+                .role(Role::Label)
+                .aria_label(subtitle.clone())
+                .pl_0p5()
+                .truncate()
+                .text_xs()
+                .text_color(muted)
+                .child(subtitle)
+        });
+        let tall = subtitle.is_some();
         let row = h_flex()
             .id("row")
             .role(Role::TreeItem)
             .aria_label(self.label.clone())
             .aria_selected(self.active)
             .when(parent, |r| r.aria_expanded(is_open))
-            .h(ROW)
+            .map(|r| match tall {
+                true => r.py_1(),
+                false => r.h(ROW),
+            })
             .mx_1()
             .pl(px(6. + INDENT * depth as f32))
             .pr_2()
@@ -236,39 +261,50 @@ impl TreeItem {
                 None => div().w(px(16.)).flex_none().into_any_element(),
             })
             .children(row_icon)
-            .child(match (self.hint, self.after_label) {
-                (None, Some(after)) => h_flex()
-                    .flex_1()
-                    .min_w_0()
-                    .pl_0p5()
-                    .gap_1()
-                    .child(div().flex_none().child(self.label))
-                    .child(div().min_w_0().truncate().child(after(window, cx)))
-                    .into_any_element(),
-                (None, None) => div()
-                    .flex_1()
-                    .min_w_0()
-                    .pl_0p5()
-                    .truncate()
-                    .child(self.label)
-                    .into_any_element(),
-                (Some(hint), _) => h_flex()
-                    .flex_1()
-                    .min_w_0()
-                    .pl_0p5()
-                    .gap_1()
-                    .child(div().flex_none().child(self.label))
-                    .child(
-                        div()
-                            .id("hint")
-                            .role(Role::Label)
-                            .aria_label(hint.clone())
-                            .min_w_0()
-                            .truncate()
-                            .text_color(muted)
-                            .child(hint),
-                    )
-                    .into_any_element(),
+            .child({
+                let label = match (self.hint, self.after_label) {
+                    (None, Some(after)) => h_flex()
+                        .flex_1()
+                        .min_w_0()
+                        .pl_0p5()
+                        .gap_1()
+                        .child(div().flex_none().child(self.label))
+                        .child(div().min_w_0().truncate().child(after(window, cx)))
+                        .into_any_element(),
+                    (None, None) => div()
+                        .flex_1()
+                        .min_w_0()
+                        .pl_0p5()
+                        .truncate()
+                        .child(self.label)
+                        .into_any_element(),
+                    (Some(hint), _) => h_flex()
+                        .flex_1()
+                        .min_w_0()
+                        .pl_0p5()
+                        .gap_1()
+                        .child(div().flex_none().child(self.label))
+                        .child(
+                            div()
+                                .id("hint")
+                                .role(Role::Label)
+                                .aria_label(hint.clone())
+                                .min_w_0()
+                                .truncate()
+                                .text_color(muted)
+                                .child(hint),
+                        )
+                        .into_any_element(),
+                };
+                match subtitle {
+                    Some(subtitle) => v_flex()
+                        .flex_1()
+                        .min_w_0()
+                        .child(label)
+                        .child(subtitle)
+                        .into_any_element(),
+                    None => label,
+                }
             })
             .when_some(self.suffix, |r, suffix| {
                 r.child(

@@ -100,6 +100,11 @@
    "within": 3000
   },
   {
+   "do": "click",
+   "label": "Documentation",
+   "role": "AXRadioButton"
+  },
+  {
    "find": [
     {
      "label": "Documentation"
@@ -162,6 +167,7 @@
   {
    "menu": "Request mapping",
    "items": [
+    "Open in HTTP Client",
     "Show all endpoints of module",
     "Open in web browser"
    ],

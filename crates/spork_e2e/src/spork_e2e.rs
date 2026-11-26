@@ -30,7 +30,8 @@
 //! top left); `{"do": "click", "label": "main.rs", "role": "AXRow", "nth": 0, "button":
 //! "right"}` (or "back", "forward": a mouse's buttons 4 and 5) clicks the center of the first element whose label or title is that text, and
 //! `{"do": "click", "at": [x, y]}` that point of the project window, `{"do": "click",
-//! "line_number": 31}` that line's number in the active editor's gutter, `{"do": "click",
+//! "line_number": 31}` that line's number in the active editor's gutter (`"gutter_mark": 31`
+//! its coverage mark), `{"do": "click",
 //! "console_text": "src/main.rs:4"}` that text in the Run tool window's console; without a label, the `nth`
 //! element of the role; `"value": "Ask"` in place of the label finds a combo box by the choice
 //! it shows; `"in": "Project Panel"` looks only under the element of that label; `"hover": true`
@@ -74,12 +75,15 @@
 //! completions its menu shows; `context_servers` the project's context servers (MCP) and their
 //! status; `java` the JDK, the Java language server and the Maven and Gradle tool windows
 //! (`spork_java::e2e_state`); `kotlin` whether Kotlin is detected and its language server
-//! (`spork_kotlin::e2e_state`); `documentation` the Documentation tool window's symbol (`shown`), its
+//! (`spork_kotlin::e2e_state`); `http` the HTTP Client's runs and environments
+//! (`spork_http::e2e_state`); `documentation` the Documentation tool window's symbol (`shown`), its
 //! `text`, `popup_first` and `auto_update` (`spork_editor::documentation_e2e_state`);
 //! `notifications` the Notifications tool window's `count`, `unread` and `expired` ones, the
 //! `balloons` shown (each its title or text, oldest first), the "N more" stub's count (`more`) and
 //! the stripe's unread dot (`badge`: "error", "info" or null)
-//! (`spork_tool_windows::notifications_e2e_state`).
+//! (`spork_tool_windows::notifications_e2e_state`); `coverage` the coverage suites known and
+//! shown, the Coverage tool window's rows, the active editor's gutter marks and their popup
+//! (`spork_coverage::e2e_state`).
 //! `{"do": "notify", "type": "info" | "warning" | "error", "title": "…", "text": "…", "actions":
 //! ["Fetch", …], "sticky": true}` shows a notification as the workspace's balloon (an action logs
 //! "Ran Fetch" when chosen); `{"do": "push", "type": …, "title": "…", "text": "…"}` pushes one as
@@ -362,7 +366,21 @@ fn run(command: &Value, cx: &mut App) -> Value {
             let line_number = command["line_number"]
                 .as_u64()
                 .and_then(|line| u32::try_from(line).ok());
+            // "gutter_mark": that line's mark in the gutter's left free painters area (coverage)
+            let gutter_mark = command["gutter_mark"]
+                .as_u64()
+                .and_then(|line| u32::try_from(line).ok());
             let found = match (command["console_text"].as_str(), line_number) {
+                _ if let Some(line) = gutter_mark => workspace
+                    .as_ref()
+                    .and_then(|workspace| workspace.read(cx).active_item_as::<editor::Editor>(cx))
+                    .and_then(|editor| {
+                        editor.update(cx, |editor, cx| {
+                            editor.free_painter_mark_point(line.saturating_sub(1), cx)
+                        })
+                    })
+                    .map(|at| (None, (f32::from(at.x), f32::from(at.y))))
+                    .ok_or_else(|| format!("the editor shows no mark on line {line}")),
                 (_, Some(line)) => workspace
                     .as_ref()
                     .and_then(|workspace| workspace.read(cx).active_item_as::<editor::Editor>(cx))
@@ -673,8 +691,10 @@ fn state(window: AnyWindowHandle, workspace: Option<&Entity<Workspace>>, cx: &mu
     let code = spork_code::e2e_state(workspace.read(cx), cx);
     let java = spork_java::e2e_state(workspace.read(cx), cx);
     let kotlin = spork_kotlin::e2e_state(workspace.read(cx), cx);
+    let http = spork_http::e2e_state(workspace.read(cx), cx);
     let documentation = spork_editor::documentation_e2e_state(workspace.read(cx), cx);
     let notifications = spork_tool_windows::notifications_e2e_state(workspace.read(cx), cx);
+    let coverage = spork_coverage::e2e_state(workspace.read(cx), cx);
     let editor = editor_state(workspace.read(cx), cx);
     let context_servers = context_servers_state(workspace.read(cx), cx);
     // each open dock's size, as the tool window's width (height at the bottom)
@@ -749,9 +769,11 @@ fn state(window: AnyWindowHandle, workspace: Option<&Entity<Workspace>>, cx: &mu
         "code": code,
         "java": java,
         "kotlin": kotlin,
+        "http": http,
         "editor": editor,
         "documentation": documentation,
         "notifications": notifications,
+        "coverage": coverage,
         "context_servers": context_servers,
     })
 }

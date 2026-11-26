@@ -24,6 +24,8 @@ use workspace::Workspace;
 use crate::configurations::{self, Configuration, Field, SHELL_SCRIPT};
 use crate::{ProjectConfigurations, run};
 
+mod coverage_options;
+
 const TITLE: &str = "Run/Debug Configurations";
 const TEMPLATES_TITLE: &str = "Run/Debug Configuration Templates";
 
@@ -139,6 +141,8 @@ struct ConfigurationsDialog {
     /// A Spring Boot configuration's Override configuration properties: each row's name and
     /// value.
     properties: Vec<(Entity<InputState>, Entity<InputState>)>,
+    /// Code Coverage's class patterns (`coverage_options`).
+    coverage: coverage_options::CoverageRows,
     folder_name: Entity<InputState>,
     /// A folder made with no configuration in it yet, shown until the dialog closes.
     empty_folder: Option<(Option<SharedString>, String)>,
@@ -178,6 +182,7 @@ impl ConfigurationsDialog {
             selected: None,
             fields: Vec::new(),
             properties: Vec::new(),
+            coverage: Default::default(),
             folder_name,
             empty_folder: None,
             focus: focus.clone(),
@@ -249,6 +254,12 @@ impl ConfigurationsDialog {
                 Field::TestMethod,
                 Field::TestPackage,
                 Field::TestPattern,
+                Field::TestDirectory,
+                Field::TestCategory,
+                Field::TestUniqueId,
+                Field::TestTags,
+                Field::TestGroup,
+                Field::TestSuite,
                 Field::WorkingDirectory,
                 Field::Environment,
                 Field::VmOptions,
@@ -302,6 +313,7 @@ impl ConfigurationsDialog {
         for (name, value) in configurations::override_properties(&configuration) {
             self.add_property_row(&name, &value, window, cx);
         }
+        self.load_coverage(&configuration, window, cx);
         cx.notify();
     }
 
@@ -664,6 +676,12 @@ fn label(configuration: &Configuration, field: Field) -> &'static str {
         (Field::TestMethod, _) => "Method:",
         (Field::TestPackage, _) => "Package:",
         (Field::TestPattern, _) => "Pattern:",
+        (Field::TestDirectory, _) => "Directory:",
+        (Field::TestCategory, _) => "Category:",
+        (Field::TestUniqueId, _) => "UniqueId:",
+        (Field::TestTags, _) => "Tag expression:",
+        (Field::TestGroup, _) => "Group:",
+        (Field::TestSuite, _) => "Suite:",
     }
 }
 
@@ -1030,12 +1048,7 @@ impl ConfigurationsDialog {
                 configurations::is_test(configuration.adapter.as_deref()),
                 |form| {
                     let kind = configurations::test_kind(configuration);
-                    let fields: &[Field] = match kind {
-                        "method" => &[Field::Command, Field::TestMethod],
-                        "package" => &[Field::TestPackage],
-                        "pattern" => &[Field::TestPattern],
-                        _ => &[Field::Command],
-                    };
+                    let fields = configurations::test_kind_fields(kind);
                     form.child(self.test_kind(configuration, cx))
                         .children(fields.iter().map(|f| field(*f)))
                 },
@@ -1078,6 +1091,7 @@ impl ConfigurationsDialog {
                     .contains_key(configurations::OVERRIDE_PROPERTIES),
                 |form| form.child(self.override_properties(cx)),
             )
+            .children(self.coverage_fragments(cx))
             .when(!configuration.is_task(), |form| {
                 form.child(self.before_launch(configuration, cx))
             })
@@ -1268,14 +1282,17 @@ impl ConfigurationsDialog {
         configuration: &Configuration,
         cx: &mut Context<Self>,
     ) -> Option<AnyElement> {
-        let options = configurations::runner(configuration, cx)?.modify_options(configuration);
-        if options.is_empty() {
+        let runner = configurations::runner(configuration, cx)?;
+        let options = runner.modify_options(configuration);
+        // IntelliJ's coverage executor's fragment, for the types that run with coverage
+        let cover = runner.can_cover();
+        if options.is_empty() && !cover {
             return None;
         }
         let this = cx.entity().downgrade();
         let options = std::rc::Rc::new(options);
         let link = spork_workbench::controls::DropDownLink::new("modify-options", "Modify options")
-            .dropdown_menu(move |menu, _, _| {
+            .dropdown_menu(move |menu, window, cx| {
                 let mut menu = menu;
                 let mut group = "";
                 for option in options.iter() {
@@ -1300,7 +1317,10 @@ impl ConfigurationsDialog {
                             }),
                     );
                 }
-                menu
+                match cover {
+                    true => Self::coverage_menu(menu, this.clone(), window, cx),
+                    false => menu,
+                }
             });
         Some(
             h_flex()

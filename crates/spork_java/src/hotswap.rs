@@ -3,7 +3,9 @@
 //! project has changed since the classes were last reloaded, Java editors show "Code changed:"
 //! with Apply HotSwap and Hide at their top right. Apply HotSwap saves the changed files, then
 //! Reload Changed Classes builds and reloads them, and the toolbar says "Code has been reloaded"
-//! for a moment.
+//! for a moment. A change HotSwap can't apply (a class's shape changed: a method or field added,
+//! removed or retyped, its supertypes; or code that doesn't parse) shows Restart Debug instead, as
+//! IntelliJ's `JvmBaseSourceFileChangeCompatibilityChecker` finds them.
 
 use std::time::{Duration, Instant};
 
@@ -70,6 +72,11 @@ pub(crate) fn mark_unchanged(project: &Entity<Project>, reloaded: bool, cx: &mut
     );
 }
 
+/// Whether a Java file of the project changed since its classes were last reloaded.
+pub(crate) fn has_changes(project: &Entity<Project>, cx: &App) -> bool {
+    !changed(project, cx).is_empty()
+}
+
 /// The project's Java files changed since its baseline.
 fn changed(project: &Entity<Project>, cx: &App) -> Vec<Entity<Buffer>> {
     let Some(baseline) = cx
@@ -94,6 +101,94 @@ fn changed(project: &Entity<Project>, cx: &App) -> Vec<Entity<Buffer>> {
         .collect()
 }
 
+/// A Java file's class shapes (`HotSwapClassShape`): each class with its supertypes and its
+/// members' declarations without their bodies; `None` when the file doesn't parse.
+fn class_shapes(text: &str) -> Option<Vec<String>> {
+    let mut parser = language::Parser::new();
+    parser
+        .set_language(&tree_sitter_java::LANGUAGE.into())
+        .ok()?;
+    let tree = parser.parse(text, None)?;
+    if tree.root_node().has_error() {
+        return None;
+    }
+    let source = text.as_bytes();
+    let declaration = |node: language::Node| {
+        // the declaration up to its body (a method's block, a class's members)
+        let end = node
+            .child_by_field_name("body")
+            .map_or(node.end_byte(), |body| body.start_byte());
+        let text = text.get(node.start_byte()..end).unwrap_or_default();
+        text.split_whitespace().collect::<Vec<_>>().join(" ")
+    };
+    let mut shapes = Vec::new();
+    let mut stack = vec![tree.root_node()];
+    while let Some(node) = stack.pop() {
+        match node.kind() {
+            "class_declaration"
+            | "interface_declaration"
+            | "enum_declaration"
+            | "record_declaration"
+            | "annotation_type_declaration" => shapes.push(declaration(node)),
+            "method_declaration"
+            | "constructor_declaration"
+            | "compact_constructor_declaration"
+            | "field_declaration"
+            | "enum_constant" => {
+                // a field's initializer is code: its declarators' names stay
+                let shape = match node.kind() {
+                    "field_declaration" => {
+                        let mut cursor = node.walk();
+                        let names: Vec<_> = node
+                            .children_by_field_name("declarator", &mut cursor)
+                            .filter_map(|declarator| declarator.child_by_field_name("name"))
+                            .filter_map(|name| name.utf8_text(source).ok())
+                            .collect();
+                        let ty = node
+                            .child_by_field_name("type")
+                            .and_then(|ty| ty.utf8_text(source).ok())
+                            .unwrap_or_default();
+                        format!("field {ty} {}", names.join(","))
+                    }
+                    "enum_constant" => format!(
+                        "constant {}",
+                        node.child_by_field_name("name")
+                            .and_then(|name| name.utf8_text(source).ok())
+                            .unwrap_or_default()
+                    ),
+                    _ => declaration(node),
+                };
+                shapes.push(shape);
+            }
+            _ => {}
+        }
+        let mut cursor = node.walk();
+        stack.extend(node.children(&mut cursor));
+    }
+    shapes.sort();
+    Some(shapes)
+}
+
+/// The changes HotSwap can't apply: a changed file whose classes changed shape, or which
+/// doesn't parse.
+fn not_hot_swappable(project: &Entity<Project>, cx: &App) -> bool {
+    let Some(baseline) = cx
+        .try_global::<Baselines>()
+        .and_then(|baselines| baselines.0.get(&project.entity_id()))
+    else {
+        return false;
+    };
+    changed(project, cx).iter().any(|buffer| {
+        let buffer = buffer.read(cx);
+        let now = class_shapes(&buffer.text());
+        let before = baseline
+            .buffers
+            .get(&buffer.remote_id())
+            .map(|before| class_shapes(&before.text()));
+        now.is_none() || before.is_some_and(|before| before != now)
+    })
+}
+
 /// The running Java debug session's proxy in a project.
 fn java_session(project: &Entity<Project>, cx: &App) -> Option<ProxyHandle> {
     project
@@ -116,6 +211,7 @@ pub(crate) fn e2e_state(workspace: &Workspace, cx: &App) -> Option<&'static str>
         .is_some_and(|at| at.elapsed() < SUCCESS_SHOWN);
     match (reloaded, changed(project, cx).is_empty()) {
         (true, _) => Some("Code has been reloaded"),
+        (false, false) if not_hot_swappable(project, cx) => Some("Restart Debug"),
         (false, false) => Some("Code changed:"),
         (false, true) => None,
     }
@@ -184,6 +280,8 @@ fn toolbar(
                 .into_any_element(),
         );
     }
+    // `xdebugger.hotswap.tooltip.restart`: the session started again applies the changes
+    let restart = not_hot_swappable(&project, cx);
     let apply = {
         let (workspace, project) = (workspace.downgrade(), project.clone());
         move |_: &gpui::ClickEvent, _: &mut Window, cx: &mut App| {
@@ -208,7 +306,10 @@ fn toolbar(
                 div()
                     .id("hotswap-apply")
                     .role(Role::Button)
-                    .aria_label("Code changed:")
+                    .aria_label(match restart {
+                        true => "Restart Debug",
+                        false => "Code changed:",
+                    })
                     .flex()
                     .items_center()
                     .gap(px(4.))
@@ -217,13 +318,41 @@ fn toolbar(
                     .rounded(px(spork_workbench::tokens::metrics::RADIUS))
                     .cursor_pointer()
                     .hover(|button| button.bg(tokens.editor_button_hover))
-                    .tooltip(|window, cx| {
-                        gpui_kit::component::tooltip::Tooltip::new("Apply HotSwap")
-                            .build(window, cx)
+                    .tooltip(move |window, cx| {
+                        let tooltip = match restart {
+                            true => gpui_kit::component::tooltip::Tooltip::element(|_, _| {
+                                gpui_kit::component::v_flex()
+                                    .max_w(px(300.))
+                                    .gap(px(4.))
+                                    .child(
+                                        div()
+                                            .font_weight(gpui::FontWeight::BOLD)
+                                            .child("Restart Debug"),
+                                    )
+                                    .child(
+                                        "HotSwap is unlikely to apply these changes. Restart \
+                                         the debug session to apply them.",
+                                    )
+                            }),
+                            false => gpui_kit::component::tooltip::Tooltip::new("Apply HotSwap"),
+                        };
+                        tooltip.build(window, cx)
                     })
                     .child("Code changed:")
-                    .child(spork_workbench::image("debugger/debuggerSync", cx).size(px(16.)))
-                    .on_click(apply),
+                    .child(
+                        spork_workbench::image(
+                            match restart {
+                                true => "run/restartDebug",
+                                false => "debugger/debuggerSync",
+                            },
+                            cx,
+                        )
+                        .size(px(16.)),
+                    )
+                    .on_click(move |event, window, cx| match restart {
+                        true => window.dispatch_action(Box::new(debugger_ui::RerunSession), cx),
+                        false => apply(event, window, cx),
+                    }),
             )
             .child(
                 ActionButton::new("hotswap-hide", "general/close")
@@ -232,4 +361,21 @@ fn toolbar(
             )
             .into_any_element(),
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::class_shapes;
+
+    #[test]
+    fn a_class_keeps_its_shape_when_only_code_changes() {
+        let before = "class A extends B {\n    int n = 1;\n    int twice(int v) {\n        return v * 2;\n    }\n}\n";
+        let body = before.replace("v * 2", "v * 3").replace("n = 1", "n = 2");
+        assert_eq!(class_shapes(before), class_shapes(&body));
+        let added = before.replace("    int twice", "    void more() {}\n    int twice");
+        assert_ne!(class_shapes(before), class_shapes(&added));
+        let retyped = before.replace("int twice(int v)", "int twice(long v)");
+        assert_ne!(class_shapes(before), class_shapes(&retyped));
+        assert_eq!(class_shapes("class A { int f( }"), None);
+    }
 }

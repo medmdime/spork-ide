@@ -326,6 +326,7 @@
     "Symbol…",
     "Text…",
     "Line:Column…",
+    "Endpoint… (disabled)",
     "Next Highlighted Error",
     "Previous Highlighted Error",
     "Last Edit Location",
@@ -448,8 +449,9 @@
     "Run"
    ],
    "items": [
-    "Run",
-    "Debug",
+    "Run 'main.rs'",
+    "Debug 'main.rs'",
+    "Run 'main.rs' with Coverage (disabled)",
     "Run…",
     "Debug…",
     "Attach to Process…",
@@ -459,7 +461,10 @@
     "Show Running List (disabled)",
     "Debugging Actions",
     "Toggle Breakpoint",
-    "View Breakpoints…"
+    "View Breakpoints…",
+    "Manage Coverage Reports…",
+    "Generate Coverage Report… (disabled)",
+    "Hide Coverage (disabled)"
    ]
   },
   {
@@ -482,7 +487,8 @@
     "Pause Program (disabled)",
     "Resume Program (disabled)",
     "Evaluate Expression… (disabled)",
-    "Show Execution Point (disabled)"
+    "Show Execution Point (disabled)",
+    "Get Thread Dump (disabled)"
    ]
   },
   {

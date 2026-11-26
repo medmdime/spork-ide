@@ -6,6 +6,7 @@
 
 mod attach;
 mod breakpoints;
+mod class_chooser;
 pub mod configurations;
 mod configurations_dialog;
 mod debug_window;
@@ -17,10 +18,12 @@ pub mod run_widget;
 pub mod services;
 mod smart_step_into;
 pub mod test_runner;
+mod threads;
 
 use std::path::PathBuf;
 use std::sync::Arc;
 
+use anyhow::Context as _;
 use collections::HashMap;
 use fs::Fs;
 use gpui::{
@@ -33,15 +36,22 @@ use util::ResultExt as _;
 use workspace::Workspace;
 
 pub use attach::jdwp_address;
-pub use breakpoints::register_exception_filters;
+pub use breakpoints::{
+    ExceptionBreakpoints, ExceptionClassBreakpoint, ExceptionClasses, exception_breakpoints,
+    register_exception_classes, register_exception_filters,
+};
+pub use class_chooser::ClassSearch;
 pub use configurations::Configuration;
 pub use configurations_dialog::follow_ide_theme;
 pub use debug_window::{
-    AdapterHooks, active_debug_session, e2e_frames, register_adapter_hooks, write_program_console,
+    AdapterHooks, active_debug_session, e2e_frames, register_adapter_hooks, running_state,
+    write_program_console,
 };
 pub use docker::Confirm;
+pub use evaluate_dialog::{ask_object_label, object_label_color};
 pub use run_widget::RunWidget;
 pub use services::is_running;
+pub use threads::{DumpThread, ThreadInfo, ThreadsView, jvm_frame_label};
 
 pub mod run {
     gpui::actions!(
@@ -100,8 +110,34 @@ pub mod run {
             /// Updates a running application as its configuration's On 'Update' action says
             /// (IntelliJ's Update Running Application).
             UpdateRunningApplication,
+            /// Runs the configuration of the caret's test method, test class or `main`, or of the
+            /// Project tool window's selection (IntelliJ's Run Context Configuration).
+            RunContextConfiguration,
+            /// Debugs the configuration of the caret's test method, test class or `main`, or of
+            /// the Project tool window's selection (IntelliJ's Debug Context Configuration).
+            DebugContextConfiguration,
+            /// Opens the selected value's tree in a window of its own.
+            Inspect,
+            /// Labels the selected object in the debugger's views, or takes its label off.
+            MarkObject,
+            /// Opens where the selected variable is declared.
+            JumpToSource,
+            /// Opens the source of the selected value's type.
+            JumpToTypeSource,
+            /// Shows or hides the values' `{Type@id}`.
+            ShowTypes,
+            /// Shows the debugged program's threads with their state and frames in a tab.
+            GetThreadDump,
         ]
     );
+
+    /// Shows the selected value with a renderer (IntelliJ's View as), `""` for the automatic one.
+    #[derive(PartialEq, Clone, serde::Deserialize, schemars::JsonSchema, Default, gpui::Action)]
+    #[action(namespace = run)]
+    #[serde(deny_unknown_fields)]
+    pub struct ViewAs {
+        pub renderer: String,
+    }
 }
 
 pub fn init(cx: &mut App) {
@@ -143,49 +179,176 @@ pub fn run_temporary(
     window: &mut Window,
     cx: &mut Context<Workspace>,
 ) {
+    // the configuration of that name runs, as IntelliJ's finds the existing one first
+    let configuration = match ProjectConfigurations::of(workspace, cx) {
+        Some(configurations) => configurations.update(cx, |configurations, cx| {
+            configurations.run_temporary(configuration.clone(), cx);
+            configurations
+                .list
+                .iter()
+                .find(|listed| listed.name() == configuration.name())
+                .cloned()
+                .unwrap_or(configuration)
+        }),
+        None => configuration,
+    };
+    run_widget::launch(Some(&configuration), debug, workspace, window, cx);
+}
+
+/// Runs a configuration made from the code with coverage (a context menu's or the gutter's Run
+/// '…' with Coverage), made temporary and selected as [`run_temporary`] makes it.
+pub fn run_temporary_with_coverage(
+    configuration: Configuration,
+    workspace: &mut Workspace,
+    window: &mut Window,
+    cx: &mut Context<Workspace>,
+) {
     if let Some(configurations) = ProjectConfigurations::of(workspace, cx) {
         configurations.update(cx, |configurations, cx| {
             configurations.run_temporary(configuration.clone(), cx)
         });
     }
-    run_widget::launch(Some(&configuration), debug, workspace, window, cx);
+    run_widget::launch_with_coverage(&configuration, workspace, window, cx);
 }
 
-/// Runs a test configuration for a debugger to attach to (a debug adapter that attaches, as
-/// Kotlin's does): the configuration made temporary as a run of it would, then run with its JVM
-/// waiting for the debugger ([`configurations::DEBUG_JVM`]) in the window of `workspace`.
-pub fn run_for_debugger(workspace: &Entity<Workspace>, configuration: Configuration, cx: &mut App) {
-    let Some(window) = cx.windows().into_iter().find(|window| {
+/// Whether a configuration runs with coverage (its type's runner gathers it).
+pub fn can_cover(configuration: &Configuration, cx: &App) -> bool {
+    run_widget::can_cover(Some(configuration), cx)
+}
+
+/// Runs a test configuration for its debug adapter `adapter` to attach to, as IntelliJ debugs
+/// tests: the configuration made temporary as a run of it would, then run in the window of
+/// `workspace` with its JVM waiting for the debugger on a free port of the loopback interface
+/// ([`configurations::DEBUG_JVM`]), its tests shown in the Debug tool window's session; the port,
+/// once the JVM listens.
+pub async fn run_for_debugger(
+    workspace: &Entity<Workspace>,
+    configuration: Configuration,
+    adapter: &str,
+    cx: &mut gpui::AsyncApp,
+) -> anyhow::Result<u16> {
+    let port = std::net::TcpListener::bind((std::net::Ipv4Addr::LOCALHOST, 0))?
+        .local_addr()?
+        .port();
+    let name = configuration.name();
+    let window = cx.update(|cx| window_of(workspace, cx));
+    let window = window.context("The project's window is closed")?;
+    // the debugged run of this name before this one, which the new one replaces
+    let debugged_run = |cx: &App| {
+        run_panel::debugged_tests(workspace.read(cx), &name, cx).map(|(_, terminal)| terminal)
+    };
+    let before = cx.update(|cx| debugged_run(cx).map(|terminal| terminal.entity_id()));
+    window.update(cx, |_, window, cx| {
+        workspace.update(cx, |workspace, cx| {
+            // the configuration of that name, as a run of it would; Rerun Failed Tests' own
+            let rerun = configuration
+                .entry
+                .contains_key(configurations::RERUN_TESTS);
+            let mut debugged = match ProjectConfigurations::of(workspace, cx) {
+                Some(configurations) => configurations.update(cx, |configurations, cx| {
+                    configurations.run_temporary(configuration.clone(), cx);
+                    configurations
+                        .list
+                        .iter()
+                        .find(|listed| !rerun && listed.name() == configuration.name())
+                        .cloned()
+                        .unwrap_or(configuration)
+                }),
+                None => configuration,
+            };
+            debugged
+                .entry
+                .insert(configurations::DEBUG_JVM.into(), port.into());
+            debugged
+                .entry
+                .insert(configurations::DEBUG_ADAPTER.into(), adapter.into());
+            run_widget::launch(Some(&debugged), false, workspace, window, cx);
+        })
+    })?;
+    // the build comes first, then the JVM says it listens
+    let listening = configurations::debug_jvm_listening(port);
+    let step = std::time::Duration::from_millis(250);
+    let mut waited = std::time::Duration::ZERO;
+    loop {
+        let run = cx.update(|cx| {
+            let terminal = debugged_run(cx).filter(|t| Some(t.entity_id()) != before)?;
+            let terminal = terminal.read(cx);
+            let running = terminal
+                .task()
+                .is_some_and(|task| task.status == terminal::TaskStatus::Running);
+            Some((terminal.get_content().contains(&listening), running))
+        });
+        match run {
+            Some((true, _)) => return Ok(port),
+            Some((false, false)) => {
+                anyhow::bail!("The tests ended before the debugger could attach to them")
+            }
+            _ => {}
+        }
+        anyhow::ensure!(
+            waited < std::time::Duration::from_secs(600),
+            "The JVM of the tests isn't waiting for the debugger"
+        );
+        cx.background_executor().timer(step).await;
+        waited += step;
+    }
+}
+
+/// The window of a workspace.
+pub(crate) fn window_of(
+    workspace: &Entity<Workspace>,
+    cx: &mut App,
+) -> Option<gpui::AnyWindowHandle> {
+    cx.windows().into_iter().find(|window| {
         window
             .update(cx, |_, window, cx| {
                 Workspace::for_window(window, cx).as_ref() == Some(workspace)
             })
             .unwrap_or(false)
-    }) else {
-        return;
-    };
-    window
-        .update(cx, |_, window, cx| {
-            workspace.update(cx, |workspace, cx| {
-                if let Some(configurations) = ProjectConfigurations::of(workspace, cx) {
-                    configurations.update(cx, |configurations, cx| {
-                        configurations.run_temporary(configuration.clone(), cx)
-                    });
-                }
-                let mut debugged = configuration;
-                debugged
-                    .entry
-                    .insert(configurations::DEBUG_JVM.into(), Value::Bool(true));
-                run_widget::launch(Some(&debugged), false, workspace, window, cx);
-            })
-        })
-        .log_err();
+    })
 }
 
-/// Whether the running run of the configuration `name` has written `text` to its console.
-pub fn run_console_shows(workspace: &Workspace, name: &str, text: &str, cx: &App) -> bool {
-    run_panel::run_of(workspace, name, cx)
-        .is_some_and(|run| run.running && run.terminal.read(cx).get_content().contains(text))
+/// What a run's end hands to the app, set once: the workspace and the environment of the run's
+/// task (a run with coverage names its suite there, `spork_coverage`'s).
+#[derive(Clone)]
+pub struct RunEnded(
+    pub std::rc::Rc<dyn Fn(&Entity<Workspace>, &HashMap<String, String>, &mut App)>,
+);
+
+impl Global for RunEnded {}
+
+/// The Run menu's Run, Debug and Run with Coverage items as IntelliJ's executors name them for
+/// the run widget's configuration (`Run 'GreetingTest'`, `Run 'GreetingTest.java'` for the
+/// current file), greyed when the current file doesn't run, and Debugging Actions' Update item:
+/// the one running application's update ("Update 'X' application"), `None` for IntelliJ's
+/// "Update Running Application…" when none or several are; the app builds its menu bar again
+/// when they change.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RunMenu {
+    pub run: SharedString,
+    pub debug: SharedString,
+    pub coverage: SharedString,
+    pub enabled: bool,
+    pub update: Option<SharedString>,
+}
+
+impl Default for RunMenu {
+    fn default() -> Self {
+        Self {
+            run: "Run".into(),
+            debug: "Debug".into(),
+            coverage: "Run with Coverage".into(),
+            enabled: true,
+            update: None,
+        }
+    }
+}
+
+impl Global for RunMenu {}
+
+/// The Run menu's Run and Debug items.
+pub fn run_menu(cx: &App) -> RunMenu {
+    cx.try_global::<RunMenu>().cloned().unwrap_or_default()
 }
 
 /// The configurations of each workspace, by its entity.
@@ -486,6 +649,9 @@ pub fn e2e_state(workspace: &Workspace, cx: &App) -> Value {
         "debug": debug_window::e2e_debug(workspace, cx),
         "evaluate": evaluate_dialog::e2e_evaluate(cx),
         "exceptions": breakpoints::e2e_exceptions(workspace, cx),
+        "exception_classes": cx
+            .try_global::<ExceptionClasses>()
+            .and_then(|classes| serde_json::to_value(&classes.0).log_err()),
         "services": services::e2e_services(workspace, cx),
         "smart_step": workspace
             .active_modal::<smart_step_into::SmartStepChooser>(cx)

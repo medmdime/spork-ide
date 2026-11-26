@@ -1,0 +1,296 @@
+{
+ "id": "spring-boot-endpoints-navigation",
+ "fixture": "spring-maven",
+ "covers": [],
+ "prepare": "mkdir -p src/main/resources/templates && printf '<p>Hello</p>\\n' > src/main/resources/templates/greeting.html && cat > src/main/java/com/example/demo/GreetingController.java <<'EOF'\npackage com.example.demo;\n\nimport org.springframework.stereotype.Controller;\nimport org.springframework.web.bind.annotation.GetMapping;\n\n@Controller\npublic class GreetingController {\n\n    @GetMapping(\"/greeting\")\n    public String greeting() {\n        return \"greeting\";\n    }\n}\nEOF",
+ "settings": {
+  "languages": {
+   "Java": {
+    "enable_language_server": true
+   },
+   "Spring Boot Properties": {
+    "enable_language_server": true
+   },
+   "Spring Boot YAML": {
+    "enable_language_server": true
+   }
+  }
+ },
+ "steps": [
+  {
+   "expect": {
+    "java.tool": "Maven",
+    "java.jdk": "17.0.20.1"
+   },
+   "within": 20000
+  },
+  {
+   "do": "action",
+   "name": "workspace::ToggleLeftDock"
+  },
+  {
+   "expect": {
+    "java.linked": true,
+    "java.server.running": true
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "java.server.busy": false
+   },
+   "within": 900000
+  },
+  {
+   "expect": {
+    "java.spring.classpath": true
+   },
+   "within": 300000
+  },
+  {
+   "expect": {
+    "java.spring.index.loaded": true,
+    "java.spring.index.endpoints": [
+     "GET /greeting",
+     "GET /hello"
+    ]
+   },
+   "within": 120000
+  },
+  {
+   "menu": "Navigate",
+   "path": [
+    "Navigate"
+   ],
+   "items": [
+    "Line:Column…",
+    "Endpoint…"
+   ],
+   "part": true
+  },
+  {
+   "do": "keys",
+   "keys": "cmd-shift-\\"
+  },
+  {
+   "find": [
+    {
+     "label": "All",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "Actions",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "Endpoints",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "Text",
+     "role": "AXRadioButton"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "find": [
+    {
+     "label": "/greeting"
+    },
+    {
+     "label": "/hello"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "type",
+   "text": "hel"
+  },
+  {
+   "find": {
+    "label": "/greeting"
+   },
+   "absent": true,
+   "within": 3000
+  },
+  {
+   "find": [
+    {
+     "label": "/hello"
+    },
+    {
+     "label": "GET"
+    },
+    {
+     "label": "HelloController"
+    }
+   ],
+   "ordered": true,
+   "within": 3000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "search-everywhere"
+  },
+  {
+   "do": "keys",
+   "keys": "enter"
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/demo/HelloController.java"
+   },
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "endpoints_tool_window::ToggleFocus"
+  },
+  {
+   "expect": {
+    "docks.right.open": true,
+    "docks.right.panel": "Endpoints"
+   },
+   "within": 5000
+  },
+  {
+   "find": [
+    {
+     "label": "/greeting"
+    },
+    {
+     "label": "HTTP Server  Spring MVC"
+    },
+    {
+     "label": "/hello"
+    },
+    {
+     "label": "HTTP Server  Spring MVC"
+    }
+   ],
+   "ordered": true,
+   "within": 5000
+  },
+  {
+   "do": "click",
+   "label": "/hello"
+  },
+  {
+   "find": [
+    {
+     "label": "HTTP Client",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "Documentation",
+     "role": "AXRadioButton"
+    },
+    {
+     "label": "Examples",
+     "role": "AXRadioButton"
+    }
+   ],
+   "ordered": true,
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Examples",
+   "role": "AXRadioButton"
+  },
+  {
+   "find": {
+    "label": "curl -X GET --location \"http://localhost:18081/hello\"",
+    "in": "Examples"
+   },
+   "within": 3000
+  },
+  {
+   "do": "activate"
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "shot": "examples"
+  },
+  {
+   "do": "action",
+   "name": "endpoints_tool_window::CompactListItems"
+  },
+  {
+   "find": {
+    "label": "HTTP Server  Spring MVC"
+   },
+   "absent": true,
+   "within": 3000
+  },
+  {
+   "find": [
+    {
+     "label": "/greeting"
+    },
+    {
+     "label": "/hello"
+    }
+   ],
+   "ordered": true
+  },
+  {
+   "do": "open",
+   "path": "src/main/java/com/example/demo/GreetingController.java"
+  },
+  {
+   "expect": {
+    "active": "src/main/java/com/example/demo/GreetingController.java"
+   },
+   "within": 5000
+  },
+  {
+   "find": {
+    "label": "Request mapping",
+    "role": "AXButton"
+   },
+   "within": 10000
+  },
+  {
+   "do": "action",
+   "name": "workspace::CloseAllDocks"
+  },
+  {
+   "do": "click",
+   "label": "Request mapping",
+   "role": "AXButton"
+  },
+  {
+   "menu": "Request mapping",
+   "items": [
+    "Open in HTTP Client",
+    "Navigate to related views",
+    "Show all endpoints of module",
+    "Open in web browser"
+   ],
+   "within": 3000
+  },
+  {
+   "do": "click",
+   "label": "Navigate to related views",
+   "role": "AXMenuItem"
+  },
+  {
+   "expect": {
+    "active": "src/main/resources/templates/greeting.html"
+   },
+   "within": 5000
+  }
+ ]
+}

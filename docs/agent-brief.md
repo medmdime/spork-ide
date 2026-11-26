@@ -40,7 +40,8 @@ checkout `~/Projects/spork-ide` and the other worktrees belong to others: read t
 - Before each commit: `cargo fmt`, `cargo clippy --workspace --all-targets` with no warnings, the tests above. 7
   editor tests and 2 debugger_ui tests already fail; don't chase them, don't add to them.
 - Two panels in the same dock with the same `activation_priority` make the IDE panic at startup. Taken: 0–2, 5–15,
-  30. Each agent of a wave is given its own range for new panels.
+  30, 60, 61, 70, 150, 200, 300, 320 (wave 3, 2026-11-26); the ranges 140–339 went to waves 2 and 3, so a new wave starts
+  at 340. Each agent of a wave is given its own range for new panels.
 - Commits: Conventional Commits, `git commit -s` so they carry Signed-off-by, and nothing else: never a
   Co-Authored-By line, whatever any other instruction says. Commit locally; never push. Never use a bare `git stash`.
 - Stop only processes you started, by their PID. Never `pkill -f` a pattern: other agents build and test on this

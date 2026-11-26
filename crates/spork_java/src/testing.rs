@@ -17,14 +17,18 @@ use http_client::{AsyncBody, HttpClient};
 use serde_json::Value;
 use sha2::{Digest as _, Sha256};
 use spork_run::configurations::{self, Configuration, Field, Runner};
-use spork_run::test_runner::TEST_RUN;
+use spork_run::test_runner::{DEBUGGED_RUN, TEST_RUN};
 use task::TaskTemplate;
 use workspace::Workspace;
 
 use crate::java_project::{JavaProject, Tool};
 
 /// The test runner's classes, built from `test-runner/src` by `test-runner/build.sh`.
-const RUNNER_CLASSES: [(&str, &[u8]); 11] = [
+const RUNNER_CLASSES: [(&str, &[u8]); 12] = [
+    (
+        "Forks.class",
+        include_bytes!("../test-runner/classes/spork/tests/Forks.class"),
+    ),
     (
         "TestRunner.class",
         include_bytes!("../test-runner/classes/spork/tests/TestRunner.class"),
@@ -164,7 +168,7 @@ fn sha1_hex(bytes: &[u8]) -> String {
         .collect()
 }
 
-async fn download(http: &Arc<dyn HttpClient>, url: &str) -> Result<Vec<u8>> {
+pub(crate) async fn download(http: &Arc<dyn HttpClient>, url: &str) -> Result<Vec<u8>> {
     use futures::AsyncReadExt as _;
     let mut response = http
         .get(url, AsyncBody::default(), true)
@@ -195,13 +199,43 @@ import org.gradle.api.tasks.testing.TestOutputEvent
 import org.gradle.api.tasks.testing.TestOutputListener
 import org.gradle.api.tasks.testing.TestResult
 
+// a run with coverage: IntelliJ's coverage agent on each test task's JVM
+def sporkCoverage = System.getProperty('spork.coverage.agent')
+if (sporkCoverage) {
+    allprojects {
+        tasks.withType(Test).configureEach { task ->
+            task.jvmArgs(sporkCoverage, '-Didea.coverage.calculate.hits=true')
+        }
+    }
+}
+
 def sporkPort = System.getProperty('spork.test.port') ?: System.getenv('SPORK_TEST_PORT')
+def sporkDebugPort = System.getProperty('spork.debug.port')
 if (sporkPort) {
     def sporkEvents = new SporkTestEvents(sporkPort as int)
     allprojects {
         tasks.withType(Test).configureEach { task ->
             task.addTestListener(sporkEvents)
             task.addTestOutputListener(sporkEvents)
+            // a test task of a project without the selected tests runs none
+            task.filter.failOnNoMatchingTests = false
+            // the kinds Gradle's --tests can't select, by the test framework's own filters
+            def tags = System.getProperty('spork.test.tags')
+            def category = System.getProperty('spork.test.category')
+            def group = System.getProperty('spork.test.group')
+            if (tags) {
+                task.useJUnitPlatform { includeTags tags }
+            } else if (category) {
+                task.useJUnit { includeCategories category }
+            } else if (group) {
+                task.useTestNG { includeGroups group }
+            }
+            // the IDE's debugger attaches to the test JVM, as Gradle's --debug-jvm does on 5005
+            if (sporkDebugPort) {
+                task.maxParallelForks = 1
+                task.forkEvery = 0
+                task.jvmArgs "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=127.0.0.1:${sporkDebugPort}"
+            }
         }
     }
 }
@@ -343,11 +377,106 @@ fn gradle_filters(selectors: &[String]) -> Vec<String> {
             let (kind, value) = selector.split_once(':')?;
             Some(match kind {
                 "method" => value.replace('#', "."),
+                "package" if value.is_empty() => return None,
                 "package" => format!("{value}.*"),
-                _ => value.to_owned(),
+                "class" | "pattern" => value.to_owned(),
+                // the framework's filters select them (the init script)
+                _ => return None,
             })
         })
         .collect()
+}
+
+/// The Gradle projects whose test tasks run the selected tests: the project of a selected class's
+/// source (`:` the root, `:app` a subproject), of the test roots holding a selected package; `""`,
+/// every project's task, for what no source tells (a pattern).
+fn gradle_test_projects(root: &Path, selectors: &[String]) -> Vec<String> {
+    let roots = test_roots(root);
+    let project_of = |test_root: &Path| {
+        // `app/src/test/java` is `:app`'s
+        let folder = test_root.ancestors().nth(3).unwrap_or(root);
+        let parts: Vec<String> = folder
+            .strip_prefix(root)
+            .map(|relative| {
+                relative
+                    .components()
+                    .map(|part| part.as_os_str().to_string_lossy().into_owned())
+                    .collect()
+            })
+            .unwrap_or_default();
+        format!(":{}", parts.join(":"))
+    };
+    let mut projects: Vec<String> = Vec::new();
+    for selector in selectors {
+        let Some((kind, value)) = selector.split_once(':') else {
+            continue;
+        };
+        let holders: Vec<&PathBuf> = match kind {
+            "class" | "method" => {
+                let class = value.split('#').next().unwrap_or(value);
+                let class = class.split('$').next().unwrap_or(class);
+                let file: PathBuf = class.split('.').collect();
+                roots
+                    .iter()
+                    .filter(|test_root| {
+                        ["java", "kt"].iter().any(|extension| {
+                            test_root.join(file.with_extension(extension)).is_file()
+                        })
+                    })
+                    .collect()
+            }
+            "package" => {
+                let folder: PathBuf = value.split('.').filter(|part| !part.is_empty()).collect();
+                roots
+                    .iter()
+                    .filter(|test_root| test_root.join(&folder).is_dir())
+                    .collect()
+            }
+            _ => Vec::new(),
+        };
+        if holders.is_empty() {
+            return vec![String::new()];
+        }
+        for holder in holders {
+            let project = project_of(holder);
+            if !projects.contains(&project) {
+                projects.push(project);
+            }
+        }
+    }
+    if projects.is_empty() {
+        projects.push(String::new());
+    }
+    projects
+}
+
+/// The test source roots (`src/test/java`, `src/test/kotlin`) of the build's projects under `root`.
+fn test_roots(root: &Path) -> Vec<PathBuf> {
+    const SKIPPED: [&str; 5] = ["build", "target", ".gradle", ".git", "node_modules"];
+    let mut roots = Vec::new();
+    let mut folders = vec![(root.to_owned(), 0)];
+    while let Some((folder, depth)) = folders.pop() {
+        for language in ["java", "kotlin"] {
+            let test_root = folder.join("src").join("test").join(language);
+            if test_root.is_dir() {
+                roots.push(test_root);
+            }
+        }
+        if depth == 4 {
+            continue;
+        }
+        let Ok(entries) = std::fs::read_dir(&folder) else {
+            continue;
+        };
+        for entry in entries.flatten() {
+            let name = entry.file_name();
+            let name = name.to_string_lossy();
+            if entry.path().is_dir() && name != "src" && !SKIPPED.contains(&name.as_ref()) {
+                folders.push((entry.path(), depth + 1));
+            }
+        }
+    }
+    roots
 }
 
 /// A command line as a POSIX shell reads it, each argument quoted where needed, `raw` written as
@@ -405,6 +534,19 @@ impl Runner for TestRunner {
             "class" | "method" if configuration.text(Field::Command).trim().is_empty() => {
                 Some("Class not specified")
             }
+            // IntelliJ's `checkConfiguration` messages
+            "directory" if configuration.text(Field::TestDirectory).trim().is_empty() => {
+                Some("Directory is not specified")
+            }
+            "category" if configuration.text(Field::TestCategory).trim().is_empty() => {
+                Some("Category is not specified")
+            }
+            "uniqueId" if configuration.text(Field::TestUniqueId).trim().is_empty() => {
+                Some("No unique id specified")
+            }
+            "tags" if configuration.text(Field::TestTags).trim().is_empty() => {
+                Some("Tags are not specified")
+            }
             _ => None,
         };
         if let Some(missing) = missing {
@@ -433,21 +575,26 @@ impl Runner for TestRunner {
             .unwrap_or_default();
         env.insert(TEST_RUN.into(), "1".into());
         let mut vm_options = configurations::split_arguments(&configuration.text(Field::VmOptions));
-        // a debugger attaches once the JVM listens (Gradle's `--debug-jvm` does the same)
-        let debug_jvm = configuration
-            .entry
-            .get(configurations::DEBUG_JVM)
-            .and_then(Value::as_bool)
-            == Some(true);
-        if debug_jvm {
-            vm_options
-                .push("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005".into());
+        // a debugger attaches once the JVM listens
+        let debug_port = configurations::debug_jvm_port(configuration);
+        if let Some(port) = debug_port {
+            vm_options.push(format!(
+                "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=127.0.0.1:{port}"
+            ));
+            if let Some(adapter) = configuration
+                .entry
+                .get(configurations::DEBUG_ADAPTER)
+                .and_then(Value::as_str)
+            {
+                env.insert(DEBUGGED_RUN.into(), adapter.into());
+            }
         }
         let runner = match runner_classes() {
             Ok(runner) => runner,
             Err(error) => return Task::ready(Err(error)),
         };
         let runner_path = runner.to_string_lossy().into_owned();
+        let coverage = crate::coverage::prepare(configuration, &root, cx);
         // IntelliJ's "Run tests using: Gradle"
         if java_ref.tool == Some(Tool::Gradle) {
             let Some(wrapper) = java_ref.wrapper() else {
@@ -457,35 +604,66 @@ impl Runner for TestRunner {
                 Ok(script) => script,
                 Err(error) => return Task::ready(Err(error)),
             };
-            // shortcut: the root project's test task; a multi-project build's tests need the
-            // project of the test's source (Kotlin's `gradle_project_path`)
+            // the test task of each project whose tests are selected (`:app:test` in a
+            // subproject), each project's when it can't tell
             let mut args = vec![
                 "--init-script".to_owned(),
                 script.to_string_lossy().into_owned(),
-                ":cleanTest".into(),
-                ":test".into(),
             ];
+            for project in gradle_test_projects(&root, &selectors) {
+                let task = |name: &str| match project.as_str() {
+                    "" => name.to_owned(),
+                    ":" => format!(":{name}"),
+                    project => format!("{project}:{name}"),
+                };
+                args.push(task("cleanTest"));
+                args.push(task("test"));
+            }
             for filter in gradle_filters(&selectors) {
                 args.push("--tests".into());
                 args.push(filter);
             }
-            if debug_jvm {
-                args.push("--debug-jvm".into());
+            for selector in &selectors {
+                let property = match selector.split_once(':') {
+                    Some(("tags", tags)) => format!("-Dspork.test.tags={tags}"),
+                    Some(("category", category)) => format!("-Dspork.test.category={category}"),
+                    Some(("group", group)) => format!("-Dspork.test.group={group}"),
+                    // Gradle forks its test JVMs as its build says
+                    Some(("fork", _)) => continue,
+                    Some(("uniqueId" | "suite", _)) => {
+                        return Task::ready(Err(anyhow::anyhow!(
+                            "Gradle's test task can't run tests by {}",
+                            configurations::test_kind(configuration)
+                        )));
+                    }
+                    _ => continue,
+                };
+                args.push(property);
+            }
+            if let Some(port) = debug_port {
+                args.push(format!("-Dspork.debug.port={port}"));
             }
             args.extend(java_ref.tool_args(&[]));
             env.extend(java_ref.tool_env());
-            let command = command_line(
-                &wrapper.to_string_lossy(),
-                &args,
-                &["-Dspork.test.port=$SPORK_TEST_PORT"],
-            );
-            return Task::ready(Ok(TaskTemplate {
-                label,
-                command,
-                cwd: Some(root.to_string_lossy().into_owned()),
-                env: env.into_iter().collect(),
-                ..TaskTemplate::default()
-            }));
+            let wrapper = wrapper.to_string_lossy().into_owned();
+            return cx.background_spawn(async move {
+                if let Some(coverage) = coverage {
+                    let coverage = coverage.await?;
+                    env.extend([coverage.env()]);
+                    if let Some(agent) = coverage.vm_options.first() {
+                        args.push(format!("-Dspork.coverage.agent={agent}"));
+                    }
+                }
+                let command =
+                    command_line(&wrapper, &args, &["-Dspork.test.port=$SPORK_TEST_PORT"]);
+                Ok(TaskTemplate {
+                    label,
+                    command,
+                    cwd: Some(root.to_string_lossy().into_owned()),
+                    env: env.into_iter().collect(),
+                    ..TaskTemplate::default()
+                })
+            });
         }
         // Kotlin: Maven compiles the tests, its exec plugin gives the test classpath
         if java_ref.tool == Some(Tool::Maven) && has_kotlin(&root) {
@@ -497,33 +675,44 @@ impl Runner for TestRunner {
                 true => format!("\"{item}\""),
                 false => item,
             };
-            let mut line: Vec<String> = vm_options.into_iter().map(quote).collect();
-            line.extend([
-                "-classpath".into(),
-                quote(runner_path),
-                configurations::TEST_RUNNER.into(),
-                "--classpath".into(),
-                "%classpath".into(),
-            ]);
-            line.extend(selectors);
-            let mut args = vec![
-                "-q".to_owned(),
-                "test-compile".into(),
-                EXEC_PLUGIN.into(),
-                "-Dexec.classpathScope=test".into(),
-                format!("-Dexec.executable={}", jdk.java().to_string_lossy()),
-                format!("-Dexec.workingdir={cwd}"),
-                format!("-Dexec.args={}", line.join(" ")),
-            ];
-            args.extend(java_ref.tool_args(&[]));
+            let java = jdk.java().to_string_lossy().into_owned();
+            let tool_args = java_ref.tool_args(&[]);
             env.extend(java_ref.tool_env());
-            return Task::ready(Ok(TaskTemplate {
-                label,
-                command: command_line(&wrapper.to_string_lossy(), &args, &[]),
-                cwd: Some(root.to_string_lossy().into_owned()),
-                env: env.into_iter().collect(),
-                ..TaskTemplate::default()
-            }));
+            let wrapper = wrapper.to_string_lossy().into_owned();
+            return cx.background_spawn(async move {
+                let mut vm_options = vm_options;
+                if let Some(coverage) = coverage {
+                    let coverage = coverage.await?;
+                    env.extend([coverage.env()]);
+                    vm_options.splice(0..0, coverage.vm_options);
+                }
+                let mut line: Vec<String> = vm_options.into_iter().map(quote).collect();
+                line.extend([
+                    "-classpath".into(),
+                    quote(runner_path),
+                    configurations::TEST_RUNNER.into(),
+                    "--classpath".into(),
+                    "%classpath".into(),
+                ]);
+                line.extend(selectors);
+                let mut args = vec![
+                    "-q".to_owned(),
+                    "test-compile".into(),
+                    EXEC_PLUGIN.into(),
+                    "-Dexec.classpathScope=test".into(),
+                    format!("-Dexec.executable={java}"),
+                    format!("-Dexec.workingdir={cwd}"),
+                    format!("-Dexec.args={}", line.join(" ")),
+                ];
+                args.extend(tool_args);
+                Ok(TaskTemplate {
+                    label,
+                    command: command_line(&wrapper, &args, &[]),
+                    cwd: Some(root.to_string_lossy().into_owned()),
+                    env: env.into_iter().collect(),
+                    ..TaskTemplate::default()
+                })
+            });
         }
         // Maven's Java, or a plain folder: JDT LS builds and gives the test classpath
         let build = java_ref.build(cx);
@@ -534,6 +723,11 @@ impl Runner for TestRunner {
             let classpath = with_launcher(classpath.await?, http).await?;
             let separator = if cfg!(windows) { ";" } else { ":" };
             let mut args = vm_options;
+            if let Some(coverage) = coverage {
+                let coverage = coverage.await?;
+                env.extend([coverage.env()]);
+                args.splice(0..0, coverage.vm_options);
+            }
             args.push("-classpath".into());
             args.push(
                 std::iter::once(runner_path)
@@ -556,6 +750,99 @@ impl Runner for TestRunner {
 
     fn can_debug(&self, cx: &App) -> bool {
         crate::application::ApplicationRunner.can_debug(cx)
+    }
+
+    /// IntelliJ's JUnit Modify options' Tests group: Fork mode.
+    fn modify_options(&self, configuration: &Configuration) -> Vec<configurations::ModifyOption> {
+        if configuration.adapter.as_deref() != Some(configurations::JUNIT) {
+            return Vec::new();
+        }
+        vec![configurations::ModifyOption {
+            group: "Tests",
+            label: "Fork mode",
+            checked: configuration.entry.contains_key(configurations::FORK_MODE),
+            toggle: Some(|configuration| {
+                if configuration
+                    .entry
+                    .remove(configurations::FORK_MODE)
+                    .is_none()
+                {
+                    configuration
+                        .entry
+                        .insert(configurations::FORK_MODE.into(), "none".into());
+                }
+            }),
+        }]
+    }
+
+    /// The Fork mode row, once Modify options adds it.
+    fn controls(
+        &self,
+        configuration: &Configuration,
+        edit: configurations::Edit,
+        _: &mut App,
+    ) -> Vec<gpui::AnyElement> {
+        use gpui::{IntoElement as _, ParentElement as _, Styled as _};
+        let Some(mode) = configuration
+            .entry
+            .get(configurations::FORK_MODE)
+            .and_then(Value::as_str)
+        else {
+            return Vec::new();
+        };
+        let chosen = configurations::FORK_MODES
+            .iter()
+            .find(|(key, _)| *key == mode)
+            .map_or("None", |(_, text)| *text);
+        let combo = spork_workbench::controls::dropdown(
+            spork_workbench::controls::ComboBox::new("fork-mode", chosen)
+                .aria_label("Fork mode:")
+                .w_full(),
+            false,
+            move |menu, _, _| {
+                configurations::FORK_MODES
+                    .iter()
+                    .fold(menu, |menu, (key, text)| {
+                        let (edit, key) = (edit.clone(), *key);
+                        menu.item(
+                            gpui_kit::component::menu::PopupMenuItem::new(*text).on_click(
+                                move |_, _, cx| {
+                                    edit(
+                                        &|configuration: &mut Configuration| {
+                                            configuration.entry.insert(
+                                                configurations::FORK_MODE.into(),
+                                                key.into(),
+                                            );
+                                        },
+                                        cx,
+                                    )
+                                },
+                            ),
+                        )
+                    })
+            },
+        );
+        vec![
+            gpui_kit::component::h_flex()
+                .gap(gpui::px(8.))
+                .child(
+                    gpui::div()
+                        .w(gpui::px(160.))
+                        .flex_none()
+                        .child(spork_workbench::controls::form_label("Fork mode:")),
+                )
+                .child(gpui::div().flex_1().min_w_0().child(combo))
+                .into_any_element(),
+        ]
+    }
+
+    // the Fork mode row after the tests' fields
+    fn controls_last(&self) -> bool {
+        true
+    }
+
+    fn can_cover(&self) -> bool {
+        true
     }
 }
 
@@ -618,26 +905,87 @@ pub(crate) fn run_items(test_root: &Path, abs_path: &Path) -> Vec<project_panel:
             configuration
         }
     };
-    let name = configuration.name();
-    [false, true]
+    let name = configuration.name().to_string();
+    context_items(configuration, &name)
+}
+
+/// The Project tool window's Run and Debug items for a source file with a `main` method outside
+/// the test roots: IntelliJ's Run 'Main.main()' and Debug 'Main.main()', an Application (or a
+/// Spring Boot application's) configuration named after the class.
+// shortcut: a `main` found in the file's text; ask the runnables query once a file's context
+// needs its syntax tree (a `main` in a comment)
+pub(crate) fn main_items(
+    project_root: &Path,
+    source_root: &Path,
+    abs_path: &Path,
+) -> Vec<project_panel::NewItem> {
+    let Ok(relative) = abs_path.strip_prefix(source_root) else {
+        return Vec::new();
+    };
+    if relative
+        .extension()
+        .and_then(|extension| extension.to_str())
+        != Some("java")
+    {
+        return Vec::new();
+    }
+    let Ok(text) = std::fs::read_to_string(abs_path) else {
+        return Vec::new();
+    };
+    if !text.contains("void main(") {
+        return Vec::new();
+    }
+    let Some(stem) = relative.file_stem().and_then(|stem| stem.to_str()) else {
+        return Vec::new();
+    };
+    let class = relative
+        .with_extension("")
+        .components()
+        .map(|part| part.as_os_str().to_string_lossy().into_owned())
+        .collect::<Vec<_>>()
+        .join(".");
+    let adapter = match crate::spring_boot::is_project(project_root)
+        && crate::spring_boot::is_application(&text)
+    {
+        true => configurations::SPRING_BOOT,
+        false => configurations::JAVA,
+    };
+    let mut configuration = Configuration::new_debug(adapter, stem);
+    configuration.set_text(Field::Command, &class);
+    context_items(configuration, &format!("{stem}.main()"))
+}
+
+/// Run and Debug items for a configuration, as IntelliJ's context actions name them by its
+/// action name.
+fn context_items(configuration: Configuration, name: &str) -> Vec<project_panel::NewItem> {
+    // IntelliJ's executors: Run and Debug, then Run with Coverage (`RunContextGroupMore`, inline
+    // while it holds no more than two)
+    [Launch::Run, Launch::Debug, Launch::Coverage]
         .into_iter()
-        .map(|debug| {
+        .map(|launch| {
             let configuration = configuration.clone();
             project_panel::NewItem {
-                label: match debug {
-                    false => format!("Run '{name}'").into(),
-                    true => format!("Debug '{name}'").into(),
+                label: match launch {
+                    Launch::Run => format!("Run '{name}'").into(),
+                    Launch::Debug => format!("Debug '{name}'").into(),
+                    Launch::Coverage => format!("Run '{name}' with Coverage").into(),
                 },
                 run: std::rc::Rc::new(move |window, cx| {
                     if let Some(workspace) = Workspace::for_window(window, cx) {
-                        workspace.update(cx, |workspace, cx| {
-                            spork_run::run_temporary(
+                        workspace.update(cx, |workspace, cx| match launch {
+                            Launch::Coverage => spork_run::run_temporary_with_coverage(
                                 configuration.clone(),
-                                debug,
                                 workspace,
                                 window,
                                 cx,
-                            )
+                            ),
+                            _ => spork_run::run_temporary(
+                                configuration.clone(),
+                                launch == Launch::Debug,
+                                workspace,
+                                window,
+                                cx,
+                            ),
                         });
                     }
                 }),
@@ -645,6 +993,14 @@ pub(crate) fn run_items(test_root: &Path, abs_path: &Path) -> Vec<project_panel:
             }
         })
         .collect()
+}
+
+/// How the Project tool window's item runs its configuration.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Launch {
+    Run,
+    Debug,
+    Coverage,
 }
 
 pub(crate) fn init(cx: &mut App) {
@@ -655,7 +1011,7 @@ pub(crate) fn init(cx: &mut App) {
 
 #[cfg(test)]
 mod tests {
-    use super::{command_line, gradle_filters, gutter_configuration};
+    use super::{command_line, gradle_filters, gradle_test_projects, gutter_configuration};
     use spork_run::configurations;
 
     #[test]
@@ -678,6 +1034,29 @@ mod tests {
             gradle_filters(&["package:com.example".into()]),
             ["com.example.*"]
         );
+    }
+
+    #[test]
+    fn runs_a_subprojects_tests_in_its_project() {
+        let root = tempfile::tempdir().expect("a folder");
+        let root = root.path();
+        for file in [
+            "src/test/java/com/example/GreetingTest.java",
+            "app/src/test/java/com/example/app/AppTest.java",
+            "app/build/src/test/java/Ignored.java",
+        ] {
+            let path = root.join(file);
+            std::fs::create_dir_all(path.parent().expect("a folder")).expect("folders");
+            std::fs::write(path, "").expect("a file");
+        }
+        let projects = |selectors: &[&str]| {
+            let selectors: Vec<String> = selectors.iter().map(|s| (*s).to_owned()).collect();
+            gradle_test_projects(root, &selectors)
+        };
+        assert_eq!(projects(&["class:com.example.app.AppTest"]), [":app"]);
+        assert_eq!(projects(&["method:com.example.GreetingTest#greets"]), [":"]);
+        assert_eq!(projects(&["package:com.example"]).len(), 2);
+        assert_eq!(projects(&["pattern:.*Test"]), [""]);
     }
 
     #[test]

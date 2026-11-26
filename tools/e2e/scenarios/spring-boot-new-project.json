@@ -331,6 +331,12 @@
     ]
    },
    "within": 60000
+  },
+  {
+   "expect": {
+    "java.spring.reformatted": true
+   },
+   "within": 60000
   }
  ]
 }

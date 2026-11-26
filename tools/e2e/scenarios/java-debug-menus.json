@@ -114,9 +114,9 @@
     "Copy Stack",
     "Hide Frames from Libraries",
     "Async Stack Traces (disabled)",
-    "Customize Threads View… (disabled)",
-    "Add Stepping Filter… (disabled)",
-    "Export Threads… (disabled)"
+    "Customize Threads View…",
+    "Add Stepping Filter…",
+    "Export Threads…"
    ],
    "checked": [
     "Hide Frames from Libraries"
@@ -140,7 +140,7 @@
    "menu": "context-menu:XDebugger.Variables.Tree.Popup",
    "items": [
     "New Class Level Watch… (disabled)",
-    "Inspect… (disabled)",
+    "Inspect…",
     "Mark Object… (disabled)",
     "Set Value…",
     "Copy Value",
@@ -149,15 +149,18 @@
     "Evaluate Expression…",
     "Add to Watches",
     "Show Referring Objects… (disabled)",
-    "Jump To Source (disabled)",
+    "Jump To Source",
     "Jump To Type Source (disabled)",
     "View Text (disabled)",
-    "View as (disabled)",
+    "View as",
     "Filter… (disabled)",
     "Adjust Range… (disabled)",
-    "Show types (disabled)",
+    "Show types",
     "Mute Renderers (disabled)",
     "Customize Data Views… (disabled)"
+   ],
+   "checked": [
+    "Show types"
    ]
   },
   {

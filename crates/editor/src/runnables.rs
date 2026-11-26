@@ -654,6 +654,42 @@ impl Editor {
         None
     }
 
+    /// Spork IDE: the runnable of IntelliJ's context configuration: the innermost one whose
+    /// declaration (the parent of its name, a method's or a class's) holds the caret, as ⌃⇧R
+    /// runs it, or with `at_caret` false the file's outermost one (Current File); the file's
+    /// outermost one too when the caret is in none.
+    pub fn context_runnable(
+        &self,
+        at_caret: bool,
+        cx: &App,
+    ) -> Option<(Entity<Buffer>, BufferRow, Arc<RunnableTasks>)> {
+        let snapshot = self.buffer.read(cx).snapshot(cx);
+        let head = self.selections.newest_anchor().head();
+        let (caret, buffer_snapshot) = snapshot.anchor_to_buffer_anchor(head)?;
+        let caret = caret.to_offset(buffer_snapshot);
+        let buffer_id = buffer_snapshot.remote_id();
+        let (_, by_row) = self.runnables.runnables.get(&buffer_id)?;
+        let declarations: Vec<(BufferRow, &RunnableTasks, Range<usize>)> = by_row
+            .iter()
+            .filter_map(|(row, tasks)| {
+                let (name, _) = snapshot.anchor_to_buffer_anchor(tasks.offset)?;
+                let name = name.to_offset(buffer_snapshot);
+                let layer = buffer_snapshot.syntax_layer_at(name)?;
+                let leaf = layer.node().descendant_for_byte_range(name, name)?;
+                let declaration = leaf.parent().unwrap_or(leaf).byte_range();
+                Some((*row, tasks, declaration))
+            })
+            .collect();
+        let innermost = declarations
+            .iter()
+            .filter(|(_, _, range)| at_caret && range.start <= caret && caret <= range.end)
+            .min_by_key(|(_, _, range)| range.len());
+        let (row, tasks, _) =
+            innermost.or_else(|| declarations.iter().max_by_key(|(_, _, range)| range.len()))?;
+        let buffer = self.buffer.read(cx).buffer(buffer_id)?;
+        Some((buffer, *row, Arc::new((*tasks).to_owned())))
+    }
+
     pub(crate) fn render_run_indicator(
         &self,
         _style: &EditorStyle,

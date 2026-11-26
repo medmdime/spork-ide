@@ -159,9 +159,13 @@
   {
    "find": [
     "All in package",
+    "All in directory",
     "Pattern",
     "Class",
-    "Method"
+    "Method",
+    "Category",
+    "UniqueId",
+    "Tags"
    ],
    "ordered": true,
    "within": 5000
@@ -211,7 +215,7 @@
      "role": "AXMenuItem"
     },
     {
-     "label": "Edit\u2026",
+     "label": "Edit…",
      "role": "AXMenuItem"
     },
     {
@@ -219,7 +223,7 @@
      "role": "AXMenuItem"
     },
     {
-     "label": "Delete\u2026",
+     "label": "Delete…",
      "role": "AXMenuItem"
     },
     {

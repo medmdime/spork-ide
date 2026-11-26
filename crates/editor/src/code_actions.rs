@@ -496,6 +496,47 @@ impl Editor {
         );
     }
 
+    /// Spork IDE: IntelliJ's context configuration (Run/Debug context, Current File): the context
+    /// runnable's first task resolved as the gutter's popup resolves it, with the debug scenario
+    /// its Debug starts.
+    pub fn context_run(
+        &mut self,
+        at_caret: bool,
+        cx: &mut Context<Self>,
+    ) -> Task<Option<ContextRun>> {
+        let Some(project) = self.project.clone() else {
+            return Task::ready(None);
+        };
+        let Some((buffer, row, tasks)) = self.context_runnable(at_caret, cx) else {
+            return Task::ready(None);
+        };
+        let context = Self::build_tasks_context(&project, &buffer, row, &tasks, cx);
+        let position = tasks.offset;
+        cx.spawn(async move |editor, cx| {
+            let context = context.await.ok().flatten()?;
+            let (kind, task) = tasks.resolve(&context).next()?;
+            let resolved = Some(ResolvedTasks {
+                templates: smallvec![(kind.clone(), task.clone())],
+                position,
+            });
+            let scenario = editor
+                .update(cx, |editor, cx| {
+                    editor.debug_scenarios(&resolved, &buffer, cx)
+                })
+                .ok()?
+                .await
+                .into_iter()
+                .next();
+            Some(ContextRun {
+                buffer,
+                kind,
+                task,
+                scenario,
+                context,
+            })
+        })
+    }
+
     fn debug_scenarios(
         &mut self,
         resolved_tasks: &Option<ResolvedTasks>,
@@ -536,6 +577,15 @@ impl Editor {
         })
         .unwrap_or_else(|| Task::ready(vec![]))
     }
+}
+
+/// Spork IDE: what [`Editor::context_run`] runs or debugs.
+pub struct ContextRun {
+    pub buffer: Entity<Buffer>,
+    pub kind: project::TaskSourceKind,
+    pub task: task::ResolvedTask,
+    pub scenario: Option<task::DebugScenario>,
+    pub context: task::TaskContext,
 }
 
 pub trait CodeActionProvider {
